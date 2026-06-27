@@ -11,3 +11,4 @@
  */
 export * from "./locations";
 export * from "./cars";
+export * from "./categories";

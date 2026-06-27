@@ -6,6 +6,7 @@
   "exports": {
     ".": "./src/index.ts",
     "./locations": "./src/locations.ts",
-    "./cars": "./src/cars.ts"
+    "./cars": "./src/cars.ts",
+    "./categories": "./src/categories.ts"
   }
 }
