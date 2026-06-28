@@ -288,6 +288,8 @@ export const CreateListingBody = zod.object({
   "base_price_cash": zod.number().optional().describe('Required for normal sale listings. Optional when is_request is true (a buyer request).'),
   "is_request": zod.boolean().optional().describe('When true, this is a buyer \"request\/wanted\" post. Price (base_price_cash) becomes optional and a description is required.'),
   "location": zod.string(),
+  "latitude": zod.number().optional().describe('Optional precise pin (send with longitude). Overrides the area centroid for near-me search + map display.'),
+  "longitude": zod.number().optional().describe('Optional precise pin (send with latitude).'),
   "specs": zod.record(zod.string(), zod.unknown()),
   "media": zod.array(zod.object({
   "type": zod.enum(['image', 'video']).optional(),

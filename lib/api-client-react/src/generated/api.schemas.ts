@@ -2369,6 +2369,10 @@ export type CreateListingBody = {
   /** When true, this is a buyer "request/wanted" post. Price (base_price_cash) becomes optional and a description is required. */
   is_request?: boolean;
   location: string;
+  /** Optional precise pin (send with longitude). Overrides the area centroid for near-me search + map display. */
+  latitude?: number;
+  /** Optional precise pin (send with latitude). */
+  longitude?: number;
   specs: CreateListingBodySpecs;
   media: CreateListingBodyMediaItem[];
   payment_options?: CreateListingBodyPaymentOptionsItem[];

@@ -185,6 +185,11 @@ export default function CreateListingScreen() {
   const [location, setLocation] = useState("");
   const [locationValue, setLocationValue] = useState<string | null>(null);
   const [locationPickerOpen, setLocationPickerOpen] = useState(false);
+  // Optional precise GPS pin for the listing (#4). null until the seller taps
+  // "use my location"; sent as latitude/longitude so near-me uses the exact
+  // point instead of the area centroid. Never blocks publishing.
+  const [pin, setPin] = useState<{ lat: number; lng: number } | null>(null);
+  const [pinBusy, setPinBusy] = useState(false);
   const [cashPrice, setCashPrice] = useState("");
   // Buyer "request/wanted" mode. When on, this is a request to BUY (is_request):
   // price becomes optional, payment plans are hidden, and a description is
@@ -243,6 +248,26 @@ export default function CreateListingScreen() {
 
   const setSpec = (key: string, value: string) =>
     setSpecs((prev) => ({ ...prev, [key]: value }));
+
+  // Capture the seller's current GPS location for the listing pin (#4). Optional
+  // + best-effort: a denied permission or any failure leaves the pin unset and
+  // never blocks publishing. Sent as latitude/longitude in the create body.
+  const captureLocation = async () => {
+    setPinBusy(true);
+    try {
+      const Location = await import("expo-location");
+      const { status } = await Location.requestForegroundPermissionsAsync();
+      if (status !== "granted") return;
+      const pos = await Location.getCurrentPositionAsync({
+        accuracy: Location.Accuracy.Balanced,
+      });
+      setPin({ lat: pos.coords.latitude, lng: pos.coords.longitude });
+    } catch {
+      // location is optional — never surface as a blocking error
+    } finally {
+      setPinBusy(false);
+    }
+  };
 
   // Seed the first contact-phone row from the account/business phone, but only
   // while the row is still untouched (don't clobber what the seller typed).
@@ -1000,6 +1025,9 @@ export default function CreateListingScreen() {
         // The backend matches location against the English area/city taxonomy, so
         // sending the label fails the strict match and rejects the listing (400).
         location: (locationValue ?? location).trim(),
+        // Optional precise pin (seller tapped "use my location"). Both axes go
+        // together; the backend stores them as the listing's coordinate override.
+        ...(pin ? { latitude: pin.lat, longitude: pin.lng } : {}),
         specs: specsClean,
         media,
         payment_options: paymentOptions,
@@ -1062,6 +1090,7 @@ export default function CreateListingScreen() {
     setDescription("");
     setLocation("");
     setLocationValue(null);
+    setPin(null);
     setCashPrice("");
     setIsRequest(false);
     const seed = accountPhone?.trim();
@@ -1537,6 +1566,36 @@ export default function CreateListingScreen() {
           {location || t("create.locationPlaceholder")}
         </AppText>
         <Feather name="chevron-down" size={18} color={colors.mutedForeground} />
+      </Pressable>
+
+      {/* Optional precise GPS pin (#4) — never required to publish. */}
+      <Pressable
+        onPress={captureLocation}
+        disabled={pinBusy}
+        style={[...inputStyle, styles.pickerBtn, { flexDirection: rowDir, marginTop: 8 }]}
+        testID="create-use-location"
+      >
+        <Feather
+          name={pin ? "check-circle" : "map-pin"}
+          size={18}
+          color={pin ? "#16a34a" : colors.mutedForeground}
+        />
+        <AppText
+          style={{
+            color: pin ? colors.foreground : colors.mutedForeground,
+            textAlign,
+            flex: 1,
+            fontFamily: "Inter_400Regular",
+            fontSize: 14,
+            marginHorizontal: 8,
+          }}
+        >
+          {pinBusy
+            ? t("create.locationCapturing")
+            : pin
+              ? t("create.locationCaptured")
+              : t("create.useMyLocation")}
+        </AppText>
       </Pressable>
 
       {category && !isRequest && (
