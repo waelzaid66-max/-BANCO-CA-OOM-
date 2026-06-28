@@ -59,7 +59,7 @@ import { KeyboardAwareScrollViewCompat } from "@/components/KeyboardAwareScrollV
 import { LocationPicker } from "@/components/LocationPicker";
 import { PermissionRationaleModal } from "@/components/PermissionRationaleModal";
 import { SmartAssetCard } from "@/components/SmartAssetCard";
-import { type CarBrand, brandLabel } from "@/constants/cars";
+import { type CarBrand, brandLabel, CAR_BRANDS } from "@/constants/cars";
 import {
   INDUSTRIAL_TYPES,
   SPEC_FIELDS_BY_UI,
@@ -78,6 +78,14 @@ import {
 } from "@/constants/countryCodes";
 import { useI18n } from "@/context/LanguageContext";
 import { useColors } from "@/hooks/useColors";
+import AsyncStorage from "@react-native-async-storage/async-storage";
+import {
+  LISTING_DRAFT_KEY,
+  parseListingDraft,
+  serializeListingDraft,
+  listingDraftHasContent,
+  type ListingDraftInput,
+} from "@/lib/listingDraft";
 
 type InstallmentMode = "seller_installment" | "bank_finance";
 
@@ -252,6 +260,99 @@ export default function CreateListingScreen() {
       return prev;
     });
   }, [accountPhone]);
+
+  // ── Auto-save draft (#2): persist the typed fields so an interrupted listing
+  // can be resumed. Photos are NOT persisted (device-session URIs). A corrupt or
+  // stale blob is rejected by parseListingDraft, so it can never break the form. ──
+  const draftReady = useRef(false);
+  useEffect(() => {
+    let cancelled = false;
+    (async () => {
+      try {
+        const d = parseListingDraft(await AsyncStorage.getItem(LISTING_DRAFT_KEY));
+        if (cancelled || !d) return;
+        setStep(d.step);
+        if (d.category) setCategory(d.category as UiListingCategory);
+        setTitle(d.title);
+        setDescription(d.description);
+        setLocation(d.location);
+        setLocationValue(d.locationValue);
+        setCashPrice(d.cashPrice);
+        setIsRequest(d.isRequest);
+        setWhatsappEnabled(d.whatsappEnabled);
+        setSpecs(d.specs);
+        setCarBrand(
+          d.carBrandValue ? CAR_BRANDS.find((b) => b.value === d.carBrandValue) ?? null : null,
+        );
+        setCarModel(d.carModel);
+        setIndustrialType(d.industrialType);
+        setCarOrigin(d.carOrigin);
+        // Only override the phone row for a real entered number (else leave the
+        // account-phone seeding above to do its job on an untouched row).
+        if (d.phones.some((p) => p.number.trim())) setPhones(d.phones);
+        setPlans(
+          d.plans.filter(
+            (p) => p.mode === "seller_installment" || p.mode === "bank_finance",
+          ) as PlanDraft[],
+        );
+      } catch {
+        // a broken draft must never block creating a listing
+      } finally {
+        if (!cancelled) draftReady.current = true;
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
+  // Debounced persist of the resumable fields — after the restore pass, and never
+  // on the success screen or mid-submit. Photos/upload state are intentionally out.
+  useEffect(() => {
+    if (!draftReady.current || done || submitting) return;
+    const input: ListingDraftInput = {
+      step,
+      category,
+      title,
+      description,
+      location,
+      locationValue,
+      cashPrice,
+      isRequest,
+      whatsappEnabled,
+      specs,
+      carBrandValue: carBrand?.value ?? null,
+      carModel,
+      industrialType,
+      carOrigin,
+      phones,
+      plans,
+    };
+    if (!listingDraftHasContent(input)) return;
+    const handle = setTimeout(() => {
+      AsyncStorage.setItem(LISTING_DRAFT_KEY, serializeListingDraft(input)).catch(() => {});
+    }, 600);
+    return () => clearTimeout(handle);
+  }, [
+    step,
+    category,
+    title,
+    description,
+    location,
+    locationValue,
+    cashPrice,
+    isRequest,
+    whatsappEnabled,
+    specs,
+    carBrand,
+    carModel,
+    industrialType,
+    carOrigin,
+    phones,
+    plans,
+    done,
+    submitting,
+  ]);
 
   const setPhoneNumberAt = (index: number, value: string) =>
     setPhones((prev) =>
@@ -916,6 +1017,8 @@ export default function CreateListingScreen() {
       Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
       setCreatedId(res.data?.id);
       setDone(true);
+      // Listing published — the saved draft is now stale; clear it.
+      AsyncStorage.removeItem(LISTING_DRAFT_KEY).catch(() => {});
       // Tell persistent listing surfaces (home feed, profile grid) to refetch so
       // the just-published listing appears immediately, no manual pull-to-refresh.
       bumpListings();
@@ -974,6 +1077,7 @@ export default function CreateListingScreen() {
     setError(null);
     setCreatedId(undefined);
     setDone(false);
+    AsyncStorage.removeItem(LISTING_DRAFT_KEY).catch(() => {});
   };
 
   const inputStyle = [
