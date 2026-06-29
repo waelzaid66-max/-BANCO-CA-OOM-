@@ -1,6 +1,7 @@
 import { describe, it, expect, afterAll, beforeAll } from "vitest";
 import { eq, inArray, isNotNull } from "drizzle-orm";
 import { createListing, updateListing } from "./ListingService";
+import { searchListings } from "./SearchService";
 import { CreateListingSchema } from "../validators/schemas";
 import { db, deleteUsers, uniq, randomUUID } from "../__tests__/helpers";
 import { listings, listingAttributes, users, locations } from "@workspace/db/schema";
@@ -108,5 +109,25 @@ describe("ListingService.updateListing — edit journey", () => {
     await updateListing(id, ownerClerk, { status: "sold" });
     [row] = await db.select({ status: listings.status }).from(listings).where(eq(listings.id, id)).limit(1);
     expect(row!.status).toBe("sold");
+  });
+
+  it("pause (archived) hides from search; republish (active) restores it", async () => {
+    const ownerClerk = await seedOwner();
+    const token = uniq("PAUSE").toUpperCase();
+    const id = await mkListing(ownerClerk, token);
+
+    // Live → appears in search.
+    const before = await searchListings({ search_term: token }, undefined, 50);
+    expect(before.items.map((i) => i.id)).toContain(id);
+
+    // Pause → archived → excluded from search (feed/search require status=active).
+    await updateListing(id, ownerClerk, { status: "archived" });
+    const paused = await searchListings({ search_term: token }, undefined, 50);
+    expect(paused.items.map((i) => i.id)).not.toContain(id);
+
+    // Republish → active → visible again.
+    await updateListing(id, ownerClerk, { status: "active" });
+    const republished = await searchListings({ search_term: token }, undefined, 50);
+    expect(republished.items.map((i) => i.id)).toContain(id);
   });
 });
