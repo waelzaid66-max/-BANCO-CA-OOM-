@@ -936,6 +936,61 @@ export const FacetCountsSchema = z.object({
 
 export type FacetCounts = z.infer<typeof FacetCountsSchema>;
 
+/* ── Admin plan management (control keys) ──────────────── */
+const planMoney = z.number().min(0).max(100_000_000);
+const planAudience = z.enum(["individual", "dealer", "company", "enterprise"]);
+
+// All-optional patch (snake_case wire shape). Only provided keys are changed.
+export const PlanUpdateSchema = z
+  .object({
+    name: z.string().trim().min(1).max(120).optional(),
+    name_ar: z.string().trim().max(120).nullable().optional(),
+    audience: planAudience.optional(),
+    is_baseline: z.boolean().optional(),
+    monthly_price: planMoney.optional(),
+    listing_quota: z.number().int().min(0).max(1_000_000).nullable().optional(),
+    active_listing_cap: z.number().int().min(0).max(1_000_000).nullable().optional(),
+    boost_price: planMoney.optional(),
+    cpl_whatsapp: planMoney.optional(),
+    cpl_call: planMoney.optional(),
+    cpl_chat: planMoney.optional(),
+    cpl_finance_request: planMoney.optional(),
+    ranking_weight: z.number().min(0).max(100).optional(),
+    features: z.unknown().nullable().optional(),
+    is_active: z.boolean().optional(),
+    sort_order: z.number().int().min(0).max(10_000).optional(),
+  })
+  .strict();
+
+// Create requires slug + name; everything else falls back to column defaults.
+export const PlanCreateSchema = PlanUpdateSchema.extend({
+  slug: z.string().trim().min(1).max(60),
+  name: z.string().trim().min(1).max(120),
+});
+
+export const PlanItemSchema = z
+  .object({
+    id: z.string(),
+    slug: z.string(),
+    name: z.string(),
+    name_ar: z.string().nullable(),
+    audience: z.string(),
+    is_baseline: z.boolean(),
+    monthly_price: z.number(),
+    listing_quota: z.number().nullable(),
+    active_listing_cap: z.number().nullable(),
+    boost_price: z.number(),
+    cpl_whatsapp: z.number(),
+    cpl_call: z.number(),
+    cpl_chat: z.number(),
+    cpl_finance_request: z.number(),
+    ranking_weight: z.number(),
+    features: z.unknown().nullable(),
+    is_active: z.boolean(),
+    sort_order: z.number(),
+  })
+  .strict();
+
 export const CreateListingSchema = z.object({
   title: z.string().min(3).max(200),
   description: z.string().max(2000).optional(),

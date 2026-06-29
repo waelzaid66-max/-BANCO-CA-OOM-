@@ -1,5 +1,5 @@
 import type { Request, Response } from "express";
-import { ZodError } from "zod";
+import { ZodError, z } from "zod";
 import {
   successResponse,
   errorResponse,
@@ -38,8 +38,17 @@ import {
   EmailConfigTestResultSchema,
   PromoCampaignUpdateSchema,
   PromoCampaignViewSchema,
+  PlanUpdateSchema,
+  PlanCreateSchema,
+  PlanItemSchema,
 } from "../validators/schemas";
 import * as AdminService from "../services/AdminService";
+import {
+  listPlansAdmin,
+  updatePlanAdmin,
+  createPlanAdmin,
+  type PlanWriteInput,
+} from "../services/AdminPlanService";
 import { listReports, resolveReport } from "../services/ReportService";
 import {
   listTickets,
@@ -567,5 +576,73 @@ export async function renewPromoCampaignHandler(req: Request, res: Response) {
     return res.json(successResponse(validateResponse(PromoCampaignViewSchema, data)));
   } catch (err) {
     return handleError(res, err, "[Admin promo-campaign renew]", "Failed to renew promo campaign");
+  }
+}
+
+/* ── Plans (control keys: pricing / quotas / CPL / boost / ranking) ───── */
+function toPlanWriteInput(body: z.infer<typeof PlanUpdateSchema>): PlanWriteInput {
+  return {
+    name: body.name,
+    nameAr: body.name_ar,
+    audience: body.audience,
+    isBaseline: body.is_baseline,
+    monthlyPrice: body.monthly_price,
+    listingQuota: body.listing_quota,
+    activeListingCap: body.active_listing_cap,
+    boostPrice: body.boost_price,
+    cplWhatsapp: body.cpl_whatsapp,
+    cplCall: body.cpl_call,
+    cplChat: body.cpl_chat,
+    cplFinanceRequest: body.cpl_finance_request,
+    rankingWeight: body.ranking_weight,
+    features: body.features,
+    isActive: body.is_active,
+    sortOrder: body.sort_order,
+  };
+}
+
+export async function adminPlansHandler(_req: Request, res: Response) {
+  try {
+    const data = await listPlansAdmin();
+    return res.json(successResponse(validateResponse(PlanItemSchema.array(), data), { total: data.length }));
+  } catch (err) {
+    return handleError(res, err, "[Admin plans list]", "Failed to load plans");
+  }
+}
+
+export async function updatePlanHandler(req: Request, res: Response) {
+  try {
+    const body = PlanUpdateSchema.parse(req.body ?? {});
+    const updated = await updatePlanAdmin(req.params.id as string, toPlanWriteInput(body));
+    if (!updated) {
+      return res.status(404).json(errorResponse("NOT_FOUND", "Plan not found"));
+    }
+    writeAudit({
+      eventType: "admin_action",
+      severity: "warning",
+      actorUserId: req.dbUserId ?? null,
+      reason: "plan_update",
+      metadata: { action: "plan_update", plan_id: updated.id, fields: Object.keys(body) },
+    });
+    return res.json(successResponse(validateResponse(PlanItemSchema, updated)));
+  } catch (err) {
+    return handleError(res, err, "[Admin plan update]", "Failed to update plan");
+  }
+}
+
+export async function createPlanHandler(req: Request, res: Response) {
+  try {
+    const body = PlanCreateSchema.parse(req.body ?? {});
+    const created = await createPlanAdmin({ ...toPlanWriteInput(body), slug: body.slug, name: body.name });
+    writeAudit({
+      eventType: "admin_action",
+      severity: "warning",
+      actorUserId: req.dbUserId ?? null,
+      reason: "plan_create",
+      metadata: { action: "plan_create", plan_id: created.id, slug: created.slug },
+    });
+    return res.json(successResponse(validateResponse(PlanItemSchema, created)));
+  } catch (err) {
+    return handleError(res, err, "[Admin plan create]", "Failed to create plan");
   }
 }

@@ -30,6 +30,9 @@ import {
   renewPromoCampaignHandler,
   setUserRoleHandler,
   setUserVerifiedHandler,
+  adminPlansHandler,
+  createPlanHandler,
+  updatePlanHandler,
 } from "../../controllers/adminController";
 import {
   financingRequestsHandler,
@@ -107,5 +110,11 @@ router.patch("/financing/intermediaries/:id", writeRateLimiter, requirePermissio
 router.get("/promo-campaign", publicRateLimiter, requirePermission("manage_payments"), getPromoCampaignHandler);
 router.put("/promo-campaign", writeRateLimiter, requirePermission("manage_payments"), updatePromoCampaignHandler);
 router.post("/promo-campaign/renew", writeRateLimiter, requirePermission("manage_payments"), renewPromoCampaignHandler);
+
+// Plans — the platform's economic levers (pricing/quotas/CPL/boost/ranking).
+// Gated by manage_payments (owner + admin), like the other monetization config.
+router.get("/plans", publicRateLimiter, requirePermission("manage_payments"), adminPlansHandler);
+router.post("/plans", writeRateLimiter, requirePermission("manage_payments"), createPlanHandler);
+router.patch("/plans/:id", writeRateLimiter, requirePermission("manage_payments"), updatePlanHandler);
 
 export default router;
