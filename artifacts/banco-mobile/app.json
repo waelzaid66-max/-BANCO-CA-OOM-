@@ -15,6 +15,7 @@
     },
     "ios": {
       "supportsTablet": false,
+      "bundleIdentifier": "it.banco.mobile",
       "infoPlist": {
         "NSPhotoLibraryUsageDescription": "BANCO accesses your photos and videos only when you choose them to add to a listing, a chat message, your profile picture, or your business verification documents and identity photo."
       }
@@ -51,6 +52,12 @@
         {
           "icon": "./assets/images/banco-logo.png",
           "color": "#000000"
+        }
+      ],
+      [
+        "expo-location",
+        {
+          "locationWhenInUsePermission": "BANCO uses your location only when you tap “use my location” to set a listing’s place, or to find listings near you."
         }
       ],
       [
