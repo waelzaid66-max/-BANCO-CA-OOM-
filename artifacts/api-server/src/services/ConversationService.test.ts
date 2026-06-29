@@ -9,7 +9,7 @@ import {
   deleteConversation,
 } from "./ConversationService";
 import { db, deleteUsers, uniq, randomUUID } from "../__tests__/helpers";
-import { users, listings } from "@workspace/db/schema";
+import { users, listings, notifications } from "@workspace/db/schema";
 
 /**
  * G3 — buyer↔seller messaging end-to-end against a real database:
@@ -151,5 +151,30 @@ describe("ConversationService — buyer↔seller messaging journey", () => {
     // A new message from the seller un-hides it for the buyer.
     await sendMessage(seller.clerkId, conv.id, "still here");
     expect((await listConversations(buyer.clerkId)).find((c) => c.id === conv.id)).toBeTruthy();
+  });
+
+  it("notifies the RECIPIENT (not the sender) when a message is sent", async () => {
+    const seller = await mkUser();
+    const buyer = await mkUser();
+    const listingId = await mkActiveListing(seller.id);
+    const conv = await createConversation(buyer.clerkId, listingId);
+
+    await sendMessage(buyer.clerkId, conv.id, "Is this still available?");
+
+    // The seller (recipient) gets a "message" notification carrying the thread id.
+    const sellerNotifs = await db
+      .select()
+      .from(notifications)
+      .where(eq(notifications.userId, seller.id));
+    const msgNotif = sellerNotifs.find((n) => n.type === "message");
+    expect(msgNotif).toBeTruthy();
+    expect((msgNotif!.data as { conversation_id?: string }).conversation_id).toBe(conv.id);
+
+    // The buyer (sender) is NOT notified of their own message.
+    const buyerNotifs = await db
+      .select()
+      .from(notifications)
+      .where(eq(notifications.userId, buyer.id));
+    expect(buyerNotifs.some((n) => n.type === "message")).toBe(false);
   });
 });
