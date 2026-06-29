@@ -294,6 +294,12 @@ export default function FeedScreen() {
 
   const lastScrollRef = useRef({ offset: 0, time: Date.now() });
   const lastSignalTimeRef = useRef(0);
+  // Hide-on-scroll anchoring: the offset where scroll direction last reversed,
+  // plus the current direction. The bar toggles only after a deliberate move
+  // (>10px) past this anchor, so micro-jitter can't flip it — and any genuine
+  // upward scroll reveals it, so it can never get "stuck" hidden.
+  const scrollAnchorRef = useRef(0);
+  const scrollDirRef = useRef<"up" | "down" | null>(null);
   const listRef = useRef<FlashListRef<FeedItem>>(null);
 
   // Per-category memory of the engine / industrial sub-type selection so moving
@@ -658,13 +664,30 @@ export default function FeedScreen() {
       const elapsed = now - prev.time;
       const delta = Math.abs(currentOffset - prev.offset);
 
-      // Hide the engine bar / condense the logo when scrolling down past a small
-      // threshold; reveal again on any upward scroll or near the top.
-      const goingDown = currentOffset > prev.offset;
-      if (goingDown && currentOffset > 90) {
-        setCompact((c) => (c ? c : true));
-      } else if (!goingDown || currentOffset <= 90) {
+      // Near the top the bar is always shown. Otherwise toggle only after a
+      // deliberate move (>10px) from the offset where direction last reversed,
+      // so jitter can't flicker it and a real upward scroll always reveals it
+      // (it can never get stuck hidden). The hide-on-scroll behavior is kept.
+      if (currentOffset <= 90) {
+        scrollDirRef.current = null;
         setCompact((c) => (c ? false : c));
+      } else {
+        const dir =
+          currentOffset > prev.offset
+            ? "down"
+            : currentOffset < prev.offset
+              ? "up"
+              : scrollDirRef.current;
+        if (dir && dir !== scrollDirRef.current) {
+          scrollDirRef.current = dir;
+          scrollAnchorRef.current = prev.offset;
+        }
+        const moved = currentOffset - scrollAnchorRef.current;
+        if (dir === "down" && moved > 10) {
+          setCompact((c) => (c ? c : true));
+        } else if (dir === "up" && moved < -10) {
+          setCompact((c) => (c ? false : c));
+        }
       }
 
       lastScrollRef.current = { offset: currentOffset, time: now };
