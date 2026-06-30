@@ -36,6 +36,10 @@ args = "typecheck-admin"
 task = "workflow.run"
 args = "typecheck-dealer"
 
+[[workflows.workflow.tasks]]
+task = "workflow.run"
+args = "Start application"
+
 [[workflows.workflow]]
 name = "test"
 author = "agent"
@@ -91,9 +95,22 @@ args = "pnpm --filter @workspace/dealer-os run typecheck"
 [workflows.workflow.metadata]
 isValidation = true
 
+[[workflows.workflow]]
+name = "Start application"
+author = "agent"
+
+[workflows.workflow.metadata]
+outputType = "webview"
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "/nix/store/61lr9izijvg30pcribjdxgjxvh3bysp4-pnpm-10.26.1/bin/pnpm install --prefer-offline && cd artifacts/api-server && PORT=5000 NODE_ENV=development /nix/store/61lr9izijvg30pcribjdxgjxvh3bysp4-pnpm-10.26.1/bin/pnpm run build && /nix/store/61lr9izijvg30pcribjdxgjxvh3bysp4-pnpm-10.26.1/bin/pnpm run start"
+waitForPort = 5000
+
 [agent]
-stack = "PNPM_WORKSPACE"
+stack = "BEST_EFFORT_FALLBACK"
 expertMode = true
+integrations = ["javascript_openai_ai_integrations:2.0.0"]
 
 [postMerge]
 path = "scripts/post-merge.sh"
@@ -142,6 +159,10 @@ externalPort = 3002
 [[ports]]
 localPort = 23353
 externalPort = 4200
+
+[[ports]]
+localPort = 5000
+externalPort = 80
 
 [nix]
 channel = "stable-25_05"
