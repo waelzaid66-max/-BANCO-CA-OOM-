@@ -1,5 +1,6 @@
 import {
   searchListings,
+  getMapClusters,
   type SearchListingsCategory,
   type SearchListingsFuelType,
   type SearchListingsTransmission,
@@ -180,4 +181,32 @@ export function buildSearchParams(
 
   if (cursor) sp.cursor = cursor;
   return sp;
+}
+
+type MapClusterParams = Parameters<typeof getMapClusters>[0];
+
+/** The visible map bounding box + zoom that drive server-side clustering. */
+export interface MapViewport {
+  min_lat: number;
+  max_lat: number;
+  min_lng: number;
+  max_lng: number;
+  zoom: number;
+}
+
+/**
+ * Map-cluster query params for the current viewport. Reuses buildSearchParams so
+ * the map honours the EXACT same filter set as the list (category, engine chip,
+ * price, offer_type, brand, …) and can never drift from it — it just drops
+ * pagination and adds the visible bounding box + zoom the /search/map endpoint
+ * clusters by.
+ */
+export function buildMapClusterParams(
+  c: SearchCriteria,
+  viewport: MapViewport,
+): MapClusterParams {
+  const filters: Record<string, unknown> = { ...buildSearchParams(c) };
+  delete filters.limit;
+  delete filters.cursor;
+  return { ...filters, ...viewport } as MapClusterParams;
 }

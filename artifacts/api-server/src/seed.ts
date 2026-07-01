@@ -1354,8 +1354,17 @@ async function seed() {
   // ── Seed Real Estate (15 listings) ─────────────────────
   for (let i = 0; i < 15; i++) {
     const title = REAL_ESTATE_TITLES[i % REAL_ESTATE_TITLES.length];
+    // Real-estate offer type — the primary EG/Gulf split (تمليك sale vs إيجار rent).
+    // Every third property is a rental so the rent engine + booking-style rent map
+    // have real inventory; rentals are priced as monthly rent, sales as full price.
+    const offerType: "sale" | "rent" = i % 3 === 0 ? "rent" : "sale";
     const isLuxury = i < 5;
-    const price = isLuxury ? rand(8_000_000, 45_000_000) : rand(1_200_000, 7_500_000);
+    const price =
+      offerType === "rent"
+        ? rand(6_000, 90_000)
+        : isLuxury
+          ? rand(8_000_000, 45_000_000)
+          : rand(1_200_000, 7_500_000);
     const userId = dealerIds[i % Math.max(dealerIds.length, 1)];
     const area = rand(80, 600);
     const rooms = rand(1, 6);
@@ -1385,6 +1394,7 @@ async function seed() {
         rooms,
         bathrooms: Math.max(1, Math.floor(rooms / 2)),
         floor,
+        offer_type: offerType,
         finishing: pick(["super_lux", "lux", "semi_finished", "core_shell"]),
         furnished: i % 3 === 0,
         compound: i < 8,
@@ -1400,7 +1410,7 @@ async function seed() {
       { listingId: listing.id, type: "image", url: pick(RE_IMAGES), isThumbnail: false, sortOrder: 1 },
     ]);
 
-    if (i < 12) {
+    if (i < 12 && offerType === "sale") {
       const mortgage = pick(MORTGAGE_PARTNERS);
       const mortDown = Math.round(price * 0.2);
       const mortMonths = pick([60, 84, 120]);

@@ -777,7 +777,9 @@ export default function SearchScreen() {
         {mapMode && canMap ? (
           <SearchResultsMap
             items={mappableItems}
+            criteria={criteria}
             onOpenListing={handleCardPress}
+            onOpenListingId={(id) => router.push(`/listing/${id}`)}
             onSave={toggleSave}
             isSaved={isSaved}
           />

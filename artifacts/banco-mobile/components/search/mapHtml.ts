@@ -9,6 +9,20 @@ export interface MapMarker {
   label: string;
 }
 
+/**
+ * A server-clustered point for a viewport. `count > 1` renders a count bubble
+ * (tap drills in); `count === 1` renders a single pin (tap selects the listing).
+ * `label` is an optional, best-effort price the host attaches when the single
+ * listing happens to be on the loaded page.
+ */
+export interface MapClusterMarker {
+  lat: number;
+  lng: number;
+  count: number;
+  listing_id: string | null;
+  label?: string;
+}
+
 /** Brand colors threaded into the Leaflet page so pins match the app theme. */
 export interface MapTheme {
   primary: string;
@@ -18,11 +32,20 @@ export interface MapTheme {
   border: string;
 }
 
+/** The visible bounding box + zoom the page reports back so the host can query. */
+export interface MapViewportBounds {
+  min_lat: number;
+  max_lat: number;
+  min_lng: number;
+  max_lng: number;
+}
+
 /** Bridge message posted from the Leaflet page back to React Native / the web host. */
 export type MapBridgeMessage =
   | { type: "ready" }
   | { type: "error" }
-  | { type: "select"; id: string };
+  | { type: "select"; id: string }
+  | { type: "viewport"; bounds: MapViewportBounds; zoom: number };
 
 const LEAFLET = "https://unpkg.com/leaflet@1.9.4/dist";
 const CLUSTER = "https://unpkg.com/leaflet.markercluster@1.5.3/dist";
@@ -46,11 +69,18 @@ export function feedItemsToMarkers(items: FeedItem[]): MapMarker[] {
 /**
  * Build a fully self-contained Leaflet + OpenStreetMap page. No API key and no
  * Google dependency — it works inside Expo Go's WebView (native) and in an
- * <iframe> (web). Pins are price pills; nearby pins are grouped into honest
- * centroid clusters (Leaflet.markercluster) that show the real grouped count.
- * Tapping a pin posts {type:"select", id} back to the host so it can reveal the
- * listing card. The marker JSON is embedded directly so the page needs no
- * follow-up bridge to render.
+ * <iframe> (web).
+ *
+ * Two-layer design:
+ *  - The embedded `markers` render instantly as price pills (the loaded page),
+ *    so the map is never blank while the first viewport query is in flight.
+ *  - `window.BANCO_MAP.setClusters(...)` replaces them with authoritative,
+ *    viewport-wide clusters from GET /search/map. The page reports its bounds
+ *    on load and after every pan/zoom via {type:"viewport"}, and the host injects
+ *    fresh clusters back in — no page reload, so panning stays smooth.
+ *
+ * Tapping a count bubble drills in; tapping a single pin posts
+ * {type:"select", id} so the host can reveal the listing card.
  */
 export function buildMapHtml(markers: MapMarker[], theme: MapTheme): string {
   // JSON is safe inside a <script> except for a literal "</script>"; escaping
@@ -84,6 +114,36 @@ export function buildMapHtml(markers: MapMarker[], theme: MapTheme): string {
     white-space: nowrap;
     border: 1.5px solid ${theme.primaryForeground};
     box-shadow: 0 1px 5px rgba(0,0,0,0.35);
+    cursor: pointer;
+  }
+  .cpin .cbubble {
+    position: absolute;
+    transform: translate(-50%, -50%);
+    min-width: 34px;
+    height: 34px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0 7px;
+    background: ${theme.primary};
+    color: ${theme.primaryForeground};
+    font-weight: 700;
+    font-size: 13px;
+    line-height: 1;
+    border-radius: 999px;
+    border: 2px solid ${theme.primaryForeground};
+    box-shadow: 0 1px 6px rgba(0,0,0,0.4);
+    cursor: pointer;
+  }
+  .cpin .sdot {
+    position: absolute;
+    transform: translate(-50%, -50%);
+    width: 16px;
+    height: 16px;
+    background: ${theme.primary};
+    border: 2.5px solid ${theme.primaryForeground};
+    border-radius: 50%;
+    box-shadow: 0 1px 4px rgba(0,0,0,0.4);
     cursor: pointer;
   }
   .marker-cluster-small div,
@@ -129,6 +189,8 @@ export function buildMapHtml(markers: MapMarker[], theme: MapTheme): string {
       maxZoom: 19,
       attribution: "&copy; OpenStreetMap"
     }).addTo(map);
+
+    // Layer 1 — the loaded page, shown instantly so the map is never blank.
     var group = L.markerClusterGroup
       ? L.markerClusterGroup({ maxClusterRadius: 48, showCoverageOnHover: false, spiderfyOnMaxZoom: true })
       : L.layerGroup();
@@ -141,17 +203,88 @@ export function buildMapHtml(markers: MapMarker[], theme: MapTheme): string {
         iconSize: [0, 0]
       });
       var m = L.marker([d.lat, d.lng], { icon: icon });
-      m.on("click", function () { post({ type: "select", id: d.id }); });
+      m.on("click", (function (id) {
+        return function () { post({ type: "select", id: id }); };
+      })(d.id));
       group.addLayer(m);
       pts.push([d.lat, d.lng]);
     });
     map.addLayer(group);
+
+    // Layer 2 — authoritative, viewport-wide server clusters. Once the host
+    // injects the first response the loaded-page layer is removed so counts and
+    // pins reflect the WHOLE visible area, not just the current result page.
+    var serverLayer = L.layerGroup();
+    var initialShown = true;
+    window.BANCO_MAP = {
+      setClusters: function (clusters) {
+        if (initialShown) { map.removeLayer(group); initialShown = false; }
+        serverLayer.clearLayers();
+        if (!map.hasLayer(serverLayer)) map.addLayer(serverLayer);
+        (clusters || []).forEach(function (c) {
+          if (typeof c.lat !== "number" || typeof c.lng !== "number") return;
+          var marker;
+          if (c.count > 1) {
+            marker = L.marker([c.lat, c.lng], {
+              icon: L.divIcon({
+                className: "cpin",
+                html: '<div class="cbubble">' + (c.count > 99 ? "99+" : c.count) + "</div>",
+                iconSize: [0, 0]
+              })
+            });
+            (function (lat, lng) {
+              marker.on("click", function () {
+                map.setView([lat, lng], Math.min(map.getZoom() + 2, 16));
+              });
+            })(c.lat, c.lng);
+          } else {
+            var inner = c.label
+              ? '<div class="pill">' + esc(c.label) + "</div>"
+              : '<div class="sdot"></div>';
+            marker = L.marker([c.lat, c.lng], {
+              icon: L.divIcon({
+                className: c.label ? "pin" : "cpin",
+                html: inner,
+                iconSize: [0, 0]
+              })
+            });
+            (function (id) {
+              marker.on("click", function () { if (id) post({ type: "select", id: id }); });
+            })(c.listing_id);
+          }
+          serverLayer.addLayer(marker);
+        });
+      }
+    };
+
+    // Report the visible bounds so the host can query /search/map for it.
+    var vpTimer = null;
+    function postViewport() {
+      var b = map.getBounds();
+      post({
+        type: "viewport",
+        bounds: {
+          min_lat: b.getSouth(),
+          max_lat: b.getNorth(),
+          min_lng: b.getWest(),
+          max_lng: b.getEast()
+        },
+        zoom: map.getZoom()
+      });
+    }
+    map.on("moveend", function () {
+      if (vpTimer) clearTimeout(vpTimer);
+      vpTimer = setTimeout(postViewport, 300);
+    });
+
+    // Frame the loaded page, then hand off to server clustering for the viewport.
     if (pts.length === 1) {
       map.setView(pts[0], 13);
     } else if (pts.length > 1) {
       map.fitBounds(pts, { padding: [48, 48], maxZoom: 15 });
     }
     post({ type: "ready" });
+    postViewport();
   })();
 </script>
 </body>
