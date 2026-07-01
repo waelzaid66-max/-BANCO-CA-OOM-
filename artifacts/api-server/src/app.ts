@@ -17,8 +17,6 @@ import { accessLogger } from "./lib/logger";
 import router from "./routes";
 import seoRouter from "./seoRoutes";
 import { notFoundHandler, errorHandler } from "./middlewares/errorHandler";
-// TEMP-DIAG: AI verification only — remove together with the /__diag_ai route below.
-import { openai as diagOpenai } from "@workspace/integrations-openai-ai-server";
 
 const app: Express = express();
 
@@ -125,31 +123,6 @@ app.use(
 // Public, crawler-facing HTML/XML routes (/l/:id, /sitemap.xml, /robots.txt).
 // Mounted BEFORE /api and the 404 handler so these paths resolve to real pages.
 app.use(seoRouter);
-
-// TEMP-DIAG: dev-only, no-auth AI health check. REMOVE after verifying the assistant.
-if (process.env.NODE_ENV !== "production") {
-  app.get("/__diag_ai", async (_req, res) => {
-    const env = {
-      hasIntegrationBase: !!process.env.AI_INTEGRATIONS_OPENAI_BASE_URL,
-      hasIntegrationKey: !!process.env.AI_INTEGRATIONS_OPENAI_API_KEY,
-      hasOwnKey: !!process.env.OPENAI_API_KEY,
-    };
-    try {
-      const r = await diagOpenai.chat.completions.create({
-        model: "gpt-5.4",
-        max_completion_tokens: 8,
-        messages: [{ role: "user", content: "Reply with exactly: OK" }],
-      });
-      res.json({ env, ai: { ok: true, content: r.choices?.[0]?.message?.content ?? null } });
-    } catch (e) {
-      const err = e as { status?: number; message?: string };
-      res.json({
-        env,
-        ai: { ok: false, status: err?.status ?? null, message: String(err?.message ?? e).slice(0, 300) },
-      });
-    }
-  });
-}
 
 app.use("/api", router);
 

@@ -24,6 +24,7 @@ import React, {
   useState,
 } from "react";
 import {
+  LayoutChangeEvent,
   Modal,
   NativeScrollEvent,
   NativeSyntheticEvent,
@@ -38,6 +39,8 @@ import {
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import Animated, {
   Easing,
+  Extrapolation,
+  interpolate,
   useAnimatedStyle,
   useReducedMotion,
   useSharedValue,
@@ -176,50 +179,92 @@ function Rail({ title, items, onCardPress, onSave, isSaved }: RailProps) {
   );
 }
 
-// Subtle, on-brand "alive" accent that fills the header gap between the logo and
-// the action cluster. Pure decoration (no data claim), symmetric so it reads the
-// same in RTL, and driven on the reanimated UI thread so it never janks.
+// B-OOM sub-brand accent (BANCO Opportunity — Open Market). It occupies ONLY the
+// small header gap between the BANCO wordmark and the action cluster — it never
+// touches, resizes, recolors, or competes with the BANCO logo.
+//
+// Behaviour (one calm pass every 30s, like a branded car driving through):
+//   • 0s → 26s   : fully hidden (opacity 0), no movement.
+//   • 26.0s      : fade in over 250ms only.
+//   • 26.25s →   : glide ONCE across the gap at a constant, calm speed (~3.75s).
+//   • ~28.5s     : begin fading out WHILE still moving, gone before the far edge.
+//   • then       : back to opacity 0 until the next 30s cycle.
+// Only translateX + opacity animate (GPU thread, no layout, no scale/zoom/rotate).
+// Uses the official B-OOM asset as-is (only its flat black backdrop was made
+// transparent so it sits cleanly on both the dark and light header). Respects
+// prefers-reduced-motion by showing the mark static instead of animating.
+//
 // NOTE: must be declared BEFORE FeedScreen — the React Compiler rewrites
 // component declarations into const bindings at their textual position, so a
 // component used before its definition throws a ReferenceError at runtime.
+const BOOM_LOGO = require("../../assets/images/boom-logo.png");
+const BOOM_ASPECT = 2045 / 769; // native px of the official B-OOM asset
+const BOOM_H = 16; // fixed, smaller than the 26px BANCO wordmark (never competes)
+const BOOM_W = Math.round(BOOM_H * BOOM_ASPECT);
+
 function HeaderSpark() {
-  const colors = useColors();
   const reduceMotion = useReducedMotion();
-  const drift = useSharedValue(0);
+  const t = useSharedValue(0);
+  const boxW = useSharedValue(0);
+
   useEffect(() => {
-    if (reduceMotion) {
-      drift.value = 0;
-      return;
-    }
-    drift.value = withRepeat(
-      withTiming(1, { duration: 2400, easing: Easing.inOut(Easing.ease) }),
+    if (reduceMotion) return;
+    t.value = withRepeat(
+      withTiming(1, { duration: 30000, easing: Easing.linear }),
       -1,
-      true
+      false
     );
-  }, [drift, reduceMotion]);
-  const dotA = useAnimatedStyle(() => ({
-    opacity: 0.4 + drift.value * 0.6,
-    transform: [{ translateX: -7 + drift.value * 14 }],
-  }));
-  const bar = useAnimatedStyle(() => ({
-    opacity: 0.35 + drift.value * 0.5,
-    transform: [{ scaleX: 0.6 + drift.value * 0.7 }],
-  }));
-  const dotB = useAnimatedStyle(() => ({
-    opacity: 0.85 - drift.value * 0.5,
-    transform: [{ translateX: 7 - drift.value * 14 }],
-  }));
+  }, [t, reduceMotion]);
+
+  const logoStyle = useAnimatedStyle(() => {
+    // Keep the whole mark inside the gap at both extremes (overflow:hidden also
+    // guards it). span = half the free horizontal room.
+    const span = Math.max(0, (boxW.value - BOOM_W) / 2);
+    return {
+      opacity: interpolate(
+        t.value,
+        [0.8667, 0.875, 0.95, 0.98, 1],
+        [0, 1, 1, 0, 0],
+        Extrapolation.CLAMP
+      ),
+      transform: [
+        {
+          translateX: interpolate(
+            t.value,
+            [0.875, 1],
+            [-span, span],
+            Extrapolation.CLAMP
+          ),
+        },
+      ],
+    };
+  });
+
+  const onLayout = (e: LayoutChangeEvent) => {
+    boxW.value = e.nativeEvent.layout.width;
+  };
+
+  if (reduceMotion) {
+    return (
+      <View style={styles.spark} pointerEvents="none">
+        <Image
+          source={BOOM_LOGO}
+          style={{ width: BOOM_W, height: BOOM_H }}
+          contentFit="contain"
+        />
+      </View>
+    );
+  }
+
   return (
-    <View style={styles.spark} pointerEvents="none">
-      <Animated.View
-        style={[styles.sparkDot, { backgroundColor: colors.primary }, dotA]}
-      />
-      <Animated.View
-        style={[styles.sparkBar, { backgroundColor: colors.primary }, bar]}
-      />
-      <Animated.View
-        style={[styles.sparkDot, { backgroundColor: colors.primary }, dotB]}
-      />
+    <View style={styles.spark} pointerEvents="none" onLayout={onLayout}>
+      <Animated.View style={logoStyle}>
+        <Image
+          source={BOOM_LOGO}
+          style={{ width: BOOM_W, height: BOOM_H }}
+          contentFit="contain"
+        />
+      </Animated.View>
     </View>
   );
 }
@@ -1394,17 +1439,7 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "center",
-    gap: 7,
-  },
-  sparkDot: {
-    width: 7,
-    height: 7,
-    borderRadius: 4,
-  },
-  sparkBar: {
-    width: 30,
-    height: 4,
-    borderRadius: 2,
+    overflow: "hidden",
   },
   sortBackdrop: {
     flex: 1,
