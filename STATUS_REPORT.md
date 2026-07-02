@@ -1,6 +1,8 @@
 # BANCO Store — Completion & Status Report
 
-_Last updated: 2026-06-30 — pushed to the B-OOM repository as the current complete, updated snapshot._
+_Last updated: 2026-07-02 — unified snapshot on B-OOM (local work + Replit workspace work on ONE history line, no divergence)._
+
+> **Version unification:** the Replit workspace pushed its commits ON TOP of the previous B-OOM snapshot (fast-forward — zero conflicts). This repo now contains BOTH work streams: the local backend/contract work AND Replit's runtime fixes (header B-OOM animation, upload permission prompts + error handling, object-storage config fix, request-log de-dup, map UI viewport wiring, OpenAI key priority). Verified locally after unification: **recursive typecheck 0 errors across all 7 packages**.
 
 This is the live status of the BANCO Store monorepo (Banco Mobile · Banco Admin · Banco Market/dealer-os · API Server · shared libs). It records what is **done and verified**, the **architecture**, and the **honest remaining items** with the reason each is or isn't locally verifiable.
 
@@ -20,6 +22,8 @@ This is the live status of the BANCO Store monorepo (Banco Mobile · Banco Admin
 | Area | What | Verification |
 |---|---|---|
 | **Server-side map clustering** | `GET /v1/search/map` → grid-clustered pins for a viewport, reusing the **exact** search filters. Scales (returns cells, not all pins). | DB test: zoom-out clusters, zoom-in pins, bbox gates, total conserved |
+| **Map UI wired to viewport clusters** | The Leaflet/WebView map now reports its viewport (debounced) → fetches `/search/map` with the SAME committed filters (`buildMapClusterParams` reuses `buildSearchParams`) → injects authoritative clusters (`window.BANCO_MAP.setClusters`), count bubbles drill in, off-page singles open by id, honest viewport-wide count, monotonic seq guard, graceful degradation to the loaded page on fetch failure. | Wired on Replit; code-reviewed + typecheck 0 locally; device QA on Replit |
+| **Messenger mini composer** | Quick-emoji strip collapsed behind a Messenger-style smiley toggle in the composer (primary-tinted while open) — thread keeps full height; reactions/reply/attach/preview untouched. | typecheck 0 |
 | **Booking-style RENT map** | `offer_type=rent` on the map/search clusters **only rentals** — real-estate, land, factories. One shared filter path (`parsedFromSearchQuery` + `buildAttributeConditions`) → map & list always consistent. | DB test (rent vs sale) |
 | **Admin "control keys"** | Full plan management (price, quota, CPL ×4, boost, ranking, active/baseline) via `GET/POST/PATCH /admin/plans` (gated `manage_payments`) + **Plans & Pricing** page in Banco Admin. | service tests + admin-os typecheck |
 | **Observability** | Server: structured error reporting + optional alert webhook + process-level unhandled-error capture. Mobile: global JS + React render crash capture. | tests + wired |
@@ -43,8 +47,8 @@ This is the live status of the BANCO Store monorepo (Banco Mobile · Banco Admin
 
 | Item | Status | Why it needs you |
 |---|---|---|
-| **Map UI wiring (pan/zoom → clusters)** | backend ready; UI is the last piece | The map is a Leaflet/WebView bridge; a mobile-UI change can't be runtime-verified here — needs device QA so the locked, working map isn't risked blind. |
-| **Image-upload byte path** | validation logic present; byte path not locally tested | The presigned PUT + stored-object metadata check needs the Object Storage backend (your environment keys). |
+| **Image-upload byte path** | object-storage config fixed + permission prompts added on Replit (`1bfc2f5`, `769086c`); byte path not locally testable | Needs the Replit Object Storage env — verify avatar/cover/listing/chat uploads on a real device. |
+| **Replit-env runtime blockers (from device testing)** | tracked | OTP email delivery · Google Sign-In · Apple Sign-In (unconfigured) · GPS location update · push notifications · settings deep-links · AI assistant (needs `OPENAI_API_KEY` secret; client now prefers it over the stuck managed integration). All are environment/integration items in the Replit workspace, not local code defects. |
 | **Real-device / store / load QA** | — | Android/iPhone/iPad device runs, store forms, and load testing are environment tasks. |
 
 These are flagged rather than faked — nothing was marked "done" that wasn't actually verified.
@@ -59,9 +63,9 @@ The four markets (cars · real-estate incl. land · industrial/factories · B2B)
 
 ## 6. Path to 100% (next, in this same environment)
 
-1. Wire the existing map UI to the new `/v1/search/map` (additive; device-QA gated).
-2. GIN/tsvector search index for large-catalog scale (additive, DB-testable).
-3. Image-upload byte-path test once Object Storage is reachable.
+1. ~~Wire the existing map UI to `/v1/search/map`~~ → **done** (Replit wiring, locally reviewed + typecheck-verified); remaining: device QA on Replit.
+2. Verify the Replit-env runtime blockers on device (uploads byte-path, OTP, Google/Apple sign-in, GPS, push, AI key).
+3. GIN/tsvector search index for large-catalog scale (additive, DB-testable).
 4. Profile-completion polish + phone-permission flow review (account creation UX).
 5. Continued deploy/log hardening with real deploy runs.
 
