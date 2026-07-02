@@ -98,6 +98,8 @@ export function transformToFeedItem(row: RawListingRow): FeedItem | null {
     coordinates: row.coordinates,
     best_offer_badge: row.best_offer_badge,
     industrial_type: row.industrial_type,
+    // The listing's main section, verbatim — powers per-section client UI.
+    category: row.category ?? null,
     // Owner-facing surfaces gate Promote on this; public feeds are already
     // active-only so it is true there too.
     is_active: row.status === "active",

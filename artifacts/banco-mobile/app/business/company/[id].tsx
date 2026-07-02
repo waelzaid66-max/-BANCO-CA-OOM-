@@ -5,6 +5,7 @@ import { Feather, MaterialCommunityIcons } from "@/components/icons";
 import { useUser } from "@clerk/expo";
 import {
   CompanyProfile,
+  createConversation,
   useFollowCompany,
   useGetCompany,
   useUnfollowCompany,
@@ -45,6 +46,32 @@ export default function CompanyProfileScreen() {
   const followM = useFollowCompany();
   const unfollowM = useUnfollowCompany();
   const [busy, setBusy] = useState(false);
+  const [openingChat, setOpeningChat] = useState(false);
+
+  // Direct message from the profile — conversations are listing-anchored, so
+  // the thread opens on the seller's newest visible listing (server-provided).
+  const messageSeller = async () => {
+    if (!profile?.latest_listing_id || openingChat) return;
+    if (isLoaded && !isSignedIn) {
+      router.push("/(tabs)/profile");
+      return;
+    }
+    setOpeningChat(true);
+    try {
+      const res = await createConversation({ listing_id: profile.latest_listing_id });
+      const conversationId = res.data?.id;
+      if (!conversationId) throw new Error("missing conversation");
+      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+      router.push({
+        pathname: "/messages/[id]",
+        params: { id: conversationId, name: res.data?.counterparty_name ?? profile.name },
+      });
+    } catch {
+      Haptics.notificationAsync(Haptics.NotificationFeedbackType.Warning);
+    } finally {
+      setOpeningChat(false);
+    }
+  };
 
   const toggleFollow = () => {
     if (!profile) return;
@@ -194,6 +221,34 @@ export default function CompanyProfileScreen() {
             </>
           )}
         </Pressable>
+
+        {profile.latest_listing_id ? (
+          <Pressable
+            onPress={messageSeller}
+            disabled={openingChat}
+            style={[
+              styles.followBtn,
+              {
+                backgroundColor: colors.secondary,
+                borderColor: colors.border,
+                borderRadius: colors.radius,
+                opacity: openingChat ? 0.7 : 1,
+              },
+            ]}
+            testID="company-message"
+          >
+            {openingChat ? (
+              <ActivityIndicator size="small" color={colors.foreground} />
+            ) : (
+              <>
+                <Feather name="message-circle" size={16} color={colors.foreground} />
+                <AppText style={[styles.followText, { color: colors.foreground }]}>
+                  {t("business.company.message")}
+                </AppText>
+              </>
+            )}
+          </Pressable>
+        ) : null}
 
         <View style={[styles.statsGrid, { flexDirection: rowDir }]}>
           <StatBox

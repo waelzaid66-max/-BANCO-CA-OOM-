@@ -128,6 +128,18 @@ export interface UserState {
   created_at: string;
 }
 
+/**
+ * Additive. The listing's main section — lets clients adapt per-section UI (e.g. the save glyph) without re-deriving it.
+ */
+export type FeedItemCategory = typeof FeedItemCategory[keyof typeof FeedItemCategory] | null;
+
+
+export const FeedItemCategory = {
+  car: 'car',
+  real_estate: 'real_estate',
+  industrial: 'industrial',
+} as const;
+
 export interface Coordinates {
   lat: number;
   lng: number;
@@ -153,6 +165,8 @@ export interface FeedItem {
   best_offer_badge?: string | null;
   /** Industrial sub-type (factory, warehouse, land, production_line, raw_material, machine) used for client-side category grouping. Null for non-industrial listings. */
   industrial_type?: string | null;
+  /** Additive. The listing's main section — lets clients adapt per-section UI (e.g. the save glyph) without re-deriving it. */
+  category?: FeedItemCategory;
   /** True when the listing status is "active" (publicly visible and promotable). Lets owner-facing surfaces built on FeedItem (e.g. the profile grid) gate the Promote control without fetching ListingDetail. Null when status is unknown. */
   is_active?: boolean | null;
   /** True when the seller opted this listing in to WhatsApp contact. Opt-in only (default false). Lets surfaces decide whether to surface a WhatsApp action. Null when unknown. */
@@ -789,6 +803,8 @@ export interface CompanyProfile {
   follower_count?: number;
   /** Additive (Task #40). Viewer-relative; false when unauthenticated. */
   is_following?: boolean;
+  /** Additive. The seller's newest visible listing — anchors the profile "Message" button (conversations are listing-anchored). */
+  latest_listing_id?: string | null;
 }
 
 export type RfqCategory = typeof RfqCategory[keyof typeof RfqCategory];

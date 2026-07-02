@@ -17,6 +17,24 @@ import { useI18n } from "@/context/LanguageContext";
 import { useSession } from "@/context/SessionContext";
 import { shareListing } from "@/lib/share";
 
+// The save glyph adapts to the section — a car for cars, a key for real estate,
+// a factory mark for industrial (falls back to the heart) — so the action reads
+// in the product's own language, and the filled + primary state still clearly
+// means "saved".
+type IoniconName = React.ComponentProps<typeof Ionicons>["name"];
+const SAVE_ICONS: Record<string, { on: IoniconName; off: IoniconName }> = {
+  car: { on: "car", off: "car-outline" },
+  real_estate: { on: "key", off: "key-outline" },
+  industrial: { on: "business", off: "business-outline" },
+};
+function saveIconFor(
+  category: string | null | undefined,
+  saved: boolean | undefined,
+): IoniconName {
+  const pair = SAVE_ICONS[category ?? ""] ?? { on: "heart", off: "heart-outline" };
+  return saved ? pair.on : pair.off;
+}
+
 interface SmartAssetCardProps {
   item: FeedItem;
   onPress?: (item: FeedItem) => void;
@@ -164,7 +182,7 @@ function SmartAssetCardComponent({
                   hitSlop={8}
                 >
                   <Ionicons
-                    name={isSaved ? "heart" : "heart-outline"}
+                    name={saveIconFor(item.category, isSaved)}
                     size={22}
                     color={isSaved ? colors.primary : "#FFFFFF"}
                   />

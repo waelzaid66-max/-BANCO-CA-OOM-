@@ -1,8 +1,10 @@
 import { Feather } from "@/components/icons";
+import * as LocalAuthentication from "expo-local-authentication";
 import React, { useEffect, useState } from "react";
 import {
   ActivityIndicator,
   Modal,
+  Platform,
   Pressable,
   StyleSheet,
   TextInput,
@@ -15,8 +17,11 @@ import type { useColors } from "@/hooks/useColors";
 
 type Colors = ReturnType<typeof useColors>;
 
-// Shared, self-contained typed-confirmation modal used by both the profile and
-// settings screens so the destructive delete flow stays in one place.
+// Shared, self-contained destructive-confirmation modal used by both the
+// profile and settings screens. The professional gate is DEVICE AUTHENTICATION
+// (Face ID / fingerprint / device passcode) — a real identity check that also
+// covers passwordless (Google/Apple) accounts. The typed-keyword input remains
+// only as the fallback when the device has no auth hardware/enrollment.
 export function DeleteAccountModal({
   visible,
   deleting,
@@ -32,14 +37,60 @@ export function DeleteAccountModal({
 }) {
   const { t, isRTL } = useI18n();
   const [confirmText, setConfirmText] = useState("");
+  const [authing, setAuthing] = useState(false);
+  // Device auth availability (null while probing). Web has no LocalAuthentication.
+  const [deviceAuth, setDeviceAuth] = useState<boolean | null>(null);
   const keyword = t("profile.deleteKeyword");
   const isMatch =
     confirmText.trim().toLocaleUpperCase() === keyword.toLocaleUpperCase();
-  const canDelete = isMatch && !deleting;
+  const canDelete = (deviceAuth === true || isMatch) && !deleting && !authing;
 
   useEffect(() => {
-    if (!visible) setConfirmText("");
+    if (!visible) {
+      setConfirmText("");
+      return;
+    }
+    let cancelled = false;
+    (async () => {
+      try {
+        if (Platform.OS === "web") {
+          if (!cancelled) setDeviceAuth(false);
+          return;
+        }
+        const hw = await LocalAuthentication.hasHardwareAsync();
+        const enrolled = hw && (await LocalAuthentication.isEnrolledAsync());
+        // securityLevel > NONE means at least a device passcode exists.
+        const level = await LocalAuthentication.getEnrolledLevelAsync();
+        if (!cancelled)
+          setDeviceAuth(enrolled || level > LocalAuthentication.SecurityLevel.NONE);
+      } catch {
+        if (!cancelled) setDeviceAuth(false);
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
   }, [visible]);
+
+  // Device-auth path: prove identity (biometrics, falling back to the device
+  // passcode) IMMEDIATELY before the irreversible call.
+  const confirmWithAuth = async () => {
+    if (deviceAuth !== true) {
+      onConfirm();
+      return;
+    }
+    setAuthing(true);
+    try {
+      const res = await LocalAuthentication.authenticateAsync({
+        promptMessage: t("profile.deleteAuthPrompt"),
+      });
+      if (res.success) onConfirm();
+    } catch {
+      // Auth errored — do nothing; the user can retry or cancel.
+    } finally {
+      setAuthing(false);
+    }
+  };
 
   return (
     <Modal
@@ -99,42 +150,51 @@ export function DeleteAccountModal({
             ))}
           </View>
 
-          <View style={styles.field}>
-            <AppText
-              style={[
-                styles.prompt,
-                {
-                  color: colors.mutedForeground,
-                  textAlign: isRTL ? "right" : "left",
-                },
-              ]}
-            >
-              {t("profile.deletePrompt")}
-            </AppText>
-            <TextInput
-              value={confirmText}
-              onChangeText={setConfirmText}
-              placeholder={keyword}
-              placeholderTextColor={colors.mutedForeground}
-              autoCapitalize="characters"
-              autoCorrect={false}
-              editable={!deleting}
-              style={[
-                styles.input,
-                {
-                  backgroundColor: colors.secondary,
-                  color: colors.foreground,
-                  borderColor: isMatch ? colors.destructive : colors.border,
-                  borderRadius: colors.radius,
-                  textAlign: isRTL ? "right" : "left",
-                },
-              ]}
-              testID="delete-confirm-input"
-            />
-          </View>
+          {deviceAuth !== true ? (
+            <View style={styles.field}>
+              <AppText
+                style={[
+                  styles.prompt,
+                  {
+                    color: colors.mutedForeground,
+                    textAlign: isRTL ? "right" : "left",
+                  },
+                ]}
+              >
+                {t("profile.deletePrompt")}
+              </AppText>
+              <TextInput
+                value={confirmText}
+                onChangeText={setConfirmText}
+                placeholder={keyword}
+                placeholderTextColor={colors.mutedForeground}
+                autoCapitalize="characters"
+                autoCorrect={false}
+                editable={!deleting}
+                style={[
+                  styles.input,
+                  {
+                    backgroundColor: colors.secondary,
+                    color: colors.foreground,
+                    borderColor: isMatch ? colors.destructive : colors.border,
+                    borderRadius: colors.radius,
+                    textAlign: isRTL ? "right" : "left",
+                  },
+                ]}
+                testID="delete-confirm-input"
+              />
+            </View>
+          ) : (
+            <View style={[styles.authHintRow, isRTL && styles.rowReverse]}>
+              <Feather name="lock" size={14} color={colors.mutedForeground} />
+              <AppText style={[styles.authHint, { color: colors.mutedForeground }]}>
+                {t("profile.deleteAuthPrompt")}
+              </AppText>
+            </View>
+          )}
 
           <Pressable
-            onPress={onConfirm}
+            onPress={confirmWithAuth}
             disabled={!canDelete}
             style={[
               styles.deleteBtn,
@@ -146,7 +206,7 @@ export function DeleteAccountModal({
             ]}
             testID="confirm-delete-account"
           >
-            {deleting ? (
+            {deleting || authing ? (
               <ActivityIndicator size="small" color="#fff" />
             ) : (
               <AppText style={styles.deleteText}>
@@ -210,6 +270,13 @@ const styles = StyleSheet.create({
   bulletText: { flex: 1, fontSize: 13, fontFamily: "Inter_400Regular", lineHeight: 18 },
   rowReverse: { flexDirection: "row-reverse" },
   field: { alignSelf: "stretch", marginBottom: 16 },
+  authHintRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 6,
+    marginBottom: 16,
+  },
+  authHint: { fontSize: 12.5, fontFamily: "Inter_500Medium" },
   prompt: { fontSize: 12.5, fontFamily: "Inter_500Medium", marginBottom: 8 },
   input: {
     borderWidth: 1.5,

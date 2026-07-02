@@ -148,7 +148,23 @@ export async function getCompanyProfile(
     isFollowing = !!row;
   }
 
+  // Additive: the seller's newest visible listing, so a profile visitor can
+  // start a conversation directly (conversations are listing-anchored).
+  const [latest] = await db
+    .select({ id: listings.id })
+    .from(listings)
+    .where(
+      and(
+        eq(listings.userId, userId),
+        eq(listings.status, "active"),
+        sql`${listings.isFlagged} IS NOT TRUE`,
+      ),
+    )
+    .orderBy(desc(listings.createdAt))
+    .limit(1);
+
   return {
+    latest_listing_id: latest?.id ?? null,
     id: user.id,
     name: user.name,
     role: user.role,

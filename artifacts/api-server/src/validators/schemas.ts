@@ -220,6 +220,9 @@ export const FeedItemSchema = z
     best_offer_badge: z.string().nullable(),
     // Additive: industrial sub-type for client-side category grouping.
     industrial_type: z.string().nullable(),
+    // Additive: the listing's main section — lets clients adapt per-section UI
+    // (e.g. the save glyph) without re-deriving it from other fields.
+    category: z.enum(["car", "real_estate", "industrial"]).nullable().optional(),
     // Additive: true when status === "active". Owner-facing FeedItem surfaces
     // (profile grid) use it to gate the Promote control without ListingDetail.
     is_active: z.boolean().nullable(),
@@ -2103,6 +2106,9 @@ export const CompanyProfileSchema = z
     // contract; is_following is viewer-relative (false when unauthenticated).
     follower_count: z.number().optional(),
     is_following: z.boolean().optional(),
+    // Additive: the seller's newest visible listing — lets a profile visitor
+    // start a conversation directly (conversations are listing-anchored).
+    latest_listing_id: z.string().nullable().optional(),
   })
   .strict();
 

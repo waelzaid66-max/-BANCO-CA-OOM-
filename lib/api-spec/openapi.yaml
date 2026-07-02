@@ -230,6 +230,11 @@ components:
           type: string
           nullable: true
           description: Industrial sub-type (factory, warehouse, land, production_line, raw_material, machine) used for client-side category grouping. Null for non-industrial listings.
+        category:
+          type: string
+          enum: [car, real_estate, industrial]
+          nullable: true
+          description: Additive. The listing's main section — lets clients adapt per-section UI (e.g. the save glyph) without re-deriving it.
         is_active:
           type: boolean
           nullable: true
@@ -1077,6 +1082,12 @@ components:
           type: boolean
           description: >
             Additive (Task #40). Viewer-relative; false when unauthenticated.
+        latest_listing_id:
+          type: string
+          nullable: true
+          description: >
+            Additive. The seller's newest visible listing — anchors the
+            profile "Message" button (conversations are listing-anchored).
 
     Rfq:
       type: object

@@ -1537,18 +1537,25 @@ const styles = StyleSheet.create({
   },
   bellBadge: {
     position: "absolute",
-    top: -2,
+    top: -3,
     minWidth: 18,
     height: 18,
     borderRadius: 9,
-    borderWidth: 1.5,
+    borderWidth: 2,
     paddingHorizontal: 4,
     alignItems: "center",
     justifyContent: "center",
+    // Match the tab-bar badge: a soft lift so the count reads as a crisp pill.
+    shadowColor: "#000",
+    shadowOpacity: 0.25,
+    shadowRadius: 3,
+    shadowOffset: { width: 0, height: 1 },
+    elevation: 3,
   },
   bellBadgeText: {
     fontSize: 10,
     fontFamily: "Inter_700Bold",
+    letterSpacing: -0.2,
   },
   rail: {
     marginBottom: 20,
