@@ -42,14 +42,16 @@ import {
   DialogTrigger,
 } from "@/components/ui/dialog";
 import { useToast } from "@/hooks/use-toast";
+import { useLang } from "@/context/LanguageContext";
 
 type Audience = NonNullable<AdminPlanUpdate["audience"]>;
 const AUDIENCES: Audience[] = ["individual", "dealer", "company", "enterprise"];
-const AUDIENCE_LABEL: Record<Audience, string> = {
-  individual: "Individual",
-  dealer: "Dealer",
-  company: "Company",
-  enterprise: "Enterprise",
+// i18n keys — resolved through t() at render.
+const AUDIENCE_KEY: Record<Audience, string> = {
+  individual: "plansPage.audIndividual",
+  dealer: "plansPage.audDealer",
+  company: "plansPage.audCompany",
+  enterprise: "plansPage.audEnterprise",
 };
 
 // Numeric coercion — inputs are strings; money/weights default to 0, while
@@ -173,12 +175,13 @@ function PlanFields({
   form: PlanForm;
   set: <K extends keyof PlanForm>(k: K, v: PlanForm[K]) => void;
 }) {
+  const { t } = useLang();
   return (
     <div className="space-y-5">
       <div className="grid gap-4 sm:grid-cols-2">
         <div className="grid gap-1.5">
           <Label htmlFor="name" className="text-xs">
-            Name (EN)
+            {t("plansPage.nameEn")}
           </Label>
           <Input
             id="name"
@@ -188,7 +191,7 @@ function PlanFields({
         </div>
         <div className="grid gap-1.5">
           <Label htmlFor="name_ar" className="text-xs">
-            Name (AR)
+            {t("plansPage.nameAr")}
           </Label>
           <Input
             id="name_ar"
@@ -201,18 +204,18 @@ function PlanFields({
 
       <div>
         <p className="text-xs font-semibold text-muted-foreground mb-2">
-          Pricing (EGP)
+          {t("plansPage.pricingSection")}
         </p>
         <div className="grid gap-4 sm:grid-cols-2">
           <NumField
             id="monthly_price"
-            label="Monthly price"
+            label={t("plansPage.monthlyPrice")}
             value={form.monthly_price}
             onChange={(v) => set("monthly_price", v)}
           />
           <NumField
             id="boost_price"
-            label="Boost price"
+            label={t("plansPage.boostPrice")}
             value={form.boost_price}
             onChange={(v) => set("boost_price", v)}
           />
@@ -221,18 +224,18 @@ function PlanFields({
 
       <div>
         <p className="text-xs font-semibold text-muted-foreground mb-2">
-          Quotas (blank = unlimited)
+          {t("plansPage.quotasSection")}
         </p>
         <div className="grid gap-4 sm:grid-cols-2">
           <NumField
             id="listing_quota"
-            label="Listing quota"
+            label={t("plansPage.listingQuota")}
             value={form.listing_quota}
             onChange={(v) => set("listing_quota", v)}
           />
           <NumField
             id="active_listing_cap"
-            label="Active listing cap"
+            label={t("plansPage.activeCap")}
             value={form.active_listing_cap}
             onChange={(v) => set("active_listing_cap", v)}
           />
@@ -241,30 +244,30 @@ function PlanFields({
 
       <div>
         <p className="text-xs font-semibold text-muted-foreground mb-2">
-          Cost per lead (EGP)
+          {t("plansPage.cplSection")}
         </p>
         <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
           <NumField
             id="cpl_whatsapp"
-            label="WhatsApp"
+            label={t("plansPage.cplWhatsapp")}
             value={form.cpl_whatsapp}
             onChange={(v) => set("cpl_whatsapp", v)}
           />
           <NumField
             id="cpl_call"
-            label="Call"
+            label={t("plansPage.cplCall")}
             value={form.cpl_call}
             onChange={(v) => set("cpl_call", v)}
           />
           <NumField
             id="cpl_chat"
-            label="Chat"
+            label={t("plansPage.cplChat")}
             value={form.cpl_chat}
             onChange={(v) => set("cpl_chat", v)}
           />
           <NumField
             id="cpl_finance_request"
-            label="Finance request"
+            label={t("plansPage.cplFinance")}
             value={form.cpl_finance_request}
             onChange={(v) => set("cpl_finance_request", v)}
           />
@@ -274,17 +277,17 @@ function PlanFields({
       <div className="grid gap-4 sm:grid-cols-2">
         <NumField
           id="ranking_weight"
-          label="Ranking weight"
+          label={t("plansPage.rankingWeight")}
           value={form.ranking_weight}
           onChange={(v) => set("ranking_weight", v)}
-          hint="Higher = ranked above lower-tier plans in the feed."
+          hint={t("plansPage.rankingHint")}
         />
         <NumField
           id="sort_order"
-          label="Sort order"
+          label={t("plansPage.sortOrder")}
           value={form.sort_order}
           onChange={(v) => set("sort_order", v)}
-          hint="Display order on the pricing page (ascending)."
+          hint={t("plansPage.sortHint")}
         />
       </div>
 
@@ -294,14 +297,14 @@ function PlanFields({
             checked={form.is_active}
             onCheckedChange={(v) => set("is_active", v)}
           />
-          <span className="text-sm">Active (offered to users)</span>
+          <span className="text-sm">{t("plansPage.activeSwitch")}</span>
         </label>
         <label className="flex items-center gap-2">
           <Switch
             checked={form.is_baseline}
             onCheckedChange={(v) => set("is_baseline", v)}
           />
-          <span className="text-sm">Baseline (free default for its audience)</span>
+          <span className="text-sm">{t("plansPage.baselineSwitch")}</span>
         </label>
       </div>
     </div>
@@ -310,6 +313,7 @@ function PlanFields({
 
 function PlanCard({ plan }: { plan: AdminPlan }) {
   const { toast } = useToast();
+  const { t } = useLang();
   const qc = useQueryClient();
   const update = useUpdateAdminPlan();
   const [form, setForm] = useState<PlanForm>(() => seed(plan));
@@ -326,7 +330,7 @@ function PlanCard({ plan }: { plan: AdminPlan }) {
 
   const save = () => {
     if (!form.name.trim()) {
-      toast({ title: "Name is required", variant: "destructive" });
+      toast({ title: t("plansPage.toastNameRequired"), variant: "destructive" });
       return;
     }
     update.mutate(
@@ -334,9 +338,9 @@ function PlanCard({ plan }: { plan: AdminPlan }) {
       {
         onSuccess: () => {
           qc.invalidateQueries({ queryKey: getGetAdminPlansQueryKey() });
-          toast({ title: "Plan saved", description: `${form.name} updated.` });
+          toast({ title: t("plansPage.toastSaved"), description: `${form.name} ${t("plansPage.toastUpdatedSuffix")}` });
         },
-        onError: () => toast({ title: "Save failed", variant: "destructive" }),
+        onError: () => toast({ title: t("plansPage.toastSaveFailed"), variant: "destructive" }),
       },
     );
   };
@@ -352,9 +356,13 @@ function PlanCard({ plan }: { plan: AdminPlan }) {
             ) : null}
           </CardTitle>
           <div className="flex items-center gap-2">
-            <Badge variant="secondary">{AUDIENCE_LABEL[plan.audience as Audience] ?? plan.audience}</Badge>
+            <Badge variant="secondary">
+              {AUDIENCE_KEY[plan.audience as Audience]
+                ? t(AUDIENCE_KEY[plan.audience as Audience])
+                : plan.audience}
+            </Badge>
             <Badge variant={plan.is_active ? "default" : "destructive"}>
-              {plan.is_active ? "Active" : "Inactive"}
+              {plan.is_active ? t("plansPage.badgeActive") : t("plansPage.badgeInactive")}
             </Badge>
           </div>
         </div>
@@ -368,9 +376,9 @@ function PlanCard({ plan }: { plan: AdminPlan }) {
             {update.isPending ? (
               <Loader2 className="w-4 h-4 mr-2 animate-spin" />
             ) : (
-              <Save className="w-4 h-4 mr-2" />
+              <Save className="w-4 h-4 me-2" />
             )}
-            Save changes
+            {t("plansPage.saveChanges")}
           </Button>
         </div>
       </CardContent>
@@ -380,6 +388,7 @@ function PlanCard({ plan }: { plan: AdminPlan }) {
 
 function CreatePlanDialog() {
   const { toast } = useToast();
+  const { t } = useLang();
   const qc = useQueryClient();
   const create = useCreateAdminPlan();
   const [open, setOpen] = useState(false);
@@ -392,7 +401,7 @@ function CreatePlanDialog() {
 
   const submit = () => {
     if (!slug.trim() || !form.name.trim()) {
-      toast({ title: "Slug and name are required", variant: "destructive" });
+      toast({ title: t("plansPage.toastSlugNameRequired"), variant: "destructive" });
       return;
     }
     const data: AdminPlanCreate = {
@@ -409,12 +418,12 @@ function CreatePlanDialog() {
           setSlug("");
           setAudience("dealer");
           setForm(emptyForm());
-          toast({ title: "Plan created", description: `${data.name} added.` });
+          toast({ title: t("plansPage.toastCreated"), description: `${data.name} ${t("plansPage.toastAddedSuffix")}` });
         },
         onError: () =>
           toast({
-            title: "Create failed",
-            description: "A plan with that slug may already exist.",
+            title: t("plansPage.toastCreateFailed"),
+            description: t("plansPage.toastCreateFailedDesc"),
             variant: "destructive",
           }),
       },
@@ -425,22 +434,19 @@ function CreatePlanDialog() {
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
         <Button>
-          <Plus className="w-4 h-4 mr-2" /> New plan
+          <Plus className="w-4 h-4 me-2" /> {t("plansPage.newPlan")}
         </Button>
       </DialogTrigger>
       <DialogContent className="max-w-2xl max-h-[85vh] overflow-y-auto">
         <DialogHeader>
-          <DialogTitle>Create a plan</DialogTitle>
-          <DialogDescription>
-            Slug is the permanent identifier (e.g. <code>dealer_pro</code>) and
-            cannot be changed later.
-          </DialogDescription>
+          <DialogTitle>{t("plansPage.createTitle")}</DialogTitle>
+          <DialogDescription>{t("plansPage.createDesc")}</DialogDescription>
         </DialogHeader>
         <div className="space-y-5 py-2">
           <div className="grid gap-4 sm:grid-cols-2">
             <div className="grid gap-1.5">
               <Label htmlFor="new_slug" className="text-xs">
-                Slug
+                {t("plansPage.slug")}
               </Label>
               <Input
                 id="new_slug"
@@ -450,7 +456,7 @@ function CreatePlanDialog() {
               />
             </div>
             <div className="grid gap-1.5">
-              <Label className="text-xs">Audience</Label>
+              <Label className="text-xs">{t("plansPage.audience")}</Label>
               <Select
                 value={audience}
                 onValueChange={(v) => setAudience(v as Audience)}
@@ -461,7 +467,7 @@ function CreatePlanDialog() {
                 <SelectContent>
                   {AUDIENCES.map((a) => (
                     <SelectItem key={a} value={a}>
-                      {AUDIENCE_LABEL[a]}
+                      {t(AUDIENCE_KEY[a])}
                     </SelectItem>
                   ))}
                 </SelectContent>
@@ -472,13 +478,13 @@ function CreatePlanDialog() {
         </div>
         <DialogFooter>
           <Button variant="outline" onClick={() => setOpen(false)}>
-            Cancel
+            {t("common.cancel")}
           </Button>
           <Button onClick={submit} disabled={create.isPending}>
             {create.isPending ? (
-              <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+              <Loader2 className="w-4 h-4 me-2 animate-spin" />
             ) : null}
-            Create plan
+            {t("plansPage.createBtn")}
           </Button>
         </DialogFooter>
       </DialogContent>
@@ -487,6 +493,7 @@ function CreatePlanDialog() {
 }
 
 export default function PlansPage() {
+  const { t } = useLang();
   const { data: resp, isLoading } = useGetAdminPlans();
   const plans = resp?.data ?? [];
 
@@ -498,12 +505,8 @@ export default function PlansPage() {
             <Wallet className="w-6 h-6 text-primary" />
           </div>
           <div>
-            <h1 className="text-3xl font-bold tracking-tight">Plans &amp; Pricing</h1>
-            <p className="text-muted-foreground mt-1">
-              The platform&apos;s economic levers — subscription price, listing
-              quotas, cost-per-lead, boost price and feed ranking, per audience.
-              Changes take effect immediately for new checkouts and lead charges.
-            </p>
+            <h1 className="text-3xl font-bold tracking-tight">{t("plansPage.title")}</h1>
+            <p className="text-muted-foreground mt-1">{t("plansPage.subtitle")}</p>
           </div>
         </div>
         {!isLoading ? <CreatePlanDialog /> : null}
@@ -516,7 +519,7 @@ export default function PlansPage() {
       ) : plans.length === 0 ? (
         <Card>
           <CardContent className="py-16 text-center text-muted-foreground">
-            No plans yet. Create the first one to start charging.
+            {t("plansPage.empty")}
           </CardContent>
         </Card>
       ) : (
