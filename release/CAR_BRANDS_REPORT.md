@@ -49,16 +49,24 @@ so autocomplete/search resolve "شيري", "chery", "شيفورليه", "vw", et
 - A few ultra-niche/coachbuilder marques are omitted to avoid clutter; adding one
   is a single data line (no schema change).
 
-## 6. Next phase (models → generations → trims) — NOT executed now
-- The `models` and `car_variants` tables already exist; add **generation, trim,
-  engine** as new nullable columns / small child tables when ready — the
-  hierarchy needs no restructure.
+## 6. Models bootstrap — DONE (batch 2)
+- **327 real models across 26 top brands** seeded into the existing `models`
+  table (`seed:car-models`), each with a body type (sedan/suv/hatchback/coupe/
+  pickup/van/crossover/minivan/convertible). Verified: 332 total / 332 distinct
+  slugs (no dup), idempotent re-run, every model linked to a valid brand FK, the
+  5 pre-existing models preserved (never deleted). Slug convention matches the
+  current seed (`slugify("<brandName>-<modelName>")`).
+- Covered brands: Toyota, Lexus, Hyundai, Kia, Nissan, Chevrolet, Mitsubishi,
+  Honda, Mazda, Mercedes-Benz, BMW, Audi, Volkswagen, Jeep, Renault, Peugeot, MG,
+  Chery, BYD, Suzuki, Škoda, Geely, Haval, Ford, Opel, Fiat.
+
+## 7. Next phase (generations → trims → engines) — NOT executed now
+- `car_variants` already exists for the variant level; add **generation, trim,
+  engine** as new nullable columns / small child tables when ready — no restructure.
 - **Self-learning dictionary:** as sellers publish, capture the model/trim they
-  type against the resolved `brand_id` (mirror the existing candidate-attributes
-  pattern) so the model dictionary builds from real listings instead of thousands
-  of hand-entered rows.
-- Seed a first pass of top models per high-popularity brand (Toyota, Hyundai,
-  Kia, Nissan, Chevrolet…) to bootstrap autocomplete before user data accrues.
+  type against the resolved `brand_id` (mirror the candidate-attributes pattern)
+  so the dictionary keeps growing from real listings.
+- Extend the model set to more brands + years as the market demands.
 
 ## Run
 ```
