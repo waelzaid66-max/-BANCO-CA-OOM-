@@ -2443,3 +2443,57 @@ export type ReferencePlace = typeof referencePlaces.$inferSelect;
 export type InsertReferencePlace = typeof referencePlaces.$inferInsert;
 export type PendingLocation = typeof pendingLocations.$inferSelect;
 export type InsertPendingLocation = typeof pendingLocations.$inferInsert;
+
+/* ── MARKET INSIGHTS: price observations (Deal Rating engine) ──
+ *
+ * A STANDALONE, append-only ledger of REAL price points, one row recorded each
+ * time a listing is published (and again when it is marked sold). It exists to
+ * power price history, market insights and the "deal rating" for a listing —
+ * how its price compares to its own market segment.
+ *
+ * Philosophy-aligned: nothing is fabricated — every observation comes from a
+ * real listing at a real price and time. Recording is ALWAYS best-effort and
+ * post-commit, so it can never block or roll back a publish (never block trade).
+ * A rating is only returned once a segment has enough real samples; below that
+ * the engine honestly reports "insufficient data" rather than inventing a number.
+ *
+ * `segmentKey` is the deterministic market bucket a listing belongs to
+ * (category + location + a primary discriminator such as brand/model/year or
+ * property type), computed by MarketInsightsService — so this table needs no
+ * schema change as new categories or dimensions are added.
+ */
+export const priceObservations = pgTable(
+  "price_observations",
+  {
+    id: uuid("id").defaultRandom().primaryKey(),
+    // Provenance. SET NULL on delete keeps the historical price point (the market
+    // signal) even after the listing itself is gone.
+    listingId: uuid("listing_id").references(() => listings.id, {
+      onDelete: "set null",
+    }),
+    category: listingCategoryEnum("category").notNull(),
+    segmentKey: text("segment_key").notNull(),
+    locationKey: text("location_key"),
+    price: numeric("price", { precision: 14, scale: 2 }).notNull(),
+    currency: text("currency").notNull().default("EGP"),
+    // Salient specs that defined the segment (brand/model/year, property_type…)
+    // — kept for finer future analysis without re-joining the listing.
+    attributes: jsonb("attributes").$type<Record<string, unknown>>().notNull().default({}),
+    // listing_publish · listing_sold · backfill
+    source: text("source").notNull().default("listing_publish"),
+    observedAt: timestamp("observed_at").notNull().defaultNow(),
+    createdAt: timestamp("created_at").defaultNow(),
+  },
+  (table) => [
+    index("idx_price_observations_segment").on(table.segmentKey),
+    index("idx_price_observations_category").on(table.category),
+    index("idx_price_observations_observed").on(table.observedAt),
+    // One row per (listing, source): re-publishing or re-running the backfill
+    // refreshes rather than duplicates. NULL listing_id (deleted) rows are
+    // exempt (Postgres treats NULLs as distinct), preserving history.
+    uniqueIndex("uq_price_observations_listing_source").on(table.listingId, table.source),
+  ]
+);
+
+export type PriceObservation = typeof priceObservations.$inferSelect;
+export type InsertPriceObservation = typeof priceObservations.$inferInsert;

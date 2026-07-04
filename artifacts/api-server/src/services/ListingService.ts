@@ -15,6 +15,7 @@ import { checkListingRate, auditListingFlag } from "./AbuseService";
 import { notifyNewMatch, notifyPriceDrop } from "./AlertService";
 import { recomputeDealerQuality } from "./QualityService";
 import { trackCandidateAttributes } from "./CandidateAttributeService";
+import { recordPriceObservation } from "./MarketInsightsService";
 import { checkListingQuota, type UserRole } from "./PlanService";
 import { getLinksForListing } from "./ListingLinkService";
 import { mintContactToken } from "./LeadService";
@@ -390,6 +391,20 @@ export async function createListing(
     isPriceOutlier: normalized.isPriceOutlier,
     ip: meta?.ip,
   });
+
+  // Market-insights signal: record this listing's price point (best-effort,
+  // post-commit — never blocks or rolls back the publish). Skipped for requests
+  // (no asking price) by recordPriceObservation itself.
+  if (!(input.is_request ?? false)) {
+    await recordPriceObservation({
+      listingId: created.id,
+      category: input.category,
+      priceCash: input.base_price_cash,
+      specs: normalized.specs,
+      location: normalized.locationCanonical ?? input.location,
+      source: "listing_publish",
+    });
+  }
 
   // Best-effort: promote all media objects to public ACL so they can be served
   // by the ACL-gated serve handler without authentication. Uses Promise.all
@@ -1090,6 +1105,20 @@ export async function updateListing(
       oldPrice: Number(listing.basePriceCash),
       newPrice: updates.base_price_cash,
       sellerId: user.id,
+    });
+  }
+
+  // Market-insights signal: a confirmed sale is the strongest price point.
+  // Best-effort and separate from the publish observation (its own source), so
+  // a segment reflects both asking and realised prices. Never blocks the update.
+  if (updates.status === "sold") {
+    await recordPriceObservation({
+      listingId: id,
+      category: listing.category as "car" | "real_estate" | "industrial",
+      priceCash: updates.base_price_cash ?? Number(listing.basePriceCash),
+      specs: normalized.specs,
+      location: normalized.locationCanonical ?? updates.location ?? listing.location,
+      source: "listing_sold",
     });
   }
 
