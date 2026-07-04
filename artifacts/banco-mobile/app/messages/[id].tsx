@@ -20,6 +20,7 @@ import {
   ActivityIndicator,
   Alert,
   FlatList,
+  useWindowDimensions,
   KeyboardAvoidingView,
   Modal,
   Platform,
@@ -74,6 +75,11 @@ export default function ThreadScreen() {
   const colors = useColors();
   const { t, isRTL, lang } = useI18n();
   const insets = useSafeAreaInsets();
+  // Absolute bubble cap. A percentage maxWidth on a flex-row child inside a
+  // FlatList doesn't resolve reliably on RN and collapses the bubble to the
+  // longest word ("one word per line"); an absolute px cap fixes it.
+  const { width: winW } = useWindowDimensions();
+  const bubbleMaxWidth = Math.round(winW * 0.78);
   const params = useLocalSearchParams<{
     id: string;
     name?: string;
@@ -366,6 +372,7 @@ export default function ThreadScreen() {
         style={[
           styles.bubble,
           {
+            maxWidth: bubbleMaxWidth,
             backgroundColor: mine ? colors.primary : colors.card,
             borderColor: failed ? colors.destructive : colors.border,
             borderWidth: mine && !failed ? 0 : StyleSheet.hairlineWidth,
@@ -459,6 +466,7 @@ export default function ThreadScreen() {
               {
                 color: mine ? colors.primaryForeground : colors.foreground,
                 marginTop: mediaUrl ? 6 : 0,
+                textAlign: isRTL ? "right" : "left",
               },
             ]}
           >
@@ -1006,7 +1014,9 @@ const styles = StyleSheet.create({
   list: { padding: 14, paddingBottom: 18, flexGrow: 1 },
   bubbleRow: { flexDirection: "row", marginBottom: 8 },
   bubble: {
-    maxWidth: "78%",
+    // maxWidth is applied inline (absolute px from window width) — a percentage
+    // here collapses the bubble to one-word-per-line inside the FlatList row.
+    minWidth: 48,
     paddingHorizontal: 14,
     paddingVertical: 9,
     borderRadius: 16,
