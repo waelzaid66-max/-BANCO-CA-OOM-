@@ -196,7 +196,7 @@ function SmartAssetCardComponent({
                     onLike={handleSave}
                     onInterested={() => sendReaction("interested")}
                     onAngry={() => sendReaction("angry")}
-                    height={22}
+                    height={30}
                     testID={`save-${item.id}`}
                   />
                 </View>

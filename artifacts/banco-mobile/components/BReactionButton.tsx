@@ -23,13 +23,25 @@ const LOGO_RATIO = 2045 / 769; // full wordmark width / height
 const B_START = 0.05; // where the B begins (fraction of wordmark width)
 const B_END = 0.3; // where the B ends (including the bolt tail)
 
-export function BGlyph({ height = 24 }: { height?: number }) {
+export function BGlyph({
+  height = 24,
+  tintColor,
+}: {
+  height?: number;
+  /**
+   * Optional single-colour tint. Used ONLY by the reaction button to signal
+   * state (white = idle, red = saved). Left undefined everywhere else (e.g. the
+   * tab bar) so the original multi-tone logo pixels render untouched.
+   */
+  tintColor?: string;
+}) {
   const imgW = height * LOGO_RATIO;
   const width = imgW * (B_END - B_START);
   return (
     <View style={{ width, height, overflow: "hidden" }}>
       <Image
         source={LOGO}
+        tintColor={tintColor}
         style={{
           position: "absolute",
           left: -imgW * B_START,
@@ -183,15 +195,9 @@ export function BReactionButton({
         style={styles.bBtn}
         testID={testID}
       >
-        <BGlyph height={height} />
-        {saved ? (
-          <View
-            style={[
-              styles.savedDot,
-              { backgroundColor: colors.primary, borderColor: "#000000" },
-            ]}
-          />
-        ) : null}
+        {/* The B IS the state: red (primary) when saved, white when idle — the
+            same fill/idle contract as every other action icon on the card. */}
+        <BGlyph height={height} tintColor={saved ? colors.primary : "#FFFFFF"} />
       </Pressable>
     </View>
   );
@@ -217,14 +223,5 @@ const styles = StyleSheet.create({
     borderWidth: 1.5,
     alignItems: "center",
     justifyContent: "center",
-  },
-  savedDot: {
-    position: "absolute",
-    bottom: -2,
-    right: -3,
-    width: 9,
-    height: 9,
-    borderRadius: 5,
-    borderWidth: 1.5,
   },
 });
