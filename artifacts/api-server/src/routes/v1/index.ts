@@ -25,6 +25,7 @@ import sellersRouter from "./sellers";
 import investmentsRouter from "./investments";
 import globalSupplyRouter from "./global-supply";
 import marketRouter from "./market";
+import referenceRouter from "./reference";
 
 const router = Router();
 
@@ -54,5 +55,6 @@ router.use("/sellers", sellersRouter);
 router.use("/investments", investmentsRouter);
 router.use("/global-supply", globalSupplyRouter);
 router.use("/market", marketRouter);
+router.use("/reference", referenceRouter);
 
 export default router;

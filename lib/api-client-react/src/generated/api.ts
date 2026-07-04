@@ -136,6 +136,8 @@ import type {
   GetMySocialLinks200,
   GetMySubscription200,
   GetPaymentConfig200,
+  GetPlaceSuggestions200,
+  GetPlaceSuggestionsParams,
   GetPromoAdSummary200,
   GetPromoCampaign200,
   GetRecommendations200,
@@ -261,6 +263,91 @@ type AwaitedInput<T> = PromiseLike<T> | T;
 
 
 type SecondParameter<T extends (...args: never) => unknown> = Parameters<T>[1];
+
+
+
+export const getGetPlaceSuggestionsUrl = (params: GetPlaceSuggestionsParams,) => {
+  const normalizedParams = new URLSearchParams();
+
+  Object.entries(params || {}).forEach(([key, value]) => {
+
+    if (value !== undefined) {
+      normalizedParams.append(key, value === null ? 'null' : String(value))
+    }
+  });
+
+  const stringifiedParams = normalizedParams.toString();
+
+  return stringifiedParams.length > 0 ? `/api/v1/reference/places?${stringifiedParams}` : `/api/v1/reference/places`
+}
+
+/**
+ * Multilingual, typo-tolerant place suggestions (cities, districts, compounds, projects) for search / autocomplete. Matches Arabic or Latin partial names and tolerates typos; prefix + popularity rank first. Read-only reference data — creates nothing and touches no live table.
+ * @summary Autocomplete suggestions from the geo/real-estate reference dataset
+ */
+export const getPlaceSuggestions = async (params: GetPlaceSuggestionsParams, options?: RequestInit): Promise<GetPlaceSuggestions200> => {
+
+  return customFetch<GetPlaceSuggestions200>(getGetPlaceSuggestionsUrl(params),
+  {
+    ...options,
+    method: 'GET'
+
+
+  }
+);}
+
+
+
+
+
+export const getGetPlaceSuggestionsQueryKey = (params?: GetPlaceSuggestionsParams,) => {
+    return [
+    `/api/v1/reference/places`, ...(params ? [params] : [])
+    ] as const;
+    }
+
+
+export const getGetPlaceSuggestionsQueryOptions = <TData = Awaited<ReturnType<typeof getPlaceSuggestions>>, TError = ErrorType<unknown>>(params: GetPlaceSuggestionsParams, options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof getPlaceSuggestions>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
+) => {
+
+const {query: queryOptions, request: requestOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getGetPlaceSuggestionsQueryKey(params);
+
+
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof getPlaceSuggestions>>> = ({ signal }) => getPlaceSuggestions(params, { signal, ...requestOptions });
+
+
+
+
+
+   return  { queryKey, queryFn, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof getPlaceSuggestions>>, TError, TData> & { queryKey: QueryKey }
+}
+
+export type GetPlaceSuggestionsQueryResult = NonNullable<Awaited<ReturnType<typeof getPlaceSuggestions>>>
+export type GetPlaceSuggestionsQueryError = ErrorType<unknown>
+
+
+/**
+ * @summary Autocomplete suggestions from the geo/real-estate reference dataset
+ */
+
+export function useGetPlaceSuggestions<TData = Awaited<ReturnType<typeof getPlaceSuggestions>>, TError = ErrorType<unknown>>(
+ params: GetPlaceSuggestionsParams, options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof getPlaceSuggestions>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
+
+ ):  UseQueryResult<TData, TError> & { queryKey: QueryKey } {
+
+  const queryOptions = getGetPlaceSuggestionsQueryOptions(params,options)
+
+  const query = useQuery(queryOptions) as  UseQueryResult<TData, TError> & { queryKey: QueryKey };
+
+  return { ...query, queryKey: queryOptions.queryKey };
+}
+
+
+
+
 
 
 

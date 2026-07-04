@@ -1568,6 +1568,19 @@ export interface DealInsights {
   history: PriceHistoryPoint[];
 }
 
+/**
+ * A geo/real-estate reference place matched for autocomplete.
+ */
+export interface PlaceSuggestion {
+  id: string;
+  global_id: string;
+  place_type: string;
+  name_en: string;
+  name_ar: string | null;
+  iso_country_code: string | null;
+  popularity: number;
+}
+
 export type PromoCampaignViewStatus = typeof PromoCampaignViewStatus[keyof typeof PromoCampaignViewStatus];
 
 
@@ -2183,6 +2196,24 @@ export interface MarketTrendsResult {
   period_label: string;
   generated_at: string;
 }
+
+export type GetPlaceSuggestionsParams = {
+/**
+ * Query text (min 2 chars); Arabic or Latin, partial ok.
+ */
+q: string;
+/**
+ * Optional ISO country code filter (e.g. EG).
+ */
+country?: string;
+limit?: number;
+};
+
+export type GetPlaceSuggestions200 = {
+  data?: PlaceSuggestion[];
+  error?: ApiError | null;
+  meta?: Meta;
+};
 
 export type GetMe200 = {
   data?: UserState;

@@ -8,6 +8,38 @@
 import * as zod from 'zod';
 
 /**
+ * Multilingual, typo-tolerant place suggestions (cities, districts, compounds, projects) for search / autocomplete. Matches Arabic or Latin partial names and tolerates typos; prefix + popularity rank first. Read-only reference data — creates nothing and touches no live table.
+ * @summary Autocomplete suggestions from the geo/real-estate reference dataset
+ */
+export const GetPlaceSuggestionsQueryParams = zod.object({
+  "q": zod.coerce.string().describe('Query text (min 2 chars); Arabic or Latin, partial ok.'),
+  "country": zod.coerce.string().optional().describe('Optional ISO country code filter (e.g. EG).'),
+  "limit": zod.coerce.number().optional()
+})
+
+export const GetPlaceSuggestionsResponse = zod.object({
+  "data": zod.array(zod.object({
+  "id": zod.string(),
+  "global_id": zod.string(),
+  "place_type": zod.string(),
+  "name_en": zod.string(),
+  "name_ar": zod.string().nullable(),
+  "iso_country_code": zod.string().nullable(),
+  "popularity": zod.number()
+}).describe('A geo\/real-estate reference place matched for autocomplete.')).optional(),
+  "error": zod.object({
+  "code": zod.enum(['INVALID_DATA', 'NOT_FOUND', 'UNAUTHORIZED', 'INTERNAL_ERROR', 'FORBIDDEN', 'RATE_LIMITED']),
+  "message": zod.string()
+}).nullish(),
+  "meta": zod.object({
+  "cursor": zod.string().optional(),
+  "has_next": zod.boolean().optional(),
+  "total": zod.number().optional()
+}).optional()
+})
+
+
+/**
  * Returns server health status
  * @summary Health check
  */

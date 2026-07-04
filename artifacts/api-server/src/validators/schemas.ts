@@ -965,6 +965,19 @@ export const DealInsightsSchema = z
   })
   .strict();
 
+// GET /v1/reference/places — autocomplete over the geo/real-estate reference set.
+export const PlaceSuggestionSchema = z
+  .object({
+    id: z.string(),
+    global_id: z.string(),
+    place_type: z.string(),
+    name_en: z.string(),
+    name_ar: z.string().nullable(),
+    iso_country_code: z.string().nullable(),
+    popularity: z.number(),
+  })
+  .strict();
+
 // GET /v1/search/facets — per-value counts of the currently-visible inventory,
 // optionally scoped to a category. The client gates chips on count > 0 so it
 // never offers a filter that would return an empty page.

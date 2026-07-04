@@ -2205,6 +2205,35 @@ components:
           items:
             $ref: "#/components/schemas/PriceHistoryPoint"
 
+    PlaceSuggestion:
+      type: object
+      description: A geo/real-estate reference place matched for autocomplete.
+      required:
+        - id
+        - global_id
+        - place_type
+        - name_en
+        - name_ar
+        - iso_country_code
+        - popularity
+      properties:
+        id:
+          type: string
+        global_id:
+          type: string
+        place_type:
+          type: string
+        name_en:
+          type: string
+        name_ar:
+          type: string
+          nullable: true
+        iso_country_code:
+          type: string
+          nullable: true
+        popularity:
+          type: integer
+
     PromoCampaignView:
       type: object
       description: >
@@ -3165,6 +3194,47 @@ components:
           format: date-time
 
 paths:
+  /v1/reference/places:
+    get:
+      operationId: getPlaceSuggestions
+      summary: Autocomplete suggestions from the geo/real-estate reference dataset
+      description: >-
+        Multilingual, typo-tolerant place suggestions (cities, districts,
+        compounds, projects) for search / autocomplete. Matches Arabic or Latin
+        partial names and tolerates typos; prefix + popularity rank first.
+        Read-only reference data — creates nothing and touches no live table.
+      tags: [reference]
+      parameters:
+        - in: query
+          name: q
+          required: true
+          description: Query text (min 2 chars); Arabic or Latin, partial ok.
+          schema: { type: string }
+        - in: query
+          name: country
+          description: Optional ISO country code filter (e.g. EG).
+          schema: { type: string }
+        - in: query
+          name: limit
+          schema: { type: integer }
+      responses:
+        "200":
+          description: Place suggestions
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    type: array
+                    items:
+                      $ref: "#/components/schemas/PlaceSuggestion"
+                  error:
+                    $ref: "#/components/schemas/ApiError"
+                    nullable: true
+                  meta:
+                    $ref: "#/components/schemas/Meta"
+
   /healthz:
     get:
       operationId: healthCheck
