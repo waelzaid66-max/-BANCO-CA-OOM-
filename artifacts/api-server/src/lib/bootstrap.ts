@@ -41,6 +41,13 @@ async function ensureSearchIndexes(): Promise<void> {
   const statements = [
     sql`CREATE INDEX CONCURRENTLY IF NOT EXISTS idx_listings_title_trgm ON listings USING gin (title gin_trgm_ops)`,
     sql`CREATE INDEX CONCURRENTLY IF NOT EXISTS idx_listings_description_trgm ON listings USING gin (description gin_trgm_ops)`,
+    // Reference dataset (geo/real-estate) fuzzy search: a trigram index on the
+    // denormalised search_blob gives partial / typo-tolerant / multilingual
+    // suggestions in one index scan, scaling to tens of millions of rows.
+    // IF NOT EXISTS makes it a no-op once created; a missing table (before the
+    // first `drizzle-kit push`) is caught below and retried on the next boot.
+    sql`CREATE INDEX CONCURRENTLY IF NOT EXISTS idx_reference_places_blob_trgm ON reference_places USING gin (search_blob gin_trgm_ops)`,
+    sql`CREATE INDEX CONCURRENTLY IF NOT EXISTS idx_reference_developers_blob_trgm ON reference_developers USING gin (search_blob gin_trgm_ops)`,
   ];
   for (const statement of statements) {
     try {

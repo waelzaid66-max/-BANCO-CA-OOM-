@@ -2297,3 +2297,149 @@ export type GlobalSupplyRequest = typeof globalSupplyRequests.$inferSelect;
 export type InsertGlobalSupplyRequest = typeof globalSupplyRequests.$inferInsert;
 export type GlobalSupplyResponse = typeof globalSupplyResponses.$inferSelect;
 export type InsertGlobalSupplyResponse = typeof globalSupplyResponses.$inferInsert;
+
+/* ── GLOBAL GEOGRAPHIC & REAL-ESTATE REFERENCE DATASET ───
+ *
+ * A STANDALONE reference database (not listings, not the taxonomy the
+ * marketplace already runs on). It exists only to power search suggestions,
+ * autocomplete, ranking and NLP matching for the real-estate section, and is
+ * designed to scale from Egypt → Middle East → the whole world WITHOUT any
+ * schema redesign:
+ *
+ *  - Hierarchy is an ADJACENCY LIST (`parentId` self-reference), so every
+ *    country can model its own administrative ladder (governorate / prefecture /
+ *    emirate / state / district / community / compound / phase / …) without a
+ *    fixed column-per-level. `placeType` is a free text label (canonical values
+ *    documented below) precisely so a new division type in any country is pure
+ *    data, never a migration.
+ *  - `searchBlob` is a denormalised, lower-cased concatenation of every name +
+ *    alias + keyword. A trigram GIN index on it (added in api-server bootstrap,
+ *    mirroring the listings pattern) gives partial / typo-tolerant / multilingual
+ *    matching in a single index scan even at tens of millions of rows.
+ *  - Nothing here references or is referenced BY the live marketplace tables, so
+ *    it can be seeded, extended or reloaded with zero impact on existing data,
+ *    APIs or performance.
+ */
+
+// Real-estate developers (Talaat Moustafa Group, Emaar Misr, SODIC, …). Kept in
+// its own table so a project (compound) links to exactly one canonical developer.
+export const referenceDevelopers = pgTable(
+  "reference_developers",
+  {
+    id: uuid("id").defaultRandom().primaryKey(),
+    slug: text("slug").notNull().unique(),
+    nameEn: text("name_en").notNull(),
+    nameAr: text("name_ar"),
+    localName: text("local_name"),
+    isoCountryCode: text("iso_country_code").notNull().default("EG"),
+    aliases: jsonb("aliases").$type<string[]>().notNull().default([]),
+    searchKeywords: jsonb("search_keywords").$type<string[]>().notNull().default([]),
+    // Lower-cased "name + aliases + keywords" join; trigram-indexed for fuzzy search.
+    searchBlob: text("search_blob").notNull().default(""),
+    popularity: integer("popularity").notNull().default(0),
+    status: text("status").notNull().default("active"),
+    createdAt: timestamp("created_at").defaultNow(),
+    updatedAt: timestamp("updated_at").defaultNow(),
+  },
+  (table) => [
+    index("idx_reference_developers_country").on(table.isoCountryCode),
+    index("idx_reference_developers_status").on(table.status),
+  ]
+);
+
+// The geographic / real-estate place hierarchy. One row per node at any level.
+// canonical `placeType` values (extend freely — it is just a label):
+//   world · continent · country · region · state · province · governorate ·
+//   prefecture · emirate · city · district · area · neighborhood · community ·
+//   compound · phase · building · unit
+export const referencePlaces = pgTable(
+  "reference_places",
+  {
+    id: uuid("id").defaultRandom().primaryKey(),
+    // Stable, human-readable identifier, e.g. "eg.cairo.new-cairo.fifth-settlement.mivida".
+    // Lets seeds be idempotent (upsert by globalId) and survive re-runs.
+    globalId: text("global_id").notNull().unique(),
+    parentId: uuid("parent_id").references((): AnyPgColumn => referencePlaces.id, {
+      onDelete: "set null",
+    }),
+    placeType: text("place_type").notNull(),
+    isoCountryCode: text("iso_country_code"),
+    nameEn: text("name_en").notNull(),
+    nameAr: text("name_ar"),
+    localName: text("local_name"),
+    slug: text("slug").notNull(),
+    aliases: jsonb("aliases").$type<string[]>().notNull().default([]),
+    searchKeywords: jsonb("search_keywords").$type<string[]>().notNull().default([]),
+    searchBlob: text("search_blob").notNull().default(""),
+    // Compounds / projects can point at their developer. NULL for pure geography.
+    developerId: uuid("developer_id").references(() => referenceDevelopers.id, {
+      onDelete: "set null",
+    }),
+    latitude: numeric("latitude", { precision: 10, scale: 7 }),
+    longitude: numeric("longitude", { precision: 10, scale: 7 }),
+    geohash: text("geohash"),
+    postalCode: text("postal_code"),
+    timezone: text("timezone"),
+    currency: text("currency"),
+    language: text("language"),
+    popularity: integer("popularity").notNull().default(0),
+    verified: boolean("verified").notNull().default(false),
+    source: text("source"),
+    sourceUrl: text("source_url"),
+    confidenceScore: numeric("confidence_score", { precision: 4, scale: 3 }),
+    status: text("status").notNull().default("active"),
+    createdAt: timestamp("created_at").defaultNow(),
+    updatedAt: timestamp("updated_at").defaultNow(),
+  },
+  (table) => [
+    index("idx_reference_places_parent").on(table.parentId),
+    index("idx_reference_places_country").on(table.isoCountryCode),
+    index("idx_reference_places_type").on(table.placeType),
+    index("idx_reference_places_status").on(table.status),
+    index("idx_reference_places_developer").on(table.developerId),
+  ]
+);
+
+// Continuous-learning queue: an unknown place/project seen in real user input is
+// recorded here (never written straight into the reference set). Occurrences are
+// counted, a confidence score accrues, and only after admin approval is it
+// promoted into `referencePlaces` — keeping the reference data clean by design.
+export const pendingLocations = pgTable(
+  "pending_locations",
+  {
+    id: uuid("id").defaultRandom().primaryKey(),
+    rawName: text("raw_name").notNull(),
+    normalized: text("normalized").notNull(),
+    isoCountryCode: text("iso_country_code"),
+    suggestedParentId: uuid("suggested_parent_id").references(
+      (): AnyPgColumn => referencePlaces.id,
+      { onDelete: "set null" }
+    ),
+    suggestedType: text("suggested_type"),
+    occurrenceCount: integer("occurrence_count").notNull().default(1),
+    confidenceScore: numeric("confidence_score", { precision: 4, scale: 3 }),
+    source: text("source"),
+    // pending · approved · rejected · merged
+    status: text("status").notNull().default("pending"),
+    mergedIntoId: uuid("merged_into_id").references(
+      (): AnyPgColumn => referencePlaces.id,
+      { onDelete: "set null" }
+    ),
+    firstSeenAt: timestamp("first_seen_at").defaultNow(),
+    lastSeenAt: timestamp("last_seen_at").defaultNow(),
+    createdAt: timestamp("created_at").defaultNow(),
+    updatedAt: timestamp("updated_at").defaultNow(),
+  },
+  (table) => [
+    // One learning row per normalized name+country; occurrences bump the counter.
+    uniqueIndex("uq_pending_locations_norm").on(table.normalized, table.isoCountryCode),
+    index("idx_pending_locations_status").on(table.status),
+  ]
+);
+
+export type ReferenceDeveloper = typeof referenceDevelopers.$inferSelect;
+export type InsertReferenceDeveloper = typeof referenceDevelopers.$inferInsert;
+export type ReferencePlace = typeof referencePlaces.$inferSelect;
+export type InsertReferencePlace = typeof referencePlaces.$inferInsert;
+export type PendingLocation = typeof pendingLocations.$inferSelect;
+export type InsertPendingLocation = typeof pendingLocations.$inferInsert;
