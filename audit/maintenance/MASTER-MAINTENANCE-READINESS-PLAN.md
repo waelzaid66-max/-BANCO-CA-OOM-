@@ -115,7 +115,7 @@ health smoke (محلي)    → PASS بعد موجة 1 (قبل Clerk)
 | # | المهمة | الحالة | ملاحظة |
 |---|--------|--------|--------|
 | 1 | دمج موجات 1–3 على `origin/main` | ✅ | @ `0eea161` |
-| 2 | CI أخضر (Typecheck & build + API tests) | ⏳ | بعد push PH-1 + P0 — `gh run watch` |
+| 2 | CI أخضر (Typecheck & build + API tests) | ⏳ | push `ddd6cd3`+ — تحقق على GitHub Actions |
 | 3 | `drizzle push` لجدول `upload_claims` على staging/prod | ⏳ | C-01 — `ensureSchemaPatches` + `WAVE-P0-STAGING-VALIDATION.md` |
 | 4 | smoke staging بمفاتيح Clerk + تخزين حقيقي | ⏳ | قائمة خطوات في `WAVE-P0-STAGING-VALIDATION.md` |
 

@@ -1,8 +1,8 @@
 # BANCO Store — Completion & Status Report
 
-_Last updated: 2026-07-07 — wave R1 furnished rental hub + billing UI (B1–B3), waves 4–5 search/geo._
+_Last updated: 2026-07-08 — PH-1 production hardening + P0 staging validation + icon registry fix._
 
-> **Release line:** `main` @ `7a1c2e8`+ — verified locally: **typecheck 0 errors (7 packages)**, **288 API tests passed** (3 skipped).
+> **Release line:** `main` @ `ddd6cd3`+ — verified locally: **typecheck 0 errors (7 packages)**, **289 API tests passed** (3 skipped), **11 mobile regression tests passed**.
 
 This is the live status of the BANCO Store monorepo (Banco Mobile · Banco Admin · Banco Market/dealer-os · API Server · shared libs). It records what is **done and verified**, the **architecture**, and the **honest remaining items** with the reason each is or isn't locally verifiable.
 
@@ -10,7 +10,8 @@ This is the live status of the BANCO Store monorepo (Banco Mobile · Banco Admin
 
 ## 1. How verification works here
 
-- **Backend (api-server):** real integration tests on a real PostgreSQL — `pnpm --filter @workspace/api-server test`. Current state: **288 passed / 3 skipped / 0 failing**.
+- **Backend (api-server):** real integration tests on a real PostgreSQL — `pnpm --filter @workspace/api-server test`. Current state: **289 passed / 3 skipped / 0 failing** (includes `ensureSchema` P0 guard).
+- **Mobile regression:** `test:icons` + `test:lib` → **11 passed** (icon registry + finance/routing guards).
 - **Type safety (all surfaces):** `pnpm -r --if-present run typecheck` → **0 errors across 7 packages** (api-server, banco-mobile, admin-os, dealer-os, landing, mockup-sandbox, scripts).
 - **API contract:** `lib/api-spec/openapi.yaml` is the source of truth → `orval` regenerates the typed client (`lib/api-client-react`) + zod (`lib/api-zod`). Generated diffs this session were **purely additive (0 deletions)**.
 - **Build:** runs on CI (Linux). Locally on Windows the esbuild native binary differs, so **typecheck is the local proxy** for compilation.
@@ -32,6 +33,8 @@ This is the live status of the BANCO Store monorepo (Banco Mobile · Banco Admin
 | **Marketplace lifecycle** | publish → appears (feed + search + SEO) → open → message → favorite → edit → bump → archive → republish → delete (+ cascade). | end-to-end DB test |
 | **Adaptive Data philosophy** | Custom specs (unlimited), search across description + spec values, minimal floor, Candidate-Attributes learning pipeline. | tests |
 | **Furnished rental host hub (R1)** | Isolated `/rentals/hub` for `is_bookable` units; edit listing (title/location/price); profile menu + booking deep-links; separate from sale/long-term rent. | mobile typecheck + manual path review |
+| **Production hardening PH-1** | Profile Payments → `/billing` hub; finance stack routes; notification deep-links guarded; `WAVE-P0-STAGING-VALIDATION.md` checklist. | `test:lib` + typecheck |
+| **Upload schema P0 (C-01)** | `ensureSchemaPatches` on boot + `ensureSchema.test.ts` proves `upload_claims` exists. | DB integration test |
 
 **Deploy hardening already in place:** `app.listen` binds the port **before** `ensureDbExtensions` (the earlier deploy failure was the port never opening because startup awaited a DB extension). Process-level `unhandledRejection`/`uncaughtException` handlers added.
 
