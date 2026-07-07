@@ -115,9 +115,9 @@ health smoke (محلي)    → PASS بعد موجة 1 (قبل Clerk)
 | # | المهمة | الحالة | ملاحظة |
 |---|--------|--------|--------|
 | 1 | دمج موجات 1–3 على `origin/main` | ✅ | @ `0eea161` |
-| 2 | CI أخضر (Typecheck & build + API tests) | ⏳ | تحقق بعد push موجة 4 |
-| 3 | `drizzle push` لجدول `upload_claims` على staging/prod | ⏳ | C-01 |
-| 4 | smoke staging بمفاتيح Clerk + تخزين حقيقي | ⏳ | رفع byte-path |
+| 2 | CI أخضر (Typecheck & build + API tests) | ⏳ | بعد push PH-1 + P0 — `gh run watch` |
+| 3 | `drizzle push` لجدول `upload_claims` على staging/prod | ⏳ | C-01 — `ensureSchemaPatches` + `WAVE-P0-STAGING-VALIDATION.md` |
+| 4 | smoke staging بمفاتيح Clerk + تخزين حقيقي | ⏳ | قائمة خطوات في `WAVE-P0-STAGING-VALIDATION.md` |
 
 ### P1 — منتج (قرار مطلوب — لا صيانة عشوائية)
 
@@ -179,6 +179,8 @@ audit/
 │   ├── WAVE-4-SEARCH-TAXONOMY.md
 │   ├── WAVE-5-SEARCH-GEO-MAPS.md
 │   ├── WAVE-R1-FURNISHED-RENTAL-HUB.md
+│   ├── WAVE-PH1-PRODUCTION-HARDENING.md
+│   └── WAVE-P0-STAGING-VALIDATION.md
 │   └── WALLET-BILLING-FINANCE-AUDIT.md
 ├── rc1/
 │   ├── BANCO-STORE-RELEASE-CANDIDATE-REPORT.md

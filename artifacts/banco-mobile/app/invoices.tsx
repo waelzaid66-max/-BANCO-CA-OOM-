@@ -105,7 +105,7 @@ export default function InvoicesScreen() {
         ]}
       >
         <Pressable
-          onPress={() => (router.canGoBack() ? router.back() : router.replace("/wallet"))}
+          onPress={() => (router.canGoBack() ? router.back() : router.replace("/billing" as Href))}
           style={styles.backBtn}
           hitSlop={12}
           testID="invoices-back"

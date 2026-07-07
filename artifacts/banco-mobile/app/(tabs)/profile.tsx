@@ -893,7 +893,7 @@ export default function ProfileScreen() {
         label: t("profile.menuWallet"),
         onPress: () => {
           setShowMenu(false);
-          router.push("/wallet");
+          router.push("/billing" as Href);
         },
       },
       {
