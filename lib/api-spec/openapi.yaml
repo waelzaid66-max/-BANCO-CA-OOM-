@@ -4445,6 +4445,23 @@ paths:
             type: string
             enum: [local, imported]
         - in: query
+          name: near_lat
+          description: Near-me anchor latitude (requires near_lng and radius_km).
+          schema:
+            type: number
+        - in: query
+          name: near_lng
+          description: Near-me anchor longitude (requires near_lat and radius_km).
+          schema:
+            type: number
+        - in: query
+          name: radius_km
+          description: Search radius in kilometres from the near-me anchor.
+          schema:
+            type: number
+            minimum: 0.1
+            maximum: 500
+        - in: query
           name: sort
           description: >-
             Result ordering. recommended (default) and newest use the created_at
@@ -4589,6 +4606,18 @@ paths:
         - in: query
           name: origin_type
           schema: { type: string, enum: [local, imported] }
+        - in: query
+          name: near_lat
+          description: Near-me anchor latitude (requires near_lng and radius_km).
+          schema: { type: number }
+        - in: query
+          name: near_lng
+          description: Near-me anchor longitude (requires near_lat and radius_km).
+          schema: { type: number }
+        - in: query
+          name: radius_km
+          description: Search radius in kilometres from the near-me anchor.
+          schema: { type: number, minimum: 0.1, maximum: 500 }
       responses:
         "200":
           description: Map clusters

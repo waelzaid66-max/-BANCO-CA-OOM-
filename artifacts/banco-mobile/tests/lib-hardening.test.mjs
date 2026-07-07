@@ -106,3 +106,31 @@ test("real-estate engines include facet-gated property_type chips", () => {
     );
   }
 });
+
+test("search params wire near-me geo to API client", () => {
+  const src = fs.readFileSync(path.join(APP_ROOT, "lib", "searchParams.ts"), "utf8");
+  assert.match(src, /nearMeEnabled/, "SearchCriteria must track near-me toggle");
+  assert.match(src, /sp\.near_lat/, "buildSearchParams must send near_lat");
+  assert.match(src, /sp\.radius_km/, "buildSearchParams must send radius_km");
+});
+
+test("search tab uses market-scoped rental taxonomy adapter", () => {
+  const search = fs.readFileSync(path.join(APP_ROOT, "app", "(tabs)", "search.tsx"), "utf8");
+  const sheet = fs.readFileSync(
+    path.join(APP_ROOT, "components", "search", "FilterSheet.tsx"),
+    "utf8",
+  );
+  assert.match(search, /rentalTermsForSearch/, "search tab must use searchTaxonomy adapter");
+  assert.match(search, /MARKET_COUNTRIES/, "search tab must expose per-market rental chips");
+  assert.match(sheet, /rentalTermsForSearch/, "FilterSheet must use market-scoped rental terms");
+  assert.match(sheet, /filter-near-me/, "FilterSheet must expose near-me control");
+});
+
+test("create taxonomy includes engine-aligned commercial property types", () => {
+  const src = fs.readFileSync(
+    path.join(APP_ROOT, "constants", "listingCreateTaxonomy.ts"),
+    "utf8",
+  );
+  assert.match(src, /commercial_land/, "PROPERTY_TYPES must include commercial_land");
+  assert.match(src, /warehouse/, "PROPERTY_TYPES must include warehouse");
+});

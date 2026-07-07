@@ -4939,7 +4939,7 @@ export const bulkImportListings = async (bulkImportListingsBody: Blob, options?:
     ...options,
     method: 'POST',
     headers: { 'Content-Type': 'text/csv', ...options?.headers },
-    body: JSON.stringify(bulkImportListingsBody)
+    body: bulkImportListingsBody
   }
 );}
 

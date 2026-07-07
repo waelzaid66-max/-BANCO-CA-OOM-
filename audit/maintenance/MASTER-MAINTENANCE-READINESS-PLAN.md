@@ -1,7 +1,7 @@
 # خطة الصيانة والجاهزية الشاملة — BANCO OOM
 
 **آخر تحديث:** 2026-07-08  
-**الفرع على GitHub:** `main` @ `49bcf62`+  
+**الفرع على GitHub:** `main` @ `fd9c981`+  
 **قرار الإصدار:** **GO WITH FIXES** (انظر `audit/rc1/BANCO-STORE-RELEASE-CANDIDATE-REPORT.md`)
 
 > **مبدأ العمل:** نُضيف ونُصلح دون هدم — لا حذف لمسارات أو فروع أو دول مدعومة. العقارات والأقسام متعددة الدول تبقى في التصنيف والإنشاء؛ الصيانة طبّقت **طبقة بحث إضافية** فوق ما هو موجود.
@@ -199,7 +199,7 @@ scripts/rc1-validation.ps1
 
 | الريبو | المسار / URL | آخر معروف | إجراء |
 |--------|----------------|-----------|--------|
-| **هنا (أساسي)** | `origin` → `waelzaid66-max/-BANCO-CA-OOM-` | `main` @ `52b0e41` | مزامنة `banco.store-main` عند توفر المسار |
+| **هنا (أساسي)** | `origin` → `waelzaid66-max/-BANCO-CA-OOM-` | `main` (wave 4/5 parity) | مزامنة `banco.store-main` عند توفر المسار |
 
 **روابط PR:**  
 https://github.com/waelzaid66-max/-BANCO-CA-OOM-/pull/new/maintenance/wave-1-3-upload-search-eas

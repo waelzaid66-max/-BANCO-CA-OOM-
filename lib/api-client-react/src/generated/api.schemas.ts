@@ -2927,6 +2927,20 @@ industry?: SearchListingsIndustry;
  */
 origin_type?: SearchListingsOriginType;
 /**
+ * Near-me anchor latitude (requires near_lng and radius_km).
+ */
+near_lat?: number;
+/**
+ * Near-me anchor longitude (requires near_lat and radius_km).
+ */
+near_lng?: number;
+/**
+ * Search radius in kilometres from the near-me anchor.
+ * @minimum 0.1
+ * @maximum 500
+ */
+radius_km?: number;
+/**
  * Result ordering. recommended (default) and newest use the created_at keyset cursor; price_asc, price_desc and popular switch to offset pagination (their cursor is an opaque numeric offset). popular ranks by lifetime interactions (views + clicks).
  */
 sort?: SearchListingsSort;
@@ -3067,6 +3081,20 @@ min_year?: number;
 max_year?: number;
 industry?: GetMapClustersIndustry;
 origin_type?: GetMapClustersOriginType;
+/**
+ * Near-me anchor latitude (requires near_lng and radius_km).
+ */
+near_lat?: number;
+/**
+ * Near-me anchor longitude (requires near_lat and radius_km).
+ */
+near_lng?: number;
+/**
+ * Search radius in kilometres from the near-me anchor.
+ * @minimum 0.1
+ * @maximum 500
+ */
+radius_km?: number;
 };
 
 export type GetMapClustersCategory = typeof GetMapClustersCategory[keyof typeof GetMapClustersCategory];

@@ -15,6 +15,7 @@ import {
   ScrollView,
   StyleSheet,
   View,
+  Alert,
 } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import Animated, {
@@ -53,7 +54,7 @@ import {
   type CarBrand,
 } from "@/constants/cars";
 import { labelForValue } from "@/constants/locations";
-import { RENTAL_TERMS } from "@/constants/listingCreateTaxonomy";
+import { DEFAULT_MARKET_COUNTRY } from "@/constants/listingCreateTaxonomy";
 import { engineByKey, enginesForCategory } from "@/constants/engines";
 import { useI18n } from "@/context/LanguageContext";
 import { SavedSearch, useSession } from "@/context/SessionContext";
@@ -67,6 +68,16 @@ import {
   type PaymentType,
   type SearchSort,
 } from "@/lib/searchParams";
+import {
+  DEFAULT_NEAR_RADIUS_KM,
+  requestNearMeCoords,
+} from "@/lib/nearMe";
+import {
+  MARKET_COUNTRIES,
+  marketCountryLabel,
+  rentalTermsForSearch,
+  sanitizeRentalTermForMarket,
+} from "@/lib/searchTaxonomy";
 
 type FilterCategory = Category;
 
@@ -108,6 +119,11 @@ const CLEAR_FILTERS: Partial<SearchCriteria> = {
   maxPrice: "",
   location: "",
   paymentType: "any",
+  marketCountry: DEFAULT_MARKET_COUNTRY,
+  nearMeEnabled: false,
+  nearLat: null,
+  nearLng: null,
+  nearRadiusKm: DEFAULT_NEAR_RADIUS_KM,
 };
 
 // Valid sort keys arriving via navigation (e.g. the Home "Sort" launcher). Any
@@ -506,6 +522,10 @@ export default function SearchScreen() {
     const engine = engineByKey(criteria.category, key);
     const patch: Partial<SearchCriteria> = { engineKey: key };
     if (engine?.params.offer_type === "sale") patch.rentalTerm = null;
+    if (engine?.params.fuel_type) patch.fuelType = engine.params.fuel_type;
+    if (engine?.params.transmission) {
+      patch.transmission = engine.params.transmission;
+    }
     update(patch);
   };
 
@@ -517,6 +537,36 @@ export default function SearchScreen() {
 
   const selectRentalTerm = (term: string) =>
     update({ rentalTerm: criteria.rentalTerm === term ? null : term });
+
+  const selectMarketCountry = (code: string) =>
+    update({
+      marketCountry: code,
+      rentalTerm: sanitizeRentalTermForMarket(criteria.rentalTerm, code),
+    });
+
+  const toggleNearMe = useCallback(async () => {
+    if (criteria.nearMeEnabled) {
+      update({
+        nearMeEnabled: false,
+        nearLat: null,
+        nearLng: null,
+      });
+      return;
+    }
+    const coords = await requestNearMeCoords();
+    if (!coords) {
+      Alert.alert(t("search.nearMe"), t("search.nearMeDenied"));
+      return;
+    }
+    update({
+      nearMeEnabled: true,
+      nearLat: coords.lat,
+      nearLng: coords.lng,
+      nearRadiusKm: DEFAULT_NEAR_RADIUS_KM,
+    });
+  }, [criteria.nearMeEnabled, t, update]);
+
+  const rentalTerms = rentalTermsForSearch(criteria.marketCountry);
 
   const originKey: "all" | "local" | "imported" =
     criteria.originType === "local" || criteria.originType === "imported"
@@ -815,44 +865,88 @@ export default function SearchScreen() {
         </View>
       ) : null}
       {showRentalTerms ? (
-        <ScrollView
-          horizontal
-          showsHorizontalScrollIndicator={false}
-          contentContainerStyle={[styles.originRow, { flexDirection: rowDir }]}
-        >
-          {RENTAL_TERMS.map((r) => {
-            const active = criteria.rentalTerm === r.value;
-            return (
-              <Pressable
-                key={r.value}
-                onPress={() => {
-                  playSound("tap");
-                  selectRentalTerm(r.value);
-                }}
-                style={[
-                  styles.originChip,
-                  {
-                    backgroundColor: active ? colors.primary : colors.secondary,
-                  },
-                ]}
-                testID={`search-rental-${r.value}`}
-              >
-                <AppText
+        <>
+          <ScrollView
+            horizontal
+            showsHorizontalScrollIndicator={false}
+            contentContainerStyle={[styles.originRow, { flexDirection: rowDir }]}
+          >
+            {MARKET_COUNTRIES.map((m) => {
+              const active = criteria.marketCountry === m.value;
+              return (
+                <Pressable
+                  key={m.value}
+                  onPress={() => {
+                    playSound("tap");
+                    selectMarketCountry(m.value);
+                  }}
                   style={[
-                    styles.originChipText,
+                    styles.originChip,
                     {
-                      color: active
-                        ? colors.primaryForeground
-                        : colors.mutedForeground,
+                      backgroundColor: active
+                        ? colors.primary
+                        : colors.secondary,
                     },
                   ]}
+                  testID={`search-market-${m.value}`}
                 >
-                  {isRTL ? r.ar : r.en}
-                </AppText>
-              </Pressable>
-            );
-          })}
-        </ScrollView>
+                  <AppText
+                    style={[
+                      styles.originChipText,
+                      {
+                        color: active
+                          ? colors.primaryForeground
+                          : colors.mutedForeground,
+                      },
+                    ]}
+                  >
+                    {marketCountryLabel(m.value, isRTL)}
+                  </AppText>
+                </Pressable>
+              );
+            })}
+          </ScrollView>
+          <ScrollView
+            horizontal
+            showsHorizontalScrollIndicator={false}
+            contentContainerStyle={[styles.originRow, { flexDirection: rowDir }]}
+          >
+            {rentalTerms.map((r) => {
+              const active = criteria.rentalTerm === r.value;
+              return (
+                <Pressable
+                  key={r.value}
+                  onPress={() => {
+                    playSound("tap");
+                    selectRentalTerm(r.value);
+                  }}
+                  style={[
+                    styles.originChip,
+                    {
+                      backgroundColor: active
+                        ? colors.primary
+                        : colors.secondary,
+                    },
+                  ]}
+                  testID={`search-rental-${r.value}`}
+                >
+                  <AppText
+                    style={[
+                      styles.originChipText,
+                      {
+                        color: active
+                          ? colors.primaryForeground
+                          : colors.mutedForeground,
+                      },
+                    ]}
+                  >
+                    {isRTL ? r.ar : r.en}
+                  </AppText>
+                </Pressable>
+              );
+            })}
+          </ScrollView>
+        </>
       ) : null}
 
       {/* Orientation line: how many results the current criteria produced.
@@ -887,6 +981,7 @@ export default function SearchScreen() {
         onUpdate={update}
         onOpenLocationPicker={() => setLocationPickerOpen(true)}
         onClearLocation={() => update({ location: "" })}
+        onToggleNearMe={() => void toggleNearMe()}
         onClearAll={clearAllFilters}
       />
 

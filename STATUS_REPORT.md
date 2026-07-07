@@ -1,8 +1,8 @@
 # BANCO Store — Completion & Status Report
 
-_Last updated: 2026-07-08 — CI fix (ESLint URL global) + full verification sweep._
+_Last updated: 2026-07-08 — Wave 4/5 parity (market rental taxonomy + near-me map/list)._
 
-> **Release line:** `main` @ `52b0e41` — verified locally + CI: **294 API tests passed / 3 skipped**, **20 mobile regression tests passed**, **ESLint scripts clean**, **CI 4/4 green** ([run #12](https://github.com/waelzaid66-max/-BANCO-CA-OOM-/actions/runs/28904249869)).
+> **Release line:** `main` — **295 API tests / 3 skipped**, **23 mobile regression tests**, CI 4/4 green @ `fd9c981`+.
 
 This is the live status of the BANCO Store monorepo (Banco Mobile · Banco Admin · Banco Market/dealer-os · API Server · shared libs). It records what is **done and verified**, the **architecture**, and the **honest remaining items** with the reason each is or isn't locally verifiable.
 
@@ -10,8 +10,8 @@ This is the live status of the BANCO Store monorepo (Banco Mobile · Banco Admin
 
 ## 1. How verification works here
 
-- **Backend (api-server):** real integration tests on a real PostgreSQL — `pnpm --filter @workspace/api-server test`. Current state: **294 passed / 3 skipped / 0 failing** (includes `health`, `ensureSchema`, upload claims).
-- **Mobile regression:** `pnpm --filter @workspace/banco-mobile run test` → **20 passed** (icons + lib-hardening + resilience).
+- **Backend (api-server):** **295 passed / 3 skipped** (includes geo map/list parity, map clusters, rental_term, industrial isolation).
+- **Mobile regression:** **23 passed** (icons + lib-hardening + resilience).
 - **ESLint:** `pnpm run lint` on `scripts/**` — **0 errors** (Node globals include `URL` for staging smoke).
 - **Type safety (all surfaces):** `pnpm -r --if-present run typecheck` → **0 errors across 7 packages** (api-server, banco-mobile, admin-os, dealer-os, landing, mockup-sandbox, scripts).
 - **API contract:** `lib/api-spec/openapi.yaml` is the source of truth → `orval` regenerates the typed client (`lib/api-client-react`) + zod (`lib/api-zod`). Generated diffs this session were **purely additive (0 deletions)**.
@@ -36,10 +36,11 @@ This is the live status of the BANCO Store monorepo (Banco Mobile · Banco Admin
 | **Furnished rental host hub (R1)** | Isolated `/rentals/hub` for `is_bookable` units; edit listing (title/location/price); profile menu + booking deep-links; separate from sale/long-term rent. | mobile typecheck + manual path review |
 | **Production hardening PH-1** | Profile Payments → `/billing` hub; finance stack routes; notification deep-links guarded; `WAVE-P0-STAGING-VALIDATION.md` checklist. | `test:lib` + typecheck |
 | **Billing export B4** | Invoice PDF download + monthly CSV from `/billing`; API `…/invoices/{id}/pdf` + `…/report.csv`; OpenAPI/orval. | unit tests + `test:lib` |
-| **Search engines P1-8** | Ten facet-gated `property_type` chips (duplex, penthouse, studio, townhouse, chalet, office, shop, warehouse, commercial_land) on home RE engines. | `test:lib` + i18n en/ar |
+| **Wave 4/5 search parity** | Market-scoped rental chips (`searchTaxonomy`), near-me on FilterSheet + API/OpenAPI, map clusters honour radius | `searchParams`, `FilterSheet`, `SearchService.nearMeConditions` |
 | **Health smoke (P0)** | Automated vitest for `GET /api/healthz`, `/api/livez`, `/api/readyz` (no Clerk). | `health.test.ts` |
 | **P0 staging tooling** | `scripts/staging-p0-smoke.mjs` (upload byte-path) + `scripts/verify-upload-claims-schema.mjs`. | run on staging with secrets |
-| **P2 infra** | GCP deploy scaffold (`deploy/gcp/`), ESLint monorepo + CI job, mobile regression CI job + `test` script, mobile resilience tests. | `WAVE-P2-INFRA.md` + Actions |
+| **Search engines P1-8** | Ten facet-gated `property_type` chips; create taxonomy aligned (`commercial_land`, `warehouse`). | `test:lib` + i18n en/ar |
+| **P2 infra** | GCP deploy scaffold (`deploy/gcp/`), ESLint monorepo + CI job, mobile regression CI job. | `WAVE-P2-INFRA.md` + Actions |
 | **Upload schema P0 (C-01)** | `ensureSchemaPatches` on boot + `ensureSchema.test.ts` proves `upload_claims` exists. | DB integration test |
 
 **Deploy hardening already in place:** `app.listen` binds the port **before** `ensureDbExtensions` (the earlier deploy failure was the port never opening because startup awaited a DB extension). Process-level `unhandledRejection`/`uncaughtException` handlers added.

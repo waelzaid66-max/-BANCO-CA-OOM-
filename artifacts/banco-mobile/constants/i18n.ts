@@ -428,6 +428,7 @@ const en = {
     yearFrom: "From",
     yearTo: "To",
     nearMe: "Near me",
+    nearMeDenied: "Location permission is required to search near you.",
     allEgypt: "All Egypt",
     discover: {
       categories: "Browse categories",
@@ -1024,6 +1025,7 @@ const en = {
       rooms: "Rooms",
       roomsPh: "e.g. 3",
       offerType: "Offer type",
+      market: "Market",
       rentalTerm: "Rental system",
       ownership: "Ownership",
       industry: "Industry",
@@ -2262,6 +2264,7 @@ const ar: typeof en = {
     yearFrom: "من",
     yearTo: "إلى",
     nearMe: "قريب مني",
+    nearMeDenied: "يلزم السماح بالموقع للبحث بالقرب منك.",
     allEgypt: "كل مصر",
     discover: {
       categories: "تصفّح الأقسام",
@@ -2853,6 +2856,7 @@ const ar: typeof en = {
       rooms: "الغرف",
       roomsPh: "مثال: ٣",
       offerType: "نوع العرض",
+      market: "السوق",
       rentalTerm: "نظام الإيجار",
       ownership: "نوع الملكية",
       industry: "الصناعة",
