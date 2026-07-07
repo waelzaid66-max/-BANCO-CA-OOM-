@@ -523,6 +523,25 @@ export const users = pgTable("users", {
   deletedAt: timestamp("deleted_at"),
 });
 
+/**
+ * Binds a presigned upload slot to the Clerk user who requested it. Prevents
+ * IDOR: another authenticated user cannot promote/attach an object they did not
+ * presign. Rows expire with the presign TTL (15 min) and are deleted on use.
+ */
+export const uploadClaims = pgTable(
+  "upload_claims",
+  {
+    objectPath: text("object_path").primaryKey(),
+    clerkId: text("clerk_id").notNull(),
+    expiresAt: timestamp("expires_at").notNull(),
+    createdAt: timestamp("created_at").defaultNow(),
+  },
+  (t) => ({
+    clerkIdx: index("upload_claims_clerk_id_idx").on(t.clerkId),
+    expiresIdx: index("upload_claims_expires_at_idx").on(t.expiresAt),
+  }),
+);
+
 /* ── LISTINGS ──────────────────────────────────────────── */
 
 export const listings = pgTable(

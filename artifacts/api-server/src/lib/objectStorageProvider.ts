@@ -28,6 +28,7 @@ export interface ObjectStorage {
   getObjectEntityFile(objectPath: string): Promise<StoredObject>;
   normalizeObjectEntityPath(rawPath: string): string;
   promoteServingUrlToPublic(servingUrl: string, ownerId: string): Promise<void>;
+  getAclOwnerForServingUrl(servingUrl: string): Promise<string | null>;
   getServingObjectMetadata(
     servingUrl: string,
   ): Promise<{ contentType: string | null; size: number | null } | null>;
