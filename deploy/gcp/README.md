@@ -1,6 +1,6 @@
 # BANCO — GCP deployment (Cloud Run + Cloud Build)
 
-**Status:** build pipeline fixed for exit **125** — validate with Cloud Build before production deploy.
+**Status:** build pipeline fixed for exit **125** in repo YAML — **GCP Console triggers** must point at these files ([TRIGGER_MIGRATION.md](./TRIGGER_MIGRATION.md)).
 
 ## Root cause of Cloud Build exit 125 (fixed in repo)
 
