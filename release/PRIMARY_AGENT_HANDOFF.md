@@ -1,19 +1,21 @@
 # تسليم للوكيل الأساسي (Replit) — 2026-07-08
 
-**لا تغييرات كود مطلوبة من هذه الجلسة** ما لم يظهر فشل CI جديد.
+**CI على `main` أخضر** (بعد `eff3471` lockfile لـ `globals`). لقطة فشل PR #2 عند `38de1c0` كانت قبل هذا الإصلاح.
 
 ## SHA المعتمد
 
 | المعنى | Commit |
 |--------|--------|
-| آخر إصلاحات منتج (Metro، OpenAI، تخزين، جاهزية) | `92a33e0` |
-| `HEAD` على `main` (origin) | `045112f` |
+| `HEAD` على `main` (origin) | `30dcb2a` |
+| إصلاح ESLint `URL` + `globals.node` | مدمج PR #2 + `eff3471` |
+| إصلاح SEO بعد نشر SELL | مدمج PR #1 |
+| خريطة البحث `MapViewport` (`min_lat`/`max_lat`…) | على `main` في `SearchResultsMap.tsx` |
 
-التحقق من المرآات (قراءة فقط من Cloud Agent، قبل `6854fbc`):
+التحقق من المرآات:
 
 ```text
-origin/main = 045112f (بعد دفع التوثيق)
-bbanco/main = bdeals/main = boom/main = 31a4bfe ← شغّل push-mirror-remotes.sh من Replit
+origin/main = 30dcb2a ✅
+bbanco / bdeals / boom ← شغّل push-mirror-remotes.sh من Replit (cursor[bot] يأخذ 403)
 ```
 
 ## إن احتجت إعادة دفع المرآات
