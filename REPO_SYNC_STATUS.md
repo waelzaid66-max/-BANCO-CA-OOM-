@@ -1,7 +1,8 @@
 # BANCO — حالة مزامنة الريبوهات (نسخة الإنتاج)
 
 **التاريخ:** 2026-07-08 (تحديث Cloud Agent)  
-**HEAD على `main` (كل الريموتات):** `31a4bfe`  
+**HEAD على `main` (origin):** `6854fbc`  
+**مرآات GitHub (`b-banco`, `b.deals`, `B-OOM`):** `31a4bfe` حتى يشغّل المالك `./scripts/push-mirror-remotes.sh` من Replit  
 **آخر commit كود/إصلاحات (قبل توثيق المزامنة فقط):** `92a33e0` (اعتماد إنتاج) · `f2dcab7` (Metro + OpenAI)  
 **أداة دفع المرآات:** `scripts/push-mirror-remotes.sh` (يتطلب صلاحيات المالك — `cursor[bot]` لا يملك push لـ `b-banco` / `b.deals` / `B-OOM`)
 
@@ -29,10 +30,10 @@
 
 | الاسم | GitHub URL | دور | `main` @ |
 |-------|------------|-----|----------|
-| **origin** (أساسي) | `waelzaid66-max/-BANCO-CA-OOM-` | مصدر العمل الرئيسي | `31a4bfe` ✅ |
-| **bbanco** | `waelzaid66-max/b-banco` | مرآة كاملة | `31a4bfe` ✅ |
-| **bdeals** | `waelzaid66-max/b.deals` | الريبو الأصلي (deploy) | `31a4bfe` ✅ |
-| **boom** | `waelzaid66-max/B-OOM` | B-OOM الأصلي | `31a4bfe` ✅ |
+| **origin** (أساسي) | `waelzaid66-max/-BANCO-CA-OOM-` | مصدر العمل الرئيسي | `6854fbc` ✅ |
+| **bbanco** | `waelzaid66-max/b-banco` | مرآة كاملة | `31a4bfe` ⏳ (دفع `6854fbc` من Replit) |
+| **bdeals** | `waelzaid66-max/b.deals` | الريبو الأصلي (deploy) | `31a4bfe` ⏳ |
+| **boom** | `waelzaid66-max/B-OOM` | B-OOM الأصلي | `31a4bfe` ⏳ |
 | **upstream** (محلي) | `banco stor app/banco.store-main` | نسخة محلية | يدوي — قارن بـ `31a4bfe` |
 
 > **ملاحظة:** لا يوجد فرع `aws-virgen-main`. مجلد `aws-virgen` مرجع منفصل فقط.
@@ -57,7 +58,7 @@
 cd C:\Users\waelz\Downloads\BANCO-CA-OOM
 git fetch origin bbanco bdeals boom
 git rev-parse HEAD origin/main bbanco/main bdeals/main boom/main
-# يجب أن تكون الأربعة = 31a4bfe... (نفس SHA على origin + المرآات)
+# يجب أن تكون الأربعة = 6854fbc... بعد تشغيل push-mirror-remotes.sh من Replit
 ```
 
 ---

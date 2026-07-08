@@ -7,12 +7,13 @@
 | المعنى | Commit |
 |--------|--------|
 | آخر إصلاحات منتج (Metro، OpenAI، تخزين، جاهزية) | `92a33e0` |
-| `HEAD` على `main` (يشمل توثيق مزامنة فقط) | `31a4bfe` |
+| `HEAD` على `main` (يشمل توثيق مزامنة فقط) | `6854fbc` |
 
-التحقق من المرآات (قراءة فقط من Cloud Agent):
+التحقق من المرآات (قراءة فقط من Cloud Agent، قبل `6854fbc`):
 
 ```text
-origin/main = bbanco/main = bdeals/main = boom/main = 31a4bfe
+origin/main = 6854fbc (بعد دفع التوثيق)
+bbanco/main = bdeals/main = boom/main = 31a4bfe ← شغّل push-mirror-remotes.sh من Replit
 ```
 
 ## إن احتجت إعادة دفع المرآات
