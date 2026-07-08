@@ -1,6 +1,6 @@
 # BANCO STORE FINAL PRODUCTION READINESS REPORT
 
-**Date:** 2026-07-08 (QC refresh)  
+**Date:** 2026-07-08 (final sign-off wave)  
 **Branch:** `main` → `origin/main`  
 **Mode:** Release Freeze (no new features, root-cause fixes only)  
 **Note on `aws-virgen-main`:** No local or remote branch named `aws-virgen-main` exists. Remotes are `origin` (GitHub) and `upstream` (local path). Ship target remains **`origin/main`**.
@@ -30,7 +30,8 @@ Audit → Phase 0 Metro/mobile build + OpenAI hardening → affected greens → 
 | Build Status (banco-mobile) | **PASS** | Lightweight `expo export --platform web`; `BUILD_EXIT=0` and confirmed rebuild `BUILD2_EXIT=0`. |
 | Full monorepo `pnpm run build` | **NOT RE-RUN this wave** | CI builds api-server, admin-os, dealer-os, landing (not mobile). Mobile gate fixed separately. |
 | TypeScript Status | **PASS (touched)** | Mobile typecheck exit 0; api-server typecheck exit 0 (includes integrations-openai rebuild). |
-| Lint Status | **PASS / pending confirm** | `pnpm run lint` re-run in QC shell; prior wave exit 0. |
+| Lint Status | **PASS** | `pnpm run lint` exit 0 (final wave). |
+| TypeScript (full monorepo) | **PASS** | `pnpm run typecheck` exit 0 (final wave). |
 | Mobile regression tests | **PASS** | 23 tests (icons 6 + lib 12 + resilience 5). |
 | Database Status | **BLOCKED (High)** | `DATABASE_URL` host DNS `ENOTFOUND` from this network — schema verify not executable here. |
 | API Status | **PARTIAL / BLOCKED (High)** | Code + health design intact; authenticated upload smoke needs `CLERK_BEARER_TOKEN`. |
@@ -114,6 +115,7 @@ Audit → Phase 0 Metro/mobile build + OpenAI hardening → affected greens → 
 
 ## 10) Related
 
+- [PRODUCTION-SIGN-OFF-AND-DEPLOYMENT.md](./PRODUCTION-SIGN-OFF-AND-DEPLOYMENT.md) — **الحزمة المؤسسية النهائية** (جاهزية + أمن + أداء + امتثال + اعتماد + نشر)  
 - [RELEASE-CANDIDATE-FINAL.md](./RELEASE-CANDIDATE-FINAL.md)  
 - [STAGING-REQUIRED-SECRETS.md](./STAGING-REQUIRED-SECRETS.md)  
 - `deploy/aws/`, `deploy/gcp/README.md`

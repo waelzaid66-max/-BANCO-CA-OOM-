@@ -1,6 +1,6 @@
 ﻿# Release Candidate — Final (Release Freeze)
 
-**Date:** 2026-07-08 (QC refresh)  
+**Date:** 2026-07-08 (final sign-off wave)  
 **Branch:** `main`  
 **Mode:** **RELEASE FREEZE** — no new features; Critical/High only if proven.
 
@@ -10,7 +10,7 @@
 
 | Environment | Verdict | Why |
 |-------------|---------|-----|
-| **Code base / CI design** | **GO WITH FIXES** | Metro/mobile export fixed (exit 0); OpenAI timeouts/retries; TypeScript + lint + 23 mobile tests green on touched path |
+| **Code base / CI design** | **GO WITH FIXES** | Final wave: mobile build + full typecheck + lint + 23 mobile tests all exit 0 on `f2dcab7` |
 | **Staging** | **GO WHEN OPS BLOCKERS CLOSED** | Authenticated smoke + DB reachability still blocked by runtime secrets/network |
 | **Global production (stores)** | **NO-GO** | App-store operational gates (EAS signing/device/store checks) not fully completed |
 
@@ -61,6 +61,7 @@
 
 ## Related
 
+- [PRODUCTION-SIGN-OFF-AND-DEPLOYMENT.md](./PRODUCTION-SIGN-OFF-AND-DEPLOYMENT.md)  
 - [BANCO-STORE-FINAL-PRODUCTION-READINESS-REPORT.md](./BANCO-STORE-FINAL-PRODUCTION-READINESS-REPORT.md)  
 - [STAGING-REQUIRED-SECRETS.md](./STAGING-REQUIRED-SECRETS.md)  
 - [OPEN-ITEMS-BACKLOG.md](./OPEN-ITEMS-BACKLOG.md)
