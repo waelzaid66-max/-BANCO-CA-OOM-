@@ -1,8 +1,9 @@
 # BANCO — حالة مزامنة الريبوهات (نسخة الإنتاج)
 
-**التاريخ:** 2026-07-08 (closure wave)  
-**HEAD على `main` (origin):** `a8cc3e1`  
-**مرآات GitHub:** `b-banco` / `b.deals` / `B-OOM` @ `a8cc3e1` ✅  
+**التاريخ:** 2026-07-08 (post PR #1/#2 + lockfile)  
+**HEAD على `main` (origin):** `30dcb2a`  
+**GitHub Actions CI على `main`:** ✅ أخضر — run [28976981389](https://github.com/waelzaid66-max/-BANCO-CA-OOM-/actions/runs/28976981389) (Typecheck، ESLint، Mobile regression، API tests)  
+**مرآات GitHub:** `b-banco` / `b.deals` / `B-OOM` — يُحدَّثون عبر `scripts/push-mirror-remotes.sh` من حساب لديه push (ليس cursor[bot])  
 **أداة دفع المرآات:** `scripts/push-mirror-remotes.sh`
 
 **آخر commit إصلاحات (هذه الموجة):** release-freeze — Windows preinstall، Universal Links env، ops secrets loader، 25 اختبار موبايل
@@ -29,10 +30,10 @@
 
 | الاسم | GitHub URL | دور | `main` @ |
 |-------|------------|-----|----------|
-| **origin** | `waelzaid66-max/-BANCO-CA-OOM-` | مصدر العمل | `a8cc3e1` ✅ |
-| **bbanco** | `waelzaid66-max/b-banco` | مرآة | `a8cc3e1` ✅ |
-| **bdeals** | `waelzaid66-max/b.deals` | deploy أصلي | `a8cc3e1` ✅ |
-| **boom** | `waelzaid66-max/B-OOM` | B-OOM | `a8cc3e1` ✅ |
+| **origin** | `waelzaid66-max/-BANCO-CA-OOM-` | مصدر العمل | `30dcb2a` ✅ |
+| **bbanco** | `waelzaid66-max/b-banco` | مرآة | ادفع يدوياً بعد `origin` |
+| **bdeals** | `waelzaid66-max/b.deals` | deploy أصلي | ادفع يدوياً بعد `origin` |
+| **boom** | `waelzaid66-max/B-OOM` | B-OOM | ادفع يدوياً بعد `origin` |
 | **aws-virgen** | `waelzaid66-max/aws-virgen` | AWS EC2/CD | `./scripts/publish-aws-virgen-rc.sh` |
 | **upstream** (محلي) | `banco stor app/banco.store-main` | نسخة محلية | يدوي |
 
