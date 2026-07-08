@@ -579,9 +579,13 @@ const SPAM_PHRASES = [
   "فرصة استثمار",
 ];
 
-/** RFC-4122 UUIDs in titles (e.g. test tokens) must not trip phone stuffing. */
+/**
+ * UUID-shaped runs in titles (e.g. journey-test tokens `JRNYSELL_<uuid>`) must not
+ * trip the phone-stuffing heuristic — hex groups contain long decimal-digit runs
+ * once whitespace is removed (~2% of v4 UUIDs before this strip).
+ */
 const UUID_IN_TEXT_RE =
-  /[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}/gi;
+  /[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}/gi;
 
 /**
  * Scans title/description for spam signals: known spam phrases, embedded URLs,

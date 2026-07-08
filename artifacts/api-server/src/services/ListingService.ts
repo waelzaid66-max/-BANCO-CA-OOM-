@@ -725,7 +725,7 @@ export async function getSeoListing(listingId: string): Promise<SeoListing | nul
       bumped_at: listings.bumpedAt,
     })
     .from(listings)
-    .leftJoin(users, eq(listings.userId, users.id))
+    .innerJoin(users, eq(listings.userId, users.id))
     .where(
       and(
         eq(listings.id, listingId),
@@ -785,7 +785,7 @@ export async function getSitemapListings(
       bumped_at: listings.bumpedAt,
     })
     .from(listings)
-    .leftJoin(users, eq(listings.userId, users.id))
+    .innerJoin(users, eq(listings.userId, users.id))
     .where(and(eq(listings.status, "active"), ...publicVisibilityConditions()))
     .orderBy(desc(sql`COALESCE(${listings.bumpedAt}, ${listings.createdAt})`))
     .limit(limit);
