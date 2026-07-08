@@ -1,9 +1,8 @@
 # BANCO — حالة مزامنة الريبوهات (نسخة الإنتاج)
 
 **التاريخ:** 2026-07-08  
-**النسخة المعتمدة (canonical):** `92a33e0` على فرع `main`  
-**الرسالة:** `docs(readiness): publish production sign-off and deployment package`  
-**السابق الهندسي:** `f2dcab7` — إصلاح Metro + OpenAI hardening
+**النسخة المعتمدة (canonical):** `8a697c4` على فرع `main`  
+**السابق:** `92a33e0` (اعتماد إنتاج) · `f2dcab7` (Metro + OpenAI)
 
 ---
 
@@ -28,11 +27,11 @@
 
 | الاسم | GitHub URL | دور | قبل المزامنة | بعد المزامنة |
 |-------|------------|-----|--------------|--------------|
-| **origin** (أساسي) | `waelzaid66-max/-BANCO-CA-OOM-` | مصدر العمل الرئيسي | `92a33e0` | `92a33e0` ✅ |
-| **bbanco** | `waelzaid66-max/b-banco` | مرآة كاملة | `3e41512` | يُحدَّث → `92a33e0` |
-| **bdeals** | `waelzaid66-max/b.deals` | الريبو الأصلي (deploy) | `712cdf6` | يُحدَّث → `92a33e0` |
-| **boom** | `waelzaid66-max/B-OOM` | B-OOM الأصلي | `0eea161` | يُحدَّث → `92a33e0` |
-| **upstream** (محلي) | `banco stor app/banco.store-main` | نسخة محلية قديمة | `c4fb358` | يُحدَّث → `92a33e0` |
+| **origin** (أساسي) | `waelzaid66-max/-BANCO-CA-OOM-` | مصدر العمل الرئيسي | `8a697c4` ✅ |
+| **bbanco** | `waelzaid66-max/b-banco` | مرآة كاملة | `8a697c4` ✅ |
+| **bdeals** | `waelzaid66-max/b.deals` | الريبو الأصلي (deploy) | `8a697c4` ✅ |
+| **boom** | `waelzaid66-max/B-OOM` | B-OOM الأصلي | `8a697c4` ✅ |
+| **upstream** (محلي) | `banco stor app/banco.store-main` | نسخة محلية | `8a697c4` ✅ |
 
 > **ملاحظة:** لا يوجد فرع `aws-virgen-main`. مجلد `aws-virgen` مرجع منفصل فقط.
 
@@ -56,7 +55,7 @@
 cd C:\Users\waelz\Downloads\BANCO-CA-OOM
 git fetch origin bbanco bdeals boom
 git rev-parse HEAD origin/main bbanco/main bdeals/main boom/main
-# يجب أن تكون الخمسة = 92a33e0d165f6ff58a2e91f5347524d67935b2c3
+# يجب أن تكون الخمسة = 8a697c4... (نفس SHA على كل الريموتات)
 ```
 
 ---
