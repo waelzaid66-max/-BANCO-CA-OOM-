@@ -1,8 +1,9 @@
 # 06 — GCP readiness checklist (Go / No-Go)
 
-## A. Repository (both `-BANCO-CA-OOM-` and `aws-virgen` after sync)
+## A. Repository (`bancooom` = GCP deploy canonical; `-BANCO-CA-OOM-` = dev; `aws-virgen` optional mirror)
 
-- [ ] `main` SHA documented in `REPO_SYNC_STATUS.md`
+- [ ] `bancooom` `main` SHA = primary `main` (run `scripts/publish-bancooom-deploy.sh` or workflow **Sync bancooom**)
+- [ ] Cloud Build trigger points at **`bancooom`**, not `-BANCO-CA-OOM-` (avoids `cloud-run-source-deploy/-banco-ca-oom-` exit 125)
 - [ ] GitHub CI: Typecheck & build — **PASS**
 - [ ] GitHub CI: API tests (Postgres) — **PASS**
 - [ ] GitHub CI: ESLint — **PASS**

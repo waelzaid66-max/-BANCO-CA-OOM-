@@ -1,8 +1,34 @@
 # إصلاح مشغّلات Cloud Build (GitHub → GCP) — exit 125 / exit 1 على خطوة Build
 
-**الحالة في الريبو (2026-07-08):** ملفات `cloudbuild*.yaml` و`Dockerfile` صحيحة وتستخدم `$BUILD_ID`.  
-**GitHub Actions CI:** يمرّ (typecheck، tests، lint، mobile).  
+**الحالة في الريبو (2026-07-09):** ملفات `cloudbuild*.yaml` و`Dockerfile` صحيحة وتستخدم `$BUILD_ID`.  
+**مستودع النشر الموصى به:** [`bancooom`](https://github.com/waelzaid66-max/bancooom) — راجع [BANCOOOM_CANONICAL_DEPLOY.md](./BANCOOOM_CANONICAL_DEPLOY.md).  
+**GitHub Actions CI:** يمرّ (typecheck، tests، lint، mobile، GCP config gate).  
 **ما يزال أحمر على GitHub:** فحوصات **Cloud Build** من مشغّلين في Google Cloud — لأن إعدادات المشغّل نفسه في Console لم تُحدَّث لقراءة هذه الملفات.
+
+## exit 125 مع `cloud-run-source-deploy/-banco-ca-oom-/banco-oom:…`
+
+إذا ظهر في السجل:
+
+```text
+invalid argument "me-central1-docker.pkg.dev/.../cloud-run-source-deploy/-banco-ca-oom-/banco-oom:<sha>" for "-t, --tag" flag: invalid reference format
+```
+
+| السبب | الإجراء |
+|--------|---------|
+| Cloud Run **source deploy** يبني وسماً تلقائياً من اسم مستودع GitHub | أوقف هذا المسار للإنتاج |
+| مقطع `-banco-ca-oom-` **يبدأ بشرطة** | اسم الريبو `-BANCO-CA-OOM-` غير صالح كمقطع OCI |
+| الـ commit في الوسم (`b2d6f7f…`) سليم | المشكلة **قبل** `docker build` — ليس في الكود داخل الصورة |
+
+**الإصلاح:**
+
+1. اربط المشغّل بـ **`bancooom`** (أو أي اسم AR/Git **بدون** شرطة في البداية/النهاية).
+2. استخدم **YAML** من الريبو (`deploy/gcp/cloudbuild.deploy.yaml`) وليس Dockerfile مُولَّد من Console.
+3. عيّن `_AR_REPO=banco`, `_IMAGE_NAME=api`, `_REGION=me-central1` (أو منطقتك).
+
+```text
+صحيح:  me-central1-docker.pkg.dev/$PROJECT_ID/banco/api:$BUILD_ID
+خطأ:   .../cloud-run-source-deploy/-banco-ca-oom-/banco-oom:$SHORT_SHA
+```
 
 إذا رأيت **ثلاثة** أو أكثر من:
 
@@ -52,7 +78,7 @@
 
 | متغير | قيمة مقترحة |
 |-------|-------------|
-| `_REGION` | `europe-west1` |
+| `_REGION` | `me-central1` (مشروعك) أو `europe-west1` |
 | `_AR_REPO` | `banco` |
 | `_IMAGE_NAME` | `api` |
 | `_SERVICE` | `banco-api` |

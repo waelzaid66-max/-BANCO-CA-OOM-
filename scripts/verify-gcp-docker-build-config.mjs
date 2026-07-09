@@ -10,6 +10,10 @@
 import fs from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
+import {
+  detectCloudRunSourceDeployAntiPattern,
+  validateImagePathSegment,
+} from "./lib/docker-image-reference.mjs";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const ROOT = path.resolve(__dirname, "..");
@@ -142,6 +146,89 @@ function checkDockerfilePathsInCloudBuild() {
   return true;
 }
 
+function parseSubstitutionDefaults(rel) {
+  const text = read(rel);
+  const block = text.match(/^substitutions:\s*\n([\s\S]*?)(?=^[^\s]|\nsteps:)/m);
+  if (!block) return {};
+  const out = {};
+  for (const line of block[1].split(/\r?\n/)) {
+    const m = line.match(/^\s+_([A-Z0-9_]+):\s*(.+?)\s*$/);
+    if (m) out[`_${m[1]}`] = m[2].replace(/^["']|["']$/g, "");
+  }
+  return out;
+}
+
+function checkSubstitutionSegments() {
+  const files = [
+    "cloudbuild.yaml",
+    "deploy/gcp/cloudbuild.yaml",
+    "deploy/gcp/cloudbuild.deploy.yaml",
+  ];
+  const keys = ["_AR_REPO", "_IMAGE_NAME", "_SERVICE"];
+  let ok = true;
+  for (const rel of files) {
+    const subs = parseSubstitutionDefaults(rel);
+    for (const key of keys) {
+      const val = subs[key];
+      if (!val || val.includes("$")) continue;
+      const v = validateImagePathSegment(val);
+      if (!v.ok) {
+        console.error(`[FAIL] ${rel}: substitution ${key}=${val} — ${v.reason}`);
+        ok = false;
+      }
+    }
+  }
+  if (ok) {
+    console.log("[PASS] _AR_REPO / _IMAGE_NAME / _SERVICE substitutions are valid OCI segments");
+  }
+  return ok;
+}
+
+function checkDocumentedAntiPatterns() {
+  const needles = [
+    "cloud-run-source-deploy/-banco-ca-oom-",
+    "cloud-run-source-deploy/-BANCO-CA-OOM-",
+  ];
+  const docPaths = [
+    "deploy/gcp/TRIGGER_MIGRATION.md",
+    "deploy/gcp/README.md",
+    "deploy/gcp/BANCOOOM_CANONICAL_DEPLOY.md",
+  ];
+  let ok = true;
+  for (const rel of docPaths) {
+    if (!fs.existsSync(path.join(ROOT, rel))) continue;
+    const text = read(rel);
+    if (!text.includes("cloud-run-source-deploy")) {
+      console.error(`[FAIL] ${rel}: must document cloud-run-source-deploy / invalid repo name fix`);
+      ok = false;
+    }
+  }
+  const sample =
+    "me-central1-docker.pkg.dev/project-6a1ad54e-d0fe-46a4-afc/cloud-run-source-deploy/-banco-ca-oom-/banco-oom:deadbeef";
+  const anti = detectCloudRunSourceDeployAntiPattern(sample);
+  if (!anti.forbidden) {
+    console.error("[FAIL] anti-pattern detector should flag cloud-run-source-deploy/-banco-ca-oom-");
+    ok = false;
+  }
+  for (const n of needles) {
+    let found = false;
+    for (const rel of docPaths) {
+      if (fs.existsSync(path.join(ROOT, rel)) && read(rel).includes(n.split("/")[1])) {
+        found = true;
+        break;
+      }
+    }
+    if (!found) {
+      console.error(`[FAIL] docs must mention invalid segment like ${n.split("/")[1]}`);
+      ok = false;
+    }
+  }
+  if (ok) {
+    console.log("[PASS] documented Cloud Run source-deploy anti-pattern (-banco-ca-oom-)");
+  }
+  return ok;
+}
+
 function checkCloudRunDeploySafety() {
   const deploy = read("deploy/gcp/cloudbuild.deploy.yaml");
   if (!deploy.includes("_ALLOW_UNAUTH")) {
@@ -170,6 +257,8 @@ function main() {
   ok = checkCloudBuildUsesBuildId("deploy/gcp/cloudbuild.yaml") && ok;
   ok = checkCloudBuildUsesBuildId("deploy/gcp/cloudbuild.deploy.yaml") && ok;
   ok = checkForbiddenImageTags() && ok;
+  ok = checkSubstitutionSegments() && ok;
+  ok = checkDocumentedAntiPatterns() && ok;
   ok = checkDockerfilePathsInCloudBuild() && ok;
   ok = checkCloudRunDeploySafety() && ok;
 
