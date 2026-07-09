@@ -1,17 +1,17 @@
 # BANCO — حالة مزامنة الريبوهات (نسخة الإنتاج)
 
-**التاريخ:** 2026-07-08 (موجة إغلاق — PR #5 مدمج)  
-**HEAD على `main` (origin):** `482eb34` (أو أحدث بعد `fix(publish)`)
+**التاريخ:** 2026-07-09  
+**HEAD على `main` (origin):** `3a95afa`  
+**aws-virgen `main`:** `39b1e63` (مزامَن + tag `v1.0.0-rc.2`)  
+**مرجع موحّد:** `DUAL_REPO_STATUS.md`
 
 ## GitHub Actions CI على `main`
 
 | Run | الحالة |
 |-----|--------|
-| [28978878224](https://github.com/waelzaid66-max/-BANCO-CA-OOM-/actions/runs/28978878224) | ✅ 5/5 (Typecheck، API tests، ESLint، GCP gate، Mobile) |
+| [28979326703](https://github.com/waelzaid66-max/-BANCO-CA-OOM-/actions/runs/28979326703) | ✅ 5/5 (Typecheck، API tests، ESLint، GCP gate، Mobile) |
 
-**Tag مستهدف:** `v1.0.0-rc.2`
-
-**أداة دفع المرآات:** `scripts/push-mirror-remotes.sh`  
+**Tag:** `v1.0.0-rc.2`  
 **أداة aws-virgen:** `scripts/publish-aws-virgen-rc.sh v1.0.0-rc.2`
 
 ---
@@ -20,13 +20,10 @@
 
 | الاسم | GitHub URL | دور | `main` @ |
 |-------|------------|-----|----------|
-| **origin** | `waelzaid66-max/-BANCO-CA-OOM-` | مصدر العمل | `482eb34` ✅ |
-| **aws-virgen** | `waelzaid66-max/aws-virgen` | AWS EC2/CD | **يدوي** — merge جاهز؛ الدفع يتطلب `gh auth` كمالك (ليس cursor[bot]) |
-| **bbanco** | `waelzaid66-max/b-banco` | مرآة | شغّل `push-mirror-remotes.sh` |
-| **bdeals** | `waelzaid66-max/b.deals` | deploy | شغّل `push-mirror-remotes.sh` |
-| **boom** | `waelzaid66-max/B-OOM` | B-OOM | شغّل `push-mirror-remotes.sh` |
+| **origin** | `waelzaid66-max/-BANCO-CA-OOM-` | مصدر العمل | `3a95afa` ✅ |
+| **aws-virgen** | `waelzaid66-max/aws-virgen` | AWS EC2/CD | `39b1e63` ✅ |
 
-> Cloud Agent يدمج محلياً لـ virgen لكن **لا يستطيع push** — GitHub يفرض هوية `cursor[bot]` على git push.
+> **نطاق رسمي:** الريبوهان أعلاه فقط. لا مرآات.
 
 ---
 
