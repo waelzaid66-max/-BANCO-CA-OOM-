@@ -17,7 +17,8 @@ Branch with fixes: local `fix/mobile-master-stabilize` (not yet on this host)
 }
 ```
 
-Re-run anytime: `node audit/mobile/scripts/probe-live-deploy.mjs`
+Re-run anytime: `node audit/mobile/scripts/probe-live-deploy.mjs`  
+Or guided: `node audit/mobile/scripts/ops-next-step.mjs` → see `NEXT-OPS-REPLIT-REDEPLOY.md`
 
 ## URLs opened
 
