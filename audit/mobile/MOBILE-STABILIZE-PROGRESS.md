@@ -152,9 +152,10 @@ Docs: `SEARCH-BUTTON-ISOLATION.md`, `SECTION-ISOLATION-STRICT-2026-07-10.md`, `A
 | ID | Why |
 |----|-----|
 | Device QA | Checklist ready (`DEVICE-QA-SECTION-COMPANIES.md`) — **not run on device** |
-| Live Replit | **FRESH** (probe 2026-07-10) — `market_country` + map `is_bookable`/`price_display` على الإنتاج |
+| Live Replit | **PARTIAL** (probe 2026-07-10 19:16Z) — wave 6 FRESH · wave 8 STALE (`seller.social_links`) |
+| Wave 10C live | Edit media PATCH + draft `promotedMedia` — **local only** until redeploy @ `23ded32+` |
 | O16 OPS | Staging secrets / EAS / smoke — not a stabilize code reopen |
-| API DB vitest | Needs `DATABASE_URL` locally — pure gate test: `allowCommodityMaterialFilter.test.ts` |
+| API DB vitest | Needs reachable `DATABASE_URL` — `ListingService.update.test.ts` + upload schema verify |
 | search-contract bare `node --test` | Prefer `pnpm --filter @workspace/search-contract run test` (`tsx`) |
 
 **Canonical next steps for store success:** `MOBILE-PUBLISH-SUCCESS-GATE.md` → **`NEXT-OPS-REPLIT-REDEPLOY.md`** (redeploy → smoke → EAS → device QA). Do not invent new code blockers.
@@ -164,13 +165,13 @@ Quick status:
 node audit/mobile/scripts/ops-next-step.mjs
 ```
 
-## Latest verification (automated) — 2026-07-10 (waves 6–9)
+## Latest verification (automated) — 2026-07-10 (waves 6–10C)
 
-- Full report: `COMPREHENSIVE-AUDIT-2026-07-10.md`
-- lib-hardening: **47/47**
-- search-contract: **37/37** (incl. `listing_mode` URL round-trip)
+- Master report: `WAVE-10-MASTER-REPORT-AR.md`
+- lib-hardening: **57/57**
+- search-contract: **37/37**
 - `pnpm run confidence -- --skip-typecheck`: **17/17**
-- Live: wave 6 **FRESH**, wave 8 **STALE** — `probe-full-deploy.mjs`
+- Live: wave 6 **FRESH**, wave 8 **STALE** @ `23ded32` — `probe-full-deploy.mjs` → `live-probes/2026-07-10-full-deploy-proof.json`
 - Device QA: **OPEN**
 
 ## Reference folders

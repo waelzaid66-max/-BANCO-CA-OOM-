@@ -274,9 +274,10 @@ pnpm --filter @workspace/api-server test -- src/services/ListingService.update.t
 
 ## 9) خطواتك التالية (بالترتيب)
 
-1. **Commit على main** (Wave 10C) — `git log -1`  
-2. **Redeploy Replit** من `origin/main` → `node audit/mobile/scripts/post-redeploy-verify.mjs`  
-3. **EAS preview** + `audit/mobile/DEVICE-QA-SECTION-COMPANIES.md`  
+1. ~~**Commit على main** (Wave 10C)~~ — **done** @ `9818ac0` + inventory @ `23ded32`  
+2. **Redeploy Replit** من `origin/main` @ `23ded32+` → `pnpm run ops:post-redeploy` (هدف exit 0)  
+   - **حالة حية 2026-07-10:** wave 6 FRESH · wave 8 STALE — انظر `live-probes/2026-07-10-full-deploy-proof.json`  
+3. **EAS preview** + `audit/mobile/DEVICE-QA-SECTION-COMPANIES.md` (يشمل تعديل وسائط)  
 4. **`CLERK_BEARER_TOKEN`** → staging upload smoke إن متاح  
 5. **لا تحذف** مسارات import/supply/rent/business لأغراض "تنظيف"  
 

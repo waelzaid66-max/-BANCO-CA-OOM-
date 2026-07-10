@@ -40,13 +40,18 @@ function runJson(script) {
 const w6 = runJson(probe6);
 const w8 = w6.status === 0 ? runJson(probe8) : { status: 2, body: { skipped: true }, stderr: "" };
 
+function gitHead() {
+  const r = spawnSync("git", ["rev-parse", "--short", "HEAD"], { encoding: "utf8", cwd: root });
+  return r.status === 0 ? r.stdout.trim() : "unknown";
+}
+
 const report = {
   generatedAt: new Date().toISOString(),
   base,
   repo: {
     branch: "main",
-    head: "3b40782",
-    wave8Feature: "5939849",
+    head: gitHead(),
+    wave8Feature: "5939849+",
   },
   wave6: { exit: w6.status, ...w6.body },
   wave8: { exit: w8.status, ...w8.body },

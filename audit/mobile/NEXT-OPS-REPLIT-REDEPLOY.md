@@ -1,11 +1,11 @@
 # NEXT OPS — Redeploy Replit from stabilize branch
 
 **Goal:** Make live API **FRESH** so Device QA / EAS claims are honest.  
-**Branch:** `main` @ Wave 10C (بعد `b2926a5`)  
-**Tip commit:** Wave 10C — edit media PATCH + draft promotedMedia  
+**Branch:** `main` @ Wave 10C  
+**Tip commit:** `23ded32` — edit media PATCH + draft promotedMedia + inventory  
 **Repo:** `https://github.com/waelzaid66-max/-BANCO-CA-OOM-.git`
 
-**2026-07-10:** المضيف الحي **FRESH لموجة 6** (ISO + خريطة) لكن **STALE لموجة 8** — حقل `seller.social_links` غير موجود في JSON الحي. أعد النشر من `origin/main`.
+**2026-07-10 22:13:** المضيف الحي **PARTIAL** — موجة 6 FRESH · موجة 8 STALE (`seller.social_links` غير موجود). أعد النشر من `origin/main` @ `23ded32+`.
 
 ---
 
@@ -18,17 +18,17 @@ node audit/mobile/scripts/pre-redeploy-code-gate.mjs   # static: branch has prob
 node audit/mobile/scripts/ops-next-step.mjs      # code gate + live probe
 ```
 
-**Reality check 2026-07-10:**
+**Reality check 2026-07-10 (22:13 UTC+3):**
 
 | Check | Result | Meaning |
 |-------|--------|---------|
-| Local confidence | PASS | كود الفرع سليم |
-| `pre-redeploy-code-gate` | PASS @ `f8273d0` | بعد redeploy يجب أن يمر probe |
+| Local confidence | PASS 17/17 | كود الفرع سليم |
+| `pre-redeploy-code-gate` | PASS @ `23ded32` | بعد redeploy يجب أن يمر wave 6 + wave 8 |
 | Live `healthz` + `readyz` | PASS | السيرفر شغّال |
-| Live probe (موجة 6) | **FRESH** | `EGYPT→400`, map فيه `is_bookable`/`price_display` |
-| probe-wave8-seller-social | **STALE** | `seller` بلا `social_links` — أعد النشر من `main` |
+| Live probe (موجة 6) | **FRESH** | `EGYPT→400`, map فيه `is_bookable`/`price_display`, EG≠SA |
+| probe-wave8-seller-social | **STALE** | `seller` بلا `social_links` — أعد النشر من `main` @ `23ded32+` |
 | `CLERK_BEARER_TOKEN` | missing | upload smoke لاحقاً |
-| `DATABASE_URL` | missing | schema verify لاحقاً |
+| `DATABASE_URL` | present (local) | schema verify متاح محلياً |
 
 ---
 
