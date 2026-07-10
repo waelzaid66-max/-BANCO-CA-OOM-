@@ -67,7 +67,7 @@ Branch: `fix/mobile-master-stabilize`
 | M31 | Hub rent deep-link `new_law` (not dead `monthly`); feed wires `market_country`; facet category CLEAR; home/web teaser send market; dead rentalDaily/Monthly/Yearly copy removed |
 | — | Docs: `SEARCH-SECTION-COMPANIES-2026-07-10.md`, `DEVICE-QA-SECTION-COMPANIES.md` |
 
-Docs: `SEARCH-BUTTON-ISOLATION.md`, `HONEST-INVENTORY-2026-07-10.md`
+Docs: `SEARCH-BUTTON-ISOLATION.md`, `SECTION-ISOLATION-STRICT-2026-07-10.md`, `ARCHITECTURE-FILE-INDEX.md`
 
 ## Still open (honest)
 
@@ -95,6 +95,7 @@ node audit/mobile/scripts/ops-next-step.mjs
 - Live probe: **STALE** (exit 2)
 - Staging smoke default host: **404 dead**; schema verify: **ENOTFOUND**
 - CI `mobile-regression`: icons + lib + resilience + **universal-links**
+- Architecture maintenance closure: `ARCHITECTURE-FILE-INDEX.md`, `pnpm run confidence` (proofs + contract)
 
 ## Reference folders
 Not modified.

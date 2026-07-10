@@ -171,7 +171,24 @@ promote / ListingService attach
 | `allowCommodityMaterialFilter.ts` | بوابة material خالصة |
 | `feedVisibility.ts` / `uploadClaims.ts` | أمان السطح العام / الرفع |
 | `MOBILE-PUBLISH-SUCCESS-GATE.md` | بوابة النشر الوحيدة |
+| `SECTION-ISOLATION-STRICT-2026-07-10.md` | عزل strict حقل/زر/خريطة |
+| `ARCHITECTURE-FILE-INDEX.md` | فهرس البنية الكامل |
 | `NEXT-OPS-REPLIT-REDEPLOY.md` | خطوة L3 التنفيذية |
+
+---
+
+## 10) عزل الأقسام (طبقة إضافية 2026-07-10)
+
+بعد M28–M31، مراجعة حقل-بحقلة كشفت تسرّبات **محددة** (ليست تخميناً):
+
+| طبقة | آلية |
+|------|------|
+| UI | `CLEAR_SECTION_ATTRS` + إخفاء chrome + مسح suggestions عند التبديل |
+| عقد | `buildSearchParams` يحذف installment خارج car/RE |
+| API | autocomplete بـ `category` + `industrial_type` |
+| خريطة | `criteriaKey` يخرج من sticky map؛ bookable RE-only |
+
+الإثبات: `proof-isolation.mjs` + `lib-hardening` + ضمن `pnpm run confidence`.
 
 ---
 

@@ -1,15 +1,15 @@
 ﻿#!/usr/bin/env node
 /**
- * Local production-confidence gate â€” runs checks that do NOT need staging secrets.
+ * Local production-confidence gate — runs checks that do NOT need staging secrets.
  *
  * Usage (from repo root):
  *   node scripts/production-confidence-check.mjs
  *   node scripts/production-confidence-check.mjs --skip-typecheck
  *
  * Exit codes:
- *   0 â€” all executed checks passed
- *   1 â€” one or more checks failed
- *   2 â€” invalid invocation / missing repo layout
+ *   0 — all executed checks passed
+ *   1 — one or more checks failed
+ *   2 — invalid invocation / missing repo layout
  */
 
 import { spawnSync } from "node:child_process";
@@ -100,7 +100,7 @@ function checkExpoConfig() {
       pass("app identifiers");
     }
     if (!fs.existsSync(appConfig)) {
-      fail("app.config.ts", "missing â€” expo-router origin should be dynamic");
+      fail("app.config.ts", "missing — expo-router origin should be dynamic");
     } else {
       pass("app.config.ts present");
     }
@@ -147,7 +147,7 @@ function checkWorkspaceRefs() {
         const pkgPath = path.join(ROOT, "lib", name.replace("@workspace/", ""), "package.json");
         const alt = path.join(ROOT, "artifacts", name.replace("@workspace/", ""), "package.json");
         if (!fs.existsSync(pkgPath) && !fs.existsSync(alt)) {
-          fail("workspace ref", `${name} â†’ ${ver} (package not found)`);
+          fail("workspace ref", `${name} → ${ver} (package not found)`);
           return;
         }
       }
@@ -183,10 +183,30 @@ function checkOpenApi() {
 
 function checkMobileTests() {
   const r = run("pnpm", ["run", "test"], MOBILE);
-  const countMatch = (r.stdout || "").match(/ℹ pass (\d+)/);
-  const label = countMatch ? `${countMatch[1]} tests` : "mobile test suite";
+  const passCounts = [...(r.stdout || "").matchAll(/ℹ pass (\d+)/g)].map((m) => Number(m[1]));
+  const total = passCounts.reduce((a, b) => a + b, 0);
+  const label = total > 0 ? `${total} tests (${passCounts.length} files)` : "mobile test suite";
   if (r.ok) pass("mobile regression tests", label);
   else fail("mobile regression tests", r.stderr || r.stdout || `exit ${r.status}`);
+}
+
+function checkSearchContract() {
+  const r = run("pnpm", ["--filter", "@workspace/search-contract", "run", "test"], ROOT);
+  const countMatch = (r.stdout || "").match(/ℹ pass (\d+)/);
+  const label = countMatch ? `${countMatch[1]} tests` : "search-contract";
+  if (r.ok) pass("search-contract tests", label);
+  else fail("search-contract tests", r.stderr || r.stdout || `exit ${r.status}`);
+}
+
+function checkMobileProof(scriptRel, label) {
+  const script = path.join(ROOT, scriptRel);
+  if (!fs.existsSync(script)) {
+    fail(label, `missing ${scriptRel}`);
+    return;
+  }
+  const r = run("node", [script], ROOT);
+  if (r.ok) pass(label);
+  else fail(label, (r.stderr || r.stdout || `exit ${r.status}`).split("\n").slice(-4).join(" "));
 }
 
 function checkMobileTypecheck() {
@@ -211,7 +231,7 @@ function summarize() {
   console.log(`\n--- ${results.length - failed.length}/${results.length} passed ---`);
   if (failed.length) {
     console.error("\nFailed:");
-    for (const f of failed) console.error(`  â€¢ ${f.name}: ${f.detail}`);
+    for (const f of failed) console.error(`  • ${f.name}: ${f.detail}`);
     process.exit(1);
   }
 }
@@ -238,6 +258,9 @@ function main() {
   }
 
   checkMobileTests();
+  checkSearchContract();
+  checkMobileProof("audit/mobile/scripts/proof-isolation.mjs", "proof-isolation (section companies)");
+  checkMobileProof("audit/mobile/scripts/proof-create-fields.mjs", "proof-create-fields");
   summarize();
 }
 

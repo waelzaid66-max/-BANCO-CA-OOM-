@@ -49,8 +49,8 @@ const SCREEN_ROUTES: Record<string, Href> = {
   notifications: "/notifications",
   supply_hub: "/business/supply-hub",
   industry: "/industry",
-  rentals: "/rentals/hub",
-  billing: "/billing",
+  rentals: "/rentals/hub" as Href,
+  billing: "/billing" as Href,
   assistant: "/assistant",
 };
 

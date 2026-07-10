@@ -180,7 +180,8 @@
 - [x] Expo/EAS config + monorepo Metro (~18/22)
 - [x] سبعة ركائز (وثائق) + RC تقارير + OPEN-ITEMS + secrets inventory
 - [x] Website separation plan (تخطيط)
-- [x] بوابات محلية: typecheck، lint، 23 mobile، confidence
+- [x] بوابات محلية: typecheck، lint، **34** mobile، confidence (**16/16**)
+- [x] فهرس البنية `ARCHITECTURE-FILE-INDEX.md` + موجة `WAVE-MOBILE-STABILIZE-ISOLATION.md`
 - [x] حماية مسار النشر في نطاق الـdiff الحالي
 - [x] Release Freeze entered (engineering)
 
@@ -221,6 +222,7 @@
 | `FULL-STRICT-AUDIT-REPORT.md` | نتائج الاختبارات الصارمة |
 | `RELEASE-CANDIDATE-FINAL.md` | حكم GO/NO-GO |
 | `PHASE-LISTING-PUBLISH-LIFECYCLE.md` | سلامة النشر |
+| `audit/ARCHITECTURE-FILE-INDEX.md` | فهرس البنية والملفات |
 | `STATUS_REPORT.md` | ما تم تسليمه كمنتج (حدّث التاريخ عند الدفع) |
 
 ---

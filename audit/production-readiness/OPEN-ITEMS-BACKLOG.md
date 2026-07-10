@@ -1,7 +1,7 @@
 # البنود غير المكتملة فقط — استخراج من تقرير الجاهزية
 
 **مصدر:** `FULL-READINESS-STATUS-PLAN.md` + 21-phase  
-**آخر تحديث إغلاق:** 2026-07-08
+**آخر تحديث إغلاق:** 2026-07-10
 
 ---
 
@@ -19,6 +19,7 @@
 | O18 | **SKIP** | Paymob B5 |
 | O19 | **CLOSED** | Release freeze + RC update (this wave) |
 | O20 | **CLOSED (code)** | Mobile CI now runs `test:universal-links` with icons/lib/resilience (2026-07-10) |
+| O21 | **CLOSED** | Architecture file index + confidence gate extended + wave doc `WAVE-MOBILE-STABILIZE-ISOLATION.md` |
 
 ---
 
