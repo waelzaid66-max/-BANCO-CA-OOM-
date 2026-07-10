@@ -2,7 +2,7 @@
 
 Branch: `main` (was `fix/mobile-master-stabilize` — merged)
 
-### Wave 9 — UX/product pass (2026-07-10, local — pending commit)
+### Wave 9 — UX/product pass (2026-07-10, `eb41fd9`)
 | Fix | Detail |
 |-----|--------|
 | Search | Chips: الكل / بيع / شراء·مطلوب via `listing_mode` → `is_request` |
