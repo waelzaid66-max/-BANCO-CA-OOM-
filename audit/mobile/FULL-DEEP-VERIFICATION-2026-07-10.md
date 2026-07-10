@@ -29,6 +29,9 @@
 | proof-isolation | `node audit/mobile/scripts/proof-isolation.mjs` | **0** | all M27–M31 flags true |
 | proof-create-fields | `node audit/mobile/scripts/proof-create-fields.mjs` | **0** | pass |
 | search-contract | `pnpm --filter @workspace/search-contract run test` | **0** | **33/33** (after fix) |
+| production-confidence | `pnpm run confidence -- --skip-typecheck` | **0** | **16/16** (+ **18/18** with typecheck) |
+| pre-redeploy-code-gate | `pnpm run ops:code-gate` | **0** | probe signals on branch |
+| C-02 sqlLikeEscape | vitest `sqlLikeEscape.test.ts` | **0** | 3/3 |
 | allowCommodityMaterialFilter | `node --import tsx --test …allowCommodityMaterialFilter.test.ts` | **0** | **4/4** |
 | Live probe | `probe-live-deploy.mjs` | **2** | EG≡SA, bad ISO 200, no bookable/price |
 | ops-next-step | wraps probe | **2** | points at NEXT-OPS-REPLIT-REDEPLOY |
@@ -64,7 +67,7 @@ Full path table: agent explore pass 2026-07-10 (same day).
 | Fix | Code | Local auto test |
 |-----|------|-----------------|
 | C-01 upload_claims IDOR | FOUND | Needs `DATABASE_URL` (vitest) |
-| C-02 LIKE escape | FOUND | **No dedicated test** (WEAK) |
+| C-02 LIKE escape | FOUND | **PASS** — `sqlLikeEscape.test.ts` (vitest, no DB) |
 | C-03 deleted-user visibility | FOUND | Needs `DATABASE_URL` |
 | H-03 ACL Clerk owner | FOUND | Needs `DATABASE_URL` / objectStorage vitest |
 

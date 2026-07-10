@@ -226,6 +226,13 @@ function checkLibsTypecheck() {
   else fail("libs typecheck", (r.stderr || r.stdout).split("\n").slice(-5).join(" "));
 }
 
+function checkApiPureTest(relUnderApiServer, label) {
+  const apiRoot = path.join(ROOT, "artifacts", "api-server");
+  const r = run("pnpm", ["exec", "vitest", "run", relUnderApiServer], apiRoot);
+  if (r.ok) pass(label);
+  else fail(label, (r.stderr || r.stdout || `exit ${r.status}`).split("\n").slice(-5).join(" "));
+}
+
 function summarize() {
   const failed = results.filter((r) => !r.ok);
   console.log(`\n--- ${results.length - failed.length}/${results.length} passed ---`);
@@ -261,6 +268,8 @@ function main() {
   checkSearchContract();
   checkMobileProof("audit/mobile/scripts/proof-isolation.mjs", "proof-isolation (section companies)");
   checkMobileProof("audit/mobile/scripts/proof-create-fields.mjs", "proof-create-fields");
+  checkMobileProof("audit/mobile/scripts/pre-redeploy-code-gate.mjs", "pre-redeploy code gate");
+  checkApiPureTest("src/lib/sqlLikeEscape.test.ts", "C-02 LIKE escape (sqlLikeEscape)");
   summarize();
 }
 

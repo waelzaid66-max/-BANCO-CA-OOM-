@@ -79,8 +79,9 @@
 | `mobile/scripts/proof-isolation.mjs` | فحص تسرّبات بين الشركات |
 | `mobile/scripts/proof-create-fields.mjs` | حقول إنشاء ↔ تصنيف |
 | `mobile/scripts/probe-live-deploy.mjs` | exit 0/2 freshness |
+| `mobile/scripts/pre-redeploy-code-gate.mjs` | static branch signals قبل redeploy |
 | `mobile/scripts/post-redeploy-verify.mjs` | سلسلة بعد redeploy |
-| `mobile/scripts/ops-next-step.mjs` | حالة الخطوة التالية |
+| `mobile/scripts/ops-next-step.mjs` | code gate + probe + تعليمات |
 
 ### صيانة تاريخية (`maintenance/`)
 

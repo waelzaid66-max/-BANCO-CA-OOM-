@@ -25,9 +25,10 @@
 
 ## ما يبقى بعد Release Freeze (أنت فقط)
 
+0. `pnpm run ops:code-gate` ثم **Redeploy API** من فرع stabilize → `pnpm run ops:post-redeploy` (**FRESH**)  
 1. توفير أسرار `STAGING-REQUIRED-SECRETS.md`  
-2. **Redeploy API** من فرع stabilize ثم `LIVE-DEPLOY-PROBE.md`  
-3. تشغيل Phase 18 scripts + device publish smoke  
+2. تشغيل Phase 18 scripts + device publish smoke  
+3. `node scripts/staging-p0-smoke.mjs` + `verify-upload-claims-schema.mjs` (بعد الأسرار)
 4. `eas build --profile preview` ثم production عند الموافقة  
 5. تنفيذ Device QA: `MOBILE-STABILIZE-ACCEPTANCE.md` + `DEVICE-QA-SECTION-COMPANIES.md`  
 6. تأكيد GitHub Actions UI على آخر commit

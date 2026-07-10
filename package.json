@@ -12,7 +12,10 @@
     "lint": "eslint scripts --max-warnings 0",
     "lint:website": "eslint artifacts/banco-web artifacts/landing --max-warnings 0",
     "lint:report": "eslint scripts artifacts/api-server/src lib/db/src",
-    "confidence": "node scripts/production-confidence-check.mjs"
+    "confidence": "node scripts/production-confidence-check.mjs",
+    "ops:next": "node audit/mobile/scripts/ops-next-step.mjs",
+    "ops:code-gate": "node audit/mobile/scripts/pre-redeploy-code-gate.mjs",
+    "ops:post-redeploy": "node audit/mobile/scripts/post-redeploy-verify.mjs"
   },
   "private": true,
   "devDependencies": {

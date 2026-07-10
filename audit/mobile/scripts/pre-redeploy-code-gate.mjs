@@ -35,6 +35,11 @@ const checks = [
     includes: ["export function marketCountryConditions", "market_country"],
   },
   {
+    id: "c02_like_escape_lib",
+    file: "artifacts/api-server/src/lib/sqlLikeEscape.ts",
+    includes: ["export function escapeLikeLiteral", "replace(/%/g"],
+  },
+  {
     id: "upload_claims_schema",
     file: "lib/db/src/schema/index.ts",
     includes: ["uploadClaims", "upload_claims"],

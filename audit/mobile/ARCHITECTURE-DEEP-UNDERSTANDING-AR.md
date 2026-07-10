@@ -127,7 +127,7 @@ promote / ListingService attach
 | إصلاح | مكان | دور |
 |-------|------|-----|
 | C-01 | `uploadClaims.ts` | منع IDOR على مسار الرفع |
-| C-02 | `escapeLikeLiteral` في uploadController | منع توسيع LIKE على legacy serve |
+| C-02 | `escapeLikeLiteral` في `lib/sqlLikeEscape.ts` + vitest | منع توسيع LIKE على legacy serve |
 | C-03 | `feedVisibility.publicVisibilityConditions` | إخفاء بائع محذوف من السطح العام |
 | H-03 | promote بـ clerkId | تطابق مالك ACL |
 

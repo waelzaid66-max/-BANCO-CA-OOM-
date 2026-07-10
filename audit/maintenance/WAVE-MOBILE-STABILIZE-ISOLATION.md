@@ -77,4 +77,5 @@ pnpm --filter @workspace/banco-mobile run test   # 34 tests
 ## OPS blocker (not code)
 
 Live Replit remains **STALE** until redeploy from this branch.  
-Runbook: `audit/mobile/NEXT-OPS-REPLIT-REDEPLOY.md`
+Runbook: `audit/mobile/NEXT-OPS-REPLIT-REDEPLOY.md`  
+PC check: `pnpm run ops:code-gate` → `pnpm run ops:next`

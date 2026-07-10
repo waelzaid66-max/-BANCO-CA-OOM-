@@ -2,7 +2,7 @@
 
 **Goal:** Make live API **FRESH** so Device QA / EAS claims are honest.  
 **Branch:** `fix/mobile-master-stabilize`  
-**Tip commit:** `fe745f3` (pull latest before redeploy)  
+**Tip commit:** `8ba704e` (pull latest before redeploy)  
 **Repo:** `https://github.com/waelzaid66-max/-BANCO-CA-OOM-.git`
 
 Live host (`https://banco-ca-oom.replit.app`) is **STALE** until this branch is what the API runs.
@@ -13,7 +13,7 @@ Live host (`https://banco-ca-oom.replit.app`) is **STALE** until this branch is 
 
 ```powershell
 cd C:\Users\waelz\Downloads\BANCO-CA-OOM
-pnpm run confidence -- --skip-typecheck          # 14/14 local proofs
+pnpm run confidence -- --skip-typecheck          # 16/16 local proofs
 node audit/mobile/scripts/pre-redeploy-code-gate.mjs   # static: branch has probe signals
 node audit/mobile/scripts/ops-next-step.mjs      # code gate + live probe
 ```
@@ -23,7 +23,7 @@ node audit/mobile/scripts/ops-next-step.mjs      # code gate + live probe
 | Check | Result | Meaning |
 |-------|--------|---------|
 | Local confidence | PASS | كود الفرع سليم |
-| `pre-redeploy-code-gate` | PASS @ `fe745f3` | بعد redeploy يجب أن يمر probe |
+| `pre-redeploy-code-gate` | PASS @ `8ba704e` | بعد redeploy يجب أن يمر probe |
 | Live `healthz` + `readyz` | PASS | السيرفر شغّال — لكن **كود قديم** |
 | Live probe | **STALE** | `EGYPT→200`, map بدون `is_bookable`/`price_display` |
 | `CLERK_BEARER_TOKEN` | missing | upload smoke لاحقاً |
@@ -65,7 +65,7 @@ node audit/mobile/scripts/post-redeploy-verify.mjs
 
 **Note:** `egEqSa` may stay true if all live cars are EG-only — that alone is not STALE after core signals pass.
 
-**Fail (exit 2):** host still on old build — repeat §1 (confirm `git log -1` shows `fe745f3` or newer on Replit).
+**Fail (exit 2):** host still on old build — repeat §1 (confirm `git log -1` shows `8ba704e` or newer on Replit).
 
 ---
 

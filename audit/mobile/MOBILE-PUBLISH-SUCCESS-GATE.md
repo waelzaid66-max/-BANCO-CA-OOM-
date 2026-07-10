@@ -86,14 +86,16 @@
 ## 4) أوامر جاهزة (نسخ/لصق)
 
 ```bash
-# إثباتات كود الموبايل
+# إثباتات كود الموبايل + بوابة محلية
+pnpm run confidence -- --skip-typecheck
+pnpm run ops:code-gate
 pnpm --filter @workspace/banco-mobile run test
 node audit/mobile/scripts/proof-isolation.mjs
 node audit/mobile/scripts/proof-create-fields.mjs
 
 # قبل/بعد redeploy — Freshness Live (exit 0 = FRESH, 2 = STALE)
-node audit/mobile/scripts/probe-live-deploy.mjs
-# node audit/mobile/scripts/probe-live-deploy.mjs https://your-staging-host
+pnpm run ops:next
+# pnpm run ops:post-redeploy
 
 # Staging (يحتاج أسرارك — انظر STAGING-REQUIRED-SECRETS.md)
 node scripts/staging-p0-smoke.mjs

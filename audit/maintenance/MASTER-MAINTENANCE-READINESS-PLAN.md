@@ -265,7 +265,8 @@ https://github.com/waelzaid66-max/-BANCO-CA-OOM-/pull/new/maintenance/wave-1-3-u
 ## 8. سجل Commits للصيانة (مرجع سريع)
 
 ```
-cdf90b9  fix(search): wave 3 — RE rental chips, land/hotel, route unify, EAS preview
+8ba704e  chore(ops): pre-redeploy code gate before live probe
+fe745f3  chore(audit): architecture maintenance wave — index, confidence gate
 d919ca5  fix(mobile): strict section isolation — fields, map, autocomplete
 33ae6dd  fix(mobile): M01–M31 stabilize + publish gate
 3607c0a  fix: wave 1+2 — upload, health, CI, industrial search, EAS metadata
@@ -282,7 +283,7 @@ e24014b  fix(security): P0 upload IDOR, LIKE, visibility, ACL
 - [x] scripts/production-confidence-check.mjs + root `pnpm run confidence`
 - [x] Listing publish lifecycle doc — verdict **publish safe** for consolidation diff
 - [x] Architecture file index + mobile stabilize wave doc (2026-07-10)
-- [x] confidence gate extended: search-contract + proof-isolation + proof-create-fields
+- [x] confidence gate extended: search-contract + proof-isolation + proof-create-fields + pre-redeploy + C-02 sqlLikeEscape (**18/18**)
 - [ ] Human: staging EAS device runbook + listing publish smoke
 - [ ] Human: production secrets (GCP, EAS, auth providers)
 - [ ] Human: Replit redeploy `fix/mobile-master-stabilize` → Live FRESH
