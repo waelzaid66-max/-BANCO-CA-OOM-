@@ -9,7 +9,7 @@ Built from: plan DoD, `MOBILE-STABILIZE-*`, cloud STATUS/USER_JOURNEY, OPEN-ITEM
 |-------|--------|
 | **Code for M01–M31** | **CLOSED** — wires + contract + API done |
 | **Automated proof available offline** | **PASS** where tests exist (see Evidence) |
-| **Live Replit host** (`banco-ca-oom.replit.app`) | **STALE** — probe 2026-07-10: no map `is_bookable`/`price_display`; `market_country` ignored (EG≡SA). See `LIVE-DEPLOY-PROBE.md` |
+| **Live Replit host** (`banco-ca-oom.replit.app`) | **PARTIAL** — wave 6 FRESH · wave 8 STALE (`seller.social_links`). See `LIVE-DEPLOY-PROBE.md` |
 | **Definition of Done (real device per ID)** | **OPEN — Device QA** after redeploy |
 | **OPS O16** (staging smoke / EAS) | **OPEN — OPS** (not a mobile code defect) |
 

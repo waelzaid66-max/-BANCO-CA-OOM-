@@ -1,7 +1,7 @@
 # بوابة نجاح نشر الموبايل — من أول الأهداف إلى الآن
 
 **التاريخ:** 2026-07-10  
-**الفرع:** `main` · tag `v1.1.3-seller-social-2026-07-10` @ `3b40782`  
+**الفرع:** `main` @ `dea23b0` (Wave 10C + live probe docs)  
 **القاعدة:** لا أخضر مزيف. الكود ≠ الجهاز ≠ Live ≠ المتجر.
 
 ---
@@ -27,9 +27,9 @@
 | طبقة | الحالة | دليل |
 |------|--------|------|
 | كود محلي M01–M31 + أمان P0 | **CLOSED** | `MOBILE-STABILIZE-PROGRESS.md`, `audit/fixes/C-01…` |
-| اختبارات أوتوماتيك محلية | **PASS** | lib-hardening **47/47** · production-confidence **17/17** · search-contract |
-| Live Replit API موجة 6 | **FRESH** | ISO + map bookable/price |
-| Live Replit API موجة 8 | **STALE** | `seller.social_links` — أعد النشر من `main` |
+| اختبارات أوتوماتيك محلية | **PASS** | lib-hardening **57/57** · production-confidence **17/17** · search-contract **37/37** |
+| Live Replit API موجة 6 | **FRESH** | ISO 400 · map `is_bookable`/`price_display` · EG≠SA |
+| Live Replit API موجة 8 | **STALE** | `seller.social_links` — redeploy من `main` @ `dea23b0+` |
 | Device QA | **OPEN** | `DEVICE-QA-SECTION-COMPANIES.md` لم يُنفَّذ |
 | OPS O16 | **OPEN** | أسرار + smoke + EAS |
 | Website | **غير حاجز** | O17 SKIP |
@@ -42,6 +42,7 @@
 [1] دمج/نشر فرع stabilize على الـ API الذي يخدم الموبايل
         → دليل تنفيذي: NEXT-OPS-REPLIT-REDEPLOY.md
         → فحص سريع: node audit/mobile/scripts/ops-next-step.mjs
+        → أثناء redeploy على Replit: node audit/mobile/scripts/replit-redeploy-watch.mjs
         → بعد redeploy: node audit/mobile/scripts/post-redeploy-verify.mjs
         → إثبات مجمّع: pnpm run ops:probe-full
         ↓
@@ -75,7 +76,7 @@
 ### يغلقه أنت فقط (لا يمكن تزويره)
 
 - [x] Redeploy API موجة 6 — **FRESH** 2026-07-10
-- [ ] Redeploy API موجة 8 — **STALE** (`seller.social_links`)
+- [ ] Redeploy API موجة 8 — **STALE** (`seller.social_links`) — انظر `REPLIT-SHELL-COPYPASTE.sh`
 - [ ] `BANCO_API_URL` + `CLERK_BEARER_TOKEN` + `DATABASE_URL`
 - [ ] `node scripts/staging-p0-smoke.mjs` exit 0
 - [ ] `node scripts/verify-upload-claims-schema.mjs` PASS
@@ -97,8 +98,10 @@ pnpm --filter @workspace/banco-mobile run test
 node audit/mobile/scripts/proof-isolation.mjs
 node audit/mobile/scripts/proof-create-fields.mjs
 
-# قبل/بعد redeploy — Freshness Live (exit 0 = FRESH, 2 = STALE)
+# قبل/بعد redeploy — Freshness Live (exit 0 = FRESH, 1 = PARTIAL, 2 = STALE)
 pnpm run ops:next
+# أثناء redeploy على Replit:
+node audit/mobile/scripts/replit-redeploy-watch.mjs
 # pnpm run ops:post-redeploy
 
 # بعد FRESH:

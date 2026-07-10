@@ -34,7 +34,13 @@ node audit/mobile/scripts/ops-next-step.mjs      # code gate + live probe
 
 ## 1) Copy-paste on Replit Shell (blocking — do this now)
 
+**One file:** `audit/mobile/REPLIT-SHELL-COPYPASTE.sh`
+
 ```bash
+bash audit/mobile/REPLIT-SHELL-COPYPASTE.sh
+```
+
+Or manually:
 git fetch origin
 git checkout main
 git pull --ff-only origin main
@@ -53,6 +59,14 @@ curl -sS https://banco-ca-oom.replit.app/api/readyz
 ---
 
 ## 2) Prove FRESH (from your PC)
+
+**While redeploying on Replit**, poll until FRESH:
+
+```powershell
+node audit/mobile/scripts/replit-redeploy-watch.mjs
+```
+
+Single check:
 
 ```powershell
 node audit/mobile/scripts/post-redeploy-verify.mjs
