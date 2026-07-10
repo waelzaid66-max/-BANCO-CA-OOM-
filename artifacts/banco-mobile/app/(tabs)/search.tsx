@@ -70,6 +70,7 @@ import {
   CLEAR_SECTION_ATTRS,
   DEFAULT_CRITERIA,
   SearchCriteria,
+  criteriaKey,
   hasActiveCriteria,
   type PaymentType,
   type SearchSort,
@@ -267,24 +268,10 @@ export default function SearchScreen() {
     if (!canMap && mapMode) setMapMode(false);
   }, [canMap, mapMode]);
 
-  // Sticky map is a trap: any criteria change returns to the list so results
-  // (sale-first) stay the default surface. Explore-on-map still latches wantMap.
-  const criteriaMapKey = [
-    criteria.category,
-    criteria.engineKey,
-    criteria.q,
-    criteria.location,
-    criteria.marketCountry,
-    criteria.rentalTerm,
-    criteria.industrialType,
-    criteria.originType,
-    criteria.brand,
-    // Near-me must clear sticky map too (was a latch hole).
-    criteria.nearMeEnabled ? "1" : "0",
-    criteria.nearLat ?? "",
-    criteria.nearLng ?? "",
-    criteria.nearRadiusKm,
-  ].join("|");
+  // Sticky map is a trap: ANY criteria change (fuel, material, years, price…)
+  // returns to the list so each section's results stay the default surface.
+  // Explore-on-map still latches wantMap after the next fetch.
+  const criteriaMapKey = criteriaKey(criteria);
   const prevCriteriaMapKey = useRef(criteriaMapKey);
   useEffect(() => {
     if (prevCriteriaMapKey.current === criteriaMapKey) return;
@@ -336,6 +323,8 @@ export default function SearchScreen() {
     !facetsLoading && !!visibleIndTypes && visibleIndTypes.length > 1;
   // If facets reveal the committed engine/sub-type no longer has inventory,
   // normalize criteria once and re-query (single fetch, not two updates).
+  // MUST clear dependents (originType / rentalTerm / industry / material) so
+  // hidden chrome never leaves a live API filter from another mini-app.
   useEffect(() => {
     if (facetsLoading) return;
     const patch: Partial<SearchCriteria> = {};
@@ -344,6 +333,14 @@ export default function SearchScreen() {
       !engineList.some((e) => e.key === criteria.engineKey)
     ) {
       patch.engineKey = "all";
+      // Leaving import must not keep origin_type=imported under "All".
+      if (criteria.category === "car" && criteria.originType) {
+        patch.originType = null;
+      }
+      // Leaving rent must not keep rental_term under sale/all.
+      if (criteria.category === "real_estate" && criteria.rentalTerm) {
+        patch.rentalTerm = null;
+      }
     }
     if (
       criteria.industrialType !== "all" &&
@@ -351,6 +348,11 @@ export default function SearchScreen() {
       !visibleIndTypes.includes(criteria.industrialType)
     ) {
       patch.industrialType = "all";
+      // Same clears as selectIndustrialType when collapsing to group "all".
+      if (criteria.category === "materials") {
+        patch.industry = null;
+        patch.material = null;
+      }
     }
     if (Object.keys(patch).length === 0) return;
     applyPatch(patch);
@@ -389,21 +391,41 @@ export default function SearchScreen() {
 
   const autocompleteSeq = useRef(0);
 
-  const fetchAutocomplete = useCallback(async (q: string) => {
-    if (q.length < 2) {
-      setSuggestions([]);
-      return;
-    }
-    const seq = ++autocompleteSeq.current;
-    try {
-      const res = await getAutocomplete({ q });
-      if (seq !== autocompleteSeq.current) return;
-      setSuggestions(res.data ?? []);
-    } catch {
-      if (seq !== autocompleteSeq.current) return;
-      setSuggestions([]);
-    }
-  }, []);
+  const fetchAutocomplete = useCallback(
+    async (q: string) => {
+      if (q.length < 2) {
+        setSuggestions([]);
+        return;
+      }
+      const seq = ++autocompleteSeq.current;
+      try {
+        // Scope suggestions to the active browse company — never mix villa
+        // titles into cars or steel into facilities.
+        const params: {
+          q: string;
+          category?: SearchListingsCategory;
+          industrial_type?: string;
+        } = { q };
+        if (criteria.category === "car" || criteria.category === "real_estate") {
+          params.category = criteria.category;
+        } else if (
+          criteria.category === "facilities" ||
+          criteria.category === "materials"
+        ) {
+          params.category = "industrial";
+          const group = industrialGroupForCategory(criteria.category);
+          if (group?.length) params.industrial_type = group.join(",");
+        }
+        const res = await getAutocomplete(params);
+        if (seq !== autocompleteSeq.current) return;
+        setSuggestions(res.data ?? []);
+      } catch {
+        if (seq !== autocompleteSeq.current) return;
+        setSuggestions([]);
+      }
+    },
+    [criteria.category],
+  );
 
   // Live typing: update the input immediately, debounce autocomplete (250ms) and
   // the committed search (350ms). The results list stays mounted throughout, so
@@ -556,7 +578,13 @@ export default function SearchScreen() {
     // the car term can't leak into the new category and empty its results.
     if (brandValue) setDraftQuery("");
     setBrandValue(null);
-    update({ ...CLEAR_ATTRS, category: cat });
+    setSuggestions([]);
+    const patch: Partial<SearchCriteria> = { ...CLEAR_ATTRS, category: cat };
+    // Installment chrome is car/RE only — never carry into facilities/materials.
+    if (cat === "facilities" || cat === "materials") {
+      patch.paymentType = "any";
+    }
+    update(patch);
   };
 
   // Discover-surface section/engine browse → filter THIS tab in place (same
@@ -566,6 +594,7 @@ export default function SearchScreen() {
   const browseSection = (cat: FilterCategory, engine: string) => {
     if (brandValue) setDraftQuery("");
     setBrandValue(null);
+    setSuggestions([]);
     const def = engineByKey(cat, engine);
     const patch: Partial<SearchCriteria> = {
       ...CLEAR_ATTRS,
@@ -578,6 +607,9 @@ export default function SearchScreen() {
     // Rent-only filters only survive an explicit rent engine browse.
     if (def?.params.offer_type !== "rent") {
       patch.rentalTerm = null;
+    }
+    if (cat === "facilities" || cat === "materials") {
+      patch.paymentType = "any";
     }
     update(patch);
   };
@@ -719,11 +751,24 @@ export default function SearchScreen() {
     });
   };
 
+  // Count every live section filter so the badge matches what that company owns.
   const activeFilterCount = [
     criteria.category !== "all",
+    criteria.engineKey !== "all",
+    criteria.industrialType !== "all",
     !!criteria.minPrice || !!criteria.maxPrice,
     !!criteria.location,
     criteria.paymentType !== "any",
+    !!criteria.rentalTerm,
+    !!criteria.brand || !!criteria.model,
+    !!criteria.fuelType,
+    !!criteria.transmission,
+    !!criteria.minYear || !!criteria.maxYear,
+    !!criteria.industry,
+    !!criteria.originType,
+    !!criteria.material,
+    criteria.nearMeEnabled,
+    criteria.marketCountry !== DEFAULT_MARKET_COUNTRY,
   ].filter(Boolean).length;
 
   const searchSaved =

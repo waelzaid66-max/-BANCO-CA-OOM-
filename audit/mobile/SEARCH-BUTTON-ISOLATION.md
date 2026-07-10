@@ -26,6 +26,7 @@ Rule (product): every Search control is its own app. No mixing host ops into sho
 5. Rent regime gated to explicit rent engine; contract `buildSearchParams` section-gates stale fields.
 6. Origin chrome materials-only; warehouse labels split RE vs industrial.
 7. Section company accents on active Search chrome.
+8. **Strict isolation (2026-07-10):** facet normalize clears origin/rental/material dependents; FilterSheet years+payment gated; sticky map uses `criteriaKey`; autocomplete section-scoped; bookable pins RE-only. See `SECTION-ISOLATION-STRICT-2026-07-10.md`.
 
 ## Journeys preserved
 

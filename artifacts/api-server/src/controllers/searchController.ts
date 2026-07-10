@@ -100,7 +100,19 @@ export async function autocompleteHandler(req: Request, res: Response) {
       const validated = validateResponse(z.string().array(), []);
       return res.json(successResponse(validated, { total: 0 }));
     }
-    const suggestions = await getAutocomplete(q);
+    const rawCat = String(req.query.category ?? "").trim();
+    const category =
+      rawCat === "car" || rawCat === "real_estate" || rawCat === "industrial"
+        ? rawCat
+        : undefined;
+    const industrial_type = String(req.query.industrial_type ?? "")
+      .split(",")
+      .map((s) => s.trim())
+      .filter(Boolean);
+    const suggestions = await getAutocomplete(q, {
+      category,
+      industrial_type: industrial_type.length ? industrial_type : undefined,
+    });
     const validated = validateResponse(z.string().array(), suggestions);
     return res.json(successResponse(validated, { total: validated.length }));
   } catch (err) {

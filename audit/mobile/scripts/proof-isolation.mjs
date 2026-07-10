@@ -87,6 +87,26 @@ const proof = {
   homeFeedSendsMarket: /market_country:\s*marketCountry/.test(
     read("artifacts/banco-mobile/app/(tabs)/index.tsx"),
   ),
+  // Strict section isolation (field/button/map)
+  facetNormalizeClearsOrigin: /patch\.engineKey = "all"[\s\S]*originType = null/.test(
+    search,
+  ),
+  facetNormalizeClearsRental: /patch\.engineKey = "all"[\s\S]*rentalTerm = null/.test(
+    search,
+  ),
+  mapExitUsesCriteriaKey: /criteriaMapKey = criteriaKey\(criteria\)/.test(search),
+  sheetYearsGatedToCar:
+    /category === "car"[\s\S]*minYear|minYear: ""[\s\S]*maxYear: ""/.test(sheet),
+  sheetPaymentGated: /showPayment[\s\S]*real_estate/.test(sheet),
+  contractGatesInstallment:
+    /paymentType === "installment"[\s\S]*real_estate/.test(buildSp),
+  autocompleteSectionScoped: /industrial_type/.test(
+    read("artifacts/api-server/src/controllers/searchController.ts"),
+  ),
+  mapBookableReOnly: /allowBookableChrome|category === "real_estate"/.test(
+    read("artifacts/banco-mobile/components/search/SearchResultsMap.tsx"),
+  ),
+  discoverMapCtaSectionAware: /openSection === "car"/.test(discover),
 };
 
 const failures = Object.entries(proof)

@@ -662,20 +662,37 @@ function formatMapPinPrice(row: {
   return `${base} /شهر`;
 }
 
-export async function getAutocomplete(query: string): Promise<string[]> {
+export async function getAutocomplete(
+  query: string,
+  opts?: {
+    category?: "car" | "real_estate" | "industrial";
+    industrial_type?: string[];
+  },
+): Promise<string[]> {
   if (!query || query.length < 2) return [];
+
+  const conditions = [
+    eq(listings.status, "active"),
+    ilike(listings.title, `%${query}%`),
+    ...publicVisibilityConditions(),
+  ];
+
+  // Section isolation: never suggest villa titles while browsing cars, etc.
+  if (opts?.category) {
+    conditions.push(eq(listings.category, opts.category));
+  }
+  if (opts?.industrial_type?.length) {
+    conditions.push(
+      inArray(listingAttributes.industrialType, opts.industrial_type),
+    );
+  }
 
   const results = await db
     .selectDistinct({ title: listings.title })
     .from(listings)
     .leftJoin(users, eq(listings.userId, users.id))
-    .where(
-      and(
-        eq(listings.status, "active"),
-        ilike(listings.title, `%${query}%`),
-        ...publicVisibilityConditions()
-      )
-    )
+    .leftJoin(listingAttributes, eq(listingAttributes.listingId, listings.id))
+    .where(and(...conditions))
     .limit(10);
 
   return results.map((r) => r.title);

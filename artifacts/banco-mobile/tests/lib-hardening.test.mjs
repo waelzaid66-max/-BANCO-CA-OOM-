@@ -189,6 +189,19 @@ test("search buttons stay isolated — no host hub / no dual fuel engines", () =
   assert.match(sheet, /filter-fuel/, "FilterSheet owns fuel");
   assert.match(sheet, /filter-transmission/, "FilterSheet owns transmission");
 
+  // Year Apply must not re-inject car years into other companies.
+  assert.match(
+    sheet,
+    /category === "car"[\s\S]*minYear[\s\S]*maxYear|minYear: ""[\s\S]*maxYear: ""/,
+    "FilterSheet Apply must gate years to car",
+  );
+  // Installment chrome not on facilities/materials.
+  assert.match(
+    sheet,
+    /showPayment[\s\S]*real_estate/,
+    "payment chips gated to car/RE/all",
+  );
+
   // Car import journey entry stays on marketplace Discover; supply stays B2B.
   assert.match(discover, /discover-car-import/);
   assert.match(discover, /discover-supply-portal/);
@@ -200,6 +213,37 @@ test("search buttons stay isolated — no host hub / no dual fuel engines", () =
     search,
     /browseSection[\s\S]*origin_type[\s\S]*originType|params\.origin_type[\s\S]*originType/,
     "browseSection must sync originType for import engine",
+  );
+
+  // Facet normalize must clear dependents (no silent cross-company API filters).
+  assert.match(
+    search,
+    /patch\.engineKey = "all"[\s\S]*originType = null/,
+    "facet normalize must clear originType when dropping import engine",
+  );
+  assert.match(
+    search,
+    /patch\.engineKey = "all"[\s\S]*rentalTerm = null/,
+    "facet normalize must clear rentalTerm when dropping rent engine",
+  );
+
+  // Sticky map exits on full criteriaKey (fuel/material/years included).
+  assert.match(
+    search,
+    /criteriaMapKey = criteriaKey\(criteria\)/,
+    "map exit must use full criteriaKey",
+  );
+
+  // Autocomplete scoped to active company.
+  assert.match(
+    search,
+    /getAutocomplete\(\s*params/,
+    "autocomplete must pass section-scoped params",
+  );
+  assert.match(
+    search,
+    /industrial_type.*group\.join|group\.join.*,\s*industrial_type/,
+    "facilities/materials autocomplete must send industrial_type group",
   );
 });
 

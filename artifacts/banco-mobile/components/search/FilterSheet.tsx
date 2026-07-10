@@ -142,14 +142,27 @@ export function FilterSheet({
     if (visible) {
       setMinPrice(criteria.minPrice);
       setMaxPrice(criteria.maxPrice);
-      setMinYear(criteria.minYear);
-      setMaxYear(criteria.maxYear);
+      // Years are car-only drafts — never rehydrate RE/facilities/materials
+      // with leftover car year strings from a previous open.
+      if (criteria.category === "car") {
+        setMinYear(criteria.minYear);
+        setMaxYear(criteria.maxYear);
+      } else {
+        setMinYear("");
+        setMaxYear("");
+      }
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [visible]);
+  }, [visible, criteria.category]);
 
   const apply = () => {
-    onUpdate({ minPrice, maxPrice, minYear, maxYear });
+    // Gate year writes to cars only — Apply must never re-inject car years
+    // into another browse company after a mid-sheet category switch.
+    if (criteria.category === "car") {
+      onUpdate({ minPrice, maxPrice, minYear, maxYear });
+    } else {
+      onUpdate({ minPrice, maxPrice, minYear: "", maxYear: "" });
+    }
     onClose();
   };
 
@@ -181,6 +194,11 @@ export function FilterSheet({
     criteria.category === "materials" &&
     (criteria.industrialType === "all" ||
       criteria.industrialType === "raw_material");
+  // Installment is a car / real-estate financing axis — not facilities/materials.
+  const showPayment =
+    criteria.category === "car" ||
+    criteria.category === "real_estate" ||
+    criteria.category === "all";
   const rentalTerms = rentalTermsForSearch(criteria.marketCountry);
 
   return (
@@ -680,7 +698,9 @@ export function FilterSheet({
               />
             </View>
 
-            {/* Payment */}
+            {/* Payment — car / RE / Discover-all only (never facilities/materials) */}
+            {showPayment && (
+              <>
             <SectionLabel text={t("search.paymentType")} align={textAlign} colors={colors} />
             <View style={[styles.chipRow, { flexDirection: rowDir }]}>
               {PAYMENTS.map((pt) => {
@@ -715,6 +735,8 @@ export function FilterSheet({
                 );
               })}
             </View>
+              </>
+            )}
           </ScrollView>
 
           {/* Apply footer */}

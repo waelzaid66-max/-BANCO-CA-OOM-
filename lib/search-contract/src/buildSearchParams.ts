@@ -83,7 +83,16 @@ export function buildSearchParams(
   if (c.maxPrice && !Number.isNaN(maxNum)) sp.max_price = maxNum;
 
   if (c.location.trim()) sp.location = c.location.trim();
-  if (c.paymentType === "installment") sp.has_installment = true;
+  // Installment is a car / real-estate financing axis — never emit for
+  // facilities/materials even if stale criteria still says installment.
+  if (
+    c.paymentType === "installment" &&
+    (c.category === "car" ||
+      c.category === "real_estate" ||
+      c.category === "all")
+  ) {
+    sp.has_installment = true;
+  }
   if (c.marketCountry.trim()) {
     sp.market_country = c.marketCountry.trim().toUpperCase();
   }

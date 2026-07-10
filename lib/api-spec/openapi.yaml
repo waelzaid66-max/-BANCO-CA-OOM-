@@ -4726,11 +4726,27 @@ paths:
     get:
       operationId: getAutocomplete
       summary: Autocomplete suggestions
+      description: >
+        Title suggestions scoped to the active browse company when category
+        (and optional industrial_type CSV) are provided. Without category,
+        suggestions span all public inventory.
       tags: [search]
       parameters:
         - in: query
           name: q
           required: true
+          schema:
+            type: string
+        - in: query
+          name: category
+          required: false
+          schema:
+            type: string
+            enum: [car, real_estate, industrial]
+        - in: query
+          name: industrial_type
+          required: false
+          description: Comma-separated industrial subtypes (facilities vs materials)
           schema:
             type: string
       responses:

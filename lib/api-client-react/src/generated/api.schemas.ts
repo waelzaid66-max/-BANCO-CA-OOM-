@@ -3232,6 +3232,13 @@ export type GetFacets200 = {
 
 export type GetAutocompleteParams = {
 q: string;
+/**
+ * API listing category — scopes suggestions to one browse company.
+ * facilities/materials clients send `industrial` + industrial_type.
+ */
+category?: 'car' | 'real_estate' | 'industrial';
+/** Comma-separated industrial subtypes (factory,warehouse,land | production_line,raw_material,machine). */
+industrial_type?: string;
 };
 
 export type GetAutocomplete200 = {

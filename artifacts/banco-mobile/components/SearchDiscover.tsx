@@ -173,17 +173,24 @@ export function SearchDiscover({
   const trending = trendingRes?.data ?? [];
 
   // Honest gate for the "Explore on map" entry: only surface it when we have
-  // real evidence that coordinate-bearing inventory exists. The trending feed is
-  // already loaded here and runs through the same coordinate resolver as search
-  // (listing override → area centroid), so any trending item with finite coords
-  // proves the catalogue has mappable listings — no extra query needed. When no
-  // such evidence exists we hide the CTA rather than advertise a map we can't fill.
-  const mapAvailable = trending.some(
-    (i) =>
-      i.coordinates &&
-      Number.isFinite(i.coordinates.lat) &&
-      Number.isFinite(i.coordinates.lng)
-  );
+  // coordinate-bearing inventory for the company that exploreOnMap will open.
+  // Discover-root (no openSection) defaults to real_estate — require RE pins.
+  // An open section requires that section's own mappable evidence.
+  const mapAvailable = trending.some((i) => {
+    if (
+      !i.coordinates ||
+      !Number.isFinite(i.coordinates.lat) ||
+      !Number.isFinite(i.coordinates.lng)
+    ) {
+      return false;
+    }
+    if (openSection === "car") return i.category === "car";
+    if (openSection === "real_estate") return i.category === "real_estate";
+    if (openSection === "facilities" || openSection === "materials") {
+      return i.category === "industrial";
+    }
+    return i.category === "real_estate";
+  });
 
   const goToResults = (category: Category, engine: string) => {
     onBrowseSection(category, engine);
