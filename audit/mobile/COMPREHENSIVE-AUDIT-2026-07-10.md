@@ -142,4 +142,40 @@ pnpm run ops:wave-b
 
 ---
 
-*آخر تحديث: فحص شامل + إصلاحات عزل 2026-07-10. لا تُعلَن جاهزية متجر قبل FRESH + smoke + Device QA.*
+## 10) موجة صيانة الجودة قبل التجريب الحي (2026-07-10 — الجلسة الثالثة)
+
+| # | المشكلة | الإصلاح |
+|---|---------|---------|
+| 1 | `/messages/[id]` يفتح للضيف بدون رسائل ويُظهر المُرسل | `enabled: !!isSignedIn` + شاشة تسجيل دخول (مثل قائمة الرسائل) |
+| 2 | ضغطة إشعار push تفتح `/billing` أو `/messages` للضيف | `notificationRequiresAuth()` + تحويل لـ Profile |
+| 3 | تعديل إعلان «طلب شراء» يُجبر على سعر > 0 | تخطي التحقق من السعر + عدم إرسال `base_price_cash`؛ API يُرجع `is_request` في `ListingDetail` |
+| 4 | «استكشف على الخريطة» يفشل بصمت بدون إحداثيات | `Alert` بـ `search.mapNoPins` عند فشل `wantMap` |
+| 5 | عمليات بحث محفوظة v1 بدون `criteria` | `upgradeSavedSearches()` عند التحميل من AsyncStorage |
+
+**اختبارات:** mobile **44/44**، lib-hardening **31**، confidence **19/19**.
+
+**ما زال OPS (ليس كود):** Replit redeploy → `pnpm run ops:post-redeploy` (FRESH) → `CLERK_BEARER_TOKEN` → `ops:wave-b` → EAS preview + Device QA.
+
+---
+
+## 11) موجة إصلاح جذرية P0 (2026-07-10 — الجلسة الرابعة)
+
+| # | المشكلة | الإصلاح |
+|---|---------|---------|
+| 1 | `contactLead` يُرجع هاتف البروفايل فقط — يتجاهل `specs.contact_phones` | `LeadService.revealPhoneFromListing()` + join على `listingAttributes` |
+| 2 | إشعار رسالة push يفتح thread بدون `name` / `listingId` / `role` | API يُرفق `counterparty_name` + `viewer_role`؛ `notificationRouting` يمرّرها لـ `/messages/[id]` |
+| 3 | الماسنجر: تفاعلات مزدوجة RTL + حدود quote/reply غير مرئية | إزالة `row-reverse` من التفاعلات؛ حدود فيزيائية `borderLeft`/`borderRight`؛ إزالة `scaleX` من أيقونة الإرسال |
+| 4 | الرئيسية: قلب نص/لغة + تبديل سوق عند التحميل | `prefsReady` (لغة + سوق) قبل أول fetch وقبل إخفاء الهيكل |
+| 5 | بحث: زر الدولة مخفي خارج إيجار/صناعي | `MarketCountryButton` دائمًا في شريط البحث + قسم «الدولة» في FilterSheet |
+| 6 | فلاتر البحث بلون عام واحد | `sectionAccent` على شرائح القسم + `EngineChips`/`ToggleChipRow` |
+| 7 | بروفايل: هاتف التسجيل بدون E.164؛ الهاتف مخفي؛ روابط بلا عنوان | `CountryCodePicker` عند التسجيل؛ عرض الهاتف على السطح؛ ترويسة `socialLinks` + `addSocial` |
+
+**اختبارات:** lib-hardening **31/31**، mobile regression **44/44**، confidence **19/19**.
+
+**أمان:** الأسرار التي أُرسلت في الشات **يجب تدويرها فورًا** (`GITHUB_TOKEN`، `CLERK_SECRET_KEY`، `SESSION_SECRET`). التخزين الصحيح: `.secrets/local.env` (محلي) وReplit Secrets (إنتاج) — **لا تُرفع في Git**.
+
+**ما زال OPS:** Replit redeploy من الفرع الحالي → `pnpm run ops:post-redeploy` حتى **FRESH** → Device QA على جهاز حقيقي.
+
+---
+
+*آخر تحديث: موجة P0 الجذرية 2026-07-10. لا تُعلَن جاهزية متجر قبل FRESH + smoke + Device QA.*

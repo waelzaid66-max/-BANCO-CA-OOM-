@@ -69,12 +69,24 @@ Branch: `fix/mobile-master-stabilize`
 
 Docs: `SEARCH-BUTTON-ISOLATION.md`, `SECTION-ISOLATION-STRICT-2026-07-10.md`, `ARCHITECTURE-FILE-INDEX.md`
 
+### Wave 5 (user-truth pass — 2026-07-10)
+| Fix | Notes |
+|-----|-------|
+| Search map chrome | Toggle + map surface in **results** even when page items lack coordinates (cluster API) |
+| LanguageProvider | No tree render until lang hydrated; web sync read from localStorage |
+| Profile rental hub | Menu item always visible (was gated on bookable listings) |
+| **Profile overflow menu** | Touch-safe modal (backdrop sibling); fixes dead menu rows on device |
+| PromoteButton sheet | Same touch pattern (profile listing grid) |
+| Stack routes | `settings`, `business/verification`, `assistant` registered |
+| AuthGate modal | Touch-safe backdrop (guest sign-up CTA no longer nested Pressable) |
+| Doc | `MASTER-TRUTH-INVENTORY-AR.md`, `PROFILE-BUTTON-INVENTORY-AR.md` |
+
 ## Still open (honest)
 
 | ID | Why |
 |----|-----|
 | Device QA | Checklist ready (`DEVICE-QA-SECTION-COMPANIES.md`) — **not run on device** |
-| Live Replit | **STALE** until redeploy — M23/M24/M28–M31 not claimable live. See `FULL-VERIFICATION-2026-07-10.md` |
+| Live Replit | **FRESH** (probe 2026-07-10) — `market_country` + map `is_bookable`/`price_display` على الإنتاج |
 | O16 OPS | Staging secrets / EAS / smoke — not a stabilize code reopen |
 | API DB vitest | Needs `DATABASE_URL` locally — pure gate test: `allowCommodityMaterialFilter.test.ts` |
 | search-contract bare `node --test` | Prefer `pnpm --filter @workspace/search-contract run test` (`tsx`) |
@@ -92,7 +104,7 @@ node audit/mobile/scripts/ops-next-step.mjs
 - `proof-isolation` / `proof-create-fields`: **ok**
 - search-contract: **33/33** (fixed stale `monthly`/facilities URL round-trip)
 - `allowCommodityMaterialFilter`: **4/4**
-- Live probe: **STALE** (exit 2)
+- Live probe: **FRESH** (exit 0) — ISO reject + map bookable/price
 - Staging smoke default host: **404 dead**; schema verify: **ENOTFOUND**
 - CI `mobile-regression`: icons + lib + resilience + **universal-links**
 - Architecture maintenance closure: `ARCHITECTURE-FILE-INDEX.md`, `pnpm run confidence` (proofs + contract)

@@ -517,7 +517,136 @@ test("home feed refetches when preferred market hydrates", () => {
   );
   assert.match(
     home,
-    /\[category,\s*industrialType,\s*engineKey,\s*marketCountry\]/,
-    "home feed effect must depend on marketCountry",
+    /\[category,\s*industrialType,\s*engineKey,\s*marketCountry,\s*prefsReady\]/,
+    "home feed effect must wait for prefs then depend on marketCountry",
+  );
+  assert.match(home, /prefsReady/, "home must gate first paint on language + market prefs");
+});
+
+test("message thread gates guests before fetching or composing", () => {
+  const thread = fs.readFileSync(path.join(APP_ROOT, "app", "messages", "[id].tsx"), "utf8");
+  assert.match(thread, /useAuth/, "thread must read auth state");
+  assert.match(
+    thread,
+    /enabled:\s*!!isSignedIn\s*&&\s*!!conversationId/,
+    "thread messages query must not run for guests",
+  );
+  assert.match(thread, /testID="thread-signin"/, "thread must offer sign-in CTA for guests");
+});
+
+test("push tap handler redirects unsigned users away from private routes", () => {
+  const push = fs.readFileSync(path.join(APP_ROOT, "hooks", "usePushNotifications.tsx"), "utf8");
+  const routing = fs.readFileSync(NOTIF_ROUTING, "utf8");
+  assert.match(routing, /notificationRequiresAuth/, "routing must expose auth gate helper");
+  assert.match(
+    push,
+    /notificationRequiresAuth\(dest\)/,
+    "push handler must gate private destinations",
+  );
+  assert.match(
+    push,
+    /handleResponse\(r,\s*isSignedIn\s*===\s*true\)/,
+    "push listener must pass signed-in state",
+  );
+});
+
+test("edit listing skips price validation for buyer requests", () => {
+  const edit = fs.readFileSync(
+    path.join(APP_ROOT, "app", "listings", "edit", "[id].tsx"),
+    "utf8",
+  );
+  assert.match(edit, /is_request/, "edit screen must read is_request from listing");
+  assert.match(
+    edit,
+    /!isRequest\s*&&\s*base_price_cash\s*<=\s*0/,
+    "price validation must be skipped for buyer requests",
+  );
+  assert.match(
+    edit,
+    /isRequest\s*\?\s*\{\}\s*:\s*\{\s*base_price_cash\s*\}/,
+    "buyer requests must not send base_price_cash on update",
+  );
+});
+
+test("explore-on-map surfaces when results have no coordinates", () => {
+  const search = fs.readFileSync(path.join(APP_ROOT, "app", "(tabs)", "search.tsx"), "utf8");
+  assert.match(
+    search,
+    /wantMap[\s\S]*search\.mapNoPins/,
+    "search must alert when map intent cannot be satisfied",
+  );
+});
+
+test("saved searches v1 entries upgrade to criteria v2 on load", () => {
+  const session = fs.readFileSync(path.join(APP_ROOT, "context", "SessionContext.tsx"), "utf8");
+  assert.match(session, /upgradeSavedSearches/, "SessionContext must upgrade legacy saved searches");
+  assert.match(session, /legacyCriteriaFromSaved/, "upgrade must map v1 fields into SearchCriteria");
+});
+
+test("profile overflow menu must not steal touches from menu rows", () => {
+  const profile = fs.readFileSync(PROFILE, "utf8");
+  assert.doesNotMatch(
+    profile,
+    /showMenu[\s\S]*onStartShouldSetResponder/,
+    "profile menu sheet must not use onStartShouldSetResponder (blocks Pressable rows)",
+  );
+  assert.match(
+    profile,
+    /showMenu[\s\S]*StyleSheet\.absoluteFillObject[\s\S]*menuSheet/,
+    "profile menu must use sibling backdrop + sheet (touch-safe pattern)",
+  );
+});
+
+test("profile menu routes are registered in root stack", () => {
+  const layout = fs.readFileSync(LAYOUT, "utf8");
+  const profile = fs.readFileSync(PROFILE, "utf8");
+  const required = [
+    "settings",
+    "business/verification",
+    "business/supply-hub",
+    "rentals/hub",
+    "bookings",
+    "billing",
+    "plans",
+  ];
+  for (const route of required) {
+    const escaped = route.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+    assert.match(
+      layout,
+      new RegExp(`name="${escaped}"`),
+      `_layout.tsx must register ${route} for profile navigation`,
+    );
+  }
+  assert.match(profile, /menuItems/, "profile must define overflow menu items");
+  assert.match(profile, /profileTabs/, "profile must define quick-link tabs");
+});
+
+test("home and promote modals use touch-safe backdrop pattern", () => {
+  const index = fs.readFileSync(path.join(APP_ROOT, "app", "(tabs)", "index.tsx"), "utf8");
+  const promote = fs.readFileSync(path.join(APP_ROOT, "components", "PromoteButton.tsx"), "utf8");
+  const authGate = fs.readFileSync(path.join(APP_ROOT, "hooks", "useAuthGate.tsx"), "utf8");
+
+  for (const [name, src, marker] of [
+    ["logo menu", index, "showLogoMenu"],
+    ["sort menu", index, "showSortMenu"],
+    ["promote sheet", promote, "visible"],
+    ["auth gate", authGate, "AuthGateModal"],
+  ]) {
+    assert.doesNotMatch(
+      src,
+      new RegExp(`${marker}[\\s\\S]*onStartShouldSetResponder`),
+      `${name} must not use onStartShouldSetResponder`,
+    );
+    assert.match(
+      src,
+      /StyleSheet\.absoluteFillObject/,
+      `${name} must use sibling absoluteFill backdrop`,
+    );
+  }
+
+  assert.doesNotMatch(
+    authGate,
+    /onPress=\{\(e\) => e\.stopPropagation\(\)\}/,
+    "auth gate must not rely on stopPropagation on nested Pressables",
   );
 });
