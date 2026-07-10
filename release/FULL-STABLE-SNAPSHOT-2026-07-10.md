@@ -182,7 +182,7 @@ AWS_REGION=... SSM_PREFIX=... bash deploy/aws/scripts/deploy.sh
 
 | البند | القيمة |
 |-------|--------|
-| Tip (stabilize) | `a0638cc`+ |
+| Tip (stabilize) | `d531c14` |
 | Live | **FRESH** @ Replit |
 | Tag مقترح | `v1.1.0-stabilize-2026-07-10` |
 | Device QA | **OPEN** |
