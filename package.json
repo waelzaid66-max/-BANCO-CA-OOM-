@@ -19,7 +19,8 @@
     "ops:redeploy-watch": "node audit/mobile/scripts/replit-redeploy-watch.mjs",
     "ops:wave-b": "node audit/mobile/scripts/wave-b-after-fresh.mjs",
     "ops:probe-full": "node audit/mobile/scripts/probe-full-deploy.mjs",
-    "ops:full-verify": "node scripts/production-confidence-check.mjs --skip-typecheck && node artifacts/banco-mobile/tests/lib-hardening.test.mjs && pnpm --filter @workspace/search-contract run test"
+    "ops:full-verify": "node scripts/production-confidence-check.mjs --skip-typecheck && node artifacts/banco-mobile/tests/lib-hardening.test.mjs && pnpm --filter @workspace/search-contract run test",
+    "ops:website-ci": "node scripts/website-ci-local.mjs"
   },
   "private": true,
   "devDependencies": {

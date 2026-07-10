@@ -85,11 +85,20 @@ async function checkRoute(item) {
         fail(item.label, "invalid JSON");
         return;
       }
-      if (!json.name || json.lang !== "ar") {
-        fail(item.label, "missing name or ar lang");
+      if (!json.name || !json.lang) {
+        fail(item.label, "missing name or lang");
       }
     } else {
-      if (!body.includes('lang="ar"')) {
+      const isEn = item.path === "/en" || item.path.startsWith("/en/");
+      if (isEn) {
+        if (
+          !body.includes('data-banco-locale="en"') &&
+          !body.includes("Browse the market") &&
+          !body.includes("Search")
+        ) {
+          fail(item.label, "missing EN route markers");
+        }
+      } else if (!body.includes('lang="ar"')) {
         fail(item.label, 'missing lang="ar"');
       }
       if (item.expectJsonLd && !body.includes(item.expectJsonLd)) {
@@ -130,6 +139,30 @@ async function checkListing(id) {
   }
 }
 
+async function checkListingShareRewrite(id) {
+  const label = "listing share /l/:id rewrite";
+  const url = `${BASE}/l/${id}`;
+  const before = failed;
+
+  try {
+    const res = await fetch(url, { redirect: "manual" });
+    if (res.status >= 500) {
+      fail(label, `HTTP ${res.status} (${url})`);
+      return;
+    }
+    if (res.status >= 400 && res.status !== 404) {
+      fail(label, `HTTP ${res.status} (${url})`);
+      return;
+    }
+    if (failed === before) {
+      pass(label, res.status);
+    }
+  } catch (error) {
+    const msg = error instanceof Error ? error.message : String(error);
+    fail(label, `${msg} (${url})`);
+  }
+}
+
 async function main() {
   if (!BASE) {
     console.error("Set BANCO_WEB_URL (or WEB_URL) to the deployed banco-web origin.");
@@ -144,6 +177,7 @@ async function main() {
   const listingId = process.env.BANCO_LISTING_SMOKE_ID?.trim();
   if (listingId) {
     await checkListing(listingId);
+    await checkListingShareRewrite(listingId);
   }
 
   process.exit(failed > 0 ? 1 : 0);

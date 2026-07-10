@@ -107,11 +107,13 @@
 - [x] بطاقات إعلان + تفاصيل إعلان + not-found تتبع تفضيل اللغة (`localStorage` + `/en/*`)
 - [x] خريطة بحث (mock/live/disabled) منسوخة AR/EN — خلف `NEXT_PUBLIC_WEB_SEARCH_MAP`
 
-### G-W3 (خريطة + فلاتر متقدمة)
+### G-W3 (خريطة + فلاتر متقدمة — staging code)
 
 - [x] مكوّنات الخريطة (panel، surface، canvas، Google) موحّدة اللغة
-- [ ] خريطة حية في prod (`MAP=true` + مفتاح Google)
-- [ ] FilterSheet parity كامل مع الموبايل (حقول نادرة)
+- [x] `pnpm run ops:website-ci` — mirror محلي لـ `ci-website.yml`
+- [x] Docker `deploy/aws/Dockerfile.banco-web` + `ci-website-docker.yml`
+- [ ] خريطة حية على staging (`MAP=true` + Google key) — بعد API FRESH
+- [ ] FilterSheet parity كامل مع الموبايل (حقول نادرة) — W3.1
 
 ### G-W5 (إنتاج بائع)
 

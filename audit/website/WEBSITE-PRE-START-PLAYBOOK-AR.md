@@ -2,7 +2,7 @@
 
 **الغرض:** ترتيب كل الأفكار، التحقق من الشروط، ومنع البدء قبل اكتمال المتطلبات.  
 **التاريخ:** 2026-07-09  
-**الحالة:** 📋 تخطيط — **ممنوع تنفيذ W0+** حتى إغلاق **القسم 3** (بوابات Go)
+**الحالة:** 📋 W0–W3 code جاهز · staging CDN معلّق · **الموبايل أولاً** — [`WEBSITE-EXECUTION-PRIORITY-AR.md`](./WEBSITE-EXECUTION-PRIORITY-AR.md)
 
 ---
 
@@ -14,6 +14,7 @@
 | 2 | [`WEBSITE-MASTER-PLAN-AR.md`](./WEBSITE-MASTER-PLAN-AR.md) | الرؤية + موجات W0–W8 |
 | 3 | [`WEBSITE-FEATURE-MATRIX.md`](./WEBSITE-FEATURE-MATRIX.md) | تغطية ميزة × سطح × موجة |
 | 4 | [`WEBSITE-READINESS-GATES.md`](./WEBSITE-READINESS-GATES.md) | قوائم تحقق قابلة للتوقيع |
+| 4b | [`WEBSITE-EXECUTION-PRIORITY-AR.md`](./WEBSITE-EXECUTION-PRIORITY-AR.md) | **ترتيب التنفيذ: موبايل أولاً** |
 | 5 | [`WEBSITE-SEPARATION-AND-COMPATIBILITY-PLAN.md`](./WEBSITE-SEPARATION-AND-COMPATIBILITY-PLAN.md) | تفاصيل معمارية إنجليزي |
 | 6 | [`WEBSITE-MOBILE-INDEPENDENCE-CHECKLIST.md`](./WEBSITE-MOBILE-INDEPENDENCE-CHECKLIST.md) | كل PR ويب |
 
@@ -30,6 +31,8 @@
 ---
 
 ## 1. ملخص تنفيذي (صفحة واحدة)
+
+> **ترتيب التنفيذ:** Replit FRESH → wave-b → EAS. الويب W3 staging بالتوازي ومعزول — [`WEBSITE-EXECUTION-PRIORITY-AR.md`](./WEBSITE-EXECUTION-PRIORITY-AR.md)
 
 **المطلوب:** موقع ويب تكميلي **شامل** يخدم المشروع دون المساس بالموبايل:
 

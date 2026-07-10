@@ -10,14 +10,26 @@ export function getSiteUrl(): string {
   return "http://localhost:3000";
 }
 
-export function getMarketUrl(): string | null {
-  const fromEnv = process.env.NEXT_PUBLIC_MARKET_URL?.trim();
-  return fromEnv ? fromEnv.replace(/\/+$/, "") : null;
+function sameOriginSurfacePath(path: string): string | null {
+  const site = process.env.NEXT_PUBLIC_SITE_URL?.trim();
+  if (!site) return null;
+  const base = site.replace(/\/+$/, "");
+  const suffix = path.startsWith("/") ? path : `/${path}`;
+  return `${base}${suffix}`;
 }
 
+/** Banco Market (dealer-os). Explicit env wins; else same host `/dealer-os/` when SITE_URL is set. */
+export function getMarketUrl(): string | null {
+  const fromEnv = process.env.NEXT_PUBLIC_MARKET_URL?.trim();
+  if (fromEnv) return fromEnv.replace(/\/+$/, "");
+  return sameOriginSurfacePath("/dealer-os");
+}
+
+/** Admin control (admin-os). Explicit env wins; else same host `/admin-os/` when SITE_URL is set. */
 export function getAdminUrl(): string | null {
   const fromEnv = process.env.NEXT_PUBLIC_ADMIN_URL?.trim();
-  return fromEnv ? fromEnv.replace(/\/+$/, "") : null;
+  if (fromEnv) return fromEnv.replace(/\/+$/, "");
+  return sameOriginSurfacePath("/admin-os");
 }
 
 export function getAppStoreUrls(): { android: string | null; ios: string | null } {

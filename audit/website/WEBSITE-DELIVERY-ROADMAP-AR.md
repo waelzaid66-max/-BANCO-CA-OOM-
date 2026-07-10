@@ -1,7 +1,7 @@
 # خارطة التسليم — موقع BANCO التكميلي
 
-**التاريخ:** 2026-07-09  
-**الحالة:** تنفيذ W0–W2 جزئي — جاهز للتجريب المحدود  
+**التاريخ:** 2026-07-10  
+**الحالة:** W0–W3 جاهز للـ staging (flags آمنة) — W4/W5 لم يبدأ  
 **المبدأ:** الموقع **لا يوقف** الموبايل أو ماركت أو الأدمن عند تعطّله أو سقوطه.
 
 ---
@@ -13,8 +13,8 @@
 | **W0** عزل CI | ~95% | `ci.yml` لا ي typecheck ويب؛ `ci-website.yml` منفصل؛ boundaries + ESLint ويب |
 | **W0.5** tokens | ~70% | `banco-web` + `landing` فقط |
 | **W1** SEO hubs | ~96% | AR + EN hubs، sitemap، hreflang، static audit |
-| **W2** بحث | ~90% | `/search`، `/listing/[id]`، عقد مشترك؛ live خلف flags |
-| **W3** خريطة/فلاتر | ~83% | مكوّنات جاهزة؛ MAP/LIVE معطّلان افتراضياً |
+| **W2** بحث | ~95% | `/search` + `/en/search`؛ EN عبر `useSearchLocale`؛ build PASS |
+| **W3** خريطة/فلاتر | ~90% | مكوّنات AR/EN؛ MAP/LIVE معطّلان افتراضياً |
 | **W4–W5** | 0% | Clerk، workspace بائع — لم يبدأ |
 | **W8** دمج landing | 0% | landing منفصل |
 
@@ -117,7 +117,7 @@ banco-web   →  middleware أو layout يقرأ:
 | البند | الخطة |
 |-------|--------|
 | `<html lang>` ثابت `ar` على كل الصفحات | `DocumentLocaleSync` على `/en/*` + هجرة `[locale]` لاحقاً |
-| مكوّنات البحث التفاعلية عربية على `/en/search` | W2.1 — تمرير `locale` لـ SearchControls/Facets |
+| ~~مكوّنات البحث على `/en/search`~~ | ✅ W2.1 — `useSearchLocale` + `/en/*` + `searchUiCopy` |
 | manifest عربي فقط | W1.3 — manifest مزدوج أو neutral |
 | `tsconfig strict: false` في banco-web | تفعيل تدريجي بعد W2 |
 
