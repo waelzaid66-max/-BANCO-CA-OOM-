@@ -119,6 +119,7 @@ eas build --profile preview --platform android
 | ملف | دور |
 |-----|-----|
 | هذا الملف | **بوابة نجاح الموبايل الوحيدة** |
+| `ARCHITECTURE-DEEP-UNDERSTANDING-AR.md` | فهم معماري مرتّب (طبقات · شركات · اعتماديات) |
 | `MOBILE-STABILIZE-ACCEPTANCE.md` | مصفوفة سيناريوهات الجهاز |
 | `MOBILE-STABILIZE-SUCCESS-CERT.md` | شهادة كود vs DoD جهاز |
 | `FULL-VERIFICATION-2026-07-10.md` | طبقات auto / live / device |
