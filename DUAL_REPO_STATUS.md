@@ -1,86 +1,69 @@
 # حالة الريبوهين الرسميين — مصدر الحقيقة
 
-**آخر تحديث:** 2026-07-11 (v1.1.5 production hardening + browse journeys)  
-**النطاق:** ريبوهان الإنتاج + مرآات GitHub (bbanco · bdeals · B-OOM).
+**آخر تحديث:** 2026-07-11  
+**مجلد العمل (المصدر الوحيد):** `C:\Users\waelz\Downloads\BANCO-CA-OOM`  
+**قاعدة الوكيل:** «حدّث الريبوهات» = **الريبوهان أدناه فقط**. `main` في هذا المجلد = نسختك.  
+**ممنوع على الوكيل:** `git push boom` · `bbanco` · `bdeals` · `upstream` — إلا بطلب صريح من المشغّل.
 
-| الريبو | الرابط | الدور |
-|--------|--------|-------|
-| **أساسي** | https://github.com/waelzaid66-max/-BANCO-CA-OOM- | كود + CI + تقارير + GCP + Replit |
-| **AWS** | https://github.com/waelzaid66-max/aws-virgen | نشر EC2/Elastic Beanstalk (نسخة مطابقة للأساسي) |
+| # | الريبو | Remote / آلية | الدور |
+|---|--------|---------------|-------|
+| 1 | **-BANCO-CA-OOM-** | `origin` | أساسي — كود + CI + Replit |
+| 2 | **aws-virgen** | sync script / GitHub workflow | AWS deploy — نسخة مطابقة للأساسي |
 
-**مرجع النشر الكامل:** `audit/production-readiness/FULL-DEPLOY-TASK-MATRIX-2026-07-11-AR.md`  
-**وسم الإصدار:** `v1.1.5-production-2026-07-11`
+**وسm:** `v1.1.5-production-2026-07-11`  
+**مرجع:** `audit/production-readiness/FULL-DEPLOY-TASK-MATRIX-2026-07-11-AR.md`
 
 ---
 
-## SHA والوسم المستهدف
-
-| الريبو | الفرع | Tag | ملاحظة |
-|--------|--------|-----|--------|
-| **-BANCO-CA-OOM-** | `main` | `v1.1.5-production-2026-07-11` | SHA **1882523** · confidence **19/19** · website CI **9/9** |
-| **aws-virgen** | `main` | نفس الوسم | بعد `publish-aws-virgen-rc.sh` أو workflow |
-| **B-OOM** (مرآة) | `main` | نفس SHA | `git push boom main` |
+## أوامر push المسموحة للوكيل
 
 ```bash
-git fetch origin main && git rev-parse --short origin/main
-pnpm run confidence                              # 19/19
-node scripts/website-ci-local.mjs                # 9/9
-pnpm run typecheck
-pnpm run ops:full-verify
+git push origin main
+git push origin --tags    # عند إنشاء tag فقط
 ```
 
----
-
-## مصفوفة النشر الصادقة
-
-| الطبقة | مثبت؟ | الدليل |
-|--------|--------|--------|
-| كود GitHub أساسي | ✅ | browse journeys + seller bio API |
-| production-confidence | ✅ | **19/19** |
-| website CI local | ✅ | **9/9** |
-| monorepo typecheck | ✅ | api-server + mobile + libs |
-| API integration (محلي) | ⚠️ | `pnpm run test:api:local` (Docker Postgres) |
-| API integration (CI) | ✅ | GitHub Actions + Postgres service |
-| aws-virgen sync | ⏳ | `AWS_VIRGEN_SYNC_TOKEN` + tag push |
-| API حي — موجة 6 | ✅ | ISO + map bookable/price |
-| API حي — موجة 8+10C+bio | ❌ **STALE** | Replit redeploy من `main` |
-| upload smoke | ⚠️ | health 2/2 · upload needs JWT |
-| EAS / متجر | ⏳ | بعد FRESH + Device QA |
-
----
-
-## Replit redeploy (blocking wave 8 on live)
-
-```bash
-bash audit/mobile/REPLIT-SHELL-COPYPASTE.sh
-pnpm run ops:redeploy-watch
-```
-
----
-
-## aws-virgen — مزامنة
+## الريبو الثاني (aws-virgen) — ليس git push مباشر
 
 ```bash
 node scripts/generate-aws-virgen-sync-manifest.mjs --tag v1.1.5-production-2026-07-11
 ./scripts/publish-aws-virgen-rc.sh v1.1.5-production-2026-07-11
 ```
 
-أو GitHub Actions: **Sync aws-virgen (full main)** مع نفس الوسم.
+أو GitHub Actions: **Sync aws-virgen (full main)**.
 
 ---
 
-## مرآات إضافية (اختياري)
+## SHA الحالي (origin)
 
 ```bash
-git push origin main
-git push origin v1.1.5-production-2026-07-11
-git push bbanco main
-git push bdeals main
-git push boom main
+git fetch origin main && git rev-parse --short origin/main
+pnpm run confidence
+node scripts/website-ci-local.mjs
 ```
 
 ---
 
-## Device QA (مفتوح)
+## مصفوفة النشر
 
-`audit/mobile/DEVICE-QA-SECTION-COMPANIES.md` — لم يُنفَّذ على جهاز حقيقي بعد FRESH.
+| الطبقة | مثبت؟ |
+|--------|--------|
+| كود GitHub (`origin/main`) | ✅ |
+| aws-virgen sync | ⏳ token |
+| API حي Replit — موجة 6 | ✅ |
+| API حي — موجة 8+bio | ❌ STALE — Replit redeploy |
+| EAS / متجر | ⏳ |
+
+---
+
+## Replit redeploy
+
+```bash
+bash audit/mobile/REPLIT-SHELL-COPYPASTE.sh
+pnpm run ops:post-redeploy
+```
+
+---
+
+## خارج نطاق الوكيل (لا push تلقائي)
+
+`boom` (B-OOM) · `bbanco` · `bdeals` — مرآات اختيارية للمشغّل فقط.

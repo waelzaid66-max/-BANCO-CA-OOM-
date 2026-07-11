@@ -78,15 +78,15 @@ Host: `https://banco-ca-oom.replit.app`
 
 ---
 
-## 5) Repos synced
+## 5) Repos (official pair only)
 
-| Remote | SHA | Synced? |
-|--------|-----|---------|
-| origin | a78fd41 | ✅ (after this commit) |
-| boom | a78fd41 | ✅ (after push) |
-| bbanco | fbaee01 | ❌ pending push |
-| bdeals | 0c4220d | ❌ pending push |
-| aws-virgen | — | ❌ pending sync |
+| Remote | Repo | Agent may push? |
+|--------|------|-----------------|
+| `origin` | -BANCO-CA-OOM- | ✅ yes |
+| aws-virgen sync | aws-virgen | ✅ via script/workflow only |
+| `boom`, `bbanco`, `bdeals` | mirrors | ❌ unless operator explicitly asks |
+
+**Workspace scope:** `C:\Users\waelz\Downloads\BANCO-CA-OOM` — `main` here is the only source of truth.
 
 ---
 

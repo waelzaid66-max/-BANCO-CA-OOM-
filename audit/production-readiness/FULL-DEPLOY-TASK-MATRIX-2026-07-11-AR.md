@@ -37,13 +37,12 @@
 | 1 | **-BANCO-CA-OOM-** (أساسي) | `origin` | `main` | `git push origin main` |
 | 2 | **aws-virgen** (AWS deploy) | عبر sync | `main` | انظر §4 |
 
-**مرآات اختيارية (نفس SHA):** `boom` (B-OOM), `bbanco`, `bdeals`
+**مرآات اختيارية (خارج نطاق الوكيل — لا push إلا بطلب صريح):** `boom` (B-OOM), `bbanco`, `bdeals`
 
 ```bash
 git push origin main
 git push origin v1.1.5-production-2026-07-11
-git push boom main
-git push boom v1.1.5-production-2026-07-11
+# aws-virgen: see §5 — not a direct git remote push
 ```
 
 ---
