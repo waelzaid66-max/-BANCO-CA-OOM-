@@ -60,6 +60,16 @@ const checks = [
     includes: ["social_links: sellerSocialLinks"],
   },
   {
+    id: "v115_seller_bio",
+    file: "artifacts/api-server/src/services/ListingService.ts",
+    includes: ["bio: sellerPresentational.bio", "getSellerPresentational"],
+  },
+  {
+    id: "v115_patch_me_bio",
+    file: "artifacts/api-server/src/validators/schemas.ts",
+    includes: ["bio: z.string().trim().max(500)", "display_title: z.string().trim().max(120)"],
+  },
+  {
     id: "wave9_listing_mode_contract",
     file: "lib/search-contract/src/buildSearchParams.ts",
     includes: ['c.listingMode === "sale"', 'c.listingMode === "buy"'],

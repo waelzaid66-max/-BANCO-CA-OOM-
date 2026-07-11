@@ -61,8 +61,8 @@ pnpm run ops:redeploy-watch
 ## aws-virgen — مزامنة
 
 ```bash
-node scripts/generate-aws-virgen-sync-manifest.mjs --tag v1.1.4-production-2026-07-10
-./scripts/publish-aws-virgen-rc.sh v1.1.4-production-2026-07-10
+node scripts/generate-aws-virgen-sync-manifest.mjs --tag v1.1.5-production-2026-07-11
+./scripts/publish-aws-virgen-rc.sh v1.1.5-production-2026-07-11
 ```
 
 أو GitHub Actions: **Sync aws-virgen (full main)** مع نفس الوسم.
@@ -73,7 +73,7 @@ node scripts/generate-aws-virgen-sync-manifest.mjs --tag v1.1.4-production-2026-
 
 ```bash
 git push origin main
-git push origin v1.1.4-production-2026-07-10
+git push origin v1.1.5-production-2026-07-11
 git push bbanco main
 git push bdeals main
 git push boom main

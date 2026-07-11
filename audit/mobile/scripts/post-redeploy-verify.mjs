@@ -3,8 +3,8 @@
  * Usage:
  *   node audit/mobile/scripts/post-redeploy-verify.mjs [baseUrl]
  *
- * Exit 0 — wave 6 + wave 8 FRESH + health smoke ok
- * Exit 1 — wave 6 FRESH but wave 8 STALE (partial deploy)
+ * Exit 0 — wave 6 + wave 8 + wave 9 (bio) FRESH + health smoke ok
+ * Exit 1 — wave 6 FRESH but wave 8 or bio STALE (partial deploy)
  * Exit 2 — wave 6 STALE (redeploy required)
  *
  * Does not require Clerk JWT (health-only). For full upload smoke set
@@ -18,6 +18,7 @@ const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "../../.
 const base = (process.argv[2] || "https://banco-ca-oom.replit.app").replace(/\/$/, "");
 const probe = path.join(root, "audit/mobile/scripts/probe-live-deploy.mjs");
 const wave8Probe = path.join(root, "audit/mobile/scripts/probe-wave8-seller-social.mjs");
+const wave9BioProbe = path.join(root, "audit/mobile/scripts/probe-wave9-seller-bio.mjs");
 
 const REDEPLOY_SHELL = `
 STILL STALE (wave 6).
@@ -67,7 +68,25 @@ Redeploy api-server from origin/main @ 5939849+, then re-run:
   process.exit(1);
 }
 
-console.log("\nWave 6 + wave 8 FRESH. Running health-only smoke on same host…\n");
+console.log("\nWave 8 FRESH. Checking v1.1.5 seller.bio + display_title…\n");
+
+const w9Run = spawnSync(process.execPath, [wave9BioProbe, base], {
+  encoding: "utf8",
+  cwd: root,
+});
+process.stdout.write(w9Run.stdout || "");
+process.stderr.write(w9Run.stderr || "");
+
+if (w9Run.status !== 0) {
+  console.log(`
+PARTIAL DEPLOY — wave 6+8 live but seller.bio/display_title missing.
+Redeploy api-server from origin/main @ 1882523+, then re-run:
+  node audit/mobile/scripts/post-redeploy-verify.mjs
+`);
+  process.exit(1);
+}
+
+console.log("\nWave 6 + wave 8 + seller bio FRESH. Running health-only smoke on same host…\n");
 
 const smoke = spawnSync(
   process.execPath,
