@@ -95,3 +95,9 @@ id = "qOkhl2q-n6iqWN_UEO3cl"
 uri = "file://audit/maintenance/MOBILE-AUDIT-2026-07-11.md"
 type = "text"
 title = "BANCO Mobile — Full Technical Audit Report"
+
+[[outputs]]
+id = "cdEFkjVKcL59mbqqFuzMR"
+uri = "file://audit/bugs/BUG-REPORT-2026-07-11.md"
+type = "text"
+title = "BANCO Bug Report & Root Cause Analysis — 2026-07-11"
