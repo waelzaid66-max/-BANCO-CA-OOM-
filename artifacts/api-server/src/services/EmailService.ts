@@ -79,19 +79,27 @@ class ResendTransport implements EmailTransport {
     private readonly from: string,
   ) {}
   async send(msg: EmailMessage): Promise<void> {
-    const res = await fetch("https://api.resend.com/emails", {
-      method: "POST",
-      headers: {
-        Authorization: `Bearer ${this.apiKey}`,
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({
+    // Node's built-in fetch (undici) validates string bodies as ByteStrings
+    // (Latin-1, code points ≤ 255). Arabic subjects/body text contain code
+    // points > 255 and trigger a TypeError at the undici layer. Passing the
+    // body as a Buffer bypasses that validation while preserving UTF-8 content.
+    const body = Buffer.from(
+      JSON.stringify({
         from: this.from,
         to: msg.to,
         subject: msg.subject,
         html: msg.html,
         text: msg.text,
       }),
+      "utf8",
+    );
+    const res = await fetch("https://api.resend.com/emails", {
+      method: "POST",
+      headers: {
+        Authorization: `Bearer ${this.apiKey}`,
+        "Content-Type": "application/json; charset=utf-8",
+      },
+      body,
     });
     if (!res.ok) {
       const detail = await res.text().catch(() => "");
