@@ -1,8 +1,21 @@
 "use client";
 
 import type { ListingDetail } from "@workspace/api-client-react";
+import {
+  ContactLeadBodyActionType,
+  useContactLead,
+  useCreateConversation,
+  useGetListing,
+  getGetListingQueryKey,
+} from "@workspace/api-client-react";
+import { SignedIn, SignedOut } from "@clerk/nextjs";
+import Link from "next/link";
+import { useRouter } from "next/navigation";
+import { useState } from "react";
 import { getAppListingDeepLink } from "../lib/site-env";
+import { isClerkConfigured, signInPath } from "../lib/clerk-config";
 import { listingUiCopy } from "../lib/listing-ui-copy";
+import { workspaceMessagesPath } from "../lib/workspace-paths";
 import { useSearchLocale } from "../lib/use-search-locale";
 
 const rowStyle: React.CSSProperties = {
@@ -31,24 +44,90 @@ const secondaryStyle: React.CSSProperties = {
   color: "var(--banco-fg)",
 };
 
-function isDailyRentListing(listing: ListingDetail): boolean {
-  if (listing.category !== "real_estate") return false;
-  const rentalTerm = listing.specs?.rental_term;
-  return typeof rentalTerm === "string" && rentalTerm === "furnished_daily";
-}
-
 type ListingContactActionsProps = {
   listing: ListingDetail;
 };
 
-/** Web contact path: deep-link into the mobile app (auth + contact_token live there). */
 export function ListingContactActions({ listing }: ListingContactActionsProps) {
   const locale = useSearchLocale();
   const copy = listingUiCopy(locale);
+  const router = useRouter();
   const appLink = getAppListingDeepLink(listing.id);
-  const bookingLink = getAppListingDeepLink(listing.id, "booking");
   const showWhatsApp = listing.whatsapp_enabled === true;
-  const showBooking = isDailyRentListing(listing);
+  const clerkOn = isClerkConfigured();
+
+  const { data: authedListing } = useGetListing(listing.id, {
+    query: { enabled: clerkOn, queryKey: getGetListingQueryKey(listing.id) },
+  });
+  const contactToken = authedListing?.data?.contact_token ?? listing.contact_token ?? null;
+  const contactLead = useContactLead();
+  const createConversation = useCreateConversation();
+  const [phoneReveal, setPhoneReveal] = useState<string | null>(null);
+  const [contactError, setContactError] = useState<string | null>(null);
+  const [openingChat, setOpeningChat] = useState(false);
+
+  const runContact = (action: ContactLeadBodyActionType) => {
+    if (!contactToken) {
+      setContactError(copy.contactWebHint);
+      return;
+    }
+    setContactError(null);
+    contactLead.mutate(
+      {
+        data: {
+          listing_id: listing.id,
+          action_type: action,
+          contact_token: contactToken,
+        },
+      },
+      {
+        onSuccess: (res) => {
+          const phone = res.data?.phone;
+          if (phone) {
+            setPhoneReveal(phone);
+            if (action === ContactLeadBodyActionType.call) {
+              window.location.href = `tel:${phone}`;
+            } else if (action === ContactLeadBodyActionType.whatsapp) {
+              window.open(`https://wa.me/${phone.replace(/\D/g, "")}`, "_blank", "noopener,noreferrer");
+            }
+          }
+        },
+        onError: () => setContactError(copy.contactError),
+      },
+    );
+  };
+
+  const openInAppChat = () => {
+    if (openingChat) return;
+    setContactError(null);
+    setOpeningChat(true);
+
+    if (contactToken) {
+      contactLead.mutate({
+        data: {
+          listing_id: listing.id,
+          action_type: ContactLeadBodyActionType.chat,
+          contact_token: contactToken,
+        },
+      });
+    }
+
+    createConversation.mutate(
+      { data: { listing_id: listing.id } },
+      {
+        onSuccess: (res) => {
+          const conversationId = res.data?.id;
+          if (conversationId) {
+            router.push(workspaceMessagesPath(locale, conversationId));
+          } else {
+            setContactError(copy.contactError);
+          }
+        },
+        onError: () => setContactError(copy.contactError),
+        onSettled: () => setOpeningChat(false),
+      },
+    );
+  };
 
   return (
     <section style={{ marginTop: "1.25rem" }} aria-label={copy.contactTitle}>
@@ -64,27 +143,86 @@ export function ListingContactActions({ listing }: ListingContactActionsProps) {
       >
         {copy.contactTitle}
       </p>
-      <p style={{ margin: "0 0 0.5rem", color: "var(--banco-muted)", fontSize: "0.85rem", lineHeight: 1.6 }}>
-        {copy.contactAppHint}
-      </p>
-      <div style={rowStyle}>
-        <a href={appLink} style={buttonStyle}>
-          {copy.contactCall}
-        </a>
-        {showWhatsApp ? (
-          <a href={appLink} style={secondaryStyle}>
-            {copy.contactWhatsApp}
-          </a>
-        ) : null}
-        <a href={appLink} style={secondaryStyle}>
-          {copy.contactChat}
-        </a>
-        {showBooking ? (
-          <a href={bookingLink} style={buttonStyle}>
-            {copy.contactBooking}
-          </a>
-        ) : null}
-      </div>
+
+      {clerkOn ? (
+        <>
+          <SignedIn>
+            <p style={{ margin: "0 0 0.5rem", color: "var(--banco-muted)", fontSize: "0.85rem", lineHeight: 1.6 }}>
+              {copy.contactWebHint}
+            </p>
+            <div style={rowStyle}>
+              <button
+                type="button"
+                style={buttonStyle}
+                disabled={contactLead.isPending}
+                onClick={() => runContact(ContactLeadBodyActionType.call)}
+              >
+                {copy.contactCall}
+              </button>
+              {showWhatsApp ? (
+                <button
+                  type="button"
+                  style={secondaryStyle}
+                  disabled={contactLead.isPending}
+                  onClick={() => runContact(ContactLeadBodyActionType.whatsapp)}
+                >
+                  {copy.contactWhatsApp}
+                </button>
+              ) : null}
+              <button
+                type="button"
+                style={secondaryStyle}
+                disabled={openingChat || createConversation.isPending}
+                onClick={openInAppChat}
+              >
+                {copy.contactChat}
+              </button>
+            </div>
+            {phoneReveal ? (
+              <p style={{ margin: "0.5rem 0 0", color: "var(--banco-fg)", fontSize: "0.9rem" }}>
+                {phoneReveal}
+              </p>
+            ) : null}
+            {contactError ? (
+              <p style={{ margin: "0.5rem 0 0", color: "var(--banco-primary)", fontSize: "0.85rem" }}>
+                {contactError}
+              </p>
+            ) : null}
+          </SignedIn>
+          <SignedOut>
+            <p style={{ margin: "0 0 0.5rem", color: "var(--banco-muted)", fontSize: "0.85rem", lineHeight: 1.6 }}>
+              {copy.contactAppHint}
+            </p>
+            <div style={rowStyle}>
+              <Link href={signInPath(locale)} style={buttonStyle}>
+                {copy.contactSignIn}
+              </Link>
+              <a href={appLink} style={secondaryStyle}>
+                {copy.openInApp}
+              </a>
+            </div>
+          </SignedOut>
+        </>
+      ) : (
+        <>
+          <p style={{ margin: "0 0 0.5rem", color: "var(--banco-muted)", fontSize: "0.85rem", lineHeight: 1.6 }}>
+            {copy.contactAppHint}
+          </p>
+          <div style={rowStyle}>
+            <a href={appLink} style={buttonStyle}>
+              {copy.contactCall}
+            </a>
+            {showWhatsApp ? (
+              <a href={appLink} style={secondaryStyle}>
+                {copy.contactWhatsApp}
+              </a>
+            ) : null}
+            <a href={appLink} style={secondaryStyle}>
+              {copy.contactChat}
+            </a>
+          </div>
+        </>
+      )}
     </section>
   );
 }

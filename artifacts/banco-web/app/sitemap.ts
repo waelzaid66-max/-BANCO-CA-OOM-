@@ -26,11 +26,13 @@ export default function sitemap(): MetadataRoute.Sitemap {
     "/real-estate",
     "/industrial",
     "/search",
+    "/directory",
     "/en",
     "/en/cars",
     "/en/real-estate",
     "/en/industrial",
     "/en/search",
+    "/en/directory",
   ];
   const searchHubs = GOLDEN_HUB_QUERIES.map((entry) => `/search?${entry.query}`);
   const enSearchHubs = GOLDEN_HUB_QUERIES.map(

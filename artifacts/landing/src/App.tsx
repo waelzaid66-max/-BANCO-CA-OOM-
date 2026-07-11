@@ -1,22 +1,20 @@
+import { useEffect } from "react";
 import logoUrl from "@/assets/banco-logo.png";
 import { bancoBrand } from "@workspace/design-tokens";
 
 /**
- * BANCO — the official entry page. Replaces the old placeholder (logo + a
- * "دخول" button that pointed at the retired Replit mobile link) with a real
- * directory of every surface and its main destinations: the mobile app (store
- * links), Banco Market, and the Admin control panel.
+ * BANCO landing artifact — entry hub when VITE_WEB_URL is unset (local dev).
+ * When VITE_WEB_URL points at banco-web, this build redirects to
+ * `{VITE_WEB_URL}/directory` so the canonical hub lives in Next.js (W8).
  *
- * All bases come from Vite env so the SAME build works in every environment:
- *   VITE_MARKET_URL · VITE_ADMIN_URL · VITE_APP_ANDROID_URL · VITE_APP_IOS_URL
- * A surface whose URL isn't configured yet renders as "قريباً / soon" instead
- * of a dead link — no stale hardcoded destinations, ever.
+ * All bases come from Vite env:
+ *   VITE_MARKET_URL · VITE_ADMIN_URL · VITE_WEB_URL · store URLs
  */
 
 const ENV = import.meta.env as Record<string, string | undefined>;
 const MARKET_URL = ENV.VITE_MARKET_URL ?? "";
 const ADMIN_URL = ENV.VITE_ADMIN_URL ?? "";
-const WEB_URL = ENV.VITE_WEB_URL ?? "";
+const WEB_URL = (ENV.VITE_WEB_URL ?? "").trim().replace(/\/+$/, "");
 const ANDROID_URL = ENV.VITE_APP_ANDROID_URL ?? "";
 const IOS_URL = ENV.VITE_APP_IOS_URL ?? "";
 
@@ -70,7 +68,27 @@ function LinkOrSoon({ url, label }: { url: string; label: string }) {
   );
 }
 
-function App() {
+function ConsumerWebDirectoryRedirect() {
+  const target = `${WEB_URL}/directory`;
+
+  useEffect(() => {
+    window.location.replace(target);
+  }, [target]);
+
+  return (
+    <div style={S.redirectPage} dir="rtl">
+      <p style={S.redirectTitle}>بانكو — دليل المنصات</p>
+      <p style={S.redirectBody}>
+        يتم تحويلك إلى موقع التصفح التكميلي. التطبيق يبقى المصدر الأساسي للتجربة.
+      </p>
+      <a href={target} style={S.cta}>
+        افتح {target}
+      </a>
+    </div>
+  );
+}
+
+function StandaloneDirectoryHub() {
   return (
     <div style={S.page} dir="rtl">
       <header style={S.hero}>
@@ -180,7 +198,29 @@ function App() {
   );
 }
 
+function App() {
+  if (WEB_URL) {
+    return <ConsumerWebDirectoryRedirect />;
+  }
+  return <StandaloneDirectoryHub />;
+}
+
 const S: Record<string, React.CSSProperties> = {
+  redirectPage: {
+    minHeight: "100vh",
+    background: "#0a0a0a",
+    color: "#f5f5f5",
+    fontFamily: "system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif",
+    padding: "clamp(24px, 6vw, 64px)",
+    display: "flex",
+    flexDirection: "column",
+    alignItems: "center",
+    justifyContent: "center",
+    gap: 16,
+    textAlign: "center",
+  },
+  redirectTitle: { fontSize: 22, fontWeight: 800, margin: 0 },
+  redirectBody: { color: "#b8b8b8", margin: 0, maxWidth: 420, lineHeight: 1.7 },
   page: {
     minHeight: "100vh",
     background: "#0a0a0a",

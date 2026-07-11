@@ -2,6 +2,7 @@ import type { Metadata, Viewport } from "next";
 import { bancoBrand, bancoCssVariables, bancoGoogleFontsUrl } from "@workspace/design-tokens";
 import { SearchAnalyticsBootstrap } from "../components/SearchAnalyticsBootstrap";
 import { ApiClientBootstrap } from "../components/ApiClientBootstrap";
+import { ClerkAppProvider } from "../components/ClerkAppProvider";
 import { SiteChrome } from "../components/SiteChrome";
 import { SkipToMain } from "../components/SkipToMain";
 import { JsonLd } from "../components/JsonLd";
@@ -62,10 +63,12 @@ export default function RootLayout({
       <body>
         <SkipToMain />
         <JsonLd data={websiteJsonLd()} />
-        <ApiClientBootstrap>
-          <SearchAnalyticsBootstrap />
-          <SiteChrome>{children}</SiteChrome>
-        </ApiClientBootstrap>
+        <ClerkAppProvider>
+          <ApiClientBootstrap>
+            <SearchAnalyticsBootstrap />
+            <SiteChrome>{children}</SiteChrome>
+          </ApiClientBootstrap>
+        </ClerkAppProvider>
       </body>
     </html>
   );

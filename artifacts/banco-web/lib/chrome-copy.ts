@@ -4,17 +4,17 @@ import { localizedPath } from "./hub-config";
 export type ChromeCopy = {
   brandAria: string;
   navAria: string;
-  search: string;
-  cars: string;
-  realEstate: string;
-  industrial: string;
-  market: string;
-  admin: string;
+  appMenu: string;
+  appAndroid: string;
+  appIos: string;
+  appSoon: string;
+  marketMenu: string;
+  marketSoon: string;
+  managementMenu: string;
   browse: string;
   generalSearch: string;
   platforms: string;
   marketLabel: string;
-  marketSoon: string;
   adminLabel: string;
   adminSoon: string;
   app: string;
@@ -32,17 +32,17 @@ const COPY: Record<SiteLocale, ChromeCopy> = {
   ar: {
     brandAria: "BANCO الرئيسية",
     navAria: "التنقل الرئيسي",
-    search: "بحث",
-    cars: "سيارات",
-    realEstate: "عقارات",
-    industrial: "صناعي",
-    market: "ماركت",
-    admin: "لوحة التحكم",
+    appMenu: "التطبيق",
+    appAndroid: "Google Play",
+    appIos: "App Store",
+    appSoon: "التطبيق (قريباً)",
+    marketMenu: "بانكو ماركت",
+    marketSoon: "بانكو ماركت (قريباً)",
+    managementMenu: "Management",
     browse: "تصفح",
     generalSearch: "بحث عام",
     platforms: "المنصات",
-    marketLabel: "بانكو ماركت",
-    marketSoon: "بانكو ماركت (قريباً)",
+    marketLabel: "بانكو ماركت / Dealer OS",
     adminLabel: "الإدارة",
     adminSoon: "الإدارة (قريباً)",
     app: "التطبيق",
@@ -58,17 +58,17 @@ const COPY: Record<SiteLocale, ChromeCopy> = {
   en: {
     brandAria: "BANCO home",
     navAria: "Main navigation",
-    search: "Search",
-    cars: "Cars",
-    realEstate: "Real Estate",
-    industrial: "Industrial",
-    market: "Market",
-    admin: "Admin",
+    appMenu: "Mobile app",
+    appAndroid: "Google Play",
+    appIos: "App Store",
+    appSoon: "App (soon)",
+    marketMenu: "BANCO Market",
+    marketSoon: "BANCO Market (soon)",
+    managementMenu: "Management",
     browse: "Browse",
     generalSearch: "Search",
     platforms: "Platforms",
-    marketLabel: "BANCO Market",
-    marketSoon: "BANCO Market (soon)",
+    marketLabel: "BANCO Market / Dealer OS",
     adminLabel: "Admin",
     adminSoon: "Admin (soon)",
     app: "App",
@@ -88,15 +88,16 @@ export function chromeCopy(locale: SiteLocale): ChromeCopy {
 }
 
 export function alternateLocalePath(pathname: string): string {
-  // Listings are locale-neutral — same URL for AR and EN.
   if (pathname.startsWith("/listing/")) return pathname;
 
   const isEn = pathname === "/en" || pathname.startsWith("/en/");
   if (isEn) {
     if (pathname === "/en") return "/";
     if (pathname === "/en/search") return "/search";
+    if (pathname === "/en/directory") return "/directory";
     return pathname.replace(/^\/en/, "") || "/";
   }
   if (pathname === "/search") return "/en/search";
+  if (pathname === "/directory") return "/en/directory";
   return localizedPath(pathname, "en");
 }

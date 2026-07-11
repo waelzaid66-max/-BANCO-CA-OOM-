@@ -10,6 +10,7 @@ import {
   searchUiCopy,
 } from "../lib/search-ui-copy";
 import { useSearchLocale } from "../lib/use-search-locale";
+import { localizedPath } from "../lib/hub-config";
 
 type SearchMapClusterCanvasProps = {
   clusters: MapCluster[];
@@ -74,7 +75,7 @@ export function SearchMapClusterCanvas({
           return (
             <Link
               key={`${cluster.lat}-${cluster.lng}-${index}`}
-              href={`/listing/${cluster.listing_id}`}
+              href={localizedPath(`/listing/${cluster.listing_id}`, locale)}
               style={{
                 ...bubbleStyle,
                 left: `${position.left}%`,

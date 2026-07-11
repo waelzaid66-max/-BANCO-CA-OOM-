@@ -46,12 +46,16 @@ export function listingPageMetadata(input: {
   description: string;
   listingId: string;
   imageUrl?: string | null;
+  locale?: "ar" | "en";
 }): Metadata {
-  const path = `/listing/${input.listingId}`;
+  const locale = input.locale ?? "ar";
+  const path =
+    locale === "en" ? `/en/listing/${input.listingId}` : `/listing/${input.listingId}`;
   const canonical = buildCanonicalUrl(path);
   const ogImage = input.imageUrl
     ? [{ url: input.imageUrl, alt: input.title }]
     : undefined;
+  const ogLocale = locale === "en" ? "en_US" : PRIMARY_LOCALE.replace("-", "_");
 
   return {
     title: input.title,
@@ -65,7 +69,7 @@ export function listingPageMetadata(input: {
       description: input.description,
       type: "website",
       url: canonical,
-      locale: PRIMARY_LOCALE.replace("-", "_"),
+      locale: ogLocale,
       siteName: "BANCO",
       ...(ogImage ? { images: ogImage } : {}),
     },

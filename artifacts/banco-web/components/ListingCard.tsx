@@ -4,6 +4,7 @@ import Link from "next/link";
 import type { FeedItem } from "@workspace/api-client-react";
 import { formatApiCategoryLabel } from "../lib/category-labels";
 import type { SiteLocale } from "../lib/hub-config";
+import { localizedPath } from "../lib/hub-config";
 import { listingUiCopy } from "../lib/listing-ui-copy";
 import { useSearchLocale } from "../lib/use-search-locale";
 
@@ -85,7 +86,7 @@ export function ListingCard({ item, locale: localeProp, linkable = true }: Listi
   }
 
   return (
-    <Link href={`/listing/${item.id}`} style={cardStyle}>
+    <Link href={localizedPath(`/listing/${item.id}`, locale)} style={cardStyle}>
       {body}
     </Link>
   );

@@ -10,7 +10,18 @@ import { searchUiCopy } from "../lib/search-ui-copy";
 import { useSearchLocale } from "../lib/use-search-locale";
 import { ListingShareActions } from "./ListingShareActions";
 import { ListingContactActions } from "./ListingContactActions";
+import { ListingSaveButton } from "./ListingSaveButton";
+import { ListingReportActions } from "./ListingReportActions";
+import { ListingCommentsSection } from "./ListingCommentsSection";
+import { ListingSellerRatingBar, ListingSellerReviews } from "./ListingSellerReviews";
+import { ListingBookingSection } from "./ListingBookingSection";
 import { SearchResultsSection } from "./SearchResultsSection";
+
+function isDailyRentListing(listing: ListingDetail): boolean {
+  if (listing.category !== "real_estate") return false;
+  const rentalTerm = listing.specs?.rental_term;
+  return typeof rentalTerm === "string" && rentalTerm === "furnished_daily";
+}
 
 const wrapStyle: React.CSSProperties = {
   border: "1px solid var(--banco-border)",
@@ -152,6 +163,7 @@ export function ListingDetailView({
             </p>
           ) : null}
           <p style={{ margin: 0, fontSize: "0.95rem" }}>{listing.seller.name}</p>
+          <ListingSellerRatingBar sellerId={listing.seller.id} />
           {listing.seller.bio ? (
             <p style={{ ...mutedStyle, margin: "0.65rem 0 0", fontSize: "0.9rem" }}>
               {listing.seller.bio}
@@ -196,7 +208,16 @@ export function ListingDetailView({
           ) : null}
         </section>
         <ListingContactActions listing={listing} />
+        {isDailyRentListing(listing) ? (
+          <ListingBookingSection listingId={listing.id} pricePerNight={listing.price_cash} />
+        ) : null}
+        <div style={{ display: "flex", flexWrap: "wrap", gap: "0.6rem", marginTop: "0.75rem", alignItems: "center" }}>
+          <ListingSaveButton listingId={listing.id} initialSaved={listing.is_saved} />
+          <ListingReportActions listingId={listing.id} />
+        </div>
         <ListingShareActions listingId={listing.id} title={listing.title} />
+        <ListingCommentsSection listingId={listing.id} sellerId={listing.seller.id} />
+        <ListingSellerReviews sellerId={listing.seller.id} />
       </article>
       {similarItems.length > 0 ? (
         <section style={{ marginTop: "1.25rem" }}>

@@ -31,6 +31,10 @@ const steps = [
     cmd: "pnpm --filter @workspace/banco-mobile run test:lib",
   },
   {
+    label: "share rewrite config",
+    cmd: "node scripts/website-rewrite-config-audit.mjs",
+  },
+  {
     label: "build landing",
     cmd: "pnpm --filter @workspace/landing run build",
   },
@@ -45,6 +49,10 @@ const steps = [
   {
     label: "bundle budget",
     cmd: "node scripts/website-bundle-budget.mjs",
+  },
+  {
+    label: "post-build route smoke",
+    cmd: "node scripts/website-post-build-smoke.mjs",
   },
 ];
 
@@ -78,7 +86,7 @@ if (failed > 0) {
   process.exit(1);
 }
 
-console.log("\n--- website CI local: PASS (9/9) ---");
+console.log("\n--- website CI local: PASS (11/11) ---");
 console.log(
   "Optional after CDN deploy: BANCO_WEB_URL=https://staging.example.com node scripts/website-staging-smoke.mjs",
 );

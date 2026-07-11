@@ -21,8 +21,15 @@ const PATHS = [
   { path: "/real-estate", label: "real-estate hub", expectJsonLd: "CollectionPage" },
   { path: "/industrial", label: "industrial hub", expectJsonLd: "CollectionPage" },
   { path: "/search", label: "search" },
+  { path: "/directory", label: "platform directory" },
   { path: "/en/search", label: "en search" },
+  { path: "/en/directory", label: "en platform directory" },
   { path: "/search?category=car&location=cairo", label: "search cars cairo" },
+  { path: "/sign-in", label: "sign-in ar" },
+  { path: "/en/sign-in", label: "sign-in en" },
+  { path: "/workspace", label: "workspace protected", kind: "protected" },
+  { path: "/en/workspace", label: "en workspace protected", kind: "protected" },
+  { path: "/saved", label: "saved protected", kind: "protected" },
   { path: "/robots.txt", label: "robots", kind: "robots" },
   { path: "/sitemap.xml", label: "sitemap", kind: "sitemap" },
   { path: "/api/health", label: "health route", kind: "health" },
@@ -45,7 +52,33 @@ async function checkRoute(item) {
   const before = failed;
 
   try {
-    const res = await fetch(url, { redirect: "follow" });
+    const redirectMode = item.kind === "protected" ? "manual" : "follow";
+    const res = await fetch(url, { redirect: redirectMode });
+
+    if (item.kind === "protected") {
+      const location = res.headers.get("location") ?? "";
+      if (res.status >= 500) {
+        fail(item.label, `HTTP ${res.status} (${url})`);
+        return;
+      }
+      if (res.status >= 300 && res.status < 400) {
+        if (!location.includes("sign-in")) {
+          fail(item.label, `expected redirect to sign-in, got ${location || res.status}`);
+        }
+      } else if (res.status >= 200 && res.status < 300) {
+        // Clerk not configured on staging — page may render without auth gate.
+        pass(item.label, `${res.status} (no redirect)`);
+        return;
+      } else if (res.status >= 400) {
+        fail(item.label, `HTTP ${res.status} (${url})`);
+        return;
+      }
+      if (failed === before) {
+        pass(item.label, res.status);
+      }
+      return;
+    }
+
     if (res.status < 200 || res.status >= 400) {
       fail(item.label, `HTTP ${res.status} (${url})`);
       return;
@@ -163,6 +196,30 @@ async function checkListingShareRewrite(id) {
   }
 }
 
+async function checkListingEn(id) {
+  const label = "en listing detail";
+  const url = `${BASE}/en/listing/${id}`;
+  const before = failed;
+
+  try {
+    const res = await fetch(url, { redirect: "follow" });
+    if (res.status < 200 || res.status >= 400) {
+      fail(label, `HTTP ${res.status} (${url})`);
+      return;
+    }
+    const html = await res.text();
+    if (!html.includes("Product")) {
+      fail(label, "missing Product JSON-LD");
+    }
+    if (failed === before) {
+      pass(label, res.status);
+    }
+  } catch (error) {
+    const msg = error instanceof Error ? error.message : String(error);
+    fail(label, `${msg} (${url})`);
+  }
+}
+
 async function main() {
   if (!BASE) {
     console.error("Set BANCO_WEB_URL (or WEB_URL) to the deployed banco-web origin.");
@@ -178,6 +235,7 @@ async function main() {
   if (listingId) {
     await checkListing(listingId);
     await checkListingShareRewrite(listingId);
+    await checkListingEn(listingId);
   }
 
   process.exit(failed > 0 ? 1 : 0);

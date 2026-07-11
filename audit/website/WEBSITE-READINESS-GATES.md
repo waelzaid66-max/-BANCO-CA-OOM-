@@ -97,6 +97,7 @@
 - [x] `sitemap.xml` يشمل روابط hubs السريعة من `HUB_DEFINITIONS`
 - [x] `manifest.webmanifest` محايد (EN) للـ PWA
 - [ ] `/l/:id` smoke PASS على staging (rewrite موجود في `next.config.ts`)
+- [x] `/en/listing/[id]` mirror + hreflang يطابق مساراً حقيقياً (2026-07-11)
 
 ### G-W2 (بحث)
 
@@ -110,16 +111,63 @@
 ### G-W3 (خريطة + فلاتر متقدمة — staging code)
 
 - [x] مكوّنات الخريطة (panel، surface، canvas، Google) موحّدة اللغة
-- [x] `pnpm run ops:website-ci` — mirror محلي لـ `ci-website.yml`
+- [x] `pnpm run ops:website-ci` — mirror محلي لـ `ci-website.yml` (**9/9 PASS 2026-07-11**)
 - [x] Docker `deploy/aws/Dockerfile.banco-web` + `ci-website-docker.yml`
 - [ ] خريطة حية على staging (`MAP=true` + Google key) — بعد API FRESH
 - [x] FilterSheet parity مع الموبايل (W3.1): `natural_gas`/`cvt`، industry/origin في facets، inventory gating
 
+### G-W4 (Clerk + حفظ + leads)
+
+- [x] `@clerk/nextjs` + middleware على `/workspace` و `/saved`
+- [x] حفظ إعلان (`ListingSaveButton`) + صفحة `/saved`
+- [x] تواصل من الويب (`POST /v1/leads/contact`) للمستخدم المسجّل
+- [x] `/sign-in` + `/sign-up` (AR + EN)
+- [x] إبلاغ عن إساءة + أسئلة/أجوبة على صفحة الإعلان (2026-07-11)
+- [x] تقييمات البائع (`GET/POST /v1/sellers/{id}/reviews`) (2026-07-11)
+
 ### G-W5 (إنتاج بائع)
 
-- [ ] `/workspace/listings/new` E2E
-- [ ] إعلان يظهر في search + mobile
-- [ ] uploads كاملة
+- [x] `/workspace` — metrics (`GET /v1/me/metrics`)
+- [x] `/workspace` — اختصارات سريعة (overview quick links) (2026-07-11)
+- [x] `/workspace/analytics` — تحليلات الأداء (2026-07-11)
+- [x] `/workspace/listings` — إعلاناتي (`GET /v1/me/listings/manage`)
+- [x] `/workspace/listings/new` — إنشاء (`POST /v1/listings` + uploads)
+- [x] `/workspace/listings/[id]/edit` — تعديل (`PATCH`)
+- [x] bump/delete من لوحة الإعلانات
+- [x] `/workspace/leads` — `GET /v1/dealer/leads`
+- [ ] E2E staging: create listing → يظهر في search + mobile
+
+### G-W6 (B2B عرض)
+
+- [x] `/workspace/b2b` — روابط عميقة لبانكو ماركت (لا تكرار UI) (2026-07-11)
+- [ ] RFQ/create على الويب (لاحق — ماركت)
+
+### G-W7 (رسائل + محفظة + حجز)
+
+- [x] `/workspace/messages` — صندوق المحادثات (`GET /v1/conversations`) (2026-07-11)
+- [x] `/workspace/messages/[id]` — محادثة + إرسال (`GET/POST /v1/conversations/{id}/messages`) (2026-07-11)
+- [x] زر «محادثة» على الإعلان يفتح المحادثة في الويب (`POST /v1/conversations`) (2026-07-11)
+- [x] `/workspace/wallet` — رصيد + سجل (`GET /v1/wallet`, `/v1/wallet/transactions`) (2026-07-11)
+- [x] `/workspace/bookings` — ضيف/مضيف + تأكيد/رفض/إلغاء (2026-07-11)
+- [x] حجز إقامة من صفحة الإعلان — تقويم كامل (نفس `BookingCard` في الموبايل) (2026-07-11)
+- [x] شحن محفظة من الويب — `createTopup` + polling `confirmTopup` (نفس `wallet.tsx`) (2026-07-11)
+- [x] نصوص وسلوك W7 مطابقة للموبايل (i18n + invalidate availability على الحجز) (2026-07-11)
+
+### G-W8 (دليل المنصات — landing parity)
+
+- [x] `/directory` + `/en/directory` — منسوخ من `landing/App.tsx` بدون import عبر الحدود (2026-07-11)
+- [x] ترتيب البطاقات: التطبيق أولاً ثم الويب التكميلي ثم ماركت ثم الأدمن (2026-07-11)
+- [x] `verify-website-boundaries.mjs` يمنع `banco-web` ↔ `landing` cross-import (2026-07-11)
+- [x] sitemap + SEO static audit + staging smoke يشمل `/directory` (2026-07-11)
+- [x] landing يعيد التوجيه إلى `{NEXT_PUBLIC_SITE_URL}/directory` عند ضبط `VITE_WEB_URL` (2026-07-11)
+- [ ] تحقق حي على staging: زيارة جذر landing/nginx → يصل `/directory` على banco-web
+
+### G-W9 (staging smoke — لا يمس الموبايل)
+
+- [x] `website-rewrite-config-audit.mjs` يتحقق من `/l/:id` + `/api/*` في `next.config.ts` (2026-07-11)
+- [ ] `BANCO_WEB_URL` + `BANCO_LISTING_SMOKE_ID` — smoke `/l/:id` على staging
+- [ ] E2E staging: create listing → يظهر في search + mobile (نفس G-W5)
+- [ ] نشر banco-web CDN staging مع flags آمنة (`WEB_SEARCH_LIVE=false` أولاً)
 
 ---
 

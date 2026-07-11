@@ -1,7 +1,7 @@
 # خارطة التسليم — موقع BANCO التكميلي
 
 **التاريخ:** 2026-07-10  
-**الحالة:** W0–W3 جاهز للـ staging (flags آمنة) — W4/W5 لم يبدأ  
+**الحالة:** W0–W9 prep + `ops:website-ci` 10/10 PASS — staging CDN deploy + live `/l/:id` smoke pending  
 **المبدأ:** الموقع **لا يوقف** الموبايل أو ماركت أو الأدمن عند تعطّله أو سقوطه.
 
 ---
@@ -15,8 +15,11 @@
 | **W1** SEO hubs | ~96% | AR + EN hubs، sitemap، hreflang، static audit |
 | **W2** بحث | ~95% | `/search` + `/en/search`؛ EN عبر `useSearchLocale`؛ build PASS |
 | **W3** خريطة/فلاتر | ~90% | مكوّنات AR/EN؛ MAP/LIVE معطّلان افتراضياً |
-| **W4–W5** | 0% | Clerk، workspace بائع — لم يبدأ |
-| **W8** دمج landing | 0% | landing منفصل |
+| **W4** Clerk + حفظ + leads | ~90% | middleware + save + contact web؛ CI PASS؛ Clerk key على staging |
+| **W5** workspace بائع | ~85% | create/edit/listings/leads/uploads؛ CI PASS؛ E2E staging pending |
+| **W6** B2B عرض | ~25% | `/workspace/b2b` → market؛ RFQ web لاحق |
+| **W8** دمج landing | ~100% | `/directory` في banco-web؛ landing يُحوّل عند `VITE_WEB_URL` |
+| **W9** staging smoke | ~40% | rewrite audit ✅؛ CDN + `/l/:id` حي ⏳ |
 
 ### ضمانات العزل (مُحقَّقة)
 
@@ -136,6 +139,7 @@ banco-web   →  middleware أو layout يقرأ:
 
 ```bash
 node scripts/verify-website-boundaries.mjs
+node scripts/website-rewrite-config-audit.mjs
 pnpm --filter @workspace/search-contract run test
 pnpm --filter @workspace/banco-mobile run test:lib
 pnpm run typecheck:website
@@ -145,6 +149,7 @@ node scripts/website-seo-static-audit.mjs
 node scripts/website-bundle-budget.mjs
 # بعد النشر:
 BANCO_WEB_URL=https://staging.example.com node scripts/website-staging-smoke.mjs
+BANCO_LISTING_SMOKE_ID=<uuid> BANCO_WEB_URL=https://staging.example.com node scripts/website-staging-smoke.mjs
 ```
 
 ---

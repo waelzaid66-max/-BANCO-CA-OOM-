@@ -10,9 +10,10 @@ import {
   getMarketUrl,
 } from "../lib/site-env";
 import { chromeCopy } from "../lib/chrome-copy";
-import { localeFromPathname } from "../lib/hub-config";
+import { adminNavItems, browseNavItems, marketNavItems } from "../lib/chrome-nav";
+import { localeFromPathname, localizedPath } from "../lib/hub-config";
 import { writeStoredLocale } from "../lib/locale-preference";
-import { LocaleSwitcher } from "./LocaleSwitcher";
+import { SiteMainNav } from "./SiteMainNav";
 
 const headerStyle: React.CSSProperties = {
   borderBottom: "1px solid var(--banco-border)",
@@ -32,13 +33,6 @@ const innerStyle: React.CSSProperties = {
   justifyContent: "space-between",
   gap: "1rem",
   flexWrap: "wrap",
-};
-
-const navStyle: React.CSSProperties = {
-  display: "flex",
-  flexWrap: "wrap",
-  gap: "0.65rem",
-  alignItems: "center",
 };
 
 const linkStyle: React.CSSProperties = {
@@ -64,14 +58,6 @@ const footerGridStyle: React.CSSProperties = {
   gap: "1rem",
 };
 
-function ExternalLink({ href, children }: { href: string; children: React.ReactNode }) {
-  return (
-    <a href={href} target="_blank" rel="noreferrer" style={linkStyle}>
-      {children}
-    </a>
-  );
-}
-
 export function SiteChrome({ children }: { children: React.ReactNode }) {
   const pathname = usePathname() ?? "/";
   const locale = localeFromPathname(pathname);
@@ -79,12 +65,20 @@ export function SiteChrome({ children }: { children: React.ReactNode }) {
   const market = getMarketUrl();
   const admin = getAdminUrl();
   const stores = getAppStoreUrls();
+  const browse = browseNavItems(locale);
+
+  const isDirectoryHub =
+    pathname === "/directory" || pathname === "/en/directory";
 
   useEffect(() => {
     if (locale === "ar" && !pathname.startsWith("/listing/")) {
       writeStoredLocale("ar");
     }
   }, [locale, pathname]);
+
+  if (isDirectoryHub) {
+    return <div id="main-content">{children}</div>;
+  }
 
   return (
     <>
@@ -97,23 +91,7 @@ export function SiteChrome({ children }: { children: React.ReactNode }) {
           >
             BANCO
           </Link>
-          <nav style={navStyle} aria-label={copy.navAria}>
-            <Link href={copy.searchHref} style={linkStyle}>
-              {copy.search}
-            </Link>
-            <Link href={copy.carsHref} style={linkStyle}>
-              {copy.cars}
-            </Link>
-            <Link href={copy.realEstateHref} style={linkStyle}>
-              {copy.realEstate}
-            </Link>
-            <Link href={copy.industrialHref} style={linkStyle}>
-              {copy.industrial}
-            </Link>
-            {market ? <ExternalLink href={market}>{copy.market}</ExternalLink> : null}
-            {admin ? <ExternalLink href={admin}>{copy.admin}</ExternalLink> : null}
-            <LocaleSwitcher />
-          </nav>
+          <SiteMainNav />
         </div>
       </header>
       <div id="main-content">{children}</div>
@@ -122,41 +100,60 @@ export function SiteChrome({ children }: { children: React.ReactNode }) {
           <div>
             <strong style={{ color: "var(--banco-fg)" }}>{copy.browse}</strong>
             <p style={{ margin: "0.5rem 0 0", lineHeight: 1.8 }}>
-              <Link href={copy.searchHref}>{copy.generalSearch}</Link>
+              {browse.map((item, i) => (
+                <span key={item.href}>
+                  {i > 0 ? " · " : null}
+                  <Link href={item.href}>{item.label}</Link>
+                </span>
+              ))}
               {" · "}
-              <Link href={copy.carsHref}>{copy.cars}</Link>
-              {" · "}
-              <Link href={copy.realEstateHref}>{copy.realEstate}</Link>
-              {" · "}
-              <Link href={copy.industrialHref}>{copy.industrial}</Link>
+              <Link href={localizedPath("/directory", locale)}>
+                {locale === "ar" ? "دليل المنصات" : "Platform directory"}
+              </Link>
             </p>
           </div>
           <div>
             <strong style={{ color: "var(--banco-fg)" }}>{copy.platforms}</strong>
             <p style={{ margin: "0.5rem 0 0", lineHeight: 1.8 }}>
               {market ? (
-                <a href={market} target="_blank" rel="noreferrer">
-                  {copy.marketLabel}
-                </a>
+                <>
+                  <a href={market} target="_blank" rel="noreferrer">
+                    {copy.marketLabel}
+                  </a>
+                  {marketNavItems(market, locale).slice(1, 4).map((item) => (
+                    <span key={item.href}>
+                      {" · "}
+                      <a href={item.href} target="_blank" rel="noreferrer">
+                        {item.label}
+                      </a>
+                    </span>
+                  ))}
+                </>
               ) : (
                 copy.marketSoon
               )}
-              {" · "}
-              {admin ? (
-                <a href={admin} target="_blank" rel="noreferrer">
-                  {copy.adminLabel}
-                </a>
-              ) : (
-                copy.adminSoon
-              )}
             </p>
+            {admin ? (
+              <p style={{ margin: "0.35rem 0 0", lineHeight: 1.8 }}>
+                <strong style={{ color: "var(--banco-fg)" }}>{copy.managementMenu}</strong>
+                {" · "}
+                {adminNavItems(admin, locale).slice(0, 3).map((item, i) => (
+                  <span key={item.href}>
+                    {i > 0 ? " · " : null}
+                    <a href={item.href} target="_blank" rel="noreferrer">
+                      {item.label}
+                    </a>
+                  </span>
+                ))}
+              </p>
+            ) : null}
           </div>
           <div>
             <strong style={{ color: "var(--banco-fg)" }}>{copy.app}</strong>
             <p style={{ margin: "0.5rem 0 0", lineHeight: 1.8 }}>
               {stores.android ? (
                 <a href={stores.android} target="_blank" rel="noreferrer">
-                  Android
+                  {copy.appAndroid}
                 </a>
               ) : (
                 copy.androidSoon
@@ -164,7 +161,7 @@ export function SiteChrome({ children }: { children: React.ReactNode }) {
               {" · "}
               {stores.ios ? (
                 <a href={stores.ios} target="_blank" rel="noreferrer">
-                  iOS
+                  {copy.appIos}
                 </a>
               ) : (
                 copy.iosSoon

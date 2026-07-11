@@ -17,6 +17,7 @@ import {
 } from "../lib/map-contract";
 import { searchConfig } from "../lib/search-config";
 import { formatMapTotalInViewport, searchUiCopy } from "../lib/search-ui-copy";
+import { localizedPath } from "../lib/hub-config";
 import { useSearchLocale } from "../lib/use-search-locale";
 
 type SearchGoogleMapProps = {
@@ -82,9 +83,9 @@ export function SearchGoogleMap({
 
   const handleListingClick = useCallback(
     (listingId: string) => {
-      router.push(`/listing/${listingId}`);
+      router.push(localizedPath(`/listing/${listingId}`, locale));
     },
-    [router],
+    [router, locale],
   );
 
   useEffect(

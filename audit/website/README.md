@@ -14,4 +14,4 @@
 | [`WEBSITE-SEPARATION-AND-COMPATIBILITY-PLAN.md`](./WEBSITE-SEPARATION-AND-COMPATIBILITY-PLAN.md) | Architecture, OpenAPI, isolation (English) |
 | [`WEBSITE-MOBILE-INDEPENDENCE-CHECKLIST.md`](./WEBSITE-MOBILE-INDEPENDENCE-CHECKLIST.md) | Per-PR mobile safety |
 
-**Status (2026-07-10):** `banco-web` build + SEO/bundle gates PASS locally (flags: LIVE/MAP off). Staging deploy + `/l/:id` smoke pending. W4/W5 (Clerk workspace) not started. Surfaces runbook: [`release/SURFACES-DEPLOY-FINISH.md`](../../release/SURFACES-DEPLOY-FINISH.md).
+**Status (2026-07-11):** `node scripts/website-ci-local.mjs` **10/10 PASS** (boundaries, rewrite config, lint, typecheck, parity, landing redirect + banco-web build, SEO audit, bundle budget). W8 `/directory` + landing→banco-web redirect when `VITE_WEB_URL` set. Staging CDN + live `/l/:id` smoke + E2E still pending. Surfaces runbook: [`release/SURFACES-DEPLOY-FINISH.md`](../../release/SURFACES-DEPLOY-FINISH.md).

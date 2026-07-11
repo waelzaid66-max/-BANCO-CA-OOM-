@@ -53,7 +53,15 @@ function walk(dir, out = []) {
 
 let failed = 0;
 
+const CROSS_SURFACE_PATTERNS = [
+  /from\s+["'][^"']*\/artifacts\/landing\//,
+  /from\s+["'][^"']*\/artifacts\/banco-web\//,
+  /import\s+["'][^"']*\/artifacts\/landing\//,
+  /import\s+["'][^"']*\/artifacts\/banco-web\//,
+];
+
 for (const root of WEB_ROOTS) {
+  const isBancoWeb = root.endsWith(`${path.sep}banco-web`);
   for (const file of walk(root)) {
     const rel = path.relative(ROOT, file);
     const src = fs.readFileSync(file, "utf8");
@@ -64,6 +72,18 @@ for (const root of WEB_ROOTS) {
     if (EXPO_PUBLIC_RE.test(src)) {
       console.error(`[FAIL] EXPO_PUBLIC_* in website surface ${rel}`);
       failed += 1;
+    }
+    if (isBancoWeb && CROSS_SURFACE_PATTERNS.some((re) => re.test(src))) {
+      if (/artifacts\/landing/.test(src)) {
+        console.error(`[FAIL] banco-web must not import landing artifact (${rel})`);
+        failed += 1;
+      }
+    }
+    if (!isBancoWeb && CROSS_SURFACE_PATTERNS.some((re) => re.test(src))) {
+      if (/artifacts\/banco-web/.test(src)) {
+        console.error(`[FAIL] landing must not import banco-web artifact (${rel})`);
+        failed += 1;
+      }
     }
   }
 }

@@ -28,6 +28,8 @@ const HUB_PAGES = [
   { file: path.join("en", "cars.html"), label: "en cars hub", mustContain: ["Cars", "BreadcrumbList"], lang: "en", dir: "ltr" },
   { file: path.join("en", "real-estate.html"), label: "en real-estate hub", mustContain: ["Real Estate", "BreadcrumbList"], lang: "en", dir: "ltr" },
   { file: path.join("en", "industrial.html"), label: "en industrial hub", mustContain: ["Industrial", "BreadcrumbList"], lang: "en", dir: "ltr" },
+  { file: "directory.html", label: "directory hub", mustContain: ["بانكو", "التطبيق هو المصدر الأساسي"], lang: "ar", dir: "rtl" },
+  { file: path.join("en", "directory.html"), label: "en directory hub", mustContain: ["BANCO mobile app", "primary experience"], lang: "en", dir: "ltr" },
 ];
 
 let failed = 0;
@@ -99,7 +101,7 @@ function auditSitemapBody() {
 
   const before = failed;
   const xml = fs.readFileSync(bodyPath, "utf8");
-  for (const hub of ["/cars", "/real-estate", "/industrial", "/search", "/en", "/en/cars", "/en/real-estate", "/en/industrial", "/en/search"]) {
+  for (const hub of ["/cars", "/real-estate", "/industrial", "/search", "/directory", "/en", "/en/cars", "/en/real-estate", "/en/industrial", "/en/search", "/en/directory"]) {
     if (!xml.includes(hub)) {
       fail("sitemap", `missing hub URL ${hub}`);
     }
