@@ -36,6 +36,7 @@ const COUNTRY_ISO: Record<string, string> = {
   Bahrain: "BH",
   Oman: "OM",
   Jordan: "JO",
+  Libya: "LY",
   Lebanon: "LB",
   Iraq: "IQ",
 };
