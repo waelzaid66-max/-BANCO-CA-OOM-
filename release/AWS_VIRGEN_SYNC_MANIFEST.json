@@ -1,13 +1,13 @@
 {
   "schema": "banco-aws-virgen-sync/1",
-  "generatedAt": "2026-07-11T04:26:42.923Z",
+  "generatedAt": "2026-07-11T04:27:58.545Z",
   "releaseTag": "v1.1.6-production-2026-07-11",
   "primaryRepository": "waelzaid66-max/-BANCO-CA-OOM-",
   "awsVirgenRepository": "waelzaid66-max/aws-virgen",
   "commit": {
-    "full": "71346c001c643a084024c76724ba01cca66c2e29",
-    "short": "71346c0",
-    "subject": "docs: restrict agent repo scope to origin + aws-virgen only"
+    "full": "e186d0f874be0bfa7f816ca7effc26436560bba2",
+    "short": "e186d0f",
+    "subject": "release: v1.1.6 full delivery — deploy verify, reports, aws manifest"
   },
   "syncPolicy": "merge primary main into aws-virgen main (full tree, history preserved)",
   "ci": {
