@@ -2,8 +2,8 @@
 
 **التاريخ:** 2026-07-11  
 **الفرع:** `main`  
-**الوسم المستهدف:** `v1.1.5-production-2026-07-11`  
-**Commit مرجعي:** بعد `bcd442e` (browse journeys + seller bio + web parity)
+**الوسم المستهدف:** `v1.1.6-production-2026-07-11`  
+**Commit مرجعي:** `20063cf` (full delivery bundle)
 
 ---
 
@@ -41,7 +41,7 @@
 
 ```bash
 git push origin main
-git push origin v1.1.5-production-2026-07-11
+git push origin v1.1.6-production-2026-07-11
 # aws-virgen: see §5 — not a direct git remote push
 ```
 
@@ -98,9 +98,9 @@ node audit/mobile/scripts/pre-redeploy-code-gate.mjs
 
 | # | المهمة | الملف | ملاحظة |
 |---|--------|-------|--------|
-| B1 | توليد manifest | `scripts/generate-aws-virgen-sync-manifest.mjs --tag v1.1.5-production-2026-07-11` | |
+| B1 | توليد manifest | `scripts/generate-aws-virgen-sync-manifest.mjs --tag v1.1.6-production-2026-07-11` | |
 | B2 | نشر إلى aws-virgen | `scripts/publish-aws-virgen-rc.sh` أو workflow `sync-aws-virgen.yml` | `AWS_VIRGEN_SYNC_TOKEN` |
-| B3 | tag على main | `git tag v1.1.5-production-2026-07-11 && git push origin --tags` | يشغّل `deploy.yml` |
+| B3 | tag على main | `git tag v1.1.6-production-2026-07-11 && git push origin --tags` | يشغّل `deploy.yml` |
 | B4 | تحقق CI deploy | `.github/workflows/deploy.yml` | ECR + SSM |
 | B5 | EC2 deploy | `deploy/aws/scripts/deploy.sh` | SSM secrets |
 | B6 | health gate | `/api/readyz` | |
@@ -184,7 +184,7 @@ node audit/mobile/scripts/pre-redeploy-code-gate.mjs
 
 ```
 1. بوابات §3 (محلي) — كلها PASS
-2. commit + tag v1.1.5-production-2026-07-11
+2. commit + tag v1.1.6-production-2026-07-11
 3. push origin main + tags
 4. push boom main (مرآة)
 5. Replit redeploy §4 → ops:post-redeploy exit 0
