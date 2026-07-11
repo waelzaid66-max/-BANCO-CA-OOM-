@@ -14,6 +14,7 @@ import { useUser } from "@clerk/expo";
 import * as Haptics from "expo-haptics";
 import { router, type Href } from "expo-router";
 import { Image } from "expo-image";
+import * as Notifications from "expo-notifications";
 import { FlashList, FlashListRef, ViewToken } from "@shopify/flash-list";
 import { BancoLogo } from "@/components/BancoLogo";
 import React, {
@@ -316,6 +317,14 @@ export default function FeedScreen() {
     (n) => !n.read_at
   ).length;
 
+  // Mirror the unread notification count onto the OS app-icon badge so it clears
+  // when the user reads them and reflects new ones as they arrive. Home stays
+  // mounted in the tab navigator, and its query refetches (20s + on focus), so
+  // this stays current app-wide. Signed-out always clears to 0.
+  useEffect(() => {
+    void Notifications.setBadgeCountAsync(isSignedIn ? unreadNotifs : 0);
+  }, [isSignedIn, unreadNotifs]);
+
   const [category, setCategory] = useState<Category>("all");
   const [industrialType, setIndustrialType] = useState<IndustrialType>("all");
   // Per-section engine filter (cars / real-estate). Key into constants/engines.
@@ -363,6 +372,10 @@ export default function FeedScreen() {
   const filterMemoryRef = useRef<
     Partial<Record<Category, { engineKey: string; industrialType: IndustrialType }>>
   >({});
+  // Last measured engine-bar pixel height per category, so returning to a section
+  // seeds the correct height immediately instead of flashing open at the bar's
+  // intrinsic height and snapping down on the next layout pass (visible flicker).
+  const barHeightByCatRef = useRef<Partial<Record<Category, number>>>({});
 
   // Hide-on-scroll: `compact` flips on scroll direction (once per flip, not per
   // event). It condenses the logo and collapses the engine bar via Reanimated —
@@ -678,10 +691,11 @@ export default function FeedScreen() {
     setIndustrialType(mem?.industrialType ?? "all");
     setEngineKey(mem?.engineKey ?? "all");
     // New section → a new chip set with a different height. Expand the bar and
-    // drop the cached pixel height so the next layout pass re-measures the
-    // incoming content; otherwise a stale height reserves an empty gap.
+    // seed the incoming category's last measured height (0 only if never seen),
+    // so the bar doesn't flash open at intrinsic height; onLayout then corrects
+    // any small delta on the next pass without a stale empty gap.
     setCompact(false);
-    setEngineBarH(0);
+    setEngineBarH(barHeightByCatRef.current[cat] ?? 0);
     sendBehaviorSignal({
       session_id: sessionId,
       action: "category_tap",
@@ -1227,8 +1241,9 @@ export default function FeedScreen() {
               // keeps its intrinsic height even when the outer animated wrapper
               // is clipped to height:0, so this stays accurate during collapse.
               const h = e.nativeEvent.layout.height;
-              if (h > 0 && Math.abs(h - engineBarH) > 1) {
-                setEngineBarH(h);
+              if (h > 0) {
+                barHeightByCatRef.current[category] = h;
+                if (Math.abs(h - engineBarH) > 1) setEngineBarH(h);
               }
             }}
           >
