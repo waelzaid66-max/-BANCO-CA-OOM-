@@ -17,7 +17,7 @@
 
 | الريبو | الفرع | Tag | ملاحظة |
 |--------|--------|-----|--------|
-| **-BANCO-CA-OOM-** | `main` | `v1.1.5-production-2026-07-11` | confidence **19/19** · website CI **9/9** |
+| **-BANCO-CA-OOM-** | `main` | `v1.1.5-production-2026-07-11` | SHA **1882523** · confidence **19/19** · website CI **9/9** |
 | **aws-virgen** | `main` | نفس الوسم | بعد `publish-aws-virgen-rc.sh` أو workflow |
 | **B-OOM** (مرآة) | `main` | نفس SHA | `git push boom main` |
 
