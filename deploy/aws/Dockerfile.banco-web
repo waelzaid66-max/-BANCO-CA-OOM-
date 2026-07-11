@@ -40,6 +40,9 @@ ENV NEXT_STANDALONE=true \
     NEXT_PUBLIC_GOOGLE_MAPS_API_KEY=$NEXT_PUBLIC_GOOGLE_MAPS_API_KEY
 
 COPY pnpm-workspace.yaml pnpm-lock.yaml package.json .npmrc ./
+# The root package.json runs a `preinstall` hook (scripts/preinstall-enforce-pnpm.mjs);
+# copy it before install or `pnpm install` fails with "Cannot find module".
+COPY scripts/preinstall-enforce-pnpm.mjs ./scripts/preinstall-enforce-pnpm.mjs
 COPY lib ./lib
 COPY artifacts/banco-web/package.json ./artifacts/banco-web/package.json
 RUN --mount=type=cache,id=pnpm,target=/pnpm/store \

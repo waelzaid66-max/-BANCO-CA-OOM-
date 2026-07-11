@@ -88,8 +88,11 @@ export function searchCriteriaToNavParams(
 ): Record<string, string> {
   const qs = buildSearchUrlParams(criteria);
   const flat: Record<string, string> = { ts: String(Date.now()) };
-  for (const [key, value] of qs.entries()) {
+  // Use forEach (present on every URLSearchParams typing, Node + DOM) rather than
+  // entries()/for-of, which needs DOM.Iterable — absent under expo/tsconfig.base
+  // on CI (Linux), so the iterator form typechecks locally but fails there.
+  qs.forEach((value, key) => {
     flat[key] = value;
-  }
+  });
   return flat;
 }

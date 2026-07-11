@@ -38,6 +38,9 @@ ENV VITE_CLERK_PUBLISHABLE_KEY=$VITE_CLERK_PUBLISHABLE_KEY \
     VITE_APP_IOS_URL=$VITE_APP_IOS_URL
 
 COPY pnpm-workspace.yaml pnpm-lock.yaml package.json .npmrc ./
+# The root package.json runs a `preinstall` hook (scripts/preinstall-enforce-pnpm.mjs);
+# copy it before install or `pnpm install` fails with "Cannot find module".
+COPY scripts/preinstall-enforce-pnpm.mjs ./scripts/preinstall-enforce-pnpm.mjs
 COPY lib ./lib
 COPY artifacts/admin-os/package.json ./artifacts/admin-os/package.json
 COPY artifacts/dealer-os/package.json ./artifacts/dealer-os/package.json
