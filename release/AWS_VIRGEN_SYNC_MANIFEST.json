@@ -1,13 +1,13 @@
 {
   "schema": "banco-aws-virgen-sync/1",
-  "generatedAt": "2026-07-10T19:40:07.650Z",
-  "releaseTag": "v1.1.4-production-2026-07-10",
+  "generatedAt": "2026-07-11T04:26:42.923Z",
+  "releaseTag": "v1.1.6-production-2026-07-11",
   "primaryRepository": "waelzaid66-max/-BANCO-CA-OOM-",
   "awsVirgenRepository": "waelzaid66-max/aws-virgen",
   "commit": {
-    "full": "46701fe195d588d7fd4bac404819fa67f94dba0c",
-    "short": "46701fe",
-    "subject": "release: v1.1.4 production snapshot waves 6-10C + mobile TS fix"
+    "full": "71346c001c643a084024c76724ba01cca66c2e29",
+    "short": "71346c0",
+    "subject": "docs: restrict agent repo scope to origin + aws-virgen only"
   },
   "syncPolicy": "merge primary main into aws-virgen main (full tree, history preserved)",
   "ci": {
@@ -30,6 +30,8 @@
       "DISASTER-RECOVERY-VERIFICATION.md",
       "EXPO-EAS-PRODUCTION-CHECKLIST.md",
       "FEATURE-FLAGS.md",
+      "FULL-DELIVERY-REPORT-2026-07-11-AR.md",
+      "FULL-DEPLOY-TASK-MATRIX-2026-07-11-AR.md",
       "FULL-READINESS-STATUS-PLAN.md",
       "FULL-STRICT-AUDIT-REPORT.md",
       "MIGRATION-ROLLBACK-PLAYBOOK.md",
@@ -113,6 +115,7 @@
       "PERFORMANCE_REPORT.md",
       "PRIMARY_AGENT_HANDOFF.md",
       "PRODUCTION-FULL-SNAPSHOT-2026-07-10.md",
+      "PRODUCTION-FULL-SNAPSHOT-2026-07-11.md",
       "PROJECT_CONTEXT.md",
       "RELEASE_CHECKLIST.md",
       "RELEASE_NOTES_v1.0.0-rc.2.md",
@@ -122,6 +125,7 @@
       "REPLIT_HANDOFF.md",
       "SECURITY_REPORT.md",
       "STORE_PUBLISHING_GUIDE.md",
+      "SURFACES-DEPLOY-FINISH.md",
       "TEST_REPORT.md",
       "UPLOAD_AUDIT.md",
       "USER_JOURNEY_REPORT.md"
