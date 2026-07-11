@@ -1,3 +1,4 @@
+- [B-OOM import GitHub branch protection](boom-github-push.md) — force push to origin/main rejected (branch protection); push feature branch instead; Replit deploy works from local code regardless
 - [BANCO BFF Architecture](banco-bff-arch.md) — immutable FeedItem contract + layer rules that all future surfaces must respect
 - [BANCO installment label match](banco-payment-display.md) — headline monthly amount + payment-type label must come from the SAME offer (best_offer); lowest_monthly vs best_offer diverge
 - [BANCO trust_signal verified](banco-trust-signal.md) — client "verified" filters must include "Top Dealer"; use shared isVerifiedSignal(), only "Private Seller" is unverified
