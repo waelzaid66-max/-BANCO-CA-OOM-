@@ -99,7 +99,10 @@ jobs:
         run: pnpm --filter @workspace/banco-web start &
       - uses: browser-actions/setup-chrome@v1
       - name: Wait for banco-web health
-        run: npx --yes wait-on@8.0.1 -t 120000 http://127.0.0.1:3000/api/health
+        # Probe the app's own home page (server-rendered, no backend needed) rather
+        # than /api/health, which next.config rewrites to the upstream API that is
+        # not running in this isolated website job — so it could never become ready.
+        run: npx --yes wait-on@8.0.1 -t 120000 http://127.0.0.1:3000/
       - name: Lighthouse SEO smoke
         run: node scripts/website-lighthouse-smoke.mjs
         env:
