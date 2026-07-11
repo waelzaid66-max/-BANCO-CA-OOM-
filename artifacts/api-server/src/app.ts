@@ -124,6 +124,17 @@ app.use(
   })),
 );
 
+// Root-path liveness probe — Replit's reverse proxy, uptime monitors, and
+// browser "is the server up?" checks all hit GET /. Without this handler they
+// fall through to notFoundHandler and produce a stream of noisy 404s in the
+// access log. Returning a terse 200 JSON ping keeps the process observable while
+// keeping the logs quiet (requestLogger skips GET / entirely — see requestLogger.ts).
+// This is NOT part of the public API contract; /api/healthz is the canonical
+// liveness probe and /api/readyz is the canonical readiness probe.
+app.get("/", (_req, res) => {
+  res.set("Cache-Control", "no-store").json({ service: "BANCO API", docs: "/api/healthz" });
+});
+
 // Public, crawler-facing HTML/XML routes (/l/:id, /sitemap.xml, /robots.txt).
 // Mounted BEFORE /api and the 404 handler so these paths resolve to real pages.
 app.use(seoRouter);
