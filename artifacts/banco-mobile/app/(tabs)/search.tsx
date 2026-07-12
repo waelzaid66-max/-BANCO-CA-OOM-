@@ -328,6 +328,12 @@ export default function SearchScreen() {
     const patch: Partial<SearchCriteria> = {};
     if (
       criteria.engineKey !== "all" &&
+      // FAIL OPEN: only normalize when facets actually returned engines. An
+      // empty engineList means facets failed / are transient — NOT that the
+      // engine has no inventory — so we must NOT wipe the user's committed
+      // engine (and, for real-estate, their rental_term with it). This was
+      // silently clearing a chosen rent term whenever facets hiccuped.
+      engineList.length > 0 &&
       !engineList.some((e) => e.key === criteria.engineKey)
     ) {
       patch.engineKey = "all";
