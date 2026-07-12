@@ -97,6 +97,10 @@ function SmartAssetCardComponent({
   const handlePotential = () => {
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
     setPotentialFlash(true);
+    // A single tap on B IS the like: persist it (save) so it reaches the listing
+    // owner (their saves + notification) and shows as saved everywhere — not just
+    // a transient flash. Long-press still opens the save/dislike menu.
+    onSave?.(item);
     void sendBehaviorSignal({
       session_id: sessionId,
       listing_id: item.id,

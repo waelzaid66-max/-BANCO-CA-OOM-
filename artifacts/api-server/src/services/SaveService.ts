@@ -1,6 +1,32 @@
 import { db } from "@workspace/db";
 import { savedListings, users, listings } from "@workspace/db/schema";
 import { eq, and, sql } from "drizzle-orm";
+import { createNotification } from "./NotificationService";
+
+/**
+ * Best-effort: tell the listing owner when someone likes/saves their listing, in
+ * the owner's own language. Fire-and-forget — never blocks or fails the save, and
+ * self-saves are skipped. No dedicated enum value yet, so it rides "system".
+ */
+async function notifyOwnerOfSave(saverUserId: string, listingId: string): Promise<void> {
+  const [row] = await db
+    .select({ ownerId: listings.userId, title: listings.title })
+    .from(listings)
+    .where(eq(listings.id, listingId))
+    .limit(1);
+  if (!row || !row.ownerId || row.ownerId === saverUserId) return;
+  const ownerId = row.ownerId;
+  // Notifications render their stored strings verbatim and there is no per-user
+  // language column, so keep the copy bilingual (AR primary market + EN) — the
+  // owner sees it correctly whichever language they use.
+  await createNotification({
+    userId: ownerId,
+    type: "system",
+    title: "إعجاب جديد بإعلانك ❤️ New like",
+    body: `أُعجب أحدهم بإعلانك «${row.title}» · Someone liked your listing`,
+    data: { listing_id: listingId },
+  });
+}
 
 export async function saveOrUnsaveListing(clerkId: string, listingId: string): Promise<{ saved: boolean }> {
   const [user] = await db
@@ -15,7 +41,8 @@ export async function saveOrUnsaveListing(clerkId: string, listingId: string): P
   // transaction so the denormalized counter never drifts from saved_listings.
   // The counter feeds a modest, log-scaled ranking signal only — it does NOT
   // bump recency, so popularity can lift a listing but never fake "just posted".
-  return db.transaction(async (tx) => {
+  let newlySaved = false;
+  const result = await db.transaction(async (tx) => {
     const [existing] = await tx
       .select({ userId: savedListings.userId })
       .from(savedListings)
@@ -55,9 +82,17 @@ export async function saveOrUnsaveListing(clerkId: string, listingId: string): P
         .update(listings)
         .set({ savesCount: sql`${listings.savesCount} + 1` })
         .where(eq(listings.id, listingId));
+      newlySaved = true;
     }
     return { saved: true };
   });
+
+  // Owner ping happens outside the transaction so a slow/failed notification can
+  // never delay or roll back the save itself.
+  if (newlySaved) {
+    void notifyOwnerOfSave(user.id, listingId).catch(() => {});
+  }
+  return result;
 }
 
 export async function getUserSaves(clerkId: string): Promise<string[]> {
