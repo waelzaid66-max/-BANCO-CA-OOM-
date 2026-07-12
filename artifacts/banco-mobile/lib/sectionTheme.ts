@@ -6,12 +6,16 @@ import type { Category } from "@workspace/taxonomy/categories";
  * family so publish chrome never fights brand, but active Search tabs/chips
  * shift enough that cars ≠ real-estate ≠ facilities ≠ materials.
  */
+// Sharper, more saturated accents than the previous near-identical dark reds, so
+// each section reads as its own space while staying in BANCO's warm red identity:
+// brand red → vivid red (cars) → rose-burgundy (real estate) → burnt terracotta
+// (factories) → bronze (raw materials). All keep white foreground contrast.
 export const SECTION_ACCENT: Record<Category, string> = {
-  all: "#7A0C12",
-  car: "#8A0E14",
-  real_estate: "#7A1840",
-  facilities: "#6A1410",
-  materials: "#7A2A0C",
+  all: "#B4121A",
+  car: "#CC1E24",
+  real_estate: "#9C1650",
+  facilities: "#B0400F",
+  materials: "#A8600F",
 };
 
 export function sectionAccent(category: Category | null | undefined): string {

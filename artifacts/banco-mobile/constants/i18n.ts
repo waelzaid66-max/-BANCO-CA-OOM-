@@ -314,6 +314,7 @@ const en = {
       facilities: "Factories & Land",
       materials: "Raw Materials & Production Lines",
       industrial: "Industrial",
+      raw_material: "Raw Materials",
     },
     industrialTypes: {
       all: "All",
@@ -2182,6 +2183,7 @@ const ar: typeof en = {
       facilities: "مصانع وأراضي",
       materials: "مواد خام وخطوط إنتاج",
       industrial: "صناعي",
+      raw_material: "مواد خام",
     },
     industrialTypes: {
       all: "الكل",
