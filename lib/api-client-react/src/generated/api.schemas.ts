@@ -91,6 +91,7 @@ export const UserStateRole = {
   dealer: 'dealer',
   company: 'company',
   enterprise: 'enterprise',
+  financial_institution: 'financial_institution',
 } as const;
 
 /**
@@ -1022,6 +1023,7 @@ export const AdminUserRole = {
   dealer: 'dealer',
   company: 'company',
   enterprise: 'enterprise',
+  financial_institution: 'financial_institution',
 } as const;
 
 /**
@@ -1509,6 +1511,7 @@ export const AdminPlanUpdateAudience = {
   dealer: 'dealer',
   company: 'company',
   enterprise: 'enterprise',
+  financial_institution: 'financial_institution',
 } as const;
 
 export type AdminPlanUpdateFeatures = { [key: string]: unknown } | null;
@@ -1867,6 +1870,7 @@ export const PlanAudience = {
   dealer: 'dealer',
   company: 'company',
   enterprise: 'enterprise',
+  financial_institution: 'financial_institution',
 } as const;
 
 export type PlanFeatures = {[key: string]: boolean} | null;
@@ -2321,7 +2325,7 @@ export type GetMe200 = {
 };
 
 /**
- * Account type chosen at onboarding. Server is authoritative for the resulting role (individual/dealer/company); a client can never request admin/enterprise.
+ * Account type chosen at onboarding. Server is authoritative for the resulting role (individual/dealer/company/financial_institution); a client can never request admin/enterprise. A financial_institution must still pass verification before its financing features unlock.
  */
 export type UpdateMeBodyAccountType = typeof UpdateMeBodyAccountType[keyof typeof UpdateMeBodyAccountType];
 
@@ -2330,6 +2334,7 @@ export const UpdateMeBodyAccountType = {
   individual: 'individual',
   dealer: 'dealer',
   company: 'company',
+  financial_institution: 'financial_institution',
 } as const;
 
 export type UpdateMeBodyBusinessActivityType = typeof UpdateMeBodyBusinessActivityType[keyof typeof UpdateMeBodyBusinessActivityType];
@@ -2358,7 +2363,7 @@ export type UpdateMeBodyBusiness = {
 };
 
 export type UpdateMeBody = {
-  /** Account type chosen at onboarding. Server is authoritative for the resulting role (individual/dealer/company); a client can never request admin/enterprise. */
+  /** Account type chosen at onboarding. Server is authoritative for the resulting role (individual/dealer/company/financial_institution); a client can never request admin/enterprise. A financial_institution must still pass verification before its financing features unlock. */
   account_type?: UpdateMeBodyAccountType;
   phone?: string | null;
   /** Public seller bio shown on listing detail (server mirrors to Clerk). */
@@ -4092,6 +4097,7 @@ export const GetAdminUsersRole = {
   dealer: 'dealer',
   company: 'company',
   enterprise: 'enterprise',
+  financial_institution: 'financial_institution',
 } as const;
 
 export type GetAdminUsers200 = {

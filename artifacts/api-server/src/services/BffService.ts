@@ -76,6 +76,8 @@ function buildTrustSignal(
   }
   if (isVerified && role === "dealer") return "Verified Dealer";
   if (isVerified && role === "company") return "Verified Company";
+  if (isVerified && role === "financial_institution")
+    return "Verified Financial Institution";
   if (isVerified) return "Verified Seller";
   return "Private Seller";
 }

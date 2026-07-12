@@ -154,7 +154,7 @@ components:
           description: Internal default account number, auto-assigned per user.
         role:
           type: string
-          enum: [individual, dealer, company, enterprise]
+          enum: [individual, dealer, company, enterprise, financial_institution]
         staff_role:
           type: string
           enum: [owner, admin, moderator, support, user]
@@ -1468,7 +1468,7 @@ components:
           nullable: true
         role:
           type: string
-          enum: [individual, dealer, company, enterprise]
+          enum: [individual, dealer, company, enterprise, financial_institution]
         staff_role:
           type: string
           enum: [owner, admin, moderator, support, user]
@@ -2101,7 +2101,7 @@ components:
           nullable: true
         audience:
           type: string
-          enum: [individual, dealer, company, enterprise]
+          enum: [individual, dealer, company, enterprise, financial_institution]
         is_baseline:
           type: boolean
         monthly_price:
@@ -2658,7 +2658,7 @@ components:
           nullable: true
         audience:
           type: string
-          enum: [individual, dealer, company, enterprise]
+          enum: [individual, dealer, company, enterprise, financial_institution]
         is_baseline:
           type: boolean
         monthly_price:
@@ -3443,8 +3443,8 @@ paths:
               properties:
                 account_type:
                   type: string
-                  description: Account type chosen at onboarding. Server is authoritative for the resulting role (individual/dealer/company); a client can never request admin/enterprise.
-                  enum: [individual, dealer, company]
+                  description: Account type chosen at onboarding. Server is authoritative for the resulting role (individual/dealer/company/financial_institution); a client can never request admin/enterprise. A financial_institution must still pass verification before its financing features unlock.
+                  enum: [individual, dealer, company, financial_institution]
                 phone:
                   type: string
                   nullable: true
@@ -6862,7 +6862,7 @@ paths:
           name: role
           schema:
             type: string
-            enum: [individual, dealer, company, enterprise]
+            enum: [individual, dealer, company, enterprise, financial_institution]
         - in: query
           name: banned
           schema:
