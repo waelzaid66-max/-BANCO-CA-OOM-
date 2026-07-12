@@ -28,6 +28,12 @@ router.get("/healthz", (_req, res) => {
   res.json(data);
 });
 
+// Bare "/api" liveness: some deploy healthcheckers probe "/api" rather than
+// "/api/healthz". Answer 200 immediately (no DB) so startup probes never 404/500.
+router.get("/", (_req, res) => {
+  res.json({ status: "ok" });
+});
+
 // Alias kept for clarity alongside /readyz.
 router.get("/livez", (_req, res) => {
   res.json({ status: "ok" });

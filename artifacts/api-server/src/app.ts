@@ -112,6 +112,12 @@ app.use(express.json({ limit: "100kb" }));
 app.use(express.urlencoded({ extended: true, limit: "100kb" }));
 
 // Liveness/readiness probes must not depend on Clerk secrets or auth context.
+// Root liveness too: the deploy healthchecker probes "/" and "/api" (not
+// "/api/healthz"), so during the ~4s startup those 404'd/500'd and flooded the
+// logs (BUG-003). Answer 200 the instant the port is bound, before Clerk/DB.
+app.get("/", (_req, res) => {
+  res.json({ status: "ok" });
+});
 app.use("/api", healthRouter);
 
 // Resolve publishable key from request host for multi-domain support
