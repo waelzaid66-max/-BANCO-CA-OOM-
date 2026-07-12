@@ -588,7 +588,7 @@ const en = {
     },
     roles: {
       individual: "Individual",
-      dealer: "Dealer",
+      dealer: "Business Pro",
       company: "Company",
     },
     rfq: {
@@ -2456,7 +2456,7 @@ const ar: typeof en = {
     },
     roles: {
       individual: "فرد",
-      dealer: "معرض",
+      dealer: "حساب بيزنس تجاري",
       company: "شركة",
     },
     rfq: {
