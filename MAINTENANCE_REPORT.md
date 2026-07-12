@@ -305,6 +305,49 @@ The `financial_institution` role added in boom/main merge created 4 TypeScript e
 
 ---
 
+## 6c. BANKS & FINANCIERS HUB + B-BUTTON FIX (2026-07-12)
+
+### New Deliverables
+
+| Item | What | Where |
+|------|------|-------|
+| Banks & Financiers CTA card | 3rd card in Business Hub section of Search Discover | `SearchDiscover.tsx` — gold `#C9A84C` gradient, credit-card icon → `/business/banks` |
+| `/business/banks.tsx` | Premium Banks & Financiers portal page — gold accent, 4 product cards, Register CTA, disclaimer | `artifacts/banco-mobile/app/business/banks.tsx` (NEW) |
+| B-button UX fix | Tap B = save immediately (red). Long press = opens menu with Potential ★ + Not-for-me 👎 | `BReactionButton.tsx` — `onPress → onSave()`, chips: `[potential, angry]` |
+| Role selection Skip button | "Skip" / "تخطى" button on the account-type onboarding gate (profile tab) | `profile.tsx` lines 662-687 — calls `chooseAccountType("individual")` |
+| i18n keys (AR+EN) | `search.discover.banksHub/Sub`, `business.banks.*` (title, subtitle, 4 products, joinCta, note) | `constants/i18n.ts` |
+
+### Business Hub CTA Cards (final order)
+1. **Supply Portal** (red/dark) → `/business/supply-hub`
+2. **Global Supply & Importers** (navy) → `/business/global-supply`
+3. **Banks & Financiers** (gold/dark amber, NEW) → `/business/banks`
+
+### B-Button Architecture (finalized)
+```
+Tap  → onSave() → immediate red B glyph (toggle)
+Long Press → opens chip tray:
+  ├── ★ Potential (silver star-outline) → onPotential() → behavior signal "interested"
+  └── 👎 Not for me  (dark red thumbs-down) → onAngry() → behavior signal "angry"
+```
+
+### Role Selection Screen — Financial Institution (already built)
+The `needsAccountType` gate in profile.tsx already had 4 options:
+Individual / Dealer / Company / **Financial Institution** (bank-outline icon, routes to `/business/onboarding`)
+Added: Skip button top-right so users are never trapped.
+
+### Notification System Audit (2026-07-12)
+Full 14-type audit performed. Status: **mostly healthy**.
+
+| Check | Status |
+|-------|--------|
+| Push token registration | ✅ correct |
+| In-app feed | ✅ works |
+| Deep link routing | ✅ all 14 types handled |
+| Icon coverage | ⚠️ `investment`, `global_supply`, `billing` use fallback bell |
+| `verification` / `account` / `business` / `dealer` notifs | ⚠️ route to supply-hub instead of dedicated page |
+
+---
+
 ## 7. NEXT ACTIONS — PRIORITY ORDER
 
 1. **[NOW] Redeploy** → fixes Issues 001 (email) + 002 (email Arabic). Click Publish.
