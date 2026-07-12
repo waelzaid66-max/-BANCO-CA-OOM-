@@ -878,7 +878,7 @@ export default function SearchScreen() {
             ]}
             testID="empty-clear-filters"
           >
-            <Feather name="refresh-ccw" size={16} color={colors.primaryForeground} />
+            <Feather name="refresh-cw" size={16} color={colors.primaryForeground} />
             <AppText style={[styles.emptyCtaText, { color: colors.primaryForeground }]}>
               {t("search.clearAll")}
             </AppText>
