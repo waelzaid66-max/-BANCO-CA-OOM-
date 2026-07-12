@@ -649,6 +649,39 @@ export function SearchDiscover({
         </LinearGradient>
       </Pressable>
 
+      {/* Banks & Financiers hub — financial institutions financing portal */}
+      <Pressable
+        onPress={() => router.push("/business/banks")}
+        style={styles.mapCtaWrap}
+        testID="discover-banks-hub"
+      >
+        <LinearGradient
+          colors={["#1A1200", "#0A0800"]}
+          start={{ x: 0, y: 0 }}
+          end={{ x: 1, y: 1 }}
+          style={styles.mapCta}
+        >
+          <View style={[styles.mapCtaRow, { flexDirection: rowDir }]}>
+            <View style={[styles.mapBadge, { backgroundColor: "#C9A84C" }]}>
+              <Feather name="credit-card" size={20} color="#000000" />
+            </View>
+            <View style={styles.mapCtaText}>
+              <AppText style={[styles.mapTitle, { textAlign }]}>
+                {t("search.discover.banksHub")}
+              </AppText>
+              <AppText style={[styles.mapSub, { textAlign }]}>
+                {t("search.discover.banksHubSub")}
+              </AppText>
+            </View>
+            <Feather
+              name={isRTL ? "chevron-left" : "chevron-right"}
+              size={20}
+              color="rgba(255,255,255,0.8)"
+            />
+          </View>
+        </LinearGradient>
+      </Pressable>
+
       <CompanyOffers />
     </ScrollView>
   );

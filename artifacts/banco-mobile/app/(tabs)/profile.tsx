@@ -658,14 +658,38 @@ export default function ProfileScreen() {
 
   if (user && needsAccountType) {
     return (
-      <ScrollView
-        style={[styles.container, { backgroundColor: colors.background }]}
-        contentContainerStyle={[
-          styles.authContent,
-          { paddingTop: topPad + 40 },
-        ]}
-        keyboardShouldPersistTaps="handled"
-      >
+      <View style={[styles.container, { backgroundColor: colors.background }]}>
+        {/* Skip / dismiss row — tapping continues as individual (default) */}
+        <View
+          style={{
+            paddingTop: topPad + 6,
+            paddingHorizontal: 16,
+            paddingBottom: 4,
+            alignItems: isRTL ? "flex-start" : "flex-end",
+          }}
+        >
+          <Pressable
+            onPress={() => chooseAccountType("individual")}
+            disabled={savingAccountType}
+            hitSlop={12}
+            style={{ padding: 8 }}
+          >
+            <AppText
+              style={{
+                color: colors.mutedForeground,
+                fontSize: 14,
+                fontFamily: "Inter_500Medium",
+              }}
+            >
+              {isRTL ? "تخطى" : "Skip"}
+            </AppText>
+          </Pressable>
+        </View>
+        <ScrollView
+          style={{ flex: 1 }}
+          contentContainerStyle={[styles.authContent, { paddingTop: 20 }]}
+          keyboardShouldPersistTaps="handled"
+        >
         <BancoLogo height={40} style={styles.authLogoImg} />
         <AppText style={[styles.authTitle, { color: colors.foreground }]}>
           {t("profile.chooseAccountType")}
@@ -795,7 +819,8 @@ export default function ProfileScreen() {
             </AppText>
           )}
         </Pressable>
-      </ScrollView>
+        </ScrollView>
+      </View>
     );
   }
 

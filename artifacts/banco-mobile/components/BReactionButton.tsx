@@ -49,7 +49,7 @@ export function BGlyph({
   );
 }
 
-export type BReaction = "save" | "angry";
+export type BReaction = "potential" | "angry";
 
 type IoniconName = React.ComponentProps<typeof Ionicons>["name"];
 
@@ -59,7 +59,7 @@ const AUTO_CLOSE_MS = 3500;
 const POTENTIAL_SILVER = "#C9CCD1";
 
 /**
- * B-OOM reaction button — tap B = Banco Potential (affinity), long-press = save / not for me.
+ * B-OOM reaction button — tap B = save immediately (turns red), long-press = Potential signal / not for me.
  */
 export function BReactionButton({
   saved,
@@ -111,11 +111,11 @@ export function BReactionButton({
 
   const chips: {
     key: BReaction;
-    icon: IoniconName | "potential-p";
+    icon: IoniconName;
     color: string;
     onPress: () => void;
   }[] = [
-    { key: "save", icon: saveIcon, color: colors.primary, onPress: onSave },
+    { key: "potential", icon: "star-outline", color: POTENTIAL_SILVER, onPress: onPotential },
     { key: "angry", icon: "thumbs-down", color: "#B3122F", onPress: onAngry },
   ];
 
@@ -177,14 +177,17 @@ export function BReactionButton({
             close();
             return;
           }
-          onPotential();
+          // Single tap = save directly (immediate red feedback).
+          // Long-press opens the affinity / negative menu.
+          Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+          onSave();
         }}
         onLongPress={openMenu}
         delayLongPress={320}
         hitSlop={8}
         style={styles.bBtn}
         testID={testID}
-        accessibilityLabel="Banco Potential"
+        accessibilityLabel="Save listing"
       >
         <BGlyph height={height} tintColor={bTint} />
       </Pressable>
