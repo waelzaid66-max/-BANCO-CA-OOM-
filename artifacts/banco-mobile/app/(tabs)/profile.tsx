@@ -540,29 +540,32 @@ export default function ProfileScreen() {
     if (savingAccountType) return;
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
     setSavingAccountType(true);
+    // Record the choice + dismiss the gate FIRST so a flaky/slow backend can never
+    // trap a brand-new account on this screen (the reported "stuck at account type"
+    // bug). The account_type sync to the API is best-effort and can be re-applied
+    // any time from settings — getting the user into the app matters more here.
+    try {
+      await user?.update({
+        unsafeMetadata: {
+          ...(user.unsafeMetadata ?? {}),
+          accountTypeChosen: true,
+        },
+      });
+      await user?.reload();
+    } catch (e) {
+      console.warn("[profile] accountTypeChosen flag save failed", e);
+    }
+    setNeedsAccountType(false);
     try {
       await updateMe({ account_type: type });
-      try {
-        await user?.update({
-          unsafeMetadata: {
-            ...(user.unsafeMetadata ?? {}),
-            accountTypeChosen: true,
-          },
-        });
-        await user?.reload();
-      } catch (e) {
-        console.warn("[profile] accountTypeChosen flag save failed", e);
-      }
-      Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
-      setNeedsAccountType(false);
-      if (type === "dealer" || type === "company") {
-        router.push("/business/onboarding");
-      }
-    } catch {
-      Alert.alert(t("profile.accountTypeError"));
-    } finally {
-      setSavingAccountType(false);
+    } catch (e) {
+      console.warn("[profile] account_type sync failed (retry from settings)", e);
     }
+    Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+    if (type === "dealer" || type === "company") {
+      router.push("/business/onboarding");
+    }
+    setSavingAccountType(false);
   };
 
   const openSocialEdit = () => {
