@@ -263,6 +263,48 @@ SELECT COUNT(*) FROM listing_media;
 
 ---
 
+## 6b. SEARCH PORTAL — TASK #17 (2026-07-12)
+
+### Architecture: Section Registry Pattern
+
+Each section in `SearchDiscover` now has an isolated identity:
+
+| Section | Category Filter | Engine Preset | Card Type |
+|---------|----------------|---------------|-----------|
+| سيارات | `car` | engine chips revealed | 2×2 grid |
+| عقارات | `real_estate` | engine chips revealed | 2×2 grid |
+| مصانع وأراضي | `facilities` | → results immediately | 2×2 grid |
+| مواد خام | `materials` | → results immediately | 2×2 grid |
+| **إيجار وحجز ← NEW** | `real_estate` | `engineKey=rent` (offer_type=rent) | Full-width portal card |
+
+**Section isolation mechanism (already existed, now used for booking):**
+```
+browseSection("real_estate", "rent")
+  → update({ ...CLEAR_ATTRS, category: "real_estate", engineKey: "rent" })
+  → def.params.offer_type === "rent" → rentalTerm preserved, not cleared
+  → search criteria committed atomically with offer_type filter
+```
+
+**Key files changed:**
+- `artifacts/banco-mobile/components/SearchDiscover.tsx` — 5th booking card + importers hub CTA
+- `artifacts/banco-mobile/constants/i18n.ts` — `home.categories.booking`, `search.discover.bookingHub*`, `search.discover.importersHub*` (AR+EN)
+- `artifacts/api-server/scripts/seedDemoListings.ts` — 5 rental listings (شهري/سنوي/يومي) for Booking portal content
+
+**New CTAs in Business Hub:**
+1. بوابة التوريدات العالمية → `/business/supply-hub` (existing)
+2. التوريد العالمي والاستيراد → `/business/global-supply` (NEW — was missing)
+
+### Pre-existing TypeScript Errors (out of scope — need separate fix)
+The `financial_institution` role added in boom/main merge created 4 TypeScript errors:
+- `AdminService.ts:104` — DB enum doesn't include `financial_institution`
+- `PlanService.ts:22` — same
+- `UserService.ts:141` — role type mismatch
+- `profile.tsx:560` — `UpdateMeBodyAccountType` doesn't include it
+
+**Fix:** Add `financial_institution` to the DB `user_role` enum in the Drizzle schema + run migration.
+
+---
+
 ## 7. NEXT ACTIONS — PRIORITY ORDER
 
 1. **[NOW] Redeploy** → fixes Issues 001 (email) + 002 (email Arabic). Click Publish.

@@ -92,6 +92,126 @@ async function main(): Promise<void> {
   const img = (id: string) =>
     `https://images.unsplash.com/photo-${id}?auto=format&fit=crop&w=1200&q=80`;
 
+  // ── Booking & rental listings — appear in Booking portal (offer_type=rent)
+  // AND in the main feed; offer_type filters are transparent to publicVisibility.
+  const rentalDrafts: Draft[] = [
+    {
+      title: "شقة مفروشة للإيجار الشهري - القاهرة الجديدة",
+      description:
+        "شقة 120 متر مفروشة بالكامل، 2 غرف، مطبخ مجهز، واي فاي، جاهزة للسكن الفوري. إيجار شهري مناسب.",
+      category: "real_estate",
+      base_price_cash: 12000,
+      location: at(0),
+      specs: {
+        area: 120,
+        rooms: 2,
+        offer_type: "rent",
+        rental_term: "monthly",
+        furnished: true,
+      },
+      media: [
+        {
+          type: "image",
+          url: img("1522708323749-97834809b785"),
+          is_thumbnail: true,
+        },
+      ],
+      payment_options: [{ mode: "cash" }],
+    },
+    {
+      title: "فيلا مفروشة للإيجار السنوي - الشيخ زايد",
+      description:
+        "فيلا 350 متر، 4 غرف، حديقة خاصة، جراج، مجمع راقي مع حمام سباحة. للإيجار السنوي.",
+      category: "real_estate",
+      base_price_cash: 180000,
+      location: at(1),
+      specs: {
+        area: 350,
+        rooms: 4,
+        offer_type: "rent",
+        rental_term: "annual",
+        furnished: true,
+      },
+      media: [
+        {
+          type: "image",
+          url: img("1613977257363-10ce2b6f6e88"),
+          is_thumbnail: true,
+        },
+      ],
+      payment_options: [{ mode: "cash" }],
+    },
+    {
+      title: "استوديو مفروش للإيجار اليومي - وسط البلد",
+      description:
+        "استوديو أنيق 55 متر، مفروش بالكامل، قريب من جميع الخدمات والمواصلات. مناسب للزيارات القصيرة.",
+      category: "real_estate",
+      base_price_cash: 800,
+      location: at(2),
+      specs: {
+        area: 55,
+        rooms: 1,
+        offer_type: "rent",
+        rental_term: "daily",
+        furnished: true,
+      },
+      media: [
+        {
+          type: "image",
+          url: img("1586023492125-27b2c045efd7"),
+          is_thumbnail: true,
+        },
+      ],
+      payment_options: [{ mode: "cash" }],
+    },
+    {
+      title: "شاليه بالبحر للإيجار اليومي - الساحل الشمالي",
+      description:
+        "شاليه 180 متر على البحر مباشرة، 3 غرف، مكيف، مطبخ كامل، تراس. للحجز اليومي أو الأسبوعي.",
+      category: "real_estate",
+      base_price_cash: 3500,
+      location: at(3),
+      specs: {
+        area: 180,
+        rooms: 3,
+        offer_type: "rent",
+        rental_term: "daily",
+        furnished: true,
+      },
+      media: [
+        {
+          type: "image",
+          url: img("1507525428034-b723cf961d3e"),
+          is_thumbnail: true,
+        },
+      ],
+      payment_options: [{ mode: "cash" }],
+    },
+    {
+      title: "شقة 90 متر للإيجار السنوي - مدينتي",
+      description:
+        "شقة 90 متر، 2 غرف وريسبشن، بدون فرش، بحالة ممتازة. إيجار سنوي بمبلغ ثابت.",
+      category: "real_estate",
+      base_price_cash: 60000,
+      location: at(4),
+      specs: {
+        area: 90,
+        rooms: 2,
+        offer_type: "rent",
+        rental_term: "annual",
+        furnished: false,
+      },
+      media: [
+        {
+          type: "image",
+          url: img("1560448204-e02f11c3d0e2"),
+          is_thumbnail: true,
+        },
+      ],
+      payment_options: [{ mode: "cash" }],
+    },
+  ];
+
   const saleDrafts: Draft[] = [
     {
       title: "تويوتا كورولا 2020 للبيع - حالة ممتازة",
@@ -160,7 +280,10 @@ async function main(): Promise<void> {
 
   const a = await seedGroup("sale", "demo-banco-seller", "بانكو ديمو", "dealer", saleDrafts);
   const b = await seedGroup("request", "demo-banco-buyer", "بانكو ديمو (طلبات)", "individual", requestDrafts);
-  const missing = a.missing + b.missing;
+  // Rental/Booking listings — same demo-banco-seller owner. Idempotent: skips
+  // any title already present so re-running after a partial seed is safe.
+  const c = await seedGroup("rental", "demo-banco-rentals", "بانكو ديمو (إيجار)", "dealer", rentalDrafts);
+  const missing = a.missing + b.missing + c.missing;
   if (missing > 0) {
     // Honesty: never exit 0 with demo data missing.
     throw new Error(`${missing} demo listing(s) still missing — see FAILED lines above.`);

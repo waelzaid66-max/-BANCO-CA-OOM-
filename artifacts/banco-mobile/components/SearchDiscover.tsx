@@ -306,6 +306,56 @@ export function SearchDiscover({
         })}
       </View>
 
+      {/* ── 5th portal card: Booking & Stays ────────────────────────────────
+          UI-only concept — maps to real_estate + offer_type=rent without
+          touching the shared taxonomy type. Full-width to distinguish it
+          as a new portal entry rather than a same-tier catalogue section. */}
+      <Pressable
+        onPress={() => onBrowseSection("real_estate", "rent")}
+        style={styles.bookingCardWrap}
+        testID="section-card-booking"
+      >
+        <LinearGradient
+          colors={["#0A2840", "#040D14"]}
+          start={{ x: 0, y: 0 }}
+          end={{ x: 1, y: 1 }}
+          style={styles.bookingCard}
+        >
+          {/* Subtle BANCO watermark behind content */}
+          <View pointerEvents="none" style={styles.sectionWatermarkWrap}>
+            <Image
+              source={BANCO_WATERMARK}
+              style={styles.sectionWatermark}
+              contentFit="contain"
+              tintColor="#FFFFFF"
+            />
+          </View>
+          <View
+            style={[
+              styles.bookingCardRow,
+              { flexDirection: rowDir },
+            ]}
+          >
+            <View style={[styles.sectionBadge, { backgroundColor: "rgba(26,127,219,0.25)", borderColor: "rgba(26,127,219,0.45)" }]}>
+              <Feather name="calendar" size={20} color="#5AB4FF" />
+            </View>
+            <View style={styles.bookingCardText}>
+              <AppText style={[styles.sectionLabel, { textAlign, fontSize: 17 }]}>
+                {t("home.categories.booking")}
+              </AppText>
+              <AppText style={[styles.bookingCardSub, { textAlign }]}>
+                {t("search.discover.bookingHubSub")}
+              </AppText>
+            </View>
+            <Feather
+              name={isRTL ? "chevron-left" : "chevron-right"}
+              size={20}
+              color="rgba(255,255,255,0.8)"
+            />
+          </View>
+        </LinearGradient>
+      </Pressable>
+
       {/* Engine chips for the expanded section — facet-gated like Search chrome */}
       {openSection && openEngines.length > 1 && (
         <View style={styles.engineReveal}>
@@ -566,6 +616,39 @@ export function SearchDiscover({
         </LinearGradient>
       </Pressable>
 
+      {/* Global Supply & Importers hub — B2B sourcing / import-export deals */}
+      <Pressable
+        onPress={() => router.push("/business/global-supply")}
+        style={styles.mapCtaWrap}
+        testID="discover-importers-hub"
+      >
+        <LinearGradient
+          colors={["#0D1F30", "#060C14"]}
+          start={{ x: 0, y: 0 }}
+          end={{ x: 1, y: 1 }}
+          style={styles.mapCta}
+        >
+          <View style={[styles.mapCtaRow, { flexDirection: rowDir }]}>
+            <View style={[styles.mapBadge, { backgroundColor: "#1A5FAD" }]}>
+              <Feather name="package" size={20} color="#FFFFFF" />
+            </View>
+            <View style={styles.mapCtaText}>
+              <AppText style={[styles.mapTitle, { textAlign }]}>
+                {t("search.discover.importersHub")}
+              </AppText>
+              <AppText style={[styles.mapSub, { textAlign }]}>
+                {t("search.discover.importersHubSub")}
+              </AppText>
+            </View>
+            <Feather
+              name={isRTL ? "chevron-left" : "chevron-right"}
+              size={20}
+              color="rgba(255,255,255,0.8)"
+            />
+          </View>
+        </LinearGradient>
+      </Pressable>
+
       <CompanyOffers />
     </ScrollView>
   );
@@ -783,5 +866,37 @@ const styles = StyleSheet.create({
     fontSize: 13,
     fontFamily: "Inter_400Regular",
     marginHorizontal: 16,
+  },
+  // ── Booking & Stays portal card ──────────────────────────────────────
+  bookingCardWrap: {
+    marginHorizontal: 16,
+    marginTop: 12,
+  },
+  bookingCard: {
+    borderRadius: 20,
+    overflow: "hidden",
+    padding: 16,
+    borderWidth: 1,
+    borderColor: "rgba(90,180,255,0.18)",
+    shadowColor: "#1A7FDB",
+    shadowOpacity: 0.22,
+    shadowRadius: 14,
+    shadowOffset: { width: 0, height: 5 },
+    elevation: 6,
+    justifyContent: "center",
+  },
+  bookingCardRow: {
+    alignItems: "center",
+    gap: 14,
+  },
+  bookingCardText: {
+    flex: 1,
+    gap: 3,
+  },
+  bookingCardSub: {
+    fontSize: 12.5,
+    fontFamily: "Inter_400Regular",
+    color: "rgba(255,255,255,0.72)",
+    marginTop: 2,
   },
 });
