@@ -91,6 +91,25 @@ const SCROLL_SIGNAL_THROTTLE_MS = 3000;
 const RAIL_CARD_WIDTH = 260;
 const MIN_INSTALLMENT_ITEMS = 3;
 
+// All discovery-rail arrays in ONE object so loadRails() can commit everything
+// with a single setRails() call → one re-render → one ListHeader rebuild → zero
+// cascading layout shifts during pull-to-refresh / tab reload.
+type RailsState = {
+  trending: FeedItem[];
+  recommended: FeedItem[];
+  installment: FeedItem[];
+  verified: FeedItem[];
+  bestDeals: FeedItem[];
+  nearYou: FeedItem[];
+  nearbyCity: string | null;
+  recentlyAdded: FeedItem[];
+  industrial: FeedItem[];
+};
+const EMPTY_RAILS: RailsState = {
+  trending: [], recommended: [], installment: [], verified: [],
+  bestDeals: [], nearYou: [], nearbyCity: null, recentlyAdded: [], industrial: [],
+};
+
 /**
  * Resolves the user's city from device GPS, but ONLY when location permission
  * has already been granted — we never trigger a permission prompt on launch
@@ -345,17 +364,21 @@ export default function FeedScreen() {
   const [loadingMore, setLoadingMore] = useState(false);
   const [error, setError] = useState(false);
 
-  const [trendingItems, setTrendingItems] = useState<FeedItem[]>([]);
-  const [recommendedItems, setRecommendedItems] = useState<FeedItem[]>([]);
-  const [installmentItems, setInstallmentItems] = useState<FeedItem[]>([]);
-  const [verifiedItems, setVerifiedItems] = useState<FeedItem[]>([]);
-  const [bestDealsItems, setBestDealsItems] = useState<FeedItem[]>([]);
-  const [nearYouItems, setNearYouItems] = useState<FeedItem[]>([]);
-  // When geo is unavailable we show listings from the dominant market city and
-  // title the rail with that city name instead of falsely claiming proximity.
-  const [nearbyCity, setNearbyCity] = useState<string | null>(null);
-  const [recentlyAddedItems, setRecentlyAddedItems] = useState<FeedItem[]>([]);
-  const [industrialItems, setIndustrialItems] = useState<FeedItem[]>([]);
+  // Lazy initializer avoids the React Compiler treating EMPTY_RAILS as a
+  // tracked prop; the object is created once at mount and never re-evaluated.
+  const [rails, setRails] = useState<RailsState>(() => ({ ...EMPTY_RAILS }));
+  // Destructure for easy reference (no behaviour change, just readability).
+  const {
+    trending: trendingItems,
+    recommended: recommendedItems,
+    installment: installmentItems,
+    verified: verifiedItems,
+    bestDeals: bestDealsItems,
+    nearYou: nearYouItems,
+    nearbyCity,
+    recentlyAdded: recentlyAddedItems,
+    industrial: industrialItems,
+  } = rails;
 
   const lastScrollRef = useRef({ offset: 0, time: Date.now() });
   const lastSignalTimeRef = useRef(0);
@@ -523,20 +546,18 @@ export default function FeedScreen() {
     [category, industrialType, engineKey, marketCountry, sessionId, prefetchImages]
   );
 
-  // Discovery rails — fetched once; independent of the category filter below.
-  // Trending, the shared pool, industrial slice, and geo city run in parallel
-  // so home rails don't waterfall three feed round-trips on cold open.
+  // Discovery rails — all requests run in parallel so there is no waterfall,
+  // and ALL derived state is committed in a single setRails() call so the
+  // ListHeader rebuilds exactly ONCE (not 8–9 times) after the data arrives.
   const loadRails = useCallback(async () => {
     const requestGen = ++railsRequestGenRef.current;
-    const [trendingRes, poolRes, industrialRes, geoCity] = await Promise.all([
+    const [trendingRes, poolRes, industrialRes, geoCity, recRes] = await Promise.all([
       getTrending().catch(() => ({ data: [] as FeedItem[] })),
       getFeed({
         limit: 40,
         session_id: sessionId,
         market_country: marketCountry,
-      }).catch(() => ({
-        data: [] as FeedItem[],
-      })),
+      }).catch(() => ({ data: [] as FeedItem[] })),
       getFeed({
         category: "industrial" as GetFeedCategory,
         limit: 20,
@@ -544,48 +565,46 @@ export default function FeedScreen() {
         market_country: marketCountry,
       }).catch(() => ({ data: [] as FeedItem[] })),
       detectCity().catch(() => null as string | null),
+      // Recommendations fetched here so all rail data lands in one setState.
+      isSignedIn
+        ? getRecommendations().catch(() => ({ data: [] as FeedItem[] }))
+        : Promise.resolve({ data: [] as FeedItem[] }),
     ]);
 
     if (requestGen !== railsRequestGenRef.current) return;
 
-    setTrendingItems(trendingRes.data ?? []);
-
     const pool = poolRes.data ?? [];
-    setInstallmentItems(pool.filter((it) => !!it.installment_badge));
-    setVerifiedItems(pool.filter((it) => isVerifiedSignal(it.trust_signal)));
-
     const ranked = pool
       .map((it) => ({ it, value: parsePriceValue(it.price_display) }))
       .filter((x): x is { it: FeedItem; value: number } => x.value !== null)
       .sort((a, b) => a.value - b.value)
       .slice(0, 12)
       .map((x) => x.it);
-    setBestDealsItems(ranked);
-
     const refCity = geoCity ?? mostCommonLocation(pool);
-    setNearbyCity(geoCity ? null : refCity);
-    setNearYouItems(
-      refCity
+
+    // ONE setState → ONE re-render → ONE ListHeader rebuild → zero layout jumps.
+    setRails({
+      trending: trendingRes.data ?? [],
+      recommended: recRes.data ?? [],
+      installment: pool.filter((it) => !!it.installment_badge),
+      verified: pool.filter((it) => isVerifiedSignal(it.trust_signal)),
+      bestDeals: ranked,
+      nearYou: refCity
         ? pool.filter((it) => locationMatchesCity(it.location, refCity))
-        : []
-    );
-    setRecentlyAddedItems(pool.slice(0, 12));
+        : [],
+      nearbyCity: geoCity ? null : refCity,
+      recentlyAdded: pool.slice(0, 12),
+      industrial: industrialRes.data ?? [],
+    });
+  }, [sessionId, marketCountry, isSignedIn]);
 
-    setIndustrialItems(industrialRes.data ?? []);
-  }, [sessionId, marketCountry]);
-
+  // loadRecommendations kept as a no-op alias — callers (listingsVersion effect)
+  // already call loadRails which now includes recommendations. Removing the
+  // reference would require touching multiple call-sites; the stub is cheaper.
   const loadRecommendations = useCallback(async () => {
-    if (!isSignedIn) {
-      setRecommendedItems([]);
-      return;
-    }
-    try {
-      const res = await getRecommendations();
-      setRecommendedItems(res.data ?? []);
-    } catch {
-      setRecommendedItems([]);
-    }
-  }, [isSignedIn]);
+    // Intentionally empty: recommendations are now fetched inside loadRails so
+    // both datasets land in a single setState and avoid a second layout shift.
+  }, []);
 
   // Hydrate preferred market once on native (web reads synchronously above).
   useEffect(() => {
@@ -818,6 +837,10 @@ export default function FeedScreen() {
       recentlyAddedItems.length >= MIN_INSTALLMENT_ITEMS ||
       industrialItems.length >= MIN_INSTALLMENT_ITEMS ||
       recentlyViewed.length > 0);
+  // Stable boolean: flips false→true once when the first feed page arrives.
+  // Unlike items.length, it never changes again on pagination so the ListHeader
+  // useCallback dep does not invalidate on every "load more" call.
+  const hasItems = items.length > 0;
 
   // B2B bridge (Task #154 T007): when the user browses an industrial group
   // (facilities / materials) we surface a non-deceptive shortcut into the
@@ -988,7 +1011,7 @@ export default function FeedScreen() {
             isSaved={isSaved}
           />
         )}
-        {hasRails && items.length > 0 && (
+        {hasRails && hasItems && (
           <AppText
             style={[
               styles.feedTitle,
@@ -1007,17 +1030,15 @@ export default function FeedScreen() {
     activeGroup,
     showRails,
     recentlyViewed,
-    recommendedItems,
-    bestDealsItems,
-    installmentItems,
-    verifiedItems,
-    nearYouItems,
-    nearbyCity,
-    trendingItems,
-    recentlyAddedItems,
-    industrialItems,
+    // Use the single rails object as one dep instead of 8 individual arrays.
+    // This dep only flips once (after loadRails resolves) rather than 8 times,
+    // so FlashList re-measures the header exactly once per refresh cycle.
+    rails,
     hasRails,
-    items.length,
+    // hasItems is a boolean derived from items.length — it only flips false→true
+    // once per load, never on subsequent pagination. Using items.length here
+    // would rebuild the header on every "load more" page, causing a layout jump.
+    hasItems,
     handleCardPress,
     toggleSave,
     isSaved,
