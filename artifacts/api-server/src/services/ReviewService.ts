@@ -224,8 +224,8 @@ export async function createReview(
   await createNotification({
     userId: sellerId,
     type: "review",
-    title: `${authorName} rated you ${rating}★`,
-    body: text && text.length > 0 ? (text.length > 80 ? `${text.slice(0, 79)}…` : text) : `New ${rating}-star rating`,
+    title: `${authorName} قيّمك ${rating}★ · rated you`,
+    body: text && text.length > 0 ? (text.length > 80 ? `${text.slice(0, 79)}…` : text) : `تقييم ${rating} نجوم · New ${rating}-star rating`,
     data: { seller_id: sellerId, review_id: row.id, rating },
   });
 

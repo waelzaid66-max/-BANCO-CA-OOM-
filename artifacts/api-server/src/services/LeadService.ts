@@ -318,8 +318,8 @@ export async function contactLead(input: ContactLeadInput): Promise<{ phone: str
     void createNotification({
       userId: sellerId,
       type: "lead",
-      title: "New lead",
-      body: `${LEAD_ACTION_LABEL[input.actionType]} interest on "${listing.title}"`,
+      title: "عميل محتمل جديد · New lead",
+      body: `اهتمام جديد على «${listing.title}» · ${LEAD_ACTION_LABEL[input.actionType]} interest`,
       data: { listing_id: input.listingId, lead_id: billing.leadId },
     });
   });
@@ -555,8 +555,8 @@ export async function processLead(input: TrackLeadInput): Promise<void> {
     await createNotification({
       userId: sellerId,
       type: "lead",
-      title: "New lead",
-      body: `${LEAD_ACTION_LABEL[input.actionType]} interest on "${listing.title}"`,
+      title: "عميل محتمل جديد · New lead",
+      body: `اهتمام جديد على «${listing.title}» · ${LEAD_ACTION_LABEL[input.actionType]} interest`,
       data: { listing_id: input.listingId, lead_id: billing.leadId },
     });
 

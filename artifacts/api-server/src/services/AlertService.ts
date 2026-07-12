@@ -57,8 +57,8 @@ export async function notifyNewMatch(listing: {
       await createNotification({
         userId: search.userId,
         type: "new_match",
-        title: "New match for your saved search",
-        body: `A new listing matches "${search.name}"`,
+        title: "تطابق جديد لبحثك المحفوظ · New saved-search match",
+        body: `إعلان جديد يطابق «${search.name}» · A new listing matches "${search.name}"`,
         data: { listing_id: listing.id, saved_search_id: search.id },
       });
 
@@ -90,8 +90,8 @@ export async function notifyPriceDrop(listing: {
       await createNotification({
         userId,
         type: "price_drop",
-        title: "Price drop on a saved listing",
-        body: `"${listing.title}" dropped in price`,
+        title: "انخفاض سعر إعلان محفوظ · Price drop",
+        body: `انخفض سعر «${listing.title}» · "${listing.title}" dropped in price`,
         data: {
           listing_id: listing.id,
           old_price: listing.oldPrice,
