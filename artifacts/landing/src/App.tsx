@@ -12,11 +12,14 @@ import { bancoBrand } from "@workspace/design-tokens";
  */
 
 const ENV = import.meta.env as Record<string, string | undefined>;
-const MARKET_URL = ENV.VITE_MARKET_URL ?? "";
-const ADMIN_URL = ENV.VITE_ADMIN_URL ?? "";
-const WEB_URL = (ENV.VITE_WEB_URL ?? "").trim().replace(/\/+$/, "");
+// Fall back to relative paths so links work on every Replit preview & production
+// deploy without any env-var setup. Override via VITE_* vars in production.
+const MARKET_URL = (ENV.VITE_MARKET_URL ?? "").trim() || "/dealer-os";
+const ADMIN_URL  = (ENV.VITE_ADMIN_URL  ?? "").trim() || "/admin-os";
+const MOBILE_URL = "/banco-mobile/";
+const WEB_URL    = (ENV.VITE_WEB_URL ?? "").trim().replace(/\/+$/, "");
 const ANDROID_URL = ENV.VITE_APP_ANDROID_URL ?? "";
-const IOS_URL = ENV.VITE_APP_IOS_URL ?? "";
+const IOS_URL     = ENV.VITE_APP_IOS_URL ?? "";
 
 const WEB_PAGES: Dest[] = [
   { ar: "الرئيسية", en: "Home", path: "/" },
@@ -137,6 +140,7 @@ function StandaloneDirectoryHub() {
             ))}
           </ul>
           <div style={S.ctaRow}>
+            <a href={MOBILE_URL} style={S.cta}>افتح التطبيق</a>
             <LinkOrSoon url={ANDROID_URL} label="Google Play" />
             <LinkOrSoon url={IOS_URL} label="App Store" />
           </div>
