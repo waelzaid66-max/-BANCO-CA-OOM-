@@ -1,5 +1,5 @@
 import { db } from "@workspace/db";
-import { savedSearches } from "@workspace/db/schema";
+import { savedSearches, companyFollows, users } from "@workspace/db/schema";
 import { and, eq, ne, or, isNull, lte, gte } from "drizzle-orm";
 import { createNotification } from "./NotificationService";
 import { getSaverUserIds } from "./SaveService";
@@ -69,6 +69,55 @@ export async function notifyNewMatch(listing: {
     }
   } catch (err) {
     console.error("[Alert new_match]", err);
+  }
+}
+
+/**
+ * Notify everyone who follows a seller/company when that seller publishes a NEW
+ * listing, so a follow actually delivers value (the follow existed but nothing
+ * ever fired on a new post). Rides the existing "new_match" type — semantically
+ * "a new listing in your interest" — which already deep-links to the listing and
+ * honours the per-category mute key. Best-effort, non-blocking; a silent no-op
+ * when the seller has no followers, and never alerts the seller themselves.
+ */
+export async function notifyFollowersOfNewListing(listing: {
+  id: string;
+  title: string;
+  sellerId: string;
+}): Promise<void> {
+  try {
+    const followers = await db
+      .select({ followerId: companyFollows.followerId })
+      .from(companyFollows)
+      .where(eq(companyFollows.companyUserId, listing.sellerId));
+    if (followers.length === 0) return;
+
+    const [seller] = await db
+      .select({ name: users.name })
+      .from(users)
+      .where(eq(users.id, listing.sellerId))
+      .limit(1);
+    const who = seller?.name?.trim();
+    const title = who
+      ? `إعلان جديد من ${who} · New listing from ${who}`
+      : "إعلان جديد ممن تتابع · New listing from someone you follow";
+    const body = `«${listing.title}» — ممن تتابع · from someone you follow`;
+
+    await Promise.all(
+      followers
+        .filter((f) => f.followerId !== listing.sellerId)
+        .map((f) =>
+          createNotification({
+            userId: f.followerId,
+            type: "new_match",
+            title,
+            body,
+            data: { listing_id: listing.id },
+          }).catch(() => {}),
+        ),
+    );
+  } catch (err) {
+    console.error("[Alert new_listing_follower]", err);
   }
 }
 
