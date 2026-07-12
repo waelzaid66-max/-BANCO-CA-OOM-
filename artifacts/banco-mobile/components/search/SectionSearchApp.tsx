@@ -1,0 +1,1385 @@
+import { Feather, Ionicons } from "@/components/icons";
+import { AppTextInput as TextInput } from "@/components/AppTextInput";
+import type { TextInput as RNTextInput } from "react-native";
+import {
+  getAutocomplete,
+  sendBehaviorSignal,
+  FeedItem,
+  SearchListingsCategory,
+} from "@workspace/api-client-react";
+import { router, useNavigation } from "expo-router";
+import { usePreventRemove } from "@react-navigation/native";
+import * as Haptics from "expo-haptics";
+import React, {
+  useCallback,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+} from "react";
+import {
+  Alert,
+  Platform,
+  Pressable,
+  ScrollView,
+  StyleSheet,
+  View,
+} from "react-native";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
+
+import { AppText } from "@/components/AppText";
+import { CarPicker } from "@/components/CarPicker";
+import { LocationPicker } from "@/components/LocationPicker";
+import { SkeletonCard } from "@/components/SkeletonCard";
+import { SearchResultsSurface } from "@/components/search/SearchResultsSurface";
+import { SearchResultsMap } from "@/components/search/SearchResultsMap";
+import { FilterSheet } from "@/components/search/FilterSheet";
+import {
+  Category,
+  CategoryIcon,
+  EngineChips,
+  IndustrialSubChips,
+  type IndustrialType,
+  apiCategoryFor,
+  industrialGroupForCategory,
+} from "@/components/CategoryTabs";
+import {
+  useInventoryFacets,
+  visibleEngines,
+  visibleIndustrialTypes,
+} from "@/lib/facets";
+import { POPULAR_BRANDS, brandQuery, type CarBrand } from "@/constants/cars";
+import { labelForValue } from "@/constants/locations";
+import { DEFAULT_MARKET_COUNTRY } from "@/constants/listingCreateTaxonomy";
+import {
+  loadPreferredMarketCountry,
+  savePreferredMarketCountry,
+} from "@/lib/marketPreference";
+import { engineByKey } from "@/constants/engines";
+import { useI18n } from "@/context/LanguageContext";
+import { useSession } from "@/context/SessionContext";
+import { useSound } from "@/context/SoundContext";
+import { useColors } from "@/hooks/useColors";
+import { useSearchMiniApp } from "@/hooks/useSearchMiniApp";
+import {
+  CLEAR_SECTION_ATTRS,
+  DEFAULT_CRITERIA,
+  SearchCriteria,
+  mapAnchorKey,
+} from "@/lib/searchParams";
+import { DEFAULT_NEAR_RADIUS_KM, requestNearMeCoords } from "@/lib/nearMe";
+import {
+  MarketCountryButton,
+  MarketCountryPicker,
+} from "@/components/MarketCountryPicker";
+import {
+  rentalTermsForSearch,
+  sanitizeRentalTermForMarket,
+} from "@/lib/searchTaxonomy";
+import { sectionAccent } from "@/lib/sectionTheme";
+
+const QUICK_BRANDS: CarBrand[] = POPULAR_BRANDS;
+const CLEAR_ATTRS = CLEAR_SECTION_ATTRS;
+
+/**
+ * Deterministic serialization of a criteria object (key-sorted) so the section
+ * page can detect "dirtiness" as a delta against the per-entry baseline rather
+ * than against hardcoded defaults. This keeps a freshly-entered page (which may
+ * carry a persisted non-default market) from being falsely flagged dirty, while
+ * still catching ANY user-applied change — including listing mode.
+ */
+function serializeCriteria(c: SearchCriteria): string {
+  return (Object.keys(c) as (keyof SearchCriteria)[])
+    .sort()
+    .map((k) => `${String(k)}=${JSON.stringify(c[k])}`)
+    .join("|");
+}
+
+export interface SectionSearchAppProps {
+  /** The locked browse category — this page only ever shows this section. */
+  category: Category;
+  /**
+   * Optional locked engine (e.g. "rent" for Booking & Stays). When set the
+   * engine chips are hidden and the engine can never change for this page.
+   */
+  lockedEngine?: string;
+  /** i18n key for the header title. */
+  titleKey: string;
+  /** i18n key for the small header subtitle. */
+  subtitleKey?: string;
+  /** Optional Feather icon name overriding the CategoryIcon in the header. */
+  headerIcon?: React.ComponentProps<typeof Feather>["name"];
+}
+
+/**
+ * A self-contained, single-category search engine rendered as a full-screen
+ * pushed page. Each mount owns its OWN `useSearchMiniApp` instance seeded to the
+ * locked category (+ optional locked engine), so entering the page always starts
+ * from a clean slate and leaving it discards all state (automatic reset by
+ * lifecycle). It reuses every search sub-component (engine/industrial chips,
+ * filter sheet, results surface, map) but renders NO category tabs — the
+ * category is fixed. When the shopper has active filters, a back gesture / button
+ * asks to confirm before discarding them.
+ */
+export function SectionSearchApp({
+  category,
+  lockedEngine,
+  titleKey,
+  subtitleKey,
+  headerIcon,
+}: SectionSearchAppProps) {
+  const colors = useColors();
+  const { t, isRTL } = useI18n();
+  const { playSound } = useSound();
+  const insets = useSafeAreaInsets();
+  const navigation = useNavigation();
+  const {
+    sessionId,
+    isSaved,
+    toggleSave,
+    saveSearch,
+    isSearchSaved,
+    cacheFeedItem,
+    recordQuery,
+  } = useSession();
+  const topPad = Platform.OS === "web" ? 67 : insets.top;
+
+  const accent = sectionAccent(category);
+
+  const onCommitted = useCallback(
+    (c: SearchCriteria) => {
+      sendBehaviorSignal({
+        session_id: sessionId,
+        action: "click",
+        category: apiCategoryFor(c.category) as
+          | SearchListingsCategory
+          | undefined,
+      }).catch(() => {});
+    },
+    [sessionId],
+  );
+
+  const search = useSearchMiniApp(onCommitted);
+  const {
+    criteria,
+    items,
+    viewState,
+    phase,
+    hasNext,
+    commit,
+    update,
+    applyPatch,
+    loadMore,
+    retry,
+  } = search;
+
+  // The seeded baseline for this section — the "clean" state a page starts in.
+  const baseEngine = lockedEngine ?? "all";
+  const buildSeed = useCallback(
+    (market: string): SearchCriteria => ({
+      ...DEFAULT_CRITERIA,
+      marketCountry: market,
+      category,
+      engineKey: baseEngine,
+      rentalTerm:
+        lockedEngine === "rent"
+          ? sanitizeRentalTermForMarket(null, market)
+          : null,
+    }),
+    [category, baseEngine, lockedEngine],
+  );
+
+  // The clean, per-entry baseline. Captured when the page seeds (and updated
+  // when the async market preference hydrates) so "dirty" means "changed from
+  // the state the shopper actually landed on", never "differs from hardcoded
+  // defaults". This is what makes a freshly-entered page never prompt on exit.
+  const baselineRef = useRef<SearchCriteria | null>(null);
+
+  // Seed the engine once on mount → entering the page immediately loads this
+  // section's results with no category chooser in sight.
+  const seeded = useRef(false);
+  useEffect(() => {
+    if (seeded.current) return;
+    seeded.current = true;
+    const seed = buildSeed(criteria.marketCountry);
+    baselineRef.current = seed;
+    commit(seed);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  // Native: confirm the preferred market once (AsyncStorage is async). Mirrors
+  // the Search tab's safe pattern — applyPatch merges into the LATEST criteria
+  // (no stale-closure overwrite of newer user changes), rentalTerm is derived
+  // from a null basis, and we only re-query once a fetch is already in flight.
+  // The baseline is advanced in lockstep so a hydrated market isn't "dirty".
+  const marketHydrated = useRef(Platform.OS === "web");
+  useEffect(() => {
+    if (marketHydrated.current) return;
+    let cancelled = false;
+    void loadPreferredMarketCountry().then((iso) => {
+      if (cancelled) return;
+      marketHydrated.current = true;
+      if (iso === criteria.marketCountry) return;
+      const marketPatch: Partial<SearchCriteria> = {
+        marketCountry: iso,
+        rentalTerm: sanitizeRentalTermForMarket(null, iso),
+      };
+      if (baselineRef.current) {
+        baselineRef.current = { ...baselineRef.current, ...marketPatch };
+      }
+      applyPatch(marketPatch);
+      if (items.length > 0 || phase !== "idle") retry();
+    });
+    return () => {
+      cancelled = true;
+    };
+  }, [applyPatch, retry, items.length, phase, criteria.marketCountry]);
+
+  // ── Map view ──────────────────────────────────────────────────────────────
+  const [mapMode, setMapMode] = useState(false);
+  const [marketPickerOpen, setMarketPickerOpen] = useState(false);
+  const mappableItems = useMemo(
+    () =>
+      items.filter(
+        (i) =>
+          i.coordinates &&
+          Number.isFinite(i.coordinates.lat) &&
+          Number.isFinite(i.coordinates.lng),
+      ),
+    [items],
+  );
+  const inResultsView = viewState === "results";
+  const hasPagePins = mappableItems.length > 0;
+  const showMapChrome = inResultsView;
+  useEffect(() => {
+    if (!inResultsView && mapMode) setMapMode(false);
+  }, [inResultsView, mapMode]);
+
+  const mapSectionKey = mapAnchorKey(criteria);
+  const prevMapSectionKey = useRef(mapSectionKey);
+  useEffect(() => {
+    if (prevMapSectionKey.current === mapSectionKey) return;
+    prevMapSectionKey.current = mapSectionKey;
+    setMapMode(false);
+  }, [mapSectionKey]);
+
+  // ── Facet gating (scoped to the locked category) ───────────────────────────
+  const { scopedFacets, loading: facetsLoading } =
+    useInventoryFacets(criteria.category);
+  const engineList = useMemo(
+    () => visibleEngines(criteria.category, scopedFacets),
+    [criteria.category, scopedFacets],
+  );
+  const activeGroup = industrialGroupForCategory(criteria.category);
+  const visibleIndTypes = useMemo(
+    () =>
+      activeGroup ? visibleIndustrialTypes(activeGroup, scopedFacets) : null,
+    [activeGroup, scopedFacets],
+  );
+  const showIndustrialChips =
+    !facetsLoading && !!visibleIndTypes && visibleIndTypes.length > 1;
+
+  // Normalize criteria if facets reveal the committed engine/sub-type is empty.
+  // Never touches a locked engine.
+  useEffect(() => {
+    if (facetsLoading) return;
+    const patch: Partial<SearchCriteria> = {};
+    if (
+      !lockedEngine &&
+      criteria.engineKey !== "all" &&
+      engineList.length > 0 &&
+      !engineList.some((e) => e.key === criteria.engineKey)
+    ) {
+      patch.engineKey = "all";
+      if (criteria.category === "car" && criteria.originType) {
+        patch.originType = null;
+      }
+      if (criteria.category === "real_estate" && criteria.rentalTerm) {
+        patch.rentalTerm = null;
+      }
+    }
+    if (
+      criteria.industrialType !== "all" &&
+      visibleIndTypes &&
+      !visibleIndTypes.includes(criteria.industrialType)
+    ) {
+      patch.industrialType = "all";
+      if (criteria.category === "materials") {
+        patch.industry = null;
+        patch.material = null;
+      }
+    }
+    if (Object.keys(patch).length === 0) return;
+    applyPatch(patch);
+    retry();
+  }, [
+    engineList,
+    visibleIndTypes,
+    criteria,
+    applyPatch,
+    retry,
+    facetsLoading,
+    lockedEngine,
+  ]);
+
+  // ── Text query + autocomplete ──────────────────────────────────────────────
+  const [draftQuery, setDraftQuery] = useState("");
+  const [suggestions, setSuggestions] = useState<string[]>([]);
+  const [showSuggestions, setShowSuggestions] = useState(false);
+  const [showFilters, setShowFilters] = useState(false);
+  const [locationPickerOpen, setLocationPickerOpen] = useState(false);
+  const [brandValue, setBrandValue] = useState<string | null>(null);
+  const [carPickerOpen, setCarPickerOpen] = useState(false);
+
+  const autocompleteTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const commitTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const inputRef = useRef<RNTextInput>(null);
+  const autocompleteSeq = useRef(0);
+
+  useEffect(
+    () => () => {
+      if (autocompleteTimer.current) clearTimeout(autocompleteTimer.current);
+      if (commitTimer.current) clearTimeout(commitTimer.current);
+    },
+    [],
+  );
+
+  const fetchAutocomplete = useCallback(
+    async (q: string) => {
+      if (q.length < 2) {
+        setSuggestions([]);
+        return;
+      }
+      const seq = ++autocompleteSeq.current;
+      try {
+        const params: {
+          q: string;
+          category?: SearchListingsCategory;
+          industrial_type?: string;
+        } = { q };
+        if (criteria.category === "car" || criteria.category === "real_estate") {
+          params.category = criteria.category;
+        } else if (
+          criteria.category === "facilities" ||
+          criteria.category === "materials"
+        ) {
+          params.category = "industrial";
+          if (criteria.industrialType !== "all") {
+            params.industrial_type = criteria.industrialType;
+          } else {
+            const group = industrialGroupForCategory(criteria.category);
+            if (group?.length) params.industrial_type = group.join(",");
+          }
+        }
+        const res = await getAutocomplete(params);
+        if (seq !== autocompleteSeq.current) return;
+        setSuggestions(res.data ?? []);
+      } catch {
+        if (seq !== autocompleteSeq.current) return;
+        setSuggestions([]);
+      }
+    },
+    [criteria.category, criteria.industrialType],
+  );
+
+  const handleQueryChange = (text: string) => {
+    setDraftQuery(text);
+    setBrandValue(null);
+    setShowSuggestions(true);
+    if (autocompleteTimer.current) clearTimeout(autocompleteTimer.current);
+    autocompleteTimer.current = setTimeout(() => fetchAutocomplete(text), 250);
+    if (commitTimer.current) clearTimeout(commitTimer.current);
+    commitTimer.current = setTimeout(() => {
+      update({ q: text, brand: null, model: null });
+    }, 350);
+  };
+
+  const commitQueryNow = (q: string) => {
+    if (commitTimer.current) clearTimeout(commitTimer.current);
+    setShowSuggestions(false);
+    recordQuery(q);
+    update({ q, brand: null, model: null });
+  };
+
+  const clearQuery = () => {
+    if (commitTimer.current) clearTimeout(commitTimer.current);
+    setDraftQuery("");
+    setBrandValue(null);
+    setSuggestions([]);
+    setShowSuggestions(false);
+    update({ q: "", brand: null, model: null });
+  };
+
+  const browseBrand = useCallback(
+    (brand: CarBrand, model: string | null) => {
+      const display = model
+        ? `${brandQuery(brand)} ${model}`
+        : brandQuery(brand);
+      setDraftQuery(display);
+      setBrandValue(brand.value);
+      setShowFilters(false);
+      setShowSuggestions(false);
+      setCarPickerOpen(false);
+      update({
+        ...CLEAR_ATTRS,
+        q: "",
+        category: "car",
+        brand: brandQuery(brand),
+        model,
+      });
+    },
+    [update],
+  );
+
+  const handleSuggestionTap = (s: string) => {
+    setDraftQuery(s);
+    setBrandValue(null);
+    commitQueryNow(s);
+  };
+
+  const handleCardPress = useCallback(
+    (item: FeedItem) => {
+      cacheFeedItem(item);
+      router.push(`/listing/${item.id}`);
+    },
+    [cacheFeedItem],
+  );
+
+  // ── Chrome handlers (engine locked category, no category switching) ─────────
+  const selectEngine = (key: string) => {
+    if (lockedEngine) return;
+    const engine = engineByKey(criteria.category, key);
+    const patch: Partial<SearchCriteria> = { engineKey: key };
+    if (criteria.category === "real_estate") {
+      patch.rentalTerm =
+        engine?.params.offer_type === "rent" ? criteria.rentalTerm : null;
+    }
+    if (engine?.params.origin_type) {
+      patch.originType = engine.params.origin_type;
+    } else if (criteria.category === "car" && criteria.originType) {
+      patch.originType = null;
+    }
+    update(patch);
+  };
+
+  const selectIndustrialType = (type: IndustrialType) => {
+    const patch: Partial<SearchCriteria> = { industrialType: type };
+    if (
+      criteria.category === "materials" &&
+      (type === "all" || type === "raw_material")
+    ) {
+      patch.industry = null;
+    }
+    if (
+      criteria.category === "materials" &&
+      type !== "all" &&
+      type !== "raw_material"
+    ) {
+      patch.material = null;
+    }
+    update(patch);
+  };
+
+  const selectOrigin = (o: "all" | "local" | "imported") =>
+    update({ originType: o === "all" ? null : o });
+
+  const selectListingMode = (mode: "all" | "sale" | "buy") =>
+    update({ listingMode: mode });
+
+  const selectRentalTerm = (term: string) => {
+    const next = criteria.rentalTerm === term ? null : term;
+    update({
+      rentalTerm: next,
+      ...(next && criteria.category === "real_estate"
+        ? { engineKey: "rent" }
+        : {}),
+    });
+  };
+
+  const selectMarketCountry = (code: string) => {
+    void savePreferredMarketCountry(code);
+    update({
+      marketCountry: code,
+      rentalTerm: sanitizeRentalTermForMarket(criteria.rentalTerm, code),
+    });
+  };
+
+  const toggleNearMe = useCallback(async () => {
+    if (criteria.nearMeEnabled) {
+      update({ nearMeEnabled: false, nearLat: null, nearLng: null });
+      return;
+    }
+    const coords = await requestNearMeCoords();
+    if (!coords) {
+      Alert.alert(t("search.nearMe"), t("search.nearMeDenied"));
+      return;
+    }
+    update({
+      nearMeEnabled: true,
+      nearLat: coords.lat,
+      nearLng: coords.lng,
+      nearRadiusKm: DEFAULT_NEAR_RADIUS_KM,
+    });
+  }, [criteria.nearMeEnabled, t, update]);
+
+  const browseBrandChip = useCallback(
+    (b: CarBrand) => browseBrand(b, null),
+    [browseBrand],
+  );
+
+  // "Clear all" resets to THIS section's clean entry baseline (locked category /
+  // engine + the market the shopper landed on), never to "all" and without
+  // discarding their market preference. Post-reset the page is not "dirty".
+  const clearAllFilters = useCallback(() => {
+    setDraftQuery("");
+    setBrandValue(null);
+    setSuggestions([]);
+    setShowSuggestions(false);
+    const baseline =
+      baselineRef.current ?? buildSeed(criteria.marketCountry);
+    commit(baseline);
+  }, [buildSeed, commit, criteria.marketCountry]);
+
+  const rentalTerms = rentalTermsForSearch(criteria.marketCountry);
+  const originKey: "all" | "local" | "imported" =
+    criteria.originType === "local" || criteria.originType === "imported"
+      ? criteria.originType
+      : "all";
+  const showOriginChrome = criteria.category === "materials";
+  const showRentalTerms =
+    criteria.category === "real_estate" &&
+    engineByKey(criteria.category, criteria.engineKey)?.params.offer_type ===
+      "rent";
+  const showEngineChips =
+    !lockedEngine &&
+    !facetsLoading &&
+    engineList.length > 1 &&
+    !showIndustrialChips;
+  const showListingMode = !lockedEngine;
+
+  // ── Section-scoped "dirty" filter count (excludes the locked baseline) ──────
+  const rentEngineActive =
+    criteria.category === "real_estate" &&
+    engineByKey(criteria.category, criteria.engineKey)?.params.offer_type ===
+      "rent";
+  const activeFilterCount = [
+    !lockedEngine && criteria.engineKey !== "all",
+    criteria.category === "facilities" || criteria.category === "materials"
+      ? criteria.industrialType !== "all"
+      : false,
+    !!criteria.minPrice || !!criteria.maxPrice,
+    !!criteria.location,
+    criteria.paymentType !== "any" &&
+      (criteria.category === "car" || criteria.category === "real_estate"),
+    rentEngineActive && !!criteria.rentalTerm,
+    criteria.category === "car" && (!!criteria.brand || !!criteria.model),
+    criteria.category === "car" && !!criteria.fuelType,
+    criteria.category === "car" && !!criteria.transmission,
+    criteria.category === "car" && (!!criteria.minYear || !!criteria.maxYear),
+    (criteria.category === "facilities" ||
+      (criteria.category === "materials" &&
+        (criteria.industrialType === "machine" ||
+          criteria.industrialType === "production_line"))) &&
+      !!criteria.industry,
+    (criteria.category === "car" || criteria.category === "materials") &&
+      !!criteria.originType,
+    criteria.category === "materials" && !!criteria.material,
+    criteria.nearMeEnabled,
+    // Baseline-aware: the market only counts as an active filter once the
+    // shopper changes it from the market they entered on (not just from the
+    // global default), keeping the badge consistent with isDirty.
+    criteria.marketCountry !==
+      (baselineRef.current?.marketCountry ?? DEFAULT_MARKET_COUNTRY),
+  ].filter(Boolean).length;
+
+  // "Dirty" for exit-confirm = the criteria (or query text) diverges from the
+  // per-entry baseline. Delta-based so a freshly-landed page with a persisted
+  // non-default market is NOT dirty, yet ANY user change (including listing
+  // mode, engine, market, etc.) correctly arms the confirmation.
+  const isDirty =
+    (baselineRef.current !== null &&
+      serializeCriteria(criteria) !== serializeCriteria(baselineRef.current)) ||
+    !!draftQuery.trim();
+
+  const searchSaved = isSearchSaved({
+    criteria: { ...criteria, q: draftQuery.trim() },
+    q: draftQuery.trim(),
+    category: criteria.category,
+    minPrice: criteria.minPrice,
+    maxPrice: criteria.maxPrice,
+    location: criteria.location,
+    paymentType: criteria.paymentType,
+  });
+
+  const handleSaveSearch = () => {
+    const snapshot: SearchCriteria = { ...criteria, q: draftQuery.trim() };
+    saveSearch({
+      criteria: snapshot,
+      q: snapshot.q,
+      category: snapshot.category,
+      minPrice: snapshot.minPrice,
+      maxPrice: snapshot.maxPrice,
+      location: snapshot.location,
+      paymentType: snapshot.paymentType,
+    });
+  };
+
+  // ── Exit confirmation — intercepts header back, hardware back & swipe ───────
+  usePreventRemove(isDirty, ({ data }) => {
+    Alert.alert(
+      t("search.discover.section.exitTitle"),
+      t("search.discover.section.exitMessage"),
+      [
+        { text: t("search.discover.section.exitCancel"), style: "cancel" },
+        {
+          text: t("search.discover.section.exitConfirm"),
+          style: "destructive",
+          onPress: () => navigation.dispatch(data.action),
+        },
+      ],
+    );
+  });
+
+  const goBack = () => {
+    playSound("tap");
+    router.back();
+  };
+
+  const rowDir = isRTL ? "row-reverse" : "row";
+  const textAlign = isRTL ? "right" : "left";
+  const locationLabel = criteria.location
+    ? labelForValue(criteria.location, isRTL) || criteria.location
+    : "";
+
+  // ── Overlay (discover surface is never shown — the engine is always active) ──
+  let overlay: React.ReactNode = null;
+  if (viewState === "loading" || viewState === "discover") {
+    overlay = (
+      <View style={{ paddingHorizontal: 16, paddingTop: 12 }}>
+        {Array.from({ length: 3 }).map((_, i) => (
+          <SkeletonCard key={i} />
+        ))}
+      </View>
+    );
+  } else if (viewState === "error") {
+    overlay = (
+      <View style={styles.emptyState}>
+        <Feather name="wifi-off" size={52} color={colors.mutedForeground} />
+        <AppText style={[styles.emptyTitle, { color: colors.foreground }]}>
+          {t("search.errorTitle")}
+        </AppText>
+        <AppText style={[styles.emptyText, { color: colors.mutedForeground }]}>
+          {t("search.errorHint")}
+        </AppText>
+        <Pressable
+          onPress={retry}
+          style={[
+            styles.applyBtn,
+            {
+              backgroundColor: accent,
+              borderRadius: colors.radius,
+              paddingHorizontal: 28,
+              marginTop: 16,
+            },
+          ]}
+          testID="section-retry"
+        >
+          <AppText style={[styles.applyText, { color: "#FFFFFF" }]}>
+            {t("search.retry")}
+          </AppText>
+        </Pressable>
+      </View>
+    );
+  } else if (viewState === "empty") {
+    overlay = (
+      <View style={styles.emptyState}>
+        <Feather name="alert-circle" size={52} color={colors.mutedForeground} />
+        <AppText style={[styles.emptyTitle, { color: colors.foreground }]}>
+          {t("search.noResults")}
+        </AppText>
+        <AppText style={[styles.emptyText, { color: colors.mutedForeground }]}>
+          {t("search.noResultsHint")}
+        </AppText>
+        {activeFilterCount > 0 || draftQuery.trim() ? (
+          <Pressable
+            onPress={() => {
+              playSound("tap");
+              clearAllFilters();
+            }}
+            style={[
+              styles.emptyCta,
+              { backgroundColor: accent, borderRadius: colors.radius },
+            ]}
+            testID="section-empty-clear"
+          >
+            <Feather name="refresh-cw" size={16} color="#FFFFFF" />
+            <AppText style={[styles.emptyCtaText, { color: "#FFFFFF" }]}>
+              {t("search.discover.section.reset")}
+            </AppText>
+          </Pressable>
+        ) : null}
+      </View>
+    );
+  }
+
+  return (
+    <View style={[styles.container, { backgroundColor: colors.background }]}>
+      {/* ── Section header: back + title/subtitle + section icon ── */}
+      <View
+        style={[
+          styles.header,
+          {
+            paddingTop: topPad + 10,
+            backgroundColor: colors.background,
+            borderBottomColor: colors.border,
+            flexDirection: rowDir,
+          },
+        ]}
+      >
+        <Pressable
+          onPress={goBack}
+          style={styles.backBtn}
+          hitSlop={12}
+          testID="section-back"
+        >
+          <Feather
+            name={isRTL ? "arrow-right" : "arrow-left"}
+            size={22}
+            color={colors.foreground}
+          />
+        </Pressable>
+        <View style={styles.headerTitleWrap}>
+          <View style={[styles.headerTitleRow, { flexDirection: rowDir }]}>
+            <View style={[styles.headerIcon, { backgroundColor: accent }]}>
+              {headerIcon ? (
+                <Feather name={headerIcon} size={15} color="#FFFFFF" />
+              ) : (
+                <CategoryIcon category={category} size={15} color="#FFFFFF" />
+              )}
+            </View>
+            <AppText
+              style={[styles.headerTitle, { color: colors.foreground, textAlign }]}
+              numberOfLines={1}
+            >
+              {t(titleKey)}
+            </AppText>
+          </View>
+          {subtitleKey ? (
+            <AppText
+              style={[
+                styles.headerSub,
+                { color: colors.mutedForeground, textAlign },
+              ]}
+              numberOfLines={1}
+            >
+              {t(subtitleKey)}
+            </AppText>
+          ) : null}
+        </View>
+        <Pressable
+          onPress={() => {
+            playSound("tap");
+            setShowFilters((v) => !v);
+          }}
+          style={[
+            styles.iconBtn,
+            {
+              backgroundColor: activeFilterCount > 0 ? accent : colors.secondary,
+              borderRadius: colors.radius,
+            },
+          ]}
+          testID="section-filter-toggle"
+        >
+          <Feather
+            name="sliders"
+            size={18}
+            color={activeFilterCount > 0 ? "#FFFFFF" : colors.foreground}
+          />
+          {activeFilterCount > 0 && (
+            <View style={[styles.filterBadge, { backgroundColor: "#FFFFFF" }]}>
+              <AppText style={[styles.filterBadgeText, { color: accent }]}>
+                {activeFilterCount}
+              </AppText>
+            </View>
+          )}
+        </Pressable>
+      </View>
+
+      {/* ── Scoped text search row ── */}
+      <View style={[styles.searchWrap, { flexDirection: rowDir }]}>
+        <View
+          style={[
+            styles.searchRow,
+            {
+              backgroundColor: colors.card,
+              borderColor: colors.border,
+              borderRadius: colors.radius,
+              flexDirection: rowDir,
+            },
+          ]}
+        >
+          <CategoryIcon
+            category={category}
+            size={18}
+            color={colors.mutedForeground}
+          />
+          <TextInput
+            ref={inputRef}
+            value={draftQuery}
+            onChangeText={handleQueryChange}
+            onSubmitEditing={() => commitQueryNow(draftQuery)}
+            onFocus={() => playSound("tap")}
+            placeholder={t("search.placeholder")}
+            placeholderTextColor={colors.mutedForeground}
+            style={[styles.input, { color: colors.foreground, textAlign }]}
+            returnKeyType="search"
+            testID="section-search-input"
+            autoCorrect={false}
+          />
+          {draftQuery.length > 0 && (
+            <Pressable onPress={clearQuery} hitSlop={8}>
+              <Feather name="x" size={16} color={colors.mutedForeground} />
+            </Pressable>
+          )}
+        </View>
+        <Pressable
+          onPress={handleSaveSearch}
+          disabled={searchSaved}
+          style={[
+            styles.iconBtn,
+            {
+              backgroundColor: searchSaved ? accent : colors.secondary,
+              borderRadius: colors.radius,
+            },
+          ]}
+          testID="section-save-search"
+        >
+          <Feather
+            name="bookmark"
+            size={18}
+            color={searchSaved ? "#FFFFFF" : colors.foreground}
+          />
+        </Pressable>
+      </View>
+
+      {/* ── Listing mode chips (hidden for a locked-engine page) ── */}
+      {showListingMode ? (
+        <View style={[styles.chipRow, { flexDirection: rowDir }]}>
+          {(["all", "sale", "buy"] as const).map((mode) => {
+            const active = criteria.listingMode === mode;
+            return (
+              <Pressable
+                key={mode}
+                onPress={() => {
+                  playSound("tap");
+                  Haptics.selectionAsync();
+                  selectListingMode(mode);
+                }}
+                style={[
+                  styles.chip,
+                  { backgroundColor: active ? accent : colors.secondary },
+                ]}
+                testID={`section-listing-mode-${mode}`}
+              >
+                <AppText
+                  style={[
+                    styles.chipText,
+                    {
+                      color: active ? "#FFFFFF" : colors.mutedForeground,
+                    },
+                  ]}
+                >
+                  {mode === "all"
+                    ? t("search.listingModeAll")
+                    : mode === "sale"
+                      ? t("search.listingModeSale")
+                      : t("search.listingModeBuy")}
+                </AppText>
+              </Pressable>
+            );
+          })}
+        </View>
+      ) : null}
+
+      {/* ── Engine / industrial chips + market country ── */}
+      <View style={[styles.secondaryChrome, { flexDirection: rowDir }]}>
+        {showEngineChips ? (
+          <View style={styles.secondaryChromeFlex}>
+            <EngineChips
+              engines={engineList}
+              selected={criteria.engineKey}
+              onChange={selectEngine}
+              accent={accent}
+            />
+          </View>
+        ) : null}
+        {showIndustrialChips ? (
+          <View style={styles.secondaryChromeFlex}>
+            <IndustrialSubChips
+              types={visibleIndTypes!}
+              selected={criteria.industrialType}
+              onChange={selectIndustrialType}
+              accent={accent}
+            />
+          </View>
+        ) : null}
+        <MarketCountryButton
+          selected={criteria.marketCountry}
+          onPress={() => {
+            playSound("tap");
+            setMarketPickerOpen(true);
+          }}
+        />
+      </View>
+
+      {/* ── Origin chips (materials only) ── */}
+      {showOriginChrome ? (
+        <View style={[styles.chipRow, { flexDirection: rowDir }]}>
+          {(["all", "local", "imported"] as const).map((o) => {
+            const active = originKey === o;
+            return (
+              <Pressable
+                key={o}
+                onPress={() => {
+                  playSound("tap");
+                  Haptics.selectionAsync();
+                  selectOrigin(o);
+                }}
+                style={[
+                  styles.chip,
+                  { backgroundColor: active ? accent : colors.secondary },
+                ]}
+                testID={`section-origin-${o}`}
+              >
+                <AppText
+                  style={[
+                    styles.chipText,
+                    { color: active ? "#FFFFFF" : colors.mutedForeground },
+                  ]}
+                >
+                  {o === "all" ? t("home.engines.all") : t(`create.opts.${o}`)}
+                </AppText>
+              </Pressable>
+            );
+          })}
+        </View>
+      ) : null}
+
+      {/* ── Rental term chips (RE rent / Booking) ── */}
+      {showRentalTerms ? (
+        <ScrollView
+          horizontal
+          showsHorizontalScrollIndicator={false}
+          contentContainerStyle={[styles.rentalChrome, { flexDirection: rowDir }]}
+        >
+          {rentalTerms.map((r) => {
+            const active = criteria.rentalTerm === r.value;
+            return (
+              <Pressable
+                key={r.value}
+                onPress={() => {
+                  playSound("tap");
+                  Haptics.selectionAsync();
+                  selectRentalTerm(r.value);
+                }}
+                style={[
+                  styles.chip,
+                  { backgroundColor: active ? accent : colors.secondary },
+                ]}
+                testID={`section-rental-${r.value}`}
+              >
+                <AppText
+                  style={[
+                    styles.chipText,
+                    { color: active ? "#FFFFFF" : colors.mutedForeground },
+                  ]}
+                >
+                  {isRTL ? r.ar : r.en}
+                </AppText>
+              </Pressable>
+            );
+          })}
+        </ScrollView>
+      ) : null}
+
+      {/* ── Results count ── */}
+      {viewState === "results" && items.length > 0 && (
+        <AppText
+          style={[styles.resultsCount, { color: colors.mutedForeground, textAlign }]}
+          testID="section-results-count"
+        >
+          {t("search.resultsCount", {
+            count: `${items.length}${hasNext ? "+" : ""}`,
+          })}
+        </AppText>
+      )}
+
+      <FilterSheet
+        visible={showFilters}
+        onClose={() => setShowFilters(false)}
+        criteria={criteria}
+        shownCategories={[category]}
+        engines={engineList}
+        quickBrands={QUICK_BRANDS}
+        brandValue={brandValue}
+        locationLabel={locationLabel}
+        lockCategory
+        onSelectCategory={() => {}}
+        onSelectEngine={selectEngine}
+        onBrowseBrand={browseBrandChip}
+        onOpenBrandPicker={() => setCarPickerOpen(true)}
+        onUpdate={(partial) => {
+          if (partial.marketCountry) {
+            void savePreferredMarketCountry(partial.marketCountry);
+          }
+          if (
+            partial.rentalTerm &&
+            criteria.category === "real_estate" &&
+            criteria.engineKey !== "rent"
+          ) {
+            partial = { ...partial, engineKey: "rent" };
+          }
+          update(partial);
+        }}
+        onOpenLocationPicker={() => setLocationPickerOpen(true)}
+        onClearLocation={() => update({ location: "" })}
+        onToggleNearMe={() => void toggleNearMe()}
+        onClearAll={clearAllFilters}
+      />
+
+      {showSuggestions && suggestions.length > 0 && (
+        <View
+          style={[
+            styles.suggestions,
+            {
+              backgroundColor: colors.card,
+              borderColor: colors.border,
+              borderRadius: colors.radius,
+            },
+          ]}
+        >
+          {suggestions.map((s, i) => (
+            <Pressable
+              key={i}
+              onPress={() => handleSuggestionTap(s)}
+              style={[
+                styles.suggestionItem,
+                {
+                  flexDirection: rowDir,
+                  borderBottomColor:
+                    i < suggestions.length - 1 ? colors.border : "transparent",
+                },
+              ]}
+            >
+              <Ionicons
+                name="search-outline"
+                size={14}
+                color={colors.mutedForeground}
+              />
+              <AppText
+                style={[styles.suggestionText, { color: colors.foreground }]}
+              >
+                {s}
+              </AppText>
+            </Pressable>
+          ))}
+        </View>
+      )}
+
+      <View style={styles.resultsArea}>
+        <SearchResultsSurface
+          items={items}
+          onCardPress={handleCardPress}
+          onSave={toggleSave}
+          isSaved={isSaved}
+          onEndReached={loadMore}
+          loadingMore={phase === "loadingMore"}
+          refreshing={phase === "refreshing"}
+          error={phase === "error"}
+          onRetry={retry}
+          onRefresh={retry}
+          overlay={overlay}
+        />
+
+        {mapMode && inResultsView ? (
+          <SearchResultsMap
+            items={mappableItems}
+            criteria={criteria}
+            onOpenListing={handleCardPress}
+            onOpenListingId={(id) =>
+              router.push(
+                criteria.category === "real_estate"
+                  ? `/listing/${id}?focus=booking`
+                  : `/listing/${id}`,
+              )
+            }
+            onSave={toggleSave}
+            isSaved={isSaved}
+          />
+        ) : null}
+
+        {showMapChrome ? (
+          <View
+            style={[styles.mapToggleWrap, { bottom: insets.bottom + 24 }]}
+            pointerEvents="box-none"
+          >
+            <Pressable
+              onPress={() => {
+                playSound("tap");
+                Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+                setMapMode((m) => !m);
+              }}
+              style={[
+                styles.mapToggle,
+                {
+                  backgroundColor: colors.foreground,
+                  flexDirection: isRTL ? "row-reverse" : "row",
+                },
+              ]}
+              testID="section-map-toggle"
+            >
+              <Feather
+                name={mapMode ? "list" : "map"}
+                size={16}
+                color={colors.background}
+              />
+              <AppText
+                style={[styles.mapToggleText, { color: colors.background }]}
+              >
+                {mapMode
+                  ? t("search.viewList")
+                  : hasPagePins
+                    ? `${t("search.viewMap")} (${mappableItems.length})`
+                    : t("search.viewMap")}
+              </AppText>
+            </Pressable>
+          </View>
+        ) : null}
+      </View>
+
+      <LocationPicker
+        visible={locationPickerOpen}
+        selectedValue={criteria.location}
+        onClose={() => setLocationPickerOpen(false)}
+        onSelect={(value) => {
+          update({ location: value });
+          setLocationPickerOpen(false);
+        }}
+        onClear={() => {
+          update({ location: "" });
+          setLocationPickerOpen(false);
+        }}
+      />
+
+      <CarPicker
+        visible={carPickerOpen}
+        mode="browse"
+        selectedBrand={brandValue ?? undefined}
+        onClose={() => setCarPickerOpen(false)}
+        onSelect={(brand, model) => browseBrand(brand, model)}
+        onClear={() => {
+          setBrandValue(null);
+          setDraftQuery("");
+          update({ q: "", brand: null, model: null });
+          setCarPickerOpen(false);
+        }}
+      />
+
+      <MarketCountryPicker
+        visible={marketPickerOpen}
+        selected={criteria.marketCountry}
+        onClose={() => setMarketPickerOpen(false)}
+        onSelect={(iso) => {
+          selectMarketCountry(iso);
+          setMarketPickerOpen(false);
+        }}
+      />
+    </View>
+  );
+}
+
+const styles = StyleSheet.create({
+  container: { flex: 1 },
+  resultsArea: { flex: 1 },
+  header: {
+    paddingHorizontal: 12,
+    paddingBottom: 10,
+    borderBottomWidth: 1,
+    alignItems: "center",
+    gap: 6,
+  },
+  backBtn: {
+    padding: 8,
+  },
+  headerTitleWrap: {
+    flex: 1,
+    justifyContent: "center",
+  },
+  headerTitleRow: {
+    alignItems: "center",
+    gap: 8,
+  },
+  headerIcon: {
+    width: 26,
+    height: 26,
+    borderRadius: 8,
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  headerTitle: {
+    flex: 1,
+    fontSize: 18,
+    fontFamily: "Inter_700Bold",
+  },
+  headerSub: {
+    fontSize: 12,
+    fontFamily: "Inter_400Regular",
+    marginTop: 2,
+  },
+  searchWrap: {
+    alignItems: "center",
+    gap: 10,
+    paddingHorizontal: 16,
+    paddingTop: 12,
+  },
+  searchRow: {
+    flex: 1,
+    alignItems: "center",
+    paddingHorizontal: 14,
+    paddingVertical: 10,
+    gap: 10,
+    borderWidth: 1,
+  },
+  input: {
+    flex: 1,
+    fontSize: 15,
+    fontFamily: "Inter_400Regular",
+    padding: 0,
+  },
+  iconBtn: {
+    padding: 12,
+    position: "relative",
+  },
+  filterBadge: {
+    position: "absolute",
+    top: 6,
+    right: 6,
+    width: 14,
+    height: 14,
+    borderRadius: 7,
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  filterBadgeText: {
+    fontSize: 9,
+    fontFamily: "Inter_700Bold",
+  },
+  chipRow: {
+    gap: 8,
+    paddingHorizontal: 16,
+    paddingTop: 10,
+  },
+  chip: {
+    paddingHorizontal: 14,
+    paddingVertical: 7,
+    borderRadius: 18,
+  },
+  chipText: {
+    fontSize: 13,
+    fontFamily: "Inter_500Medium",
+  },
+  secondaryChrome: {
+    alignItems: "center",
+    gap: 8,
+    paddingHorizontal: 12,
+    paddingTop: 8,
+    minHeight: 0,
+  },
+  secondaryChromeFlex: {
+    flex: 1,
+    minWidth: 0,
+  },
+  rentalChrome: {
+    alignItems: "center",
+    gap: 8,
+    paddingHorizontal: 16,
+    paddingTop: 10,
+    paddingBottom: 2,
+  },
+  resultsCount: { fontSize: 12.5, paddingHorizontal: 16, paddingTop: 8 },
+  suggestions: {
+    position: "absolute",
+    top: 150,
+    left: 16,
+    right: 76,
+    zIndex: 100,
+    borderWidth: 1,
+    overflow: "hidden",
+  },
+  suggestionItem: {
+    alignItems: "center",
+    gap: 10,
+    paddingHorizontal: 14,
+    paddingVertical: 12,
+    borderBottomWidth: 1,
+  },
+  suggestionText: {
+    fontSize: 14,
+    fontFamily: "Inter_400Regular",
+  },
+  mapToggleWrap: {
+    position: "absolute",
+    left: 0,
+    right: 0,
+    alignItems: "center",
+  },
+  mapToggle: {
+    alignItems: "center",
+    gap: 7,
+    paddingVertical: 10,
+    paddingHorizontal: 18,
+    borderRadius: 999,
+    elevation: 6,
+    shadowColor: "#000000",
+    shadowOpacity: 0.2,
+    shadowRadius: 8,
+    shadowOffset: { width: 0, height: 3 },
+  },
+  mapToggleText: { fontSize: 14, fontWeight: "700" },
+  applyBtn: {
+    marginTop: 14,
+    paddingVertical: 12,
+    alignItems: "center",
+  },
+  applyText: {
+    fontSize: 15,
+    fontFamily: "Inter_600SemiBold",
+  },
+  emptyState: {
+    flex: 1,
+    alignItems: "center",
+    justifyContent: "center",
+    gap: 8,
+    paddingBottom: 80,
+  },
+  emptyCta: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 8,
+    paddingVertical: 11,
+    paddingHorizontal: 20,
+    marginTop: 6,
+  },
+  emptyCtaText: { fontSize: 14, fontFamily: "Inter_600SemiBold" },
+  emptyTitle: {
+    fontSize: 20,
+    fontFamily: "Inter_600SemiBold",
+    marginTop: 12,
+  },
+  emptyText: {
+    fontSize: 14,
+    fontFamily: "Inter_400Regular",
+    textAlign: "center",
+    paddingHorizontal: 40,
+  },
+});

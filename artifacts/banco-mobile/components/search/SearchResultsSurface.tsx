@@ -4,6 +4,7 @@ import {
   ActivityIndicator,
   FlatList,
   Pressable,
+  RefreshControl,
   StyleSheet,
   View,
 } from "react-native";
@@ -38,6 +39,13 @@ interface SearchResultsSurfaceProps {
    */
   overlay: React.ReactNode;
   contentPaddingBottom?: number;
+  /**
+   * Optional pull-to-refresh handler. When provided, the list gets a native
+   * RefreshControl whose spinner is bound to the `refreshing` phase. Omitted on
+   * the Search tab (which relies on live-typing refresh) but used by the
+   * dedicated section pages where pull-to-refresh is the expected gesture.
+   */
+  onRefresh?: () => void;
 }
 
 /**
@@ -63,6 +71,7 @@ export function SearchResultsSurface({
   onRetry,
   overlay,
   contentPaddingBottom = 120,
+  onRefresh,
 }: SearchResultsSurfaceProps) {
   const colors = useColors();
   const { t, isRTL } = useI18n();
@@ -107,6 +116,16 @@ export function SearchResultsSurface({
         onEndReached={onEndReached}
         onEndReachedThreshold={0.5}
         scrollEnabled={items.length > 0}
+        refreshControl={
+          onRefresh ? (
+            <RefreshControl
+              refreshing={refreshing}
+              onRefresh={onRefresh}
+              tintColor={colors.primary}
+              colors={[colors.primary]}
+            />
+          ) : undefined
+        }
         ListFooterComponent={
           loadingMore ? (
             <View style={styles.footer}>

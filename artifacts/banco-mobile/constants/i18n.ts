@@ -465,6 +465,19 @@ const en = {
       banksHubSub: "Discover financing products from verified partner institutions",
       carImport: "Car import",
       carImportSub: "Browse imported vehicles",
+      section: {
+        exitTitle: "Discard filters?",
+        exitMessage:
+          "You have active filters in this section. Leaving will reset them.",
+        exitConfirm: "Leave",
+        exitCancel: "Stay",
+        reset: "Reset",
+        carSub: "New, used, imported & installment cars",
+        realEstateSub: "Apartments, villas & land — for sale & rent",
+        factoriesSub: "Factories, warehouses, machines & land",
+        materialsSub: "Raw materials & production lines",
+        bookingSub: "Furnished stays — daily, monthly & yearly rentals",
+      },
     },
   },
   locationPicker: {
@@ -2361,6 +2374,18 @@ const ar: typeof en = {
       banksHubSub: "اكتشف منتجات تمويل من مؤسسات شريكة موثّقة",
       carImport: "استيراد سيارات",
       carImportSub: "تصفّح السيارات المستوردة",
+      section: {
+        exitTitle: "تجاهل الفلاتر؟",
+        exitMessage: "عندك فلاتر مفعّلة في القسم ده. الخروج هيصفّرها.",
+        exitConfirm: "خروج",
+        exitCancel: "أفضل",
+        reset: "تصفير",
+        carSub: "سيارات جديدة، مستعملة، مستوردة وبالتقسيط",
+        realEstateSub: "شقق، فيلات وأراضي — للبيع والإيجار",
+        factoriesSub: "مصانع، مخازن، ماكينات وأراضي",
+        materialsSub: "مواد خام وخطوط إنتاج",
+        bookingSub: "إقامات مفروشة — إيجار يومي وشهري وسنوي",
+      },
     },
   },
   locationPicker: {

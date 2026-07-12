@@ -2,7 +2,7 @@ import { Feather } from "@/components/icons";
 import { Image } from "expo-image";
 import { LinearGradient } from "expo-linear-gradient";
 import { router } from "expo-router";
-import React, { useMemo, useState } from "react";
+import React from "react";
 import {
   Pressable,
   ScrollView,
@@ -11,18 +11,12 @@ import {
 } from "react-native";
 
 import { AppText } from "@/components/AppText";
-import {
-  Category,
-  CategoryIcon,
-  EngineChips,
-} from "@/components/CategoryTabs";
+import { Category, CategoryIcon } from "@/components/CategoryTabs";
 import { CompanyOffers } from "@/components/search/CompanyOffers";
 import { type CarBrand } from "@/constants/cars";
-import { enginesForCategory } from "@/constants/engines";
 import { useI18n } from "@/context/LanguageContext";
 import { type SavedSearch } from "@/context/SessionContext";
 import { useColors } from "@/hooks/useColors";
-import { useInventoryFacets, visibleEngines } from "@/lib/facets";
 import type { FeedItem } from "@workspace/api-client-react";
 
 // ─── Architecture ────────────────────────────────────────────────────────────
@@ -51,6 +45,17 @@ import type { FeedItem } from "@workspace/api-client-react";
 
 const SECTIONS: Category[] = ["car", "real_estate", "facilities", "materials"];
 
+// Each marketplace section opens its own dedicated full-screen mini-app page —
+// a complete search engine scoped to only that category. Tapping a card pushes
+// into that world (no inline expansion, no shared Search-tab state to bleed).
+const SECTION_ROUTE: Record<Category, string> = {
+  all: "/section/car",
+  car: "/section/car",
+  real_estate: "/section/real-estate",
+  facilities: "/section/factories",
+  materials: "/section/materials",
+};
+
 const SECTION_GRADIENT: Record<Category, [string, string]> = {
   all: ["#7A0C12", "#1C0507"],
   car: ["#8A0E14", "#1C0507"],
@@ -69,11 +74,10 @@ const SECTION_PHOTO: Partial<Record<Category, number>> = {
 const BANCO_WATERMARK = require("../assets/images/banco-logo.png");
 
 interface Props {
-  /** Browse a section (and optional engine type) inline in the Search tab. */
-  onBrowseSection: (cat: Category, engine: string) => void;
-  // ── Legacy props — kept optional so the parent call-site needs no changes ─
-  // These were used by the old between-cards content (brands, trending, saved
-  // searches). That content is intentionally removed from SearchDiscover.
+  // ── Legacy props — all optional so the parent call-site needs no changes ──
+  // Section cards now navigate into dedicated section pages (router.push), so
+  // these inline-browse callbacks are no longer used by SearchDiscover.
+  onBrowseSection?: (cat: Category, engine: string) => void;
   onBrowseBrand?: (brand: CarBrand) => void;
   onApplySaved?: (s: SavedSearch) => void;
   onOpenListing?: (item: FeedItem) => void;
@@ -81,32 +85,14 @@ interface Props {
   onSearchQuery?: (q: string) => void;
 }
 
-export function SearchDiscover({ onBrowseSection }: Props) {
+export function SearchDiscover(_props: Props) {
   const colors = useColors();
   const { t, isRTL } = useI18n();
   const rowDir = isRTL ? "row-reverse" : "row";
   const textAlign = isRTL ? "right" : "left";
 
-  // Which section card is expanded to reveal its engine chips.
-  const [openSection, setOpenSection] = useState<Category | null>(null);
-
-  const facetCategory: Category = openSection ?? "all";
-  const { scopedFacets } = useInventoryFacets(facetCategory);
-  const openEngines = useMemo(
-    () => (openSection ? visibleEngines(openSection, scopedFacets) : []),
-    [openSection, scopedFacets]
-  );
-
-  const goToResults = (category: Category, engine: string) => {
-    onBrowseSection(category, engine);
-  };
-
   const handleSectionPress = (cat: Category) => {
-    if (enginesForCategory(cat)) {
-      setOpenSection((prev) => (prev === cat ? null : cat));
-    } else {
-      goToResults(cat, "all");
-    }
+    router.push(SECTION_ROUTE[cat] as never);
   };
 
   const SectionHeader = ({
@@ -134,13 +120,12 @@ export function SearchDiscover({ onBrowseSection }: Props) {
       keyboardShouldPersistTaps="handled"
     >
       {/* ── Marketplace section cards ────────────────────────────────────────
-          Each card is a distinct catalogue / sub-app. Tap to enter that world.
-          Cars & Real Estate expand to show their engine chips first. */}
+          Each card is a distinct catalogue / sub-app. Tapping a card opens that
+          section's dedicated full-screen search page. */}
       <SectionHeader label={t("search.discover.sections")} top={14} />
 
       <View style={styles.sectionGrid}>
         {SECTIONS.map((cat) => {
-          const open = openSection === cat;
           return (
             <Pressable
               key={cat}
@@ -152,7 +137,6 @@ export function SearchDiscover({ onBrowseSection }: Props) {
                 style={[
                   styles.sectionCard,
                   { backgroundColor: SECTION_GRADIENT[cat][1] },
-                  open && styles.sectionCardOpen,
                 ]}
               >
                 <Image
@@ -202,39 +186,26 @@ export function SearchDiscover({ onBrowseSection }: Props) {
                     {t(`home.categories.${cat}`)}
                   </AppText>
                 </View>
-                {enginesForCategory(cat) && (
-                  <Feather
-                    name={open ? "chevron-up" : "chevron-down"}
-                    size={16}
-                    color="rgba(255,255,255,0.92)"
-                    style={[
-                      styles.sectionChevron,
-                      isRTL ? { left: 12 } : { right: 12 },
-                    ]}
-                  />
-                )}
+                <Feather
+                  name={isRTL ? "chevron-left" : "chevron-right"}
+                  size={16}
+                  color="rgba(255,255,255,0.92)"
+                  style={[
+                    styles.sectionChevron,
+                    isRTL ? { left: 12 } : { right: 12 },
+                  ]}
+                />
               </View>
             </Pressable>
           );
         })}
       </View>
 
-      {/* Engine chips — only for the expanded section (cars / real-estate) */}
-      {openSection && openEngines.length > 1 && (
-        <View style={styles.engineReveal}>
-          <EngineChips
-            engines={openEngines}
-            selected="all"
-            onChange={(key) => goToResults(openSection, key)}
-          />
-        </View>
-      )}
-
       {/* ── 5th portal: Booking & Stays ──────────────────────────────────────
-          Full-width — visually distinct from the 2×2 grid; maps to
-          real_estate + offer_type=rent without touching shared taxonomy. */}
+          Full-width — visually distinct from the 2×2 grid; opens the dedicated
+          Booking & Stays page (real_estate + offer_type=rent, engine locked). */}
       <Pressable
-        onPress={() => onBrowseSection("real_estate", "rent")}
+        onPress={() => router.push("/section/booking")}
         style={styles.bookingCardWrap}
         testID="section-card-booking"
       >

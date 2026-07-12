@@ -94,6 +94,11 @@ interface FilterSheetProps {
   onClearLocation: () => void;
   onToggleNearMe: () => void;
   onClearAll: () => void;
+  /**
+   * Hide the Category chip row entirely. Used by the dedicated section pages
+   * where the category is locked and must never be switched from the sheet.
+   */
+  lockCategory?: boolean;
 }
 
 /**
@@ -123,6 +128,7 @@ export function FilterSheet({
   onClearLocation,
   onToggleNearMe,
   onClearAll,
+  lockCategory = false,
 }: FilterSheetProps) {
   const colors = useColors();
   const { t, isRTL } = useI18n();
@@ -294,7 +300,9 @@ export function FilterSheet({
               />
             </View>
 
-            {/* Category */}
+            {/* Category — hidden on section pages where the category is locked. */}
+            {!lockCategory && (
+            <>
             <SectionLabel text={t("search.category")} align={textAlign} colors={colors} />
             <ScrollView
               horizontal
@@ -342,6 +350,8 @@ export function FilterSheet({
                 );
               })}
             </ScrollView>
+            </>
+            )}
 
             {/* Type (facet-gated engine chips) */}
             {showEngines && (
