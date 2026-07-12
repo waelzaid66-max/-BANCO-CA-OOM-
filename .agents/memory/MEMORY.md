@@ -53,6 +53,7 @@
 - [BANCO icon validation gap](banco-icon-validation-gap.md) — unmapped icon name → CircleAlert "dot" + dev warn; test:icons audits it but isn't in CI (only api-server test runs) so broken icons ship silently; wire test:icons into validation
 - [Mutation success vs refresh](banco-mutation-vs-refresh.md) — report a write's success from the write call alone; a best-effort post-write refetch failure must NEVER surface as a mutation error (honesty rule)
 - [Home has NO search bar](banco-home-no-search-bar.md) — user forcefully banned a home search pill; search lives only on the Search tab; removing it is intended, NOT scope creep
+- [SearchDiscover is a portal directory](banco-search-discover-arch.md) — NEVER add brands/trending/saved-searches/car-import/map between section cards and Business Hub; each card = separate app/division; structure is LOCKED
 - [Metro asset-swap cache](metro-asset-swap-cache.md) — overwriting a bundled image in place keeps serving old bytes; clear /tmp/metro-cache + /tmp/metro-file-map-* before restart, then warm the real entry.bundle
 - [Fullscreen image viewer gestures](banco-fullscreen-viewer.md) — child Pan in a paging ScrollView must be .enabled(zoomed) or it eats swipes; drive zoom via one applyZoom JS cb; remount per-open via key, not a reset effect
 - [Listing publish button gate](banco-publish-gate.md) — publish `disabled` = `submitting` ONLY; any media/quota pre-gate silently kills it for buyer requests (photos optional). handleSubmit is the real gate; gate seller-only specs on !isRequest
