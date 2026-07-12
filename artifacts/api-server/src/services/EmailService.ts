@@ -79,10 +79,12 @@ class ResendTransport implements EmailTransport {
     private readonly from: string,
   ) {}
   async send(msg: EmailMessage): Promise<void> {
-    // Node's built-in fetch (undici) validates string bodies as ByteStrings
-    // (Latin-1, code points ≤ 255). Arabic subjects/body text contain code
-    // points > 255 and trigger a TypeError at the undici layer. Passing the
-    // body as a Buffer bypasses that validation while preserving UTF-8 content.
+    // Node 24's built-in fetch (undici) coerces a STRING body to a ByteString
+    // (Latin-1) before sending, which THROWS on any code point > 255 — i.e. on
+    // every Arabic subject/body (e.g. "مهتم جديد", "إيصال دفع"). That silently
+    // killed ALL Arabic-locale emails. Encoding the JSON as a UTF-8 Buffer
+    // makes undici treat it as opaque bytes and send the real Unicode payload;
+    // Resend accepts JSON as UTF-8.
     const body = Buffer.from(
       JSON.stringify({
         from: this.from,

@@ -125,7 +125,7 @@ export const UserStateSchema = z
     clerk_id: z.string(),
     // Internal default account number (e.g. "BNC-…"), auto-assigned per user.
     account_number: z.string().nullable(),
-    role: z.enum(["individual", "dealer", "company", "enterprise"]),
+    role: z.enum(["individual", "dealer", "company", "enterprise", "financial_institution"]),
     // Internal staff role (separate axis from `role`). "user" = no staff access.
     staff_role: z.enum(["owner", "admin", "moderator", "support", "user"]),
     name: z.string(),
@@ -893,7 +893,7 @@ export const FeedQuerySchema = z.object({
 // signup to a role (always `dealer`) — a raw `role` is never accepted.
 export const UpdateMeSchema = z
   .object({
-    account_type: z.enum(["individual", "dealer", "company"]).optional(),
+    account_type: z.enum(["individual", "dealer", "company", "financial_institution"]).optional(),
     phone: z.string().trim().min(4).max(30).nullable().optional(),
     /** Public seller bio — mirrored to Clerk publicMetadata server-side. */
     bio: z.string().trim().max(500).nullable().optional(),
@@ -1716,7 +1716,7 @@ const adminListingStatusEnum = z.enum([
 
 export const AdminUsersQuerySchema = z.object({
   search: z.string().optional(),
-  role: z.enum(["individual", "dealer", "company", "enterprise"]).optional(),
+  role: z.enum(["individual", "dealer", "company", "enterprise", "financial_institution"]).optional(),
   banned: z.coerce.boolean().optional(),
   cursor: z.string().optional(),
   limit: z.coerce.number().min(1).max(100).default(30),
@@ -1798,7 +1798,7 @@ export const AdminUserSchema = z
     name: z.string(),
     email: z.string().nullable(),
     phone: z.string().nullable(),
-    role: z.enum(["individual", "dealer", "company", "enterprise"]),
+    role: z.enum(["individual", "dealer", "company", "enterprise", "financial_institution"]),
     staff_role: z.enum(["owner", "admin", "moderator", "support", "user"]),
     is_admin: z.boolean(),
     is_verified: z.boolean(),

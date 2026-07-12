@@ -188,7 +188,7 @@ export default function ProfileScreen() {
   const [needsAccountType, setNeedsAccountType] = useState(false);
   const [savingAccountType, setSavingAccountType] = useState(false);
   const [pendingType, setPendingType] = useState<
-    "individual" | "dealer" | "company"
+    "individual" | "dealer" | "company" | "financial_institution"
   >("individual");
   // Set only after an in-session SSO auth, so the account-type prompt never
   // appears on a cold launch for an already-signed-in user.
@@ -535,34 +535,44 @@ export default function ProfileScreen() {
   };
 
   const chooseAccountType = async (
-    type: "individual" | "dealer" | "company"
+    type: "individual" | "dealer" | "company" | "financial_institution"
   ) => {
     if (savingAccountType) return;
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
     setSavingAccountType(true);
+    // Record the choice + dismiss the gate FIRST so a flaky/slow backend can never
+    // trap a brand-new account on this screen (the reported "stuck at account type"
+    // bug). The account_type sync to the API is best-effort and can be re-applied
+    // any time from settings — getting the user into the app matters more here.
+    try {
+      await user?.update({
+        unsafeMetadata: {
+          ...(user.unsafeMetadata ?? {}),
+          accountTypeChosen: true,
+        },
+      });
+      await user?.reload();
+    } catch (e) {
+      console.warn("[profile] accountTypeChosen flag save failed", e);
+    }
+    setNeedsAccountType(false);
     try {
       await updateMe({ account_type: type });
-      try {
-        await user?.update({
-          unsafeMetadata: {
-            ...(user.unsafeMetadata ?? {}),
-            accountTypeChosen: true,
-          },
-        });
-        await user?.reload();
-      } catch (e) {
-        console.warn("[profile] accountTypeChosen flag save failed", e);
-      }
-      Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
-      setNeedsAccountType(false);
-      if (type === "dealer" || type === "company") {
-        router.push("/business/onboarding");
-      }
-    } catch {
-      Alert.alert(t("profile.accountTypeError"));
-    } finally {
-      setSavingAccountType(false);
+    } catch (e) {
+      console.warn("[profile] account_type sync failed (retry from settings)", e);
     }
+    Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+    // Dealer / company / financial-institution all continue to the business
+    // onboarding, where verification (KYC / bank approval) is collected. A
+    // financial institution's financing features stay locked until it verifies.
+    if (
+      type === "dealer" ||
+      type === "company" ||
+      type === "financial_institution"
+    ) {
+      router.push("/business/onboarding");
+    }
+    setSavingAccountType(false);
   };
 
   const openSocialEdit = () => {
@@ -685,6 +695,12 @@ export default function ProfileScreen() {
               label: "accountCompany",
               hint: "accountCompanyHint",
             },
+            {
+              type: "financial_institution",
+              icon: "bank-outline",
+              label: "accountFinancial",
+              hint: "accountFinancialHint",
+            },
           ] as const
         ).map((opt) => {
           const active = pendingType === opt.type;
@@ -797,7 +813,12 @@ export default function ProfileScreen() {
     })();
 
     const role = (user.publicMetadata?.role as string) || "";
-    const isBusiness = ["dealer", "company", "enterprise"].includes(role);
+    const isBusiness = [
+      "dealer",
+      "company",
+      "enterprise",
+      "financial_institution",
+    ].includes(role);
 
     const metrics = metricsQuery.data?.data;
     const social = socialQuery.data?.data ?? [];

@@ -26,6 +26,10 @@ export const userRoleEnum = pgEnum("user_role", [
   "dealer",
   "company",
   "enterprise",
+  // Banks / lenders. A distinct 4th account type that can advertise financing
+  // (cars / real-estate) end-to-end. Verified (KYC / bank approval delivered by
+  // us via email + notification) before its financing features unlock.
+  "financial_institution",
 ]);
 
 // Internal staff role for the BANCO team. This is a SEPARATE axis from

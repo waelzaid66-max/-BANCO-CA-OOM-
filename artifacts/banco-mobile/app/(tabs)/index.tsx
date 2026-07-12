@@ -12,7 +12,8 @@ import {
 } from "@workspace/api-client-react";
 import { useUser } from "@clerk/expo";
 import * as Haptics from "expo-haptics";
-import { router, type Href } from "expo-router";
+import type { BottomTabNavigationProp } from "@react-navigation/bottom-tabs";
+import { router, useNavigation, type Href } from "expo-router";
 import { Image } from "expo-image";
 import * as Notifications from "expo-notifications";
 import { FlashList, FlashListRef, ViewToken } from "@shopify/flash-list";
@@ -416,7 +417,10 @@ export default function FeedScreen() {
 
   const engineBarStyle = useAnimatedStyle(() => ({
     height: engineBarH === 0 ? undefined : engineBarH * (1 - barCollapse.value),
-    opacity: 1 - barCollapse.value,
+    // While the height is still unmeasured (0), render invisibly so the bar can
+    // measure via onLayout WITHOUT first flashing open at its intrinsic height —
+    // then reveal. Once measured, opacity tracks the collapse animation as before.
+    opacity: engineBarH === 0 ? 0 : 1 - barCollapse.value,
   }));
 
   // Data-presence gating: chips only render for taxonomy that has live
@@ -683,6 +687,26 @@ export default function FeedScreen() {
     await Promise.all([fetchFeed(true), loadRails(), loadRecommendations()]);
     setRefreshing(false);
   };
+
+  // Press the Home tab again while already on Home → jump to top + reload the
+  // feed (the expected "re-tap to refresh" gesture). A ref holds the latest
+  // handler so the listener subscribes once (navigation is stable) yet always
+  // runs the current refresh logic. Only fires when Home is already focused, so
+  // navigating TO Home from another tab stays a plain navigation.
+  const navigation =
+    useNavigation<BottomTabNavigationProp<Record<string, object | undefined>>>();
+  const retapReloadRef = useRef<() => void>(() => {});
+  retapReloadRef.current = () => {
+    listRef.current?.scrollToOffset({ offset: 0, animated: true });
+    setCompact(false);
+    void handleRefresh();
+  };
+  useEffect(() => {
+    const unsub = navigation.addListener("tabPress", () => {
+      if (navigation.isFocused()) retapReloadRef.current();
+    });
+    return unsub;
+  }, [navigation]);
 
   const handleLoadMore = async () => {
     if (!hasNext || loadingMore || loading) return;
