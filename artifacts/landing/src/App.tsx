@@ -14,8 +14,8 @@ import { bancoBrand } from "@workspace/design-tokens";
 const ENV = import.meta.env as Record<string, string | undefined>;
 // Fall back to relative paths so links work on every Replit preview & production
 // deploy without any env-var setup. Override via VITE_* vars in production.
-const MARKET_URL = (ENV.VITE_MARKET_URL ?? "").trim() || "/dealer-os";
-const ADMIN_URL  = (ENV.VITE_ADMIN_URL  ?? "").trim() || "/admin-os";
+const MARKET_URL = (ENV.VITE_MARKET_URL ?? "").trim() || "/dealer-os/";
+const ADMIN_URL  = (ENV.VITE_ADMIN_URL  ?? "").trim() || "/admin-os/";
 const MOBILE_URL = "/banco-mobile/";
 const WEB_URL    = (ENV.VITE_WEB_URL ?? "").trim().replace(/\/+$/, "");
 const ANDROID_URL = ENV.VITE_APP_ANDROID_URL ?? "";
@@ -195,6 +195,34 @@ function StandaloneDirectoryHub() {
         </section>
       </main>
 
+      {/* ===== وصول سريع ===== */}
+      <section style={S.quickSection}>
+        <h2 style={S.quickTitle}>🔗 ادخل على المنصة الآن</h2>
+        <div style={S.quickLinks}>
+          <a href={MOBILE_URL} target="_blank" rel="noreferrer" style={{ ...S.quickBtn, borderColor: bancoBrand.red }}>
+            <span style={S.quickIcon}>📱</span>
+            <span>
+              <strong>تطبيق بانكو</strong>
+              <small style={S.quickSub}>{MOBILE_URL}</small>
+            </span>
+          </a>
+          <a href={MARKET_URL} target="_blank" rel="noreferrer" style={{ ...S.quickBtn, borderColor: "#1FA97D" }}>
+            <span style={S.quickIcon}>🛒</span>
+            <span>
+              <strong>بانكو ماركت</strong>
+              <small style={S.quickSub}>{MARKET_URL}</small>
+            </span>
+          </a>
+          <a href={ADMIN_URL} target="_blank" rel="noreferrer" style={{ ...S.quickBtn, borderColor: "#3B82F6" }}>
+            <span style={S.quickIcon}>🛠️</span>
+            <span>
+              <strong>لوحة التحكم</strong>
+              <small style={S.quickSub}>{ADMIN_URL}</small>
+            </span>
+          </a>
+        </div>
+      </section>
+
       <footer style={S.footer}>
         © {new Date().getFullYear()} BANCO — جميع الحقوق محفوظة
       </footer>
@@ -282,6 +310,52 @@ const S: Record<string, React.CSSProperties> = {
     borderRadius: 999,
   },
   footer: { textAlign: "center", color: "#6a6a6a", fontSize: 12, marginTop: "auto" },
+  quickSection: {
+    maxWidth: 520,
+    width: "100%",
+    margin: "0 auto",
+    display: "flex",
+    flexDirection: "column",
+    gap: 14,
+    alignItems: "stretch",
+  },
+  quickTitle: {
+    textAlign: "center",
+    fontSize: 18,
+    fontWeight: 800,
+    margin: 0,
+    marginBottom: 4,
+    color: "#f5f5f5",
+  },
+  quickLinks: {
+    display: "flex",
+    flexDirection: "column",
+    gap: 12,
+  },
+  quickBtn: {
+    display: "flex",
+    alignItems: "center",
+    gap: 16,
+    padding: "16px 22px",
+    background: "#141414",
+    border: "2px solid",
+    borderRadius: 14,
+    textDecoration: "none",
+    color: "#f5f5f5",
+    fontFamily: "system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif",
+    fontSize: 16,
+    fontWeight: 700,
+    transition: "background 0.15s",
+  },
+  quickIcon: { fontSize: 26, lineHeight: 1 },
+  quickSub: {
+    display: "block",
+    fontSize: 12,
+    color: "#7a7a7a",
+    fontFamily: "ui-monospace, Menlo, monospace",
+    fontWeight: 400,
+    marginTop: 2,
+  },
 };
 
 export default App;
