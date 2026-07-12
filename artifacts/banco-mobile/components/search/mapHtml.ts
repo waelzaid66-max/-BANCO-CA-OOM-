@@ -133,6 +133,10 @@ export function buildMapHtml(
     box-shadow: 0 1px 5px rgba(0,0,0,0.35);
     cursor: pointer;
   }
+  .pin .pill.book {
+    background: #0E9F6E;
+    border-color: #E8FFF5;
+  }
   .cpin .cbubble {
     position: absolute;
     transform: translate(-50%, -50%);
@@ -254,7 +258,7 @@ export function buildMapHtml(
       if (typeof d.lat !== "number" || typeof d.lng !== "number") return;
       var icon = L.divIcon({
         className: "pin",
-        html: '<div class="pill">' + (d.bookable ? "📅 " : "") + esc(d.label) + "</div>",
+        html: '<div class="pill' + (d.bookable ? " book" : "") + '">' + (d.bookable ? "📅 " : "") + esc(d.label) + "</div>",
         iconSize: [0, 0]
       });
       var m = L.marker([d.lat, d.lng], { icon: icon });
@@ -294,7 +298,7 @@ export function buildMapHtml(
             })(c.lat, c.lng);
           } else {
             var inner = c.label
-              ? '<div class="pill">' + (c.bookable ? "📅 " : "") + esc(c.label) + "</div>"
+              ? '<div class="pill' + (c.bookable ? " book" : "") + '">' + (c.bookable ? "📅 " : "") + esc(c.label) + "</div>"
               : '<div class="sdot"></div>';
             marker = L.marker([c.lat, c.lng], {
               icon: L.divIcon({
