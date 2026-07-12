@@ -50,7 +50,9 @@ export function SoundProvider({ children }: { children: React.ReactNode }) {
 
   useEffect(() => {
     // Respect silent switch off by default; users who enable sounds expect cues.
-    setAudioModeAsync({ playsInSilentMode: true }).catch(() => {});
+    setAudioModeAsync({ playsInSilentMode: true }).catch((e) => {
+      if (__DEV__) console.warn("[sound] setAudioModeAsync failed:", e);
+    });
     (async () => {
       try {
         const [s, n] = await AsyncStorage.multiGet([SOUND_KEY, NOTIF_KEY]);
@@ -93,8 +95,12 @@ export function SoundProvider({ children }: { children: React.ReactNode }) {
         }
         player.seekTo(0);
         player.play();
-      } catch {
-        // Best-effort: audio is non-critical feedback.
+      } catch (e) {
+        // Best-effort: audio is non-critical feedback. Surface WHY it failed in
+        // dev, though — expo-audio's native player isn't present in plain Expo Go,
+        // so cues only fire in a dev-client / EAS build. This log makes that
+        // obvious instead of a silent "no sound".
+        if (__DEV__) console.warn("[sound] playSound failed:", name, e);
       }
     };
     return {
