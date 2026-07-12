@@ -2195,6 +2195,10 @@ export default function ProfileScreen() {
                   {userEmail}
                 </AppText>
               ) : null}
+              <ScrollView
+                showsVerticalScrollIndicator={false}
+                bounces={false}
+              >
               {menuItems.map((mi) => (
                 <Pressable
                   key={mi.key}
@@ -2231,6 +2235,7 @@ export default function ProfileScreen() {
                   />
                 </Pressable>
               ))}
+              </ScrollView>
             </View>
           </View>
         </Modal>
@@ -3925,6 +3930,9 @@ const styles = StyleSheet.create({
     padding: 20,
     paddingBottom: 36,
     borderWidth: 1,
+    // Cap the sheet so a long menu (11+ rows on a small screen) scrolls inside
+    // instead of overflowing above the top of the screen.
+    maxHeight: "85%",
   },
   menuHandle: {
     width: 40,

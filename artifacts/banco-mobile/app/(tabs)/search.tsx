@@ -866,6 +866,24 @@ export default function SearchScreen() {
         <AppText style={[styles.emptyText, { color: colors.mutedForeground }]}>
           {t("search.noResultsHint")}
         </AppText>
+        {activeFilterCount > 0 ? (
+          <Pressable
+            onPress={() => {
+              playSound("tap");
+              clearAllFilters();
+            }}
+            style={[
+              styles.emptyCta,
+              { backgroundColor: colors.primary, borderRadius: colors.radius },
+            ]}
+            testID="empty-clear-filters"
+          >
+            <Feather name="refresh-cw" size={16} color={colors.primaryForeground} />
+            <AppText style={[styles.emptyCtaText, { color: colors.primaryForeground }]}>
+              {t("search.clearAll")}
+            </AppText>
+          </Pressable>
+        ) : null}
       </View>
     );
   }
@@ -1482,6 +1500,15 @@ const styles = StyleSheet.create({
     gap: 8,
     paddingBottom: 80,
   },
+  emptyCta: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 8,
+    paddingVertical: 11,
+    paddingHorizontal: 20,
+    marginTop: 6,
+  },
+  emptyCtaText: { fontSize: 14, fontFamily: "Inter_600SemiBold" },
   emptyTitle: {
     fontSize: 20,
     fontFamily: "Inter_600SemiBold",
