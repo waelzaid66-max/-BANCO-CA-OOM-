@@ -9,6 +9,28 @@ args = ["pnpm", "store", "prune"]
 env = { "CI" = "true" }
 
 [workflows]
+runButton = "Project"
+
+[[workflows.workflow]]
+name = "Project"
+mode = "parallel"
+author = "agent"
+
+[[workflows.workflow.tasks]]
+task = "workflow.run"
+args = "artifacts/banco-web: web"
+
+[[workflows.workflow]]
+name = "artifacts/banco-web: web"
+author = "agent"
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "pnpm --filter @workspace/banco-web run dev"
+waitForPort = 3000
+
+[workflows.workflow.metadata]
+outputType = "console"
 
 [agent]
 stack = "BEST_EFFORT_FALLBACK"
@@ -81,4 +103,10 @@ ADMIN_EMAILS = "info@bancoeg.com,wael_zeed@yahoo.com,waelzaid66@gmail.com"
 PAYMOB_MODE = "sandbox"
 CLERK_PUBLISHABLE_KEY = "pk_test_ZXZvbHZpbmctbWFncGllLTQzLmNsZXJrLmFjY291bnRzLmRldiQ"
 VITE_CLERK_PUBLISHABLE_KEY = "pk_test_ZXZvbHZpbmctbWFncGllLTQzLmNsZXJrLmFjY291bnRzLmRldiQ"
+NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY = "pk_test_ZXZvbHZpbmctbWFncGllLTQzLmNsZXJrLmFjY291bnRzLmRldiQ"
+NEXT_PUBLIC_API_URL = "http://localhost:8080"
+NEXT_PUBLIC_SEARCH_ENABLED = "true"
+NEXT_PUBLIC_WEB_SEARCH_LIVE = "true"
+NEXT_PUBLIC_WEB_SEARCH_MAP = "false"
+NEXT_PUBLIC_SEARCH_ANALYTICS_MODE = "off"
 AI_INTEGRATIONS_OPENAI_BASE_URL = "http://localhost:1106/modelfarm/openai"

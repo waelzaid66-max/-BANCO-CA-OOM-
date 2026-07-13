@@ -1,7 +1,7 @@
 import type { NextConfig } from "next";
 
 function apiRewriteTarget(): string {
-  const base = (process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:5000").replace(
+  const base = (process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:8080").replace(
     /\/+$/,
     "",
   );
@@ -11,6 +11,14 @@ function apiRewriteTarget(): string {
 const nextConfig: NextConfig = {
   reactStrictMode: true,
   poweredByHeader: false,
+  // Allow Replit's proxied preview (cross-origin iframe) to load /_next/* assets
+  allowedDevOrigins: ["*"],
+  transpilePackages: [
+    "@workspace/design-tokens",
+    "@workspace/search-contract",
+    "@workspace/taxonomy",
+    "@workspace/api-client-react",
+  ],
   ...(process.env.NEXT_STANDALONE === "true" ? { output: "standalone" as const } : {}),
   async headers() {
     return [
