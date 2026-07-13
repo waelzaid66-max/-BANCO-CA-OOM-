@@ -106,7 +106,7 @@ async function main(): Promise<void> {
         area: 120,
         rooms: 2,
         offer_type: "rent",
-        rental_term: "monthly",
+        rental_term: "new_law",
         furnished: true,
       },
       media: [
@@ -119,17 +119,17 @@ async function main(): Promise<void> {
       payment_options: [{ mode: "cash" }],
     },
     {
-      title: "فيلا مفروشة للإيجار السنوي - الشيخ زايد",
+      title: "فيلا مفروشة للإيجار - قانون جديد - الشيخ زايد",
       description:
-        "فيلا 350 متر، 4 غرف، حديقة خاصة، جراج، مجمع راقي مع حمام سباحة. للإيجار السنوي.",
+        "فيلا 350 متر، 4 غرف، حديقة خاصة، جراج، مجمع راقي مع حمام سباحة. عقد قانون جديد حتى 5 سنوات.",
       category: "real_estate",
-      base_price_cash: 180000,
+      base_price_cash: 45000,
       location: at(1),
       specs: {
         area: 350,
         rooms: 4,
         offer_type: "rent",
-        rental_term: "annual",
+        rental_term: "new_law",
         furnished: true,
       },
       media: [
@@ -152,7 +152,7 @@ async function main(): Promise<void> {
         area: 55,
         rooms: 1,
         offer_type: "rent",
-        rental_term: "daily",
+        rental_term: "furnished_daily",
         furnished: true,
       },
       media: [
@@ -175,7 +175,7 @@ async function main(): Promise<void> {
         area: 180,
         rooms: 3,
         offer_type: "rent",
-        rental_term: "daily",
+        rental_term: "furnished_daily",
         furnished: true,
       },
       media: [
@@ -188,17 +188,17 @@ async function main(): Promise<void> {
       payment_options: [{ mode: "cash" }],
     },
     {
-      title: "شقة 90 متر للإيجار السنوي - مدينتي",
+      title: "شقة 90 متر للإيجار - قانون قديم - مدينتي",
       description:
-        "شقة 90 متر، 2 غرف وريسبشن، بدون فرش، بحالة ممتازة. إيجار سنوي بمبلغ ثابت.",
+        "شقة 90 متر، 2 غرف وريسبشن، بدون فرش، بحالة ممتازة. إيجار قانون قديم بعقد طويل الأمد.",
       category: "real_estate",
-      base_price_cash: 60000,
+      base_price_cash: 5000,
       location: at(4),
       specs: {
         area: 90,
         rooms: 2,
         offer_type: "rent",
-        rental_term: "annual",
+        rental_term: "old_law",
         furnished: false,
       },
       media: [

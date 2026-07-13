@@ -46,6 +46,18 @@ interface SearchResultsSurfaceProps {
    * dedicated section pages where pull-to-refresh is the expected gesture.
    */
   onRefresh?: () => void;
+  /**
+   * Optional card renderer. Defaults to SmartAssetCard. The Booking & Stays
+   * page passes a Booking.com-style StayCard so the same permanently-mounted
+   * virtualized surface (loadMore / refresh / overlay / entrance animation) can
+   * render stay cards without duplicating the list machinery.
+   */
+  CardComponent?: React.ComponentType<{
+    item: FeedItem;
+    onPress?: (item: FeedItem) => void;
+    onSave?: (item: FeedItem) => void;
+    isSaved?: boolean;
+  }>;
 }
 
 /**
@@ -72,9 +84,11 @@ export function SearchResultsSurface({
   overlay,
   contentPaddingBottom = 120,
   onRefresh,
+  CardComponent,
 }: SearchResultsSurfaceProps) {
   const colors = useColors();
   const { t, isRTL } = useI18n();
+  const Card = CardComponent ?? SmartAssetCard;
 
   // Ids that have already played their entrance animation. We only ever add, so
   // each card animates exactly once per surface lifetime — remounts during
@@ -99,7 +113,7 @@ export function SearchResultsSurface({
                 firstAppearance ? FadeInDown.duration(220) : undefined
               }
             >
-              <SmartAssetCard
+              <Card
                 item={item}
                 onPress={onCardPress}
                 onSave={onSave}
