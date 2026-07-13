@@ -37,8 +37,6 @@ import { FilterSheet } from "@/components/search/FilterSheet";
 import {
   Category,
   CategoryIcon,
-  EngineChips,
-  IndustrialSubChips,
   type IndustrialType,
   apiCategoryFor,
   industrialGroupForCategory,
@@ -327,6 +325,7 @@ export function SectionSearchApp({
   const [suggestions, setSuggestions] = useState<string[]>([]);
   const [showSuggestions, setShowSuggestions] = useState(false);
   const [showFilters, setShowFilters] = useState(false);
+  const [searchOpen, setSearchOpen] = useState(false);
   const [locationPickerOpen, setLocationPickerOpen] = useState(false);
   const [brandValue, setBrandValue] = useState<string | null>(null);
   const [carPickerOpen, setCarPickerOpen] = useState(false);
@@ -521,6 +520,17 @@ export function SectionSearchApp({
       nearRadiusKm: DEFAULT_NEAR_RADIUS_KM,
     });
   }, [criteria.nearMeEnabled, t, update]);
+
+  const openSearch = () => {
+    playSound("tap");
+    setSearchOpen(true);
+    setTimeout(() => inputRef.current?.focus(), 50);
+  };
+  const closeSearch = () => {
+    setSearchOpen(false);
+    setShowSuggestions(false);
+    inputRef.current?.blur();
+  };
 
   const browseBrandChip = useCallback(
     (b: CarBrand) => browseBrand(b, null),
@@ -777,6 +787,19 @@ export function SectionSearchApp({
           ) : null}
         </View>
         <Pressable
+          onPress={openSearch}
+          style={[
+            styles.iconBtn,
+            {
+              backgroundColor: draftQuery ? accent : colors.secondary,
+              borderRadius: colors.radius,
+            },
+          ]}
+          testID="section-search-open"
+        >
+          <Feather name="search" size={18} color={draftQuery ? "#FFFFFF" : colors.foreground} />
+        </Pressable>
+        <Pressable
           onPress={() => {
             playSound("tap");
             setShowFilters((v) => !v);
@@ -805,24 +828,20 @@ export function SectionSearchApp({
         </Pressable>
       </View>
 
-      {/* ── Scoped text search row ── */}
-      <View style={[styles.searchWrap, { flexDirection: rowDir }]}>
+      {/* ── Collapsible search bar — shown when the search icon in the header is tapped ── */}
+      {searchOpen && (
         <View
           style={[
-            styles.searchRow,
+            styles.searchBar,
             {
+              flexDirection: rowDir,
               backgroundColor: colors.card,
               borderColor: colors.border,
               borderRadius: colors.radius,
-              flexDirection: rowDir,
             },
           ]}
         >
-          <CategoryIcon
-            category={category}
-            size={18}
-            color={colors.mutedForeground}
-          />
+          <CategoryIcon category={category} size={17} color={colors.mutedForeground} />
           <TextInput
             ref={inputRef}
             value={draftQuery}
@@ -831,98 +850,69 @@ export function SectionSearchApp({
             onFocus={() => playSound("tap")}
             placeholder={t("search.placeholder")}
             placeholderTextColor={colors.mutedForeground}
-            style={[styles.input, { color: colors.foreground, textAlign }]}
+            style={[styles.searchBarInput, { color: colors.foreground, textAlign }]}
             returnKeyType="search"
             testID="section-search-input"
             autoCorrect={false}
           />
-          {draftQuery.length > 0 && (
-            <Pressable onPress={clearQuery} hitSlop={8}>
-              <Feather name="x" size={16} color={colors.mutedForeground} />
-            </Pressable>
-          )}
+          <Pressable
+            onPress={handleSaveSearch}
+            disabled={searchSaved}
+            hitSlop={8}
+            testID="section-save-search"
+          >
+            <Feather
+              name="bookmark"
+              size={16}
+              color={searchSaved ? accent : colors.mutedForeground}
+            />
+          </Pressable>
+          <Pressable onPress={draftQuery.length > 0 ? clearQuery : closeSearch} hitSlop={8}>
+            <Feather name="x" size={16} color={colors.mutedForeground} />
+          </Pressable>
         </View>
-        <Pressable
-          onPress={handleSaveSearch}
-          disabled={searchSaved}
+      )}
+      {/* Inline autocomplete — renders just below the search bar */}
+      {searchOpen && showSuggestions && suggestions.length > 0 && (
+        <View
           style={[
-            styles.iconBtn,
+            styles.suggestions,
             {
-              backgroundColor: searchSaved ? accent : colors.secondary,
+              backgroundColor: colors.card,
+              borderColor: colors.border,
               borderRadius: colors.radius,
             },
           ]}
-          testID="section-save-search"
         >
-          <Feather
-            name="bookmark"
-            size={18}
-            color={searchSaved ? "#FFFFFF" : colors.foreground}
-          />
-        </Pressable>
-      </View>
-
-      {/* ── Listing mode chips (hidden for a locked-engine page) ── */}
-      {showListingMode ? (
-        <View style={[styles.chipRow, { flexDirection: rowDir }]}>
-          {(["all", "sale", "buy"] as const).map((mode) => {
-            const active = criteria.listingMode === mode;
-            return (
-              <Pressable
-                key={mode}
-                onPress={() => {
-                  playSound("tap");
-                  Haptics.selectionAsync();
-                  selectListingMode(mode);
-                }}
-                style={[
-                  styles.chip,
-                  { backgroundColor: active ? accent : colors.secondary },
-                ]}
-                testID={`section-listing-mode-${mode}`}
-              >
-                <AppText
-                  style={[
-                    styles.chipText,
-                    {
-                      color: active ? "#FFFFFF" : colors.mutedForeground,
-                    },
-                  ]}
-                >
-                  {mode === "all"
-                    ? t("search.listingModeAll")
-                    : mode === "sale"
-                      ? t("search.listingModeSale")
-                      : t("search.listingModeBuy")}
-                </AppText>
-              </Pressable>
-            );
-          })}
+          {suggestions.map((s, i) => (
+            <Pressable
+              key={i}
+              onPress={() => handleSuggestionTap(s)}
+              style={[
+                styles.suggestionItem,
+                {
+                  flexDirection: rowDir,
+                  borderBottomColor:
+                    i < suggestions.length - 1 ? colors.border : "transparent",
+                },
+              ]}
+            >
+              <Ionicons name="search-outline" size={14} color={colors.mutedForeground} />
+              <AppText style={[styles.suggestionText, { color: colors.foreground }]}>
+                {s}
+              </AppText>
+            </Pressable>
+          ))}
         </View>
-      ) : null}
+      )}
 
-      {/* ── Engine / industrial chips + market country ── */}
-      <View style={[styles.secondaryChrome, { flexDirection: rowDir }]}>
-        {showEngineChips ? (
-          <View style={styles.secondaryChromeFlex}>
-            <EngineChips
-              engines={engineList}
-              selected={criteria.engineKey}
-              onChange={selectEngine}
-              accent={accent}
-            />
-          </View>
-        ) : null}
-        {showIndustrialChips ? (
-          <View style={styles.secondaryChromeFlex}>
-            <IndustrialSubChips
-              types={visibleIndTypes!}
-              selected={criteria.industrialType}
-              onChange={selectIndustrialType}
-              accent={accent}
-            />
-          </View>
-        ) : null}
+      {/* ── Unified chip strip: 🌐 globe FIRST, then mode + engine chips in one
+          horizontal ScrollView — easy horizontal selection, no separate rows. ── */}
+      <ScrollView
+        horizontal
+        showsHorizontalScrollIndicator={false}
+        contentContainerStyle={[styles.chipStrip, { flexDirection: rowDir }]}
+      >
         <MarketCountryButton
           selected={criteria.marketCountry}
           onPress={() => {
@@ -930,7 +920,58 @@ export function SectionSearchApp({
             setMarketPickerOpen(true);
           }}
         />
-      </View>
+        {(showListingMode || showEngineChips || showIndustrialChips) ? (
+          <View style={[styles.chipStripDivider, { backgroundColor: colors.border }]} />
+        ) : null}
+        {showListingMode ? (["all", "sale", "buy"] as const).map((mode) => {
+          const active = criteria.listingMode === mode;
+          return (
+            <Pressable
+              key={mode}
+              onPress={() => { playSound("tap"); Haptics.selectionAsync(); selectListingMode(mode); }}
+              style={[styles.stripChip, { backgroundColor: active ? accent : colors.secondary }]}
+              testID={`section-listing-mode-${mode}`}
+            >
+              <AppText style={[styles.stripChipText, { color: active ? "#FFFFFF" : colors.mutedForeground }]}>
+                {mode === "all" ? t("search.listingModeAll") : mode === "sale" ? t("search.listingModeSale") : t("search.listingModeBuy")}
+              </AppText>
+            </Pressable>
+          );
+        }) : null}
+        {showEngineChips ? engineList.map((e) => {
+          const active = criteria.engineKey === e.key;
+          return (
+            <Pressable
+              key={e.key}
+              onPress={() => { playSound("tap"); Haptics.selectionAsync(); selectEngine(e.key); }}
+              style={[styles.stripChip, { backgroundColor: active ? accent : colors.secondary }]}
+              testID={`engine-${e.key}`}
+            >
+              <AppText style={[styles.stripChipText, { color: active ? "#FFFFFF" : colors.mutedForeground }]}>
+                {t(e.i18nKey)}
+              </AppText>
+            </Pressable>
+          );
+        }) : null}
+        {showIndustrialChips ? [
+          { key: "all" as IndustrialType, i18nKey: "home.industrialTypes.all" },
+          ...((visibleIndTypes ?? []).map((ty) => ({ key: ty, i18nKey: `home.industrialTypes.${ty}` }))),
+        ].map((item) => {
+          const active = criteria.industrialType === item.key;
+          return (
+            <Pressable
+              key={item.key}
+              onPress={() => { playSound("tap"); Haptics.selectionAsync(); selectIndustrialType(item.key); }}
+              style={[styles.stripChip, { backgroundColor: active ? accent : colors.secondary }]}
+              testID={`industrial-type-${item.key}`}
+            >
+              <AppText style={[styles.stripChipText, { color: active ? "#FFFFFF" : colors.mutedForeground }]}>
+                {t(item.i18nKey)}
+              </AppText>
+            </Pressable>
+          );
+        }) : null}
+      </ScrollView>
 
       {/* ── Origin chips (materials only) ── */}
       {showOriginChrome ? (
@@ -1047,44 +1088,6 @@ export function SectionSearchApp({
         onClearAll={clearAllFilters}
       />
 
-      {showSuggestions && suggestions.length > 0 && (
-        <View
-          style={[
-            styles.suggestions,
-            {
-              backgroundColor: colors.card,
-              borderColor: colors.border,
-              borderRadius: colors.radius,
-            },
-          ]}
-        >
-          {suggestions.map((s, i) => (
-            <Pressable
-              key={i}
-              onPress={() => handleSuggestionTap(s)}
-              style={[
-                styles.suggestionItem,
-                {
-                  flexDirection: rowDir,
-                  borderBottomColor:
-                    i < suggestions.length - 1 ? colors.border : "transparent",
-                },
-              ]}
-            >
-              <Ionicons
-                name="search-outline"
-                size={14}
-                color={colors.mutedForeground}
-              />
-              <AppText
-                style={[styles.suggestionText, { color: colors.foreground }]}
-              >
-                {s}
-              </AppText>
-            </Pressable>
-          ))}
-        </View>
-      )}
 
       <View style={styles.resultsArea}>
         <SearchResultsSurface
@@ -1236,21 +1239,17 @@ const styles = StyleSheet.create({
     fontFamily: "Inter_400Regular",
     marginTop: 2,
   },
-  searchWrap: {
+  searchBar: {
     alignItems: "center",
     gap: 10,
-    paddingHorizontal: 16,
-    paddingTop: 12,
-  },
-  searchRow: {
-    flex: 1,
-    alignItems: "center",
+    marginHorizontal: 16,
+    marginTop: 10,
     paddingHorizontal: 14,
     paddingVertical: 10,
-    gap: 10,
     borderWidth: 1,
+    borderRadius: 12,
   },
-  input: {
+  searchBarInput: {
     flex: 1,
     fontSize: 15,
     fontFamily: "Inter_400Regular",
@@ -1288,16 +1287,28 @@ const styles = StyleSheet.create({
     fontSize: 13,
     fontFamily: "Inter_500Medium",
   },
-  secondaryChrome: {
+  // Unified horizontal chip strip — globe first, then mode/engine chips inline
+  chipStrip: {
     alignItems: "center",
     gap: 8,
     paddingHorizontal: 12,
     paddingTop: 8,
-    minHeight: 0,
+    paddingBottom: 2,
   },
-  secondaryChromeFlex: {
-    flex: 1,
-    minWidth: 0,
+  chipStripDivider: {
+    width: 1,
+    height: 20,
+    opacity: 0.5,
+    marginHorizontal: 2,
+  },
+  stripChip: {
+    paddingHorizontal: 14,
+    paddingVertical: 7,
+    borderRadius: 18,
+  },
+  stripChipText: {
+    fontSize: 13,
+    fontFamily: "Inter_500Medium",
   },
   rentalChrome: {
     alignItems: "center",
@@ -1308,11 +1319,8 @@ const styles = StyleSheet.create({
   },
   resultsCount: { fontSize: 12.5, paddingHorizontal: 16, paddingTop: 8 },
   suggestions: {
-    position: "absolute",
-    top: 150,
-    left: 16,
-    right: 76,
-    zIndex: 100,
+    marginHorizontal: 16,
+    marginTop: 2,
     borderWidth: 1,
     overflow: "hidden",
   },

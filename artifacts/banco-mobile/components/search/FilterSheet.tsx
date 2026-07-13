@@ -99,6 +99,11 @@ interface FilterSheetProps {
    * where the category is locked and must never be switched from the sheet.
    */
   lockCategory?: boolean;
+  /**
+   * Hide the payment type (cash / installment) row entirely.
+   * Used by rental-locked pages where installment is irrelevant.
+   */
+  hidePaymentType?: boolean;
 }
 
 /**
@@ -129,6 +134,7 @@ export function FilterSheet({
   onToggleNearMe,
   onClearAll,
   lockCategory = false,
+  hidePaymentType = false,
 }: FilterSheetProps) {
   const colors = useColors();
   const { t, isRTL } = useI18n();
@@ -202,11 +208,12 @@ export function FilterSheet({
     criteria.category === "materials" &&
     (criteria.industrialType === "all" ||
       criteria.industrialType === "raw_material");
-  // Installment is a car / real-estate financing axis — not facilities/materials.
+  // Installment is a car / real-estate financing axis — not facilities/materials/rent.
   const showPayment =
-    criteria.category === "car" ||
-    criteria.category === "real_estate" ||
-    criteria.category === "all";
+    !hidePaymentType &&
+    (criteria.category === "car" ||
+      criteria.category === "real_estate" ||
+      criteria.category === "all");
   const rentalTerms = rentalTermsForSearch(criteria.marketCountry);
 
   return (

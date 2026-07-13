@@ -1,4 +1,5 @@
 import { Feather, Ionicons } from "@/components/icons";
+import { Image } from "expo-image";
 import { AppTextInput as TextInput } from "@/components/AppTextInput";
 import type { TextInput as RNTextInput } from "react-native";
 import {
@@ -57,6 +58,7 @@ import {
 } from "@/lib/searchTaxonomy";
 
 const ALL_TAB = "__all__";
+const BANCO_LOGO = require("../../assets/images/banco-logo.png");
 
 /** Deterministic, key-sorted serialization used for baseline-delta dirty checks
  *  (mirrors SectionSearchApp — a freshly-landed page is never falsely dirty). */
@@ -459,6 +461,30 @@ export function BookingStaysApp() {
           single "Where to?" search pill. ─────────────────────────────────── */}
       <View style={[styles.hero, { paddingTop: topPad + 12 }]}>
         <SectionBackdrop section="real_estate" motifSize={140} />
+        {/* BANCO watermark — same identity signal as the Discover section cards */}
+        <View pointerEvents="none" style={styles.heroWatermarkWrap}>
+          <Image
+            source={BANCO_LOGO}
+            style={styles.heroWatermark}
+            contentFit="contain"
+            tintColor="#FFFFFF"
+          />
+        </View>
+        {/* Subtle dim overlay when search is open — reduces glass intensity on
+            the backdrop to make the open field more readable, as requested. */}
+        {searchOpen ? (
+          <View
+            pointerEvents="none"
+            style={[
+              StyleSheet.absoluteFill,
+              {
+                backgroundColor: "rgba(0,0,0,0.20)",
+                borderBottomLeftRadius: 24,
+                borderBottomRightRadius: 24,
+              },
+            ]}
+          />
+        ) : null}
         <View style={[styles.heroTopRow, { flexDirection: rowDir }]}>
           <Pressable onPress={goBack} style={styles.heroBackBtn} hitSlop={12} testID="stays-back">
             <Feather
@@ -603,8 +629,13 @@ export function BookingStaysApp() {
         </View>
       )}
 
-      {/* Controls: market chip + primary rental-term segmentation. */}
-      <View style={[styles.controlsRow, { flexDirection: rowDir }]}>
+      {/* Controls: 🌐 globe + rental-term tabs — all one horizontal scrollable strip.
+          MarketCountryButton is the FIRST item so the globe is always in the strip. */}
+      <ScrollView
+        horizontal
+        showsHorizontalScrollIndicator={false}
+        contentContainerStyle={[styles.controlsRow, { flexDirection: rowDir }]}
+      >
         <MarketCountryButton
           selected={criteria.marketCountry}
           onPress={() => {
@@ -613,43 +644,37 @@ export function BookingStaysApp() {
           }}
         />
         <View style={[styles.controlsDivider, { backgroundColor: colors.border }]} />
-        <ScrollView
-          horizontal
-          showsHorizontalScrollIndicator={false}
-          contentContainerStyle={[styles.termTabs, { flexDirection: rowDir }]}
-        >
-          {[{ value: ALL_TAB, label: t("search.discover.section.staysAll") }]
-            .concat(
-              rentalTerms.map((r) => ({ value: r.value, label: isRTL ? r.ar : r.en })),
-            )
-            .map((tab) => {
-              const active = activeTerm === tab.value;
-              return (
-                <Pressable
-                  key={tab.value}
-                  onPress={() => selectTerm(tab.value)}
+        {[{ value: ALL_TAB, label: t("search.discover.section.staysAll") }]
+          .concat(
+            rentalTerms.map((r) => ({ value: r.value, label: isRTL ? r.ar : r.en })),
+          )
+          .map((tab) => {
+            const active = activeTerm === tab.value;
+            return (
+              <Pressable
+                key={tab.value}
+                onPress={() => selectTerm(tab.value)}
+                style={[
+                  styles.termTab,
+                  {
+                    backgroundColor: active ? STAYS_ACCENT : colors.card,
+                    borderColor: active ? STAYS_ACCENT : colors.border,
+                  },
+                ]}
+                testID={`stays-term-${tab.value}`}
+              >
+                <AppText
                   style={[
-                    styles.termTab,
-                    {
-                      backgroundColor: active ? STAYS_ACCENT : colors.card,
-                      borderColor: active ? STAYS_ACCENT : colors.border,
-                    },
+                    styles.termTabText,
+                    { color: active ? "#FFFFFF" : colors.foreground },
                   ]}
-                  testID={`stays-term-${tab.value}`}
                 >
-                  <AppText
-                    style={[
-                      styles.termTabText,
-                      { color: active ? "#FFFFFF" : colors.foreground },
-                    ]}
-                  >
-                    {tab.label}
-                  </AppText>
-                </Pressable>
-              );
-            })}
-        </ScrollView>
-      </View>
+                  {tab.label}
+                </AppText>
+              </Pressable>
+            );
+          })}
+      </ScrollView>
 
       {viewState === "results" && items.length > 0 ? (
         <AppText
@@ -686,6 +711,7 @@ export function BookingStaysApp() {
         onClearLocation={() => update({ location: "" })}
         onToggleNearMe={() => void toggleNearMe()}
         onClearAll={clearAllFilters}
+        hidePaymentType
       />
 
       <View style={styles.resultsArea}>
@@ -856,14 +882,25 @@ const styles = StyleSheet.create({
     color: "#FFFFFF",
     padding: 0,
   },
+  // controlsRow is the ScrollView contentContainerStyle — globe + term tabs in one row
   controlsRow: {
     alignItems: "center",
     gap: 8,
     paddingHorizontal: 12,
     paddingTop: 10,
+    paddingBottom: 2,
   },
   controlsDivider: { width: 1, height: 22, opacity: 0.7 },
-  termTabs: { paddingBottom: 2, gap: 7, alignItems: "center" },
+  heroWatermarkWrap: {
+    position: "absolute",
+    top: 14,
+    right: 14,
+  },
+  heroWatermark: {
+    width: 72,
+    height: 24,
+    opacity: 0.55,
+  },
   termTab: {
     paddingHorizontal: 14,
     paddingVertical: 7,
