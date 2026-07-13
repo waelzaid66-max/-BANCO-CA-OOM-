@@ -73,6 +73,10 @@ const SECTION_PHOTO: Partial<Record<Category, number>> = {
 
 const BANCO_WATERMARK = require("../assets/images/banco-logo.png");
 
+// Booking & Stays is real-estate rentals (not a taxonomy Category), so it keeps
+// its own photo constant. It uses the real-estate/stays identity — never blue.
+const BOOKING_PHOTO = require("../assets/images/categories/booking.jpg");
+
 interface Props {
   // ── Legacy props — all optional so the parent call-site needs no changes ──
   // Section cards now navigate into dedicated section pages (router.push), so
@@ -209,12 +213,24 @@ export function SearchDiscover(_props: Props) {
         style={styles.bookingCardWrap}
         testID="section-card-booking"
       >
-        <LinearGradient
-          colors={["#0A2840", "#040D14"]}
-          start={{ x: 0, y: 0 }}
-          end={{ x: 1, y: 1 }}
-          style={styles.bookingCard}
-        >
+        <View style={styles.bookingCard}>
+          <Image
+            source={BOOKING_PHOTO}
+            style={styles.sectionPhoto}
+            contentFit="cover"
+            transition={220}
+          />
+          <LinearGradient
+            colors={[
+              "rgba(12,4,5,0.14)",
+              "rgba(12,4,5,0.52)",
+              "rgba(12,4,5,0.90)",
+            ]}
+            locations={[0, 0.5, 1]}
+            start={{ x: 0, y: 0 }}
+            end={{ x: 1, y: 1 }}
+            style={styles.sectionScrim}
+          />
           <View pointerEvents="none" style={styles.sectionWatermarkWrap}>
             <Image
               source={BANCO_WATERMARK}
@@ -224,23 +240,28 @@ export function SearchDiscover(_props: Props) {
             />
           </View>
           <View style={[styles.bookingCardRow, { flexDirection: rowDir }]}>
-            <View
-              style={[
-                styles.sectionBadge,
-                {
-                  backgroundColor: "rgba(26,127,219,0.25)",
-                  borderColor: "rgba(26,127,219,0.45)",
-                },
-              ]}
-            >
-              <Feather name="calendar" size={20} color="#5AB4FF" />
+            <View style={styles.sectionBadge}>
+              <Feather name="calendar" size={20} color="#FFFFFF" />
             </View>
             <View style={styles.bookingCardText}>
-              <AppText
-                style={[styles.sectionLabel, { textAlign, fontSize: 17 }]}
+              <View
+                style={[
+                  styles.sectionLabelRow,
+                  isRTL && { flexDirection: "row-reverse" },
+                ]}
               >
-                {t("home.categories.booking")}
-              </AppText>
+                <View
+                  style={[
+                    styles.sectionAccent,
+                    { backgroundColor: colors.primary },
+                  ]}
+                />
+                <AppText
+                  style={[styles.sectionLabel, { textAlign, fontSize: 17 }]}
+                >
+                  {t("home.categories.booking")}
+                </AppText>
+              </View>
               <AppText style={[styles.bookingCardSub, { textAlign }]}>
                 {t("search.discover.bookingHubSub")}
               </AppText>
@@ -248,10 +269,10 @@ export function SearchDiscover(_props: Props) {
             <Feather
               name={isRTL ? "chevron-left" : "chevron-right"}
               size={20}
-              color="rgba(255,255,255,0.8)"
+              color="rgba(255,255,255,0.9)"
             />
           </View>
-        </LinearGradient>
+        </View>
       </Pressable>
 
       {/* ── Divider between marketplace portals and B2B hub ─────────────── */}
@@ -482,17 +503,19 @@ const styles = StyleSheet.create({
     marginTop: 12,
   },
   bookingCard: {
+    minHeight: 116,
     borderRadius: 20,
     overflow: "hidden",
     padding: 16,
     borderWidth: 1,
-    borderColor: "rgba(90,180,255,0.18)",
-    shadowColor: "#1A7FDB",
-    shadowOpacity: 0.22,
-    shadowRadius: 14,
-    shadowOffset: { width: 0, height: 5 },
+    borderColor: "rgba(255,255,255,0.10)",
+    shadowColor: "#000000",
+    shadowOpacity: 0.28,
+    shadowRadius: 12,
+    shadowOffset: { width: 0, height: 6 },
     elevation: 6,
     justifyContent: "center",
+    backgroundColor: "#190509",
   },
   bookingCardRow: {
     alignItems: "center",
