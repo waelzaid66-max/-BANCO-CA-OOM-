@@ -460,8 +460,8 @@ export async function respondToRequest(
   void createNotification({
     userId: req.buyerId,
     type: "global_supply",
-    title: "رد توريد جديد · New supply response",
-    body: `رد مورّد على طلبك «${req.productText}» · A supplier responded to your request`,
+    title: "New supply response",
+    body: `A supplier responded to your request for "${req.productText}"`,
     data: { request_id: requestId, response_id: response.id },
   });
 

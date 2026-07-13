@@ -1,6 +1,6 @@
 import app from "./app";
 import { logger } from "./lib/logger";
-import { ensureDbExtensions } from "./lib/bootstrap";
+import { ensureDbExtensions, ensureSeedData } from "./lib/bootstrap";
 import { reportErrorAsync } from "./lib/errorReporter";
 import { startScheduledJobs, runStartupBackfills } from "./jobs";
 
@@ -46,6 +46,7 @@ app.listen(port, (err) => {
 
   logger.info({ port }, "Server listening");
   void ensureDbExtensions();
+  void ensureSeedData();
   startScheduledJobs();
   void runStartupBackfills();
 });

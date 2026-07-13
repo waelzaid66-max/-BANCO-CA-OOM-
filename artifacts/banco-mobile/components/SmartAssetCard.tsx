@@ -1,7 +1,7 @@
 import { Ionicons, MaterialCommunityIcons } from "@/components/icons";
 import * as Haptics from "expo-haptics";
 import { Image } from "expo-image";
-import React, { useState } from "react";
+import React from "react";
 import { Pressable, StyleSheet, Text, View } from "react-native";
 import Animated, {
   useAnimatedStyle,
@@ -13,7 +13,6 @@ import Animated, {
 import { FeedItem, sendBehaviorSignal } from "@workspace/api-client-react";
 
 import { BReactionButton } from "@/components/BReactionButton";
-import { SectionBackdrop } from "@/components/SectionBackdrop";
 import { isVerifiedSignal } from "@/constants/feed";
 import { useColors } from "@/hooks/useColors";
 import { useI18n } from "@/context/LanguageContext";
@@ -93,24 +92,6 @@ function SmartAssetCardComponent({
     onPress?.(item);
   };
 
-  const [potentialFlash, setPotentialFlash] = useState(false);
-
-  const handlePotential = () => {
-    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
-    setPotentialFlash(true);
-    // A single tap on B IS the like: persist it (save) so it reaches the listing
-    // owner (their saves + notification) and shows as saved everywhere — not just
-    // a transient flash. Long-press still opens the save/dislike menu.
-    onSave?.(item);
-    void sendBehaviorSignal({
-      session_id: sessionId,
-      listing_id: item.id,
-      action: "interested",
-      category: item.category ?? undefined,
-    }).catch(() => {});
-    setTimeout(() => setPotentialFlash(false), 1200);
-  };
-
   const handleSave = () => {
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
     onSave?.(item);
@@ -120,7 +101,6 @@ function SmartAssetCardComponent({
   // "interested" boosts this category's affinity in the adaptive feed, "angry"
   // lowers it. Fire-and-forget; a network hiccup never touches the UI.
   const sendReaction = (action: "interested" | "angry") => {
-    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
     void sendBehaviorSignal({
       session_id: sessionId,
       listing_id: item.id,
@@ -162,23 +142,18 @@ function SmartAssetCardComponent({
           testID={`asset-card-${item.id}`}
         >
           <View style={[styles.imageWrapper, { height: imageHeight }]}>
-            {/* Section-identity backdrop sits under the photo. If the listing
-                has no photo, this is what shows — never a blank grey box. */}
-            <SectionBackdrop section={item.category} motifSize={compact ? 52 : 72} />
-            {item.media_preview ? (
-              <Image
-                source={{ uri: item.media_preview }}
-                style={[
-                  styles.image,
-                  {
-                    borderTopLeftRadius: colors.radius,
-                    borderTopRightRadius: colors.radius,
-                  },
-                ]}
-                contentFit="cover"
-                transition={200}
-              />
-            ) : null}
+            <Image
+              source={{ uri: item.media_preview }}
+              style={[
+                styles.image,
+                {
+                  borderTopLeftRadius: colors.radius,
+                  borderTopRightRadius: colors.radius,
+                },
+              ]}
+              contentFit="cover"
+              transition={200}
+            />
 
             <View style={styles.topBadges}>
               {item.is_sponsored && (
@@ -203,11 +178,6 @@ function SmartAssetCardComponent({
                   <Ionicons name="calendar" size={12} color="#FFFFFF" />
                 </View>
               ) : null}
-              {item.is_request ? (
-                <View style={[styles.sponsoredBadge, { backgroundColor: "#C9CCD1" }]}>
-                  <Text style={styles.sponsoredText}>{t("create.kindRequest")}</Text>
-                </View>
-              ) : null}
             </View>
 
             {item.has_video && (
@@ -229,10 +199,9 @@ function SmartAssetCardComponent({
                 <View style={styles.actionBtn}>
                   <BReactionButton
                     saved={!!isSaved}
-                    potentialActive={potentialFlash}
-                    saveIcon={saveIconFor(item.category, true)}
-                    onPotential={handlePotential}
-                    onSave={handleSave}
+                    likeIcon={saveIconFor(item.category, true)}
+                    onLike={handleSave}
+                    onInterested={() => sendReaction("interested")}
                     onAngry={() => sendReaction("angry")}
                     height={30}
                     testID={`save-${item.id}`}

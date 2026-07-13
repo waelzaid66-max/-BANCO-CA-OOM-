@@ -89,15 +89,3 @@ id = "cTP31Q7keqER8-T7i3W_3"
 uri = "file://database_backup.dump.gz"
 type = "unspecified"
 title = "database_backup.dump.gz — نسخة احتياطية مضغوطة للقاعدة الحالية"
-
-[[outputs]]
-id = "qOkhl2q-n6iqWN_UEO3cl"
-uri = "file://audit/maintenance/MOBILE-AUDIT-2026-07-11.md"
-type = "text"
-title = "BANCO Mobile — Full Technical Audit Report"
-
-[[outputs]]
-id = "cdEFkjVKcL59mbqqFuzMR"
-uri = "file://audit/bugs/BUG-REPORT-2026-07-11.md"
-type = "text"
-title = "BANCO Bug Report & Root Cause Analysis — 2026-07-11"

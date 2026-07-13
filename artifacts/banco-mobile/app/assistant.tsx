@@ -24,8 +24,6 @@ import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { AppText } from "@/components/AppText";
 import { BancoLogo } from "@/components/BancoLogo";
 import { useI18n } from "@/context/LanguageContext";
-import { searchCriteriaToNavParams } from "@/lib/searchNavParams";
-import { DEFAULT_CRITERIA, type SearchCriteria } from "@/lib/searchParams";
 import { useColors } from "@/hooks/useColors";
 
 type ChatMessage = {
@@ -47,32 +45,9 @@ const SCREEN_ROUTES: Record<string, Href> = {
   messages: "/(tabs)/messages",
   my_listings: "/listings/mine",
   create_listing: "/listings/create",
-  wallet: "/wallet" as Href,
-  billing: "/billing" as Href,
   profile: "/(tabs)/profile",
   notifications: "/notifications",
-  supply_hub: "/business/supply-hub",
-  industry: "/industry",
-  rentals: "/rentals/hub" as Href,
-  assistant: "/assistant",
 };
-
-function assistantSearchCategory(
-  raw: string | null | undefined,
-): SearchCriteria["category"] {
-  if (
-    raw === "car" ||
-    raw === "real_estate" ||
-    raw === "facilities" ||
-    raw === "materials" ||
-    raw === "all"
-  ) {
-    return raw;
-  }
-  // Server search tool still emits legacy `industrial`; mobile search UI uses facilities.
-  if (raw === "industrial") return "facilities";
-  return DEFAULT_CRITERIA.category;
-}
 
 export default function AssistantScreen() {
   const colors = useColors();
@@ -111,26 +86,16 @@ export default function AssistantScreen() {
         const resp = await askBancoAssistant({ message, history });
         const answer = resp.data?.answer?.trim();
         const actions = resp.data?.actions ?? [];
-        const errMsg = resp.error?.message?.trim();
         setMessages((prev) => [
           ...prev,
           answer
             ? { id: nextId(), role: "assistant", content: answer, actions }
-            : {
-                id: nextId(),
-                role: "assistant",
-                content: errMsg || t("assistant.errorBubble"),
-                error: true,
-              },
+            : { id: nextId(), role: "assistant", content: t("assistant.errorBubble"), error: true },
         ]);
-      } catch (e) {
-        const detail =
-          e instanceof Error && e.message.trim()
-            ? e.message.trim()
-            : t("assistant.errorBubble");
+      } catch {
         setMessages((prev) => [
           ...prev,
-          { id: nextId(), role: "assistant", content: detail, error: true },
+          { id: nextId(), role: "assistant", content: t("assistant.errorBubble"), error: true },
         ]);
       } finally {
         setSending(false);
@@ -158,13 +123,11 @@ export default function AssistantScreen() {
       return;
     }
     if (a.kind === "search") {
-      const params = searchCriteriaToNavParams({
-        ...DEFAULT_CRITERIA,
-        q: a.query ?? "",
-        category: assistantSearchCategory(a.category),
-        maxPrice: a.max_price != null ? String(a.max_price) : "",
-        paymentType: a.has_installment ? "installment" : "any",
-      });
+      const params: Record<string, string> = {};
+      if (a.query) params.q = a.query;
+      if (a.category) params.category = a.category;
+      if (a.max_price != null) params.maxPrice = String(a.max_price);
+      if (a.has_installment) params.paymentType = "installment";
       router.push({ pathname: "/(tabs)/search", params });
       return;
     }

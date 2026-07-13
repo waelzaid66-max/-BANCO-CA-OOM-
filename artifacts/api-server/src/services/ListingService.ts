@@ -1,4 +1,3 @@
-import { clerkClient } from "@clerk/express";
 import { db } from "@workspace/db";
 import {
   listings,
@@ -9,20 +8,18 @@ import {
   interactions,
   locations,
 } from "@workspace/db/schema";
-import { eq, and, desc, asc, sql, count } from "drizzle-orm";
+import { eq, and, desc, sql, count } from "drizzle-orm";
 import { normalizePaymentOptions, computeOffers } from "./PaymentService";
 import { normalizeListing, detectDuplicate, computeTrustScore, validateMedia } from "./NormalizationService";
 import { checkListingRate, auditListingFlag } from "./AbuseService";
-import { notifyNewMatch, notifyPriceDrop, notifyFollowersOfNewListing } from "./AlertService";
+import { notifyNewMatch, notifyPriceDrop } from "./AlertService";
 import { recomputeDealerQuality } from "./QualityService";
 import { trackCandidateAttributes } from "./CandidateAttributeService";
 import { recordPriceObservation } from "./MarketInsightsService";
 import { checkListingQuota, type UserRole } from "./PlanService";
 import { getLinksForListing } from "./ListingLinkService";
 import { mintContactToken } from "./LeadService";
-import { getSocialLinksForUserId } from "./ProfileService";
 import { publicVisibilityConditions } from "../lib/feedVisibility";
-import { sortListingMedia, pickListingThumbnailUrl } from "../lib/listingMediaPreview";
 import { getObjectStorageService } from "../lib/objectStorageProvider";
 import {
   assertCallerMayUseUpload,
@@ -35,29 +32,6 @@ import type { CreateListingSchema } from "../validators/schemas";
 import type { z } from "zod";
 
 const objectStorageService = getObjectStorageService();
-
-async function getSellerPresentational(clerkId: string | null | undefined): Promise<{
-  bio: string | null;
-  display_title: string | null;
-}> {
-  if (!clerkId) return { bio: null, display_title: null };
-  try {
-    const clerkUser = await clerkClient.users.getUser(clerkId);
-    const pub = (clerkUser.publicMetadata ?? {}) as Record<string, unknown>;
-    const unsafe = (clerkUser.unsafeMetadata ?? {}) as Record<string, unknown>;
-    const bioRaw =
-      (typeof pub.bio === "string" ? pub.bio : "") ||
-      (typeof unsafe.bio === "string" ? unsafe.bio : "");
-    const titleRaw =
-      (typeof pub.displayTitle === "string" ? pub.displayTitle : "") ||
-      (typeof unsafe.displayTitle === "string" ? unsafe.displayTitle : "");
-    const bio = bioRaw.trim() || null;
-    const display_title = titleRaw.trim() || null;
-    return { bio, display_title };
-  } catch {
-    return { bio: null, display_title: null };
-  }
-}
 
 type CreateListingInput = z.infer<typeof import("../validators/schemas").CreateListingSchema>;
 
@@ -184,16 +158,7 @@ export function validateAttributes(
   // land listing is never forced to invent one. Mirrors the mobile gate
   // (requiredSpecKeysFor / REAL_ESTATE_NO_ROOMS_TYPES).
   if (category === "real_estate") {
-    // Keep in sync with mobile REAL_ESTATE_NO_ROOMS_TYPES (incl. warehouse /
-    // commercial_land from the property_type engine expansion).
-    const noRooms = [
-      "land",
-      "commercial_land",
-      "shop",
-      "office",
-      "clinic",
-      "warehouse",
-    ];
+    const noRooms = ["land", "shop", "office", "clinic"];
     const pt = typeof specs.property_type === "string" ? specs.property_type : "";
     if (!noRooms.includes(pt)) requiredKeys.push("rooms");
   }
@@ -482,17 +447,6 @@ export async function createListing(
     sellerId: user.id,
   });
 
-  // Best-effort: ping the seller's followers about the new listing (no-op when
-  // they have none). Skipped for buyer "request/wanted" posts — followers care
-  // about what a seller is OFFERING, not what they're looking to buy.
-  if (!(input.is_request ?? false)) {
-    void notifyFollowersOfNewListing({
-      id: created.id,
-      title: normalized.title,
-      sellerId: user.id,
-    });
-  }
-
   return created;
 }
 
@@ -586,7 +540,6 @@ export async function getListingDetail(listingId: string, viewerClerkId?: string
       seller_clerk_id: users.clerkId,
       seller_name: users.name,
       seller_role: users.role,
-      is_request: listings.isRequest,
       // seller_phone intentionally excluded — phone reveal is gated behind
       // POST /leads/contact so that every access is a server-observed contact event.
       is_verified: users.isVerified,
@@ -615,13 +568,8 @@ export async function getListingDetail(listingId: string, viewerClerkId?: string
 
   const isOwner = viewerClerkId && viewerClerkId === listing.seller_clerk_id;
 
-  const [mediaRows, paymentRows, attrRows, linkedListings, contactToken, sellerSocialLinks, sellerPresentational] =
-    await Promise.all([
-    db
-      .select()
-      .from(listingMedia)
-      .where(eq(listingMedia.listingId, listingId))
-      .orderBy(desc(listingMedia.isThumbnail), asc(listingMedia.sortOrder)),
+  const [mediaRows, paymentRows, attrRows, linkedListings, contactToken] = await Promise.all([
+    db.select().from(listingMedia).where(eq(listingMedia.listingId, listingId)),
     db.select().from(paymentOptions).where(eq(paymentOptions.listingId, listingId)),
     db.select().from(listingAttributes).where(eq(listingAttributes.listingId, listingId)).limit(1),
     getLinksForListing(listingId),
@@ -631,10 +579,6 @@ export async function getListingDetail(listingId: string, viewerClerkId?: string
     viewerClerkId && !isOwner
       ? mintContactToken(viewerClerkId, listingId)
       : Promise.resolve(null),
-    listing.user_id
-      ? getSocialLinksForUserId(listing.user_id)
-      : Promise.resolve([]),
-    getSellerPresentational(listing.seller_clerk_id),
   ]);
 
   const payment = normalizePaymentOptions(paymentRows);
@@ -688,20 +632,16 @@ export async function getListingDetail(listingId: string, viewerClerkId?: string
     title: listing.title,
     description: listing.description,
     category: listing.category,
-    price_display: listing.is_request
-      ? REQUEST_PRICE_DISPLAY
-      : formatEGP(String(listing.base_price_cash ?? 0)),
+    price_display: formatEGP(listing.base_price_cash),
     // Additive: the raw numeric cash price. For furnished/daily rentals it is the
     // per-night rate the booking widget multiplies by the night count for a
     // pre-booking estimate (the server stays authoritative on the real total).
     price_cash:
-      typeof listing.base_price_cash === "number" && listing.base_price_cash > 0
-        ? listing.base_price_cash
-        : null,
+      typeof listing.base_price_cash === "number" ? listing.base_price_cash : null,
     location: listing.location,
     status: listing.status,
     created_at: listing.created_at?.toISOString() ?? new Date().toISOString(),
-    media: sortListingMedia(mediaRows).map((m) => ({
+    media: mediaRows.map((m) => ({
       id: m.id,
       type: m.type,
       url: m.url,
@@ -718,9 +658,6 @@ export async function getListingDetail(listingId: string, viewerClerkId?: string
       name: listing.seller_name ?? "Unknown",
       role: listing.seller_role ?? "individual",
       is_verified: listing.is_verified ?? false,
-      social_links: sellerSocialLinks,
-      bio: sellerPresentational.bio,
-      display_title: sellerPresentational.display_title,
     },
     interactions: {
       views: listing.views ?? 0,
@@ -736,7 +673,6 @@ export async function getListingDetail(listingId: string, viewerClerkId?: string
     contact_token: contactToken,
     // Opt-in only — true only when the seller explicitly enabled WhatsApp.
     whatsapp_enabled: (specs as Record<string, unknown>).whatsapp_enabled === true,
-    is_request: listing.is_request ?? false,
   };
 }
 
@@ -808,21 +744,15 @@ export async function getSeoListing(listingId: string): Promise<SeoListing | nul
       url: listingMedia.url,
       thumbnail_url: listingMedia.thumbnailUrl,
       is_thumbnail: listingMedia.isThumbnail,
-      sort_order: listingMedia.sortOrder,
     })
     .from(listingMedia)
-    .where(eq(listingMedia.listingId, listingId))
-    .orderBy(desc(listingMedia.isThumbnail), asc(listingMedia.sortOrder));
+    .where(eq(listingMedia.listingId, listingId));
 
-  const image_path = pickListingThumbnailUrl(
-    mediaRows.map((m) => ({
-      type: m.type,
-      url: m.url,
-      thumbnail_url: m.thumbnail_url,
-      is_thumbnail: m.is_thumbnail,
-      sort_order: m.sort_order,
-    })),
-  );
+  const cover = mediaRows.find((m) => m.is_thumbnail && m.type === "image");
+  const firstImage = mediaRows.find((m) => m.type === "image");
+  const videoPoster = mediaRows.find((m) => m.type === "video" && m.thumbnail_url);
+  const image_path =
+    cover?.url ?? firstImage?.url ?? videoPoster?.thumbnail_url ?? null;
 
   return {
     id: row.id,
@@ -1035,15 +965,6 @@ export async function getPublicListings(options: {
 
 /* ── Update Listing ────────────────────────────────────── */
 
-type ListingMediaPatch = {
-  type: "image" | "video";
-  url: string;
-  thumbnail_url?: string;
-  is_thumbnail?: boolean;
-  width?: number;
-  height?: number;
-};
-
 export async function updateListing(
   id: string,
   clerkUserId: string,
@@ -1062,7 +983,6 @@ export async function updateListing(
       country_of_origin?: string | null;
       shipping_method?: "container" | "bulk" | "air" | null;
     };
-    media?: ListingMediaPatch[];
   }
 ): Promise<{ id: string; updated: boolean }> {
   const [user] = await db
@@ -1081,7 +1001,6 @@ export async function updateListing(
       category: listings.category,
       basePriceCash: listings.basePriceCash,
       location: listings.location,
-      isRequest: listings.isRequest,
     })
     .from(listings)
     .where(and(eq(listings.id, id), eq(listings.userId, user.id)))
@@ -1101,34 +1020,7 @@ export async function updateListing(
   const mediaRows = await db
     .select({ type: listingMedia.type, url: listingMedia.url })
     .from(listingMedia)
-    .where(eq(listingMedia.listingId, id))
-    .orderBy(desc(listingMedia.isThumbnail), asc(listingMedia.sortOrder));
-
-  const previousMediaUrls = new Set(mediaRows.map((m) => m.url));
-
-  if (updates.media !== undefined) {
-    if (!listing.isRequest && updates.media.length === 0) {
-      throw Object.assign(new Error("At least one media file is required"), { code: "INVALID_DATA" });
-    }
-    await assertVideosWithinSizeLimit(updates.media, (url) =>
-      objectStorageService.getServingObjectMetadata(url)
-    );
-    await assertImagesWithinSizeLimit(updates.media, (url) =>
-      objectStorageService.getServingObjectMetadata(url)
-    );
-    for (const m of updates.media) {
-      await assertCallerMayUseUpload(m.url, clerkUserId);
-    }
-  }
-
-  const mediaForNormalize =
-    updates.media !== undefined
-      ? updates.media.map((m) => ({
-          type: m.type,
-          url: m.url,
-          thumbnail_url: m.thumbnail_url,
-        }))
-      : mediaRows.map((m) => ({ type: m.type as "image" | "video", url: m.url }));
+    .where(eq(listingMedia.listingId, id));
 
   const mergedSpecs = {
     ...((existingAttr?.specs as Record<string, unknown>) ?? {}),
@@ -1143,18 +1035,11 @@ export async function updateListing(
       base_price_cash: updates.base_price_cash ?? Number(listing.basePriceCash),
       location: updates.location ?? listing.location,
       specs: mergedSpecs,
-      media: mediaForNormalize,
+      media: mediaRows.map((m) => ({ type: m.type, url: m.url })),
     },
     // Always-publish (see createListing): edits never 400 on an unmatched
     // controlled value — it warns + ranks lower instead of rejecting.
-    {
-      sellerId: user.id,
-      sellerVerified: !!user.isVerified,
-      excludeListingId: id,
-      lenient: true,
-      autoLearn: true,
-      requireMedia: updates.media !== undefined ? !listing.isRequest : false,
-    }
+    { sellerId: user.id, sellerVerified: !!user.isVerified, excludeListingId: id, lenient: true, autoLearn: true }
   );
 
   // Additive (Task #40): only patch logistics when the caller provided it, so an
@@ -1216,39 +1101,7 @@ export async function updateListing(
         ...logisticsPatch,
       } as Partial<typeof listingAttributes.$inferInsert>)
       .where(eq(listingAttributes.listingId, id));
-
-    if (updates.media !== undefined) {
-      await tx.delete(listingMedia).where(eq(listingMedia.listingId, id));
-      if (updates.media.length > 0) {
-        await tx.insert(listingMedia).values(
-          updates.media.map((m, idx) => {
-            const firstImageIdx = updates.media!.findIndex((x) => x.type === "image");
-            return {
-              listingId: id,
-              type: m.type,
-              url: m.url,
-              thumbnailUrl: m.thumbnail_url ?? null,
-              isThumbnail: m.is_thumbnail ?? idx === firstImageIdx,
-              sortOrder: idx,
-            };
-          })
-        );
-      }
-    }
   });
-
-  if (updates.media !== undefined) {
-    await Promise.all(
-      updates.media
-        .filter((m) => !previousMediaUrls.has(m.url))
-        .map(async (m) => {
-          await assertCallerMayUseUpload(m.url, clerkUserId);
-          await objectStorageService.promoteServingUrlToPublic(m.url, clerkUserId);
-          const wildcard = parseServingWildcard(m.url);
-          if (wildcard) await consumeUploadClaim(servingWildcardToObjectPath(wildcard));
-        })
-    );
-  }
 
   // Durable audit trail for any abuse-flagged/demoted listing on edit.
   await auditListingFlag({

@@ -62,11 +62,8 @@ export async function syncRoleToClerk(clerkId: string, role: string): Promise<vo
 }
 
 export interface UpdateUserProfileInput {
-  account_type?: "individual" | "dealer" | "company" | "financial_institution";
+  account_type?: "individual" | "dealer" | "company";
   phone?: string | null;
-  bio?: string | null;
-  display_title?: string | null;
-  category_label?: string | null;
   business?: {
     activity_type: "car_dealer" | "real_estate_developer" | "factory" | "supplier";
     business_name: string;
@@ -132,20 +129,16 @@ export async function updateUserProfile(
   if (input.phone !== undefined) patch.phone = input.phone;
 
   // Account-type selection is SERVER-authoritative. The client can only ever
-  // request one of four onboarding types — individual / dealer (Business Pro) /
-  // company / financial_institution — and we map each to a concrete role here.
-  // A client can never request `admin` or any privileged role; those are
-  // unreachable through this path. A financial institution still has to pass
-  // verification (KYC / bank approval) before its financing features unlock.
+  // request one of three onboarding types — individual / dealer / company —
+  // and we map each to a concrete role here. A client can never request
+  // `admin` or any privileged role; those are unreachable through this path.
   if (input.account_type) {
     patch.role =
       input.account_type === "individual"
         ? "individual"
         : input.account_type === "company"
           ? "company"
-          : input.account_type === "financial_institution"
-            ? "financial_institution"
-            : "dealer";
+          : "dealer";
   }
 
   // A business signup always hard-maps to a seller role. If the client also
@@ -170,42 +163,14 @@ export async function updateUserProfile(
     };
   }
 
-  // Empty DB patch — still allow Clerk-only profile presentation updates.
-  const hasPresentationPatch =
-    input.bio !== undefined ||
-    input.display_title !== undefined ||
-    input.category_label !== undefined;
+  // Empty patch (no-op) — return the current row without an empty UPDATE.
+  if (Object.keys(patch).length === 0) return user;
 
-  if (Object.keys(patch).length === 0 && !hasPresentationPatch) return user;
-
-  let updated = user;
-  if (Object.keys(patch).length > 0) {
-    const [row] = await db
-      .update(users)
-      .set(patch)
-      .where(eq(users.id, user.id))
-      .returning();
-    updated = row;
-  }
-
-  if (hasPresentationPatch) {
-    try {
-      const presentation: Record<string, string | null> = {};
-      if (input.bio !== undefined) presentation.bio = input.bio;
-      if (input.display_title !== undefined) {
-        presentation.displayTitle = input.display_title;
-      }
-      if (input.category_label !== undefined) {
-        presentation.categoryLabel = input.category_label;
-      }
-      await clerkClient.users.updateUserMetadata(clerkId, {
-        publicMetadata: presentation,
-        unsafeMetadata: presentation,
-      });
-    } catch (err) {
-      console.error("[Profile sync] Failed to mirror presentation to Clerk", err);
-    }
-  }
+  const [updated] = await db
+    .update(users)
+    .set(patch)
+    .where(eq(users.id, user.id))
+    .returning();
 
   // Best-effort mirror of the resolved role (+ business profile) into Clerk
   // publicMetadata so client surfaces that read it stay consistent.

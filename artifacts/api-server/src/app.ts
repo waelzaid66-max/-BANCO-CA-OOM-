@@ -112,12 +112,6 @@ app.use(express.json({ limit: "100kb" }));
 app.use(express.urlencoded({ extended: true, limit: "100kb" }));
 
 // Liveness/readiness probes must not depend on Clerk secrets or auth context.
-// Root liveness too: the deploy healthchecker probes "/" and "/api" (not
-// "/api/healthz"), so during the ~4s startup those 404'd/500'd and flooded the
-// logs (BUG-003). Answer 200 the instant the port is bound, before Clerk/DB.
-app.get("/", (_req, res) => {
-  res.json({ status: "ok" });
-});
 app.use("/api", healthRouter);
 
 // Resolve publishable key from request host for multi-domain support
@@ -129,17 +123,6 @@ app.use(
     ),
   })),
 );
-
-// Root-path liveness probe — Replit's reverse proxy, uptime monitors, and
-// browser "is the server up?" checks all hit GET /. Without this handler they
-// fall through to notFoundHandler and produce a stream of noisy 404s in the
-// access log. Returning a terse 200 JSON ping keeps the process observable while
-// keeping the logs quiet (requestLogger skips GET / entirely — see requestLogger.ts).
-// This is NOT part of the public API contract; /api/healthz is the canonical
-// liveness probe and /api/readyz is the canonical readiness probe.
-app.get("/", (_req, res) => {
-  res.set("Cache-Control", "no-store").json({ service: "BANCO API", docs: "/api/healthz" });
-});
 
 // Public, crawler-facing HTML/XML routes (/l/:id, /sitemap.xml, /robots.txt).
 // Mounted BEFORE /api and the 404 handler so these paths resolve to real pages.

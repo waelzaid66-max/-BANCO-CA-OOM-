@@ -107,13 +107,12 @@ export async function notifyPaymentSuccess(
   };
 
   const arBody = receiptBody(payload.kind, payload.amount, true, payload.planName);
-  const enBody = receiptBody(payload.kind, payload.amount, false, payload.planName);
 
   await createNotification({
     userId: payload.userId,
     type: "payment_success",
-    title: "تم الدفع بنجاح · Payment successful",
-    body: `${arBody} · ${enBody}`,
+    title: "تم الدفع بنجاح",
+    body: arBody,
     data,
   });
 
@@ -158,8 +157,8 @@ export async function notifyPaymentFailed(payload: BillingFailedPayload): Promis
   await createNotification({
     userId: payload.userId,
     type: "payment_failed",
-    title: "فشل الدفع · Payment failed",
-    body: `لم يكتمل ${purposeLabel.ar} (${payload.amount} ج.م عبر ${payload.method}). · ${purposeLabel.en} of ${payload.amount} EGP via ${payload.method} did not complete.`,
+    title: "فشل الدفع",
+    body: `لم يكتمل ${purposeLabel.ar} (${payload.amount} ج.م عبر ${payload.method}).`,
     data: {
       intent_id: payload.intentId,
       amount: payload.amount,
@@ -252,8 +251,8 @@ export async function notifySubscriptionsExpiringSoon(): Promise<number> {
     await createNotification({
       userId: row.userId,
       type: "subscription_expiring",
-      title: "اشتراكك ينتهي قريباً · Subscription expiring",
-      body: `اشتراك ${row.planName} ينتهي خلال ${daysLeft} يوم · Your ${row.planName} subscription expires in ${daysLeft} day${daysLeft === 1 ? "" : "s"}.`,
+      title: "اشتراكك ينتهي قريباً",
+      body: `اشتراك ${row.planName} ينتهي خلال ${daysLeft} يوم.`,
       data: {
         subscription_id: row.subscriptionId,
         plan_name: row.planName,

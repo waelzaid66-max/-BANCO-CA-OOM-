@@ -3,12 +3,7 @@ import { plans, subscriptions, listings, type Plan } from "@workspace/db/schema"
 import { and, count, eq, gte } from "drizzle-orm";
 import { invalidData } from "../lib/billing";
 
-export type UserRole =
-  | "individual"
-  | "dealer"
-  | "company"
-  | "enterprise"
-  | "financial_institution";
+export type UserRole = "individual" | "dealer" | "company" | "enterprise";
 
 /** A db transaction handle as passed to db.transaction callbacks. */
 type DbTx = Parameters<Parameters<typeof db.transaction>[0]>[0];

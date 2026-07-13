@@ -3,6 +3,7 @@ import { Feather, Ionicons } from "@/components/icons";
 import { AppTextInput as TextInput } from "@/components/AppTextInput";
 import {
   createListing,
+  verifyUpload,
   useGetMe,
   getGetMeQueryKey,
   useGetMySubscription,
@@ -37,7 +38,6 @@ import {
   buildResolvedMedia,
   uploadResolvedMedia,
   uploadErrorMessageKey,
-  verifyUploadWithRetry,
 } from "@/lib/upload";
 import {
   MAX_MEDIA,
@@ -60,20 +60,15 @@ import { KeyboardAwareScrollViewCompat } from "@/components/KeyboardAwareScrollV
 import { LocationPicker } from "@/components/LocationPicker";
 import { PermissionRationaleModal } from "@/components/PermissionRationaleModal";
 import { SmartAssetCard } from "@/components/SmartAssetCard";
-import { type CarBrand, brandLabel, CAR_BRANDS, carBrandFromDraftValue } from "@/constants/cars";
+import { type CarBrand, brandLabel, CAR_BRANDS } from "@/constants/cars";
 import {
   INDUSTRIAL_TYPES,
   visibleSpecFieldsFor,
   UI_CATEGORIES,
   apiCategoryForUi,
   requiredSpecKeysFor,
-  DEFAULT_MARKET_COUNTRY,
   type UiListingCategory,
 } from "@/constants/listingCreateTaxonomy";
-import {
-  loadPreferredMarketCountry,
-  normalizeMarketCountry,
-} from "@/lib/marketPreference";
 import { buildPreviewFeedItem } from "@/constants/listingPreview";
 import {
   DEFAULT_COUNTRY,
@@ -181,19 +176,6 @@ export default function CreateListingScreen() {
   const [step, setStep] = useState(0);
   const [category, setCategory] = useState<UiListingCategory | null>(null);
   const [photos, setPhotos] = useState<ImagePicker.ImagePickerAsset[]>([]);
-  // Seller market for inventory scoping (same preference as Search country).
-  const [publishMarketCountry, setPublishMarketCountry] = useState(
-    DEFAULT_MARKET_COUNTRY,
-  );
-  useEffect(() => {
-    let cancelled = false;
-    void loadPreferredMarketCountry().then((iso) => {
-      if (!cancelled) setPublishMarketCountry(iso);
-    });
-    return () => {
-      cancelled = true;
-    };
-  }, []);
   const [captions, setCaptions] = useState<Record<string, string>>({});
   const [specs, setSpecs] = useState<Record<string, string>>({});
   // Free-form seller specs (philosophy: unlimited, save-everything). Stored as
@@ -280,21 +262,8 @@ export default function CreateListingScreen() {
     [specFields, requiredSpecKeys],
   );
 
-  // Spec writes clear sibling fields that become illegal for the new value so
-  // a sale→rent (or land→apartment) toggle never leaves a wrong field stamped.
   const setSpec = (key: string, value: string) =>
-    setSpecs((prev) => {
-      const next: Record<string, string> = { ...prev, [key]: value };
-      if (key === "offer_type") {
-        if (value === "sale") delete next.rental_term;
-        if (value === "rent") delete next.ownership;
-        if (value === "") {
-          delete next.rental_term;
-          delete next.ownership;
-        }
-      }
-      return next;
-    });
+    setSpecs((prev) => ({ ...prev, [key]: value }));
 
   // Capture the seller's current GPS location for the listing pin (#4). Optional
   // + best-effort: a denied permission or any failure leaves the pin unset and
@@ -309,21 +278,6 @@ export default function CreateListingScreen() {
         accuracy: Location.Accuracy.Balanced,
       });
       setPin({ lat: pos.coords.latitude, lng: pos.coords.longitude });
-      try {
-        const places = await Location.reverseGeocodeAsync({
-          latitude: pos.coords.latitude,
-          longitude: pos.coords.longitude,
-        });
-        const place = places[0];
-        if (place && !locationValue?.trim()) {
-          const label = [place.district, place.city, place.region]
-            .filter(Boolean)
-            .join(", ");
-          if (label) setLocation(label);
-        }
-      } catch {
-        // display label optional when reverse geocode unavailable
-      }
     } catch {
       // location is optional — never surface as a blocking error
     } finally {
@@ -372,7 +326,7 @@ export default function CreateListingScreen() {
         setSpecs(d.specs);
         setCustomSpecs(d.customSpecs);
         setCarBrand(
-          d.carBrandValue ? carBrandFromDraftValue(d.carBrandValue) : null,
+          d.carBrandValue ? CAR_BRANDS.find((b) => b.value === d.carBrandValue) ?? null : null,
         );
         setCarModel(d.carModel);
         setIndustrialType(d.industrialType);
@@ -385,29 +339,6 @@ export default function CreateListingScreen() {
             (p) => p.mode === "seller_installment" || p.mode === "bank_finance",
           ) as PlanDraft[],
         );
-        if (d.promotedMedia?.length) {
-          const restored = d.promotedMedia.map((m) => ({
-            uri: m.url,
-            width: 800,
-            height: 600,
-            type: m.type === "video" ? ("video" as const) : ("image" as const),
-            mimeType: m.type === "video" ? "video/mp4" : "image/jpeg",
-          }));
-          setPhotos(restored);
-          setUploadState(
-            Object.fromEntries(
-              d.promotedMedia.map((m) => [
-                m.url,
-                {
-                  status: "uploaded" as const,
-                  progress: 1,
-                  url: m.url,
-                  type: m.type,
-                },
-              ]),
-            ),
-          );
-        }
       } catch {
         // a broken draft must never block creating a listing
       } finally {
@@ -423,11 +354,6 @@ export default function CreateListingScreen() {
   // on the success screen or mid-submit. Photos/upload state are intentionally out.
   useEffect(() => {
     if (!draftReady.current || done || submitting) return;
-    const promotedMedia = photos.flatMap((p) => {
-      const entry = uploadState[p.uri];
-      if (entry?.status !== "uploaded" || !entry.url || !entry.type) return [];
-      return [{ type: entry.type, url: entry.url }];
-    });
     const input: ListingDraftInput = {
       step,
       category,
@@ -446,7 +372,6 @@ export default function CreateListingScreen() {
       carOrigin,
       phones,
       plans,
-      ...(promotedMedia.length > 0 ? { promotedMedia } : {}),
     };
     if (!listingDraftHasContent(input)) return;
     const handle = setTimeout(() => {
@@ -471,8 +396,6 @@ export default function CreateListingScreen() {
     carOrigin,
     phones,
     plans,
-    photos,
-    uploadState,
     done,
     submitting,
   ]);
@@ -512,9 +435,26 @@ export default function CreateListingScreen() {
       prev.map((p, i) => (i === index ? { ...p, ...patch } : p)),
     );
 
-  // Verify the stored object is readable before marking a tile done (shared helper).
-  const verifyWithRetry = async (url: string, signal: AbortSignal) =>
-    verifyUploadWithRetry(url, { signal });
+  // Verify the stored object is readable before marking a tile done. The verify
+  // endpoint returns 503 while storage metadata is still settling (read-after-
+  // write lag); treat that as transient and retry a few times. Any other error
+  // is permanent and propagates to mark the upload failed.
+  const verifyWithRetry = async (url: string, signal: AbortSignal) => {
+    for (let attempt = 1; attempt <= 4; attempt += 1) {
+      if (signal.aborted) return;
+      try {
+        await verifyUpload({ url });
+        return;
+      } catch (e) {
+        const status = (e as { status?: number } | null)?.status;
+        if (status === 503 && attempt < 4) {
+          await new Promise((r) => setTimeout(r, 700 * attempt));
+          continue;
+        }
+        throw e;
+      }
+    }
+  };
 
   // Per-asset upload state machine: uploading(progress) -> verifying -> uploaded
   // | failed. Media uploads the moment it's added so publishing is instant, the
@@ -633,27 +573,11 @@ export default function CreateListingScreen() {
     removePhoto(asset.uri);
   };
 
-  const requestLibraryPermission = async (): Promise<boolean> => {
-    const perm = await ImagePicker.requestMediaLibraryPermissionsAsync();
-    if (perm.granted) return true;
-    if (Platform.OS !== "web" && !perm.canAskAgain) {
-      Alert.alert(t("create.libraryDeniedTitle"), t("create.libraryDeniedBody"), [
-        { text: t("common.cancel"), style: "cancel" },
-        {
-          text: t("create.openSettings"),
-          onPress: () => Linking.openSettings().catch(() => {}),
-        },
-      ]);
-    } else {
-      setError(t("create.libraryDeniedBody"));
-    }
-    return false;
-  };
-
   const launchPicker = async () => {
     setShowPhotoRationale(false);
     try {
-      if (!(await requestLibraryPermission())) return;
+      const perm = await ImagePicker.requestMediaLibraryPermissionsAsync();
+      if (!perm.granted) return;
       const remaining = MAX_MEDIA - photos.length;
       if (remaining <= 0) return;
       const result = await ImagePicker.launchImageLibraryAsync({
@@ -695,7 +619,8 @@ export default function CreateListingScreen() {
   // for the rare case the platform returns an over-cap clip.
   const launchVideoTrimPicker = async () => {
     try {
-      if (!(await requestLibraryPermission())) return;
+      const perm = await ImagePicker.requestMediaLibraryPermissionsAsync();
+      if (!perm.granted) return;
       const videoCount = photos.filter(isVideoAsset).length;
       if (videoCount >= MAX_VIDEOS || photos.length >= MAX_MEDIA) return;
       const result = await ImagePicker.launchImageLibraryAsync({
@@ -991,20 +916,16 @@ export default function CreateListingScreen() {
   }, [done, step]);
 
   const handleSubmit = async () => {
-    // Re-validate every wizard step (0-indexed) so a deep-linked draft can't slip
-    // an invalid body to the API; jump back to the first failing step.
-    for (const s of [0, 1, 2, 3]) {
+    if (!category) return setError(t("create.errCategory"));
+    // Re-validate every prior step so a deep-linked / edited draft can't slip an
+    // invalid body to the API; jump back to the first failing step.
+    for (const s of [1, 2, 3, 4]) {
       const err = validateStep(s);
       if (err) {
         setError(err);
         setStep(s);
         return;
       }
-    }
-    if (!category) {
-      setError(t("create.errCategory"));
-      setStep(0);
-      return;
     }
     // Requests carry no sale price; omit base_price_cash entirely so the server
     // applies its request rules instead of a 0 price.
@@ -1077,8 +998,6 @@ export default function CreateListingScreen() {
       const specsClean: Record<string, unknown> = {};
       // Contact is the one spec dimension a buyer request also needs.
       specsClean.contact_phones = cleanPhones;
-      // Scope inventory to the seller's preferred market (search list + map).
-      specsClean.market_country = normalizeMarketCountry(publishMarketCountry);
       // WhatsApp opt-in: buyers only see the WhatsApp contact path when the
       // seller explicitly enables it. Stored on the free-form specs and surfaced
       // via the additive `whatsapp_enabled` field on the feed + detail contract.
@@ -1566,11 +1485,7 @@ export default function CreateListingScreen() {
     <View key={field.key}>
       <FieldLabel
         label={t(field.labelKey)}
-        tag={
-          requiredSpecKeys.includes(field.key)
-            ? t("create.required")
-            : t("create.optional")
-        }
+        tag={field.required ? t("create.required") : t("create.optional")}
         colors={colors}
         rowDir={rowDir}
       />

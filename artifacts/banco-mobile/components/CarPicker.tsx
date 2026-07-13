@@ -1,5 +1,5 @@
 import { Feather } from "@/components/icons";
-import React, { useEffect, useMemo, useRef, useState } from "react";
+import React, { useMemo, useState } from "react";
 import {
   Modal,
   Pressable,
@@ -24,7 +24,7 @@ import {
 
 interface CarPickerProps {
   visible: boolean;
-  /** browse = catalogue + any-brand clear; create = catalogue + always-visible custom brand. */
+  /** browse = rich catalogue (maps to a search term); create = backend-known only. */
   mode: "browse" | "create";
   selectedBrand?: string;
   selectedModel?: string;
@@ -32,16 +32,6 @@ interface CarPickerProps {
   /** model is null when the user picks the whole brand (browse) or "Other" (create). */
   onSelect: (brand: CarBrand, model: string | null) => void;
   onClear: () => void;
-}
-
-function toCustomBrand(name: string): CarBrand {
-  const trimmed = name.trim();
-  return {
-    value: `custom:${trimmed.toLowerCase()}`,
-    en: trimmed,
-    ar: trimmed,
-    country: "other",
-  };
 }
 
 export function CarPicker({
@@ -56,26 +46,17 @@ export function CarPicker({
   const colors = useColors();
   const { t, isRTL } = useI18n();
   const insets = useSafeAreaInsets();
-  const searchRef = useRef<TextInput>(null);
 
   const [activeBrand, setActiveBrand] = useState<CarBrand | null>(null);
   const [query, setQuery] = useState("");
-  /** Create-mode: user chose "Other brand" — keep typed brand row visible. */
-  const [customBrandMode, setCustomBrandMode] = useState(false);
 
   const rowDir = isRTL ? "row-reverse" : "row";
   const textAlign = isRTL ? "right" : "left";
 
-  // Full catalogue is suggestions only. Unknown brands auto-learn on publish.
+  // Both modes now offer the FULL brand catalogue. The old "create-safe only"
+  // gate existed to avoid strict-mode 400s; that gate is retired — unmatched
+  // brands are auto-learned server-side, so any brand here can be published.
   const brands = CAR_BRANDS;
-
-  useEffect(() => {
-    if (!visible) {
-      setActiveBrand(null);
-      setQuery("");
-      setCustomBrandMode(false);
-    }
-  }, [visible]);
 
   const popular = useMemo(
     () => brands.filter((b) => b.popular),
@@ -113,7 +94,6 @@ export function CarPicker({
   const reset = () => {
     setActiveBrand(null);
     setQuery("");
-    setCustomBrandMode(false);
   };
 
   const handleClose = () => {
@@ -126,38 +106,21 @@ export function CarPicker({
     onSelect(brand, model);
   };
 
-  const startCustomBrand = () => {
-    setActiveBrand(null);
-    setCustomBrandMode(true);
-    setQuery("");
-    requestAnimationFrame(() => searchRef.current?.focus());
-  };
-
-  const typedBrand = query.trim();
-  const showTypedBrandRow =
-    mode === "create" &&
-    !activeBrand &&
-    typedBrand.length > 0 &&
-    (customBrandMode || brandResults.length === 0);
-
   const Row = ({
     label,
     onPress,
     active,
     chevron,
     muted,
-    testID,
   }: {
     label: string;
     onPress: () => void;
     active?: boolean;
     chevron?: boolean;
     muted?: boolean;
-    testID?: string;
   }) => (
     <Pressable
       onPress={onPress}
-      testID={testID}
       style={[
         styles.row,
         { flexDirection: rowDir, borderBottomColor: colors.border },
@@ -275,15 +238,12 @@ export function CarPicker({
           >
             <Feather name="search" size={16} color={colors.mutedForeground} />
             <TextInput
-              ref={searchRef}
               value={query}
               onChangeText={setQuery}
               placeholder={
                 activeBrand
                   ? t("carPicker.searchModel")
-                  : customBrandMode
-                    ? t("carPicker.searchCustomBrand")
-                    : t("carPicker.searchBrand")
+                  : t("carPicker.searchBrand")
               }
               placeholderTextColor={colors.mutedForeground}
               style={[styles.searchInput, { color: colors.foreground, textAlign }]}
@@ -338,9 +298,36 @@ export function CarPicker({
                   </AppText>
                 ) : null}
               </>
+            ) : query ? (
+              brandResults.length > 0 ? (
+                brandResults.map(renderBrandRow)
+              ) : mode === "create" ? (
+                // Open publish: a brand not in the catalogue can still be listed —
+                // it's sent as typed and auto-learned server-side. Lets sellers
+                // publish ANY brand, then it becomes pickable/searchable for all.
+                <Row
+                  label={t("carPicker.useTypedBrand", { name: query.trim() })}
+                  muted
+                  onPress={() =>
+                    pick(
+                      {
+                        value: `custom:${query.trim().toLowerCase()}`,
+                        en: query.trim(),
+                        ar: query.trim(),
+                        country: "other",
+                      },
+                      null,
+                    )
+                  }
+                />
+              ) : (
+                <AppText style={[styles.empty, { color: colors.mutedForeground }]}>
+                  {t("carPicker.noResults")}
+                </AppText>
+              )
             ) : (
               <>
-                {mode === "browse" && !query ? (
+                {mode === "browse" ? (
                   <Row
                     label={t("carPicker.anyBrand")}
                     muted
@@ -351,61 +338,18 @@ export function CarPicker({
                     }}
                   />
                 ) : null}
-                {/* Create: custom brand ALWAYS reachable — catalogue is assistive. */}
-                {mode === "create" && !query && !customBrandMode ? (
-                  <Row
-                    label={t("carPicker.otherBrand")}
-                    muted
-                    chevron
-                    active={!!selectedBrand?.startsWith("custom:")}
-                    onPress={startCustomBrand}
-                    testID="car-picker-other-brand"
-                  />
-                ) : null}
-                {customBrandMode && !typedBrand ? (
-                  <AppText
-                    style={[styles.empty, { color: colors.mutedForeground }]}
-                  >
-                    {t("carPicker.customBrandHint")}
-                  </AppText>
-                ) : null}
-                {showTypedBrandRow ? (
-                  <Row
-                    label={t("carPicker.useTypedBrand", { name: typedBrand })}
-                    muted
-                    active={selectedBrand === `custom:${typedBrand.toLowerCase()}`}
-                    onPress={() => pick(toCustomBrand(typedBrand), null)}
-                    testID="car-picker-use-typed-brand"
-                  />
-                ) : null}
-                {query && brandResults.length > 0
-                  ? brandResults.map(renderBrandRow)
-                  : null}
-                {!query && !customBrandMode ? (
+                {popular.length > 0 ? (
                   <>
-                    {popular.length > 0 ? (
-                      <>
-                        <SectionHeader label={t("carPicker.popular")} />
-                        {popular.map(renderBrandRow)}
-                      </>
-                    ) : null}
-                    {countryGroups.map((g) => (
-                      <View key={g.country.value}>
-                        <SectionHeader label={countryLabel(g.country, isRTL)} />
-                        {g.items.map(renderBrandRow)}
-                      </View>
-                    ))}
+                    <SectionHeader label={t("carPicker.popular")} />
+                    {popular.map(renderBrandRow)}
                   </>
                 ) : null}
-                {query &&
-                brandResults.length === 0 &&
-                mode === "browse" ? (
-                  <AppText
-                    style={[styles.empty, { color: colors.mutedForeground }]}
-                  >
-                    {t("carPicker.noResults")}
-                  </AppText>
-                ) : null}
+                {countryGroups.map((g) => (
+                  <View key={g.country.value}>
+                    <SectionHeader label={countryLabel(g.country, isRTL)} />
+                    {g.items.map(renderBrandRow)}
+                  </View>
+                ))}
               </>
             )}
             <View style={{ height: 24 }} />

@@ -56,7 +56,7 @@ export const GetMeResponse = zod.object({
   "id": zod.string(),
   "clerk_id": zod.string(),
   "account_number": zod.string().nullable().describe('Internal default account number, auto-assigned per user.'),
-  "role": zod.enum(['individual', 'dealer', 'company', 'enterprise', 'financial_institution']),
+  "role": zod.enum(['individual', 'dealer', 'company', 'enterprise']),
   "staff_role": zod.enum(['owner', 'admin', 'moderator', 'support', 'user']).describe('Internal staff role, a separate axis from `role`. \"user\" means no staff access; the others grant Admin Control Center permissions.\n'),
   "is_admin": zod.boolean().describe('Whether this user has Admin Control Center access.'),
   "name": zod.string(),
@@ -82,11 +82,8 @@ export const GetMeResponse = zod.object({
  * @summary Update current user — phone and optional Banco Business upgrade
  */
 export const UpdateMeBody = zod.object({
-  "account_type": zod.enum(['individual', 'dealer', 'company', 'financial_institution']).optional().describe('Account type chosen at onboarding. Server is authoritative for the resulting role (individual\/dealer\/company\/financial_institution); a client can never request admin\/enterprise. A financial_institution must still pass verification before its financing features unlock.'),
+  "account_type": zod.enum(['individual', 'dealer', 'company']).optional().describe('Account type chosen at onboarding. Server is authoritative for the resulting role (individual\/dealer\/company); a client can never request admin\/enterprise.'),
   "phone": zod.string().nullish(),
-  "bio": zod.string().nullish().describe('Public seller bio shown on listing detail (server mirrors to Clerk).'),
-  "display_title": zod.string().nullish(),
-  "category_label": zod.string().nullish(),
   "business": zod.object({
   "activity_type": zod.enum(['car_dealer', 'real_estate_developer', 'factory', 'supplier']),
   "business_name": zod.string(),
@@ -102,7 +99,7 @@ export const UpdateMeResponse = zod.object({
   "id": zod.string(),
   "clerk_id": zod.string(),
   "account_number": zod.string().nullable().describe('Internal default account number, auto-assigned per user.'),
-  "role": zod.enum(['individual', 'dealer', 'company', 'enterprise', 'financial_institution']),
+  "role": zod.enum(['individual', 'dealer', 'company', 'enterprise']),
   "staff_role": zod.enum(['owner', 'admin', 'moderator', 'support', 'user']).describe('Internal staff role, a separate axis from `role`. \"user\" means no staff access; the others grant Admin Control Center permissions.\n'),
   "is_admin": zod.boolean().describe('Whether this user has Admin Control Center access.'),
   "name": zod.string(),
@@ -128,10 +125,6 @@ export const UpdateMeResponse = zod.object({
  * @summary Get adaptive scored feed
  */
 export const getFeedQueryLimitDefault = 20;
-export const getFeedQueryMarketCountryRegExp = new RegExp('^[A-Za-z]{2}$');
-export const getFeedQueryMaterialMax = 40;
-
-
 
 export const GetFeedQueryParams = zod.object({
   "cursor": zod.coerce.string().optional(),
@@ -147,7 +140,6 @@ export const GetFeedQueryParams = zod.object({
   "furnished": zod.coerce.boolean().optional().describe('Furnished real-estate (specs.furnished).'),
   "offer_type": zod.enum(['sale', 'rent']).optional().describe('Real-estate offer type — sale (تمليك) or rent (إيجار), from specs.offer_type.'),
   "rental_term": zod.coerce.string().optional().describe('Rental system within rent — the country\'s legal\/duration regime (Egypt: furnished_daily from 1 day, new_law up to 5 years, old_law up to 59 years; Gulf: annual_contract). Free string; the catalog is client-side and grows per country.'),
-  "market_country": zod.coerce.string().regex(getFeedQueryMarketCountryRegExp).optional().describe('ISO 3166-1 alpha-2 market country (EG, SA, …). Filters inventory by specs.market_country; listings without the key are treated as EG.'),
   "fuel_type": zod.enum(['petrol', 'diesel', 'hybrid', 'electric', 'natural_gas']).optional().describe('Filter cars by fuel type (listing_attributes.fuel_type or specs).'),
   "transmission": zod.enum(['manual', 'automatic', 'cvt']).optional().describe('Filter cars by transmission (listing_attributes.transmission or specs).'),
   "brand": zod.coerce.string().optional().describe('Filter cars by brand, matched against the English listing title (titles are canonical \"<Brand> <Model> <Year>\").'),
@@ -156,7 +148,6 @@ export const GetFeedQueryParams = zod.object({
   "max_year": zod.coerce.number().optional().describe('Maximum car model year (numeric specs.year).'),
   "industry": zod.enum(['food', 'beverage', 'plastic', 'textile', 'pharmaceutical', 'chemical', 'engineering', 'other']).optional().describe('Filter industrial listings by industry (listing_attributes.industry).'),
   "origin_type": zod.enum(['local', 'imported']).optional().describe('Filter industrial listings by origin (listing_attributes.origin_type).'),
-  "material": zod.coerce.string().max(getFeedQueryMaterialMax).optional().describe('Filter raw-material commodity listings by specs.material (steel, aluminum, copper, …). Free string; catalog is client-side.'),
   "session_id": zod.coerce.string().optional()
 })
 
@@ -420,13 +411,7 @@ export const GetListingResponse = zod.object({
   "name": zod.string(),
   "role": zod.string(),
   "is_verified": zod.boolean(),
-  "phone": zod.string().nullish(),
-  "social_links": zod.array(zod.object({
-  "platform": zod.enum(['instagram', 'linkedin', 'website', 'whatsapp']),
-  "value": zod.string().describe('URL (website\/linkedin\/instagram) or phone (whatsapp), normalized server-side.')
-}).describe('Public seller\/company social link shown on the profile (Task')).optional().describe('Public seller profile links (Task'),
-  "bio": zod.string().nullish().describe('Public seller bio shown on listing detail (from Clerk profile).'),
-  "display_title": zod.string().nullish().describe('Public display title \/ business name on listing detail.')
+  "phone": zod.string().nullish()
 }),
   "interactions": zod.object({
   "views": zod.number().optional(),
@@ -481,8 +466,7 @@ export const GetListingResponse = zod.object({
   "shipping_method": zod.enum(['container', 'bulk', 'air']).nullable()
 }).describe('Additive (Task #40). Optional seller-provided logistics & delivery block on a listing. Every field is nullable; the whole object is null when the seller provided nothing. Never part of the immutable FeedItem.\n').nullish().describe('Additive (Task #40). Optional seller-provided logistics & delivery block; null when the seller provided none. Older clients may ignore it.\n'),
   "contact_token": zod.string().nullish().describe('Single-use UUID token minted server-side when an authenticated non-owner loads this listing. Required by POST \/v1\/leads\/contact. Null for the listing owner and for unauthenticated viewers.\n'),
-  "whatsapp_enabled": zod.boolean().nullish().describe('True when the seller opted this listing in to WhatsApp contact. Opt-in only (default false); clients gate the WhatsApp CTA on it.\n'),
-  "is_request": zod.boolean().optional().describe('True when this is a buyer \"request\/wanted\" post rather than a sale listing.\n')
+  "whatsapp_enabled": zod.boolean().nullish().describe('True when the seller opted this listing in to WhatsApp contact. Opt-in only (default false); clients gate the WhatsApp CTA on it.\n')
 }).optional(),
   "error": zod.object({
   "code": zod.enum(['INVALID_DATA', 'NOT_FOUND', 'UNAUTHORIZED', 'INTERNAL_ERROR', 'FORBIDDEN', 'RATE_LIMITED']),
@@ -515,15 +499,7 @@ export const UpdateListingBody = zod.object({
   "origin_type": zod.enum(['local', 'imported']).nullish(),
   "country_of_origin": zod.string().nullish(),
   "shipping_method": zod.enum(['container', 'bulk', 'air']).nullish()
-}).optional().describe('Additive (Task #40). Optional logistics & delivery patch. All fields optional\/nullable.\n'),
-  "media": zod.array(zod.object({
-  "type": zod.enum(['image', 'video']),
-  "url": zod.string().url(),
-  "thumbnail_url": zod.string().url().optional(),
-  "is_thumbnail": zod.boolean().optional(),
-  "width": zod.number().optional(),
-  "height": zod.number().optional()
-})).optional().describe('Replace listing media in seller order. Omit to leave photos unchanged. Sale listings must keep at least one item.\n')
+}).optional().describe('Additive (Task #40). Optional logistics & delivery patch. All fields optional\/nullable.\n')
 })
 
 export const UpdateListingResponse = zod.object({
@@ -825,9 +801,6 @@ export const BumpListingResponse = zod.object({
 /**
  * @summary Full-text + filter search with Arabic NLP
  */
-export const searchListingsQueryMarketCountryRegExp = new RegExp('^[A-Za-z]{2}$');
-export const searchListingsQueryMaterialMax = 40;
-
 export const searchListingsQueryRadiusKmMin = 0.1;
 export const searchListingsQueryRadiusKmMax = 500;
 
@@ -851,7 +824,6 @@ export const SearchListingsQueryParams = zod.object({
   "furnished": zod.coerce.boolean().optional().describe('Furnished real-estate (specs.furnished).'),
   "offer_type": zod.enum(['sale', 'rent']).optional().describe('Real-estate offer type — sale (تمليك) or rent (إيجار), from specs.offer_type.'),
   "rental_term": zod.coerce.string().optional().describe('Rental system within rent — the country\'s legal\/duration regime (Egypt: furnished_daily from 1 day, new_law up to 5 years, old_law up to 59 years; Gulf: annual_contract). Free string; the catalog is client-side and grows per country.'),
-  "market_country": zod.coerce.string().regex(searchListingsQueryMarketCountryRegExp).optional().describe('ISO 3166-1 alpha-2 market country (EG, SA, …). Filters inventory by specs.market_country; listings without the key are treated as EG.'),
   "fuel_type": zod.enum(['petrol', 'diesel', 'hybrid', 'electric', 'natural_gas']).optional().describe('Filter cars by fuel type (listing_attributes.fuel_type or specs).'),
   "transmission": zod.enum(['manual', 'automatic', 'cvt']).optional().describe('Filter cars by transmission (listing_attributes.transmission or specs).'),
   "brand": zod.coerce.string().optional().describe('Filter cars by brand, matched against the English listing title (titles are canonical \"<Brand> <Model> <Year>\").'),
@@ -860,7 +832,6 @@ export const SearchListingsQueryParams = zod.object({
   "max_year": zod.coerce.number().optional().describe('Maximum car model year (numeric specs.year).'),
   "industry": zod.enum(['food', 'beverage', 'plastic', 'textile', 'pharmaceutical', 'chemical', 'engineering', 'other']).optional().describe('Filter industrial listings by industry (listing_attributes.industry).'),
   "origin_type": zod.enum(['local', 'imported']).optional().describe('Filter industrial listings by origin (listing_attributes.origin_type).'),
-  "material": zod.coerce.string().max(searchListingsQueryMaterialMax).optional().describe('Filter raw-material commodity listings by specs.material (steel, aluminum, copper, …). Free string; catalog is client-side.'),
   "near_lat": zod.coerce.number().optional().describe('Near-me anchor latitude (requires near_lng and radius_km).'),
   "near_lng": zod.coerce.number().optional().describe('Near-me anchor longitude (requires near_lat and radius_km).'),
   "radius_km": zod.coerce.number().min(searchListingsQueryRadiusKmMin).max(searchListingsQueryRadiusKmMax).optional().describe('Search radius in kilometres from the near-me anchor.'),
@@ -911,9 +882,6 @@ export const SearchListingsResponse = zod.object({
  * The SAME filters as /v1/search (so the map and list stay consistent), within a viewport bounding box, aggregated into a zoom-dependent grid. Returns one cluster per occupied cell (centroid + count); listing_id is set only when a cell holds exactly one listing (a tappable pin). offer_type=rent powers the Booking-style rental map for real-estate, land and factories.
  * @summary Server-side clustered listing pins for a map viewport
  */
-export const getMapClustersQueryMarketCountryRegExp = new RegExp('^[A-Za-z]{2}$');
-export const getMapClustersQueryMaterialMax = 40;
-
 export const getMapClustersQueryRadiusKmMin = 0.1;
 export const getMapClustersQueryRadiusKmMax = 500;
 
@@ -941,7 +909,6 @@ export const GetMapClustersQueryParams = zod.object({
   "furnished": zod.coerce.boolean().optional(),
   "offer_type": zod.enum(['sale', 'rent']).optional().describe('sale (تمليك) or rent (إيجار).'),
   "rental_term": zod.coerce.string().optional().describe('Rental regime (furnished_daily \/ new_law \/ old_law \/ annual_contract).'),
-  "market_country": zod.coerce.string().regex(getMapClustersQueryMarketCountryRegExp).optional().describe('ISO market country (EG, SA, …); missing specs coalesce to EG.'),
   "fuel_type": zod.enum(['petrol', 'diesel', 'hybrid', 'electric', 'natural_gas']).optional(),
   "transmission": zod.enum(['manual', 'automatic', 'cvt']).optional(),
   "brand": zod.coerce.string().optional(),
@@ -950,7 +917,6 @@ export const GetMapClustersQueryParams = zod.object({
   "max_year": zod.coerce.number().optional(),
   "industry": zod.enum(['food', 'beverage', 'plastic', 'textile', 'pharmaceutical', 'chemical', 'engineering', 'other']).optional(),
   "origin_type": zod.enum(['local', 'imported']).optional(),
-  "material": zod.coerce.string().max(getMapClustersQueryMaterialMax).optional().describe('Filter raw-material commodity listings by specs.material.'),
   "near_lat": zod.coerce.number().optional().describe('Near-me anchor latitude (requires near_lng and radius_km).'),
   "near_lng": zod.coerce.number().optional().describe('Near-me anchor longitude (requires near_lat and radius_km).'),
   "radius_km": zod.coerce.number().min(getMapClustersQueryRadiusKmMin).max(getMapClustersQueryRadiusKmMax).optional().describe('Search radius in kilometres from the near-me anchor.')
@@ -961,10 +927,8 @@ export const GetMapClustersResponse = zod.object({
   "lat": zod.number(),
   "lng": zod.number(),
   "count": zod.number(),
-  "listing_id": zod.string().nullable(),
-  "is_bookable": zod.boolean().nullable().describe('True when the single pin is a furnished\/daily real-estate rental (same rule as FeedItem.is_bookable). Null for multi-listing cells.\n'),
-  "price_display": zod.string().nullable().describe('UI-ready price label for a single pin. Null for multi-listing cells.')
-}).describe('One occupied grid cell on the map — its centroid and how many listings it aggregates. listing_id \/ is_bookable \/ price_display are set ONLY when count is 1 (a single tappable pin); for multi-listing cells they are null.\n')).optional(),
+  "listing_id": zod.string().nullable()
+}).describe('One occupied grid cell on the map — its centroid and how many listings it aggregates. listing_id is set ONLY when count is 1 (a single tappable pin); for multi-listing cells it is null and the client shows a count bubble.\n')).optional(),
   "error": zod.object({
   "code": zod.enum(['INVALID_DATA', 'NOT_FOUND', 'UNAUTHORIZED', 'INTERNAL_ERROR', 'FORBIDDEN', 'RATE_LIMITED']),
   "message": zod.string()
@@ -1016,13 +980,10 @@ export const GetFacetsResponse = zod.object({
 
 
 /**
- * Title suggestions scoped to the active browse company when category (and optional industrial_type CSV) are provided. Without category, suggestions span all public inventory.
  * @summary Autocomplete suggestions
  */
 export const GetAutocompleteQueryParams = zod.object({
-  "q": zod.coerce.string(),
-  "category": zod.enum(['car', 'real_estate', 'industrial']).optional(),
-  "industrial_type": zod.coerce.string().optional().describe('Comma-separated industrial subtypes (facilities vs materials)')
+  "q": zod.coerce.string()
 })
 
 export const GetAutocompleteResponse = zod.object({
@@ -2447,7 +2408,7 @@ export const ListPlansResponse = zod.object({
   "slug": zod.string(),
   "name": zod.string(),
   "name_ar": zod.string().nullable(),
-  "audience": zod.enum(['individual', 'dealer', 'company', 'enterprise', 'financial_institution']),
+  "audience": zod.enum(['individual', 'dealer', 'company', 'enterprise']),
   "is_baseline": zod.boolean(),
   "monthly_price": zod.string(),
   "listing_quota": zod.number().nullable(),
@@ -2483,7 +2444,7 @@ export const GetMySubscriptionResponse = zod.object({
   "slug": zod.string(),
   "name": zod.string(),
   "name_ar": zod.string().nullable(),
-  "audience": zod.enum(['individual', 'dealer', 'company', 'enterprise', 'financial_institution']),
+  "audience": zod.enum(['individual', 'dealer', 'company', 'enterprise']),
   "is_baseline": zod.boolean(),
   "monthly_price": zod.string(),
   "listing_quota": zod.number().nullable(),
@@ -2505,7 +2466,7 @@ export const GetMySubscriptionResponse = zod.object({
   "slug": zod.string(),
   "name": zod.string(),
   "name_ar": zod.string().nullable(),
-  "audience": zod.enum(['individual', 'dealer', 'company', 'enterprise', 'financial_institution']),
+  "audience": zod.enum(['individual', 'dealer', 'company', 'enterprise']),
   "is_baseline": zod.boolean(),
   "monthly_price": zod.string(),
   "listing_quota": zod.number().nullable(),
@@ -2565,7 +2526,7 @@ export const SubscribeResponse = zod.object({
   "slug": zod.string(),
   "name": zod.string(),
   "name_ar": zod.string().nullable(),
-  "audience": zod.enum(['individual', 'dealer', 'company', 'enterprise', 'financial_institution']),
+  "audience": zod.enum(['individual', 'dealer', 'company', 'enterprise']),
   "is_baseline": zod.boolean(),
   "monthly_price": zod.string(),
   "listing_quota": zod.number().nullable(),
@@ -2627,7 +2588,7 @@ export const ConfirmSubscriptionResponse = zod.object({
   "slug": zod.string(),
   "name": zod.string(),
   "name_ar": zod.string().nullable(),
-  "audience": zod.enum(['individual', 'dealer', 'company', 'enterprise', 'financial_institution']),
+  "audience": zod.enum(['individual', 'dealer', 'company', 'enterprise']),
   "is_baseline": zod.boolean(),
   "monthly_price": zod.string(),
   "listing_quota": zod.number().nullable(),
@@ -2674,7 +2635,7 @@ export const CancelSubscriptionResponse = zod.object({
   "slug": zod.string(),
   "name": zod.string(),
   "name_ar": zod.string().nullable(),
-  "audience": zod.enum(['individual', 'dealer', 'company', 'enterprise', 'financial_institution']),
+  "audience": zod.enum(['individual', 'dealer', 'company', 'enterprise']),
   "is_baseline": zod.boolean(),
   "monthly_price": zod.string(),
   "listing_quota": zod.number().nullable(),
@@ -2894,7 +2855,7 @@ export const GetAdminOverviewResponse = zod.object({
  */
 export const GetAdminUsersQueryParams = zod.object({
   "search": zod.coerce.string().optional(),
-  "role": zod.enum(['individual', 'dealer', 'company', 'enterprise', 'financial_institution']).optional(),
+  "role": zod.enum(['individual', 'dealer', 'company', 'enterprise']).optional(),
   "banned": zod.coerce.boolean().optional(),
   "cursor": zod.coerce.string().optional(),
   "limit": zod.coerce.number().optional()
@@ -2907,7 +2868,7 @@ export const GetAdminUsersResponse = zod.object({
   "name": zod.string().optional(),
   "email": zod.string().nullish(),
   "phone": zod.string().nullish(),
-  "role": zod.enum(['individual', 'dealer', 'company', 'enterprise', 'financial_institution']).optional(),
+  "role": zod.enum(['individual', 'dealer', 'company', 'enterprise']).optional(),
   "staff_role": zod.enum(['owner', 'admin', 'moderator', 'support', 'user']).optional().describe('Internal staff role (separate axis from `role`).'),
   "is_admin": zod.boolean().optional(),
   "is_verified": zod.boolean().optional(),
@@ -2947,7 +2908,7 @@ export const SetUserBanResponse = zod.object({
   "name": zod.string().optional(),
   "email": zod.string().nullish(),
   "phone": zod.string().nullish(),
-  "role": zod.enum(['individual', 'dealer', 'company', 'enterprise', 'financial_institution']).optional(),
+  "role": zod.enum(['individual', 'dealer', 'company', 'enterprise']).optional(),
   "staff_role": zod.enum(['owner', 'admin', 'moderator', 'support', 'user']).optional().describe('Internal staff role (separate axis from `role`).'),
   "is_admin": zod.boolean().optional(),
   "is_verified": zod.boolean().optional(),
@@ -2982,7 +2943,7 @@ export const SetUserRoleResponse = zod.object({
   "name": zod.string().optional(),
   "email": zod.string().nullish(),
   "phone": zod.string().nullish(),
-  "role": zod.enum(['individual', 'dealer', 'company', 'enterprise', 'financial_institution']).optional(),
+  "role": zod.enum(['individual', 'dealer', 'company', 'enterprise']).optional(),
   "staff_role": zod.enum(['owner', 'admin', 'moderator', 'support', 'user']).optional().describe('Internal staff role (separate axis from `role`).'),
   "is_admin": zod.boolean().optional(),
   "is_verified": zod.boolean().optional(),
@@ -3017,7 +2978,7 @@ export const SetUserVerifiedResponse = zod.object({
   "name": zod.string().optional(),
   "email": zod.string().nullish(),
   "phone": zod.string().nullish(),
-  "role": zod.enum(['individual', 'dealer', 'company', 'enterprise', 'financial_institution']).optional(),
+  "role": zod.enum(['individual', 'dealer', 'company', 'enterprise']).optional(),
   "staff_role": zod.enum(['owner', 'admin', 'moderator', 'support', 'user']).optional().describe('Internal staff role (separate axis from `role`).'),
   "is_admin": zod.boolean().optional(),
   "is_verified": zod.boolean().optional(),
@@ -4047,7 +4008,7 @@ export const GetAdminPlansResponse = zod.object({
 export const CreateAdminPlanBody = zod.object({
   "name": zod.string(),
   "name_ar": zod.string().nullish(),
-  "audience": zod.enum(['individual', 'dealer', 'company', 'enterprise', 'financial_institution']).optional(),
+  "audience": zod.enum(['individual', 'dealer', 'company', 'enterprise']).optional(),
   "is_baseline": zod.boolean().optional(),
   "monthly_price": zod.number().optional(),
   "listing_quota": zod.number().nullish(),
@@ -4103,7 +4064,7 @@ export const UpdateAdminPlanParams = zod.object({
 export const UpdateAdminPlanBody = zod.object({
   "name": zod.string().optional(),
   "name_ar": zod.string().nullish(),
-  "audience": zod.enum(['individual', 'dealer', 'company', 'enterprise', 'financial_institution']).optional(),
+  "audience": zod.enum(['individual', 'dealer', 'company', 'enterprise']).optional(),
   "is_baseline": zod.boolean().optional(),
   "monthly_price": zod.number().optional(),
   "listing_quota": zod.number().nullish(),

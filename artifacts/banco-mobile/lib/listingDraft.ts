@@ -3,12 +3,10 @@
  *
  * PURE + DEFENSIVE by design: it persists only the serialisable text/selection
  * fields, never the picked photo assets (those are device-session URIs that don't
- * survive a restart). Verified remote upload URLs ARE persisted in
- * `promotedMedia` so a seller can resume after restart without re-uploading.
- * `parseListingDraft` validates EVERY field and returns null on bad JSON, wrong
- * version, expiry, or any type mismatch — so a corrupt or stale blob can never
- * partially corrupt the form. No React/RN/storage imports here, so the logic is
- * unit-checkable in isolation.
+ * survive a restart). `parseListingDraft` validates EVERY field and returns null
+ * on bad JSON, wrong version, expiry, or any type mismatch — so a corrupt or
+ * stale blob can never partially corrupt the form. No React/RN/storage imports
+ * here, so the logic is unit-checkable in isolation.
  */
 
 export interface DraftPlan {
@@ -28,12 +26,6 @@ export interface DraftPhone {
 export interface DraftCustomSpec {
   name: string;
   value: string;
-}
-
-export interface DraftPromotedMedia {
-  type: "image" | "video";
-  url: string;
-  thumbnail_url?: string;
 }
 
 export interface ListingDraftV1 {
@@ -56,8 +48,6 @@ export interface ListingDraftV1 {
   carOrigin: "local" | "imported" | null;
   phones: DraftPhone[];
   plans: DraftPlan[];
-  /** Remote URLs already uploaded + verified — safe to resume after restart. */
-  promotedMedia?: DraftPromotedMedia[];
 }
 
 /** The fields a caller supplies; `v`/`savedAt` are stamped on serialize. */
@@ -81,9 +71,7 @@ export function listingDraftHasContent(d: ListingDraftInput): boolean {
     d.carBrandValue ||
     d.industrialType ||
     Object.keys(d.specs).length > 0 ||
-    d.customSpecs.some((c) => c.name.trim() || c.value.trim()) ||
-    d.phones.some((p) => p.number.trim()) ||
-    (d.promotedMedia?.length ?? 0) > 0
+    d.customSpecs.some((c) => c.name.trim() || c.value.trim())
   );
 }
 
@@ -153,25 +141,6 @@ function parseCustomSpecs(x: unknown): DraftCustomSpec[] | null {
   return out;
 }
 
-function parsePromotedMedia(x: unknown): DraftPromotedMedia[] | null {
-  if (x === undefined) return [];
-  if (!Array.isArray(x)) return null;
-  const out: DraftPromotedMedia[] = [];
-  for (const item of x) {
-    if (!item || typeof item !== "object") return null;
-    const o = item as Record<string, unknown>;
-    if (o.type !== "image" && o.type !== "video") return null;
-    if (!isStr(o.url)) return null;
-    if (o.thumbnail_url !== undefined && !isStr(o.thumbnail_url)) return null;
-    out.push({
-      type: o.type,
-      url: o.url,
-      ...(o.thumbnail_url ? { thumbnail_url: o.thumbnail_url } : {}),
-    });
-  }
-  return out;
-}
-
 /**
  * Strictly validate a stored blob. Returns null on bad JSON, wrong version,
  * expiry, or ANY field-type mismatch — never a partially-populated object.
@@ -206,8 +175,6 @@ export function parseListingDraft(raw: string | null, now: number = Date.now()):
   if (!phones) return null;
   const plans = parsePlans(o.plans);
   if (!plans) return null;
-  const promotedMedia = parsePromotedMedia(o.promotedMedia);
-  if (!promotedMedia) return null;
 
   return {
     v: 1,
@@ -229,6 +196,5 @@ export function parseListingDraft(raw: string | null, now: number = Date.now()):
     carOrigin: o.carOrigin as ListingDraftV1["carOrigin"],
     phones,
     plans,
-    ...(promotedMedia.length > 0 ? { promotedMedia } : {}),
   };
 }

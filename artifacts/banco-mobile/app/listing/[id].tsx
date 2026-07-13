@@ -50,7 +50,6 @@ import {
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 import { AppText } from "@/components/AppText";
-import { BReactionButton } from "@/components/BReactionButton";
 import { DealRatingChip } from "@/components/DealRatingChip";
 import { BookingCard } from "@/components/BookingCard";
 import { LinkedListings } from "@/components/LinkedListings";
@@ -58,16 +57,13 @@ import { ListingComments } from "@/components/ListingComments";
 import { MediaGallery } from "@/components/MediaGallery";
 import { PromoteButton } from "@/components/PromoteButton";
 import { SellerRatingBar, SellerReviews } from "@/components/SellerReviews";
-import { SellerSocialLinks } from "@/components/SellerSocialLinks";
 import { SkeletonCard } from "@/components/SkeletonCard";
 import { SmartAssetCard } from "@/components/SmartAssetCard";
 import { formatSpecs } from "@/constants/listingSpecs";
 import { useI18n } from "@/context/LanguageContext";
 import { useSession } from "@/context/SessionContext";
 import { useSound } from "@/context/SoundContext";
-import { useAuthGate } from "@/hooks/useAuthGate";
 import { useColors } from "@/hooks/useColors";
-import { pickListingPreviewUrl } from "@/lib/listingMedia";
 
 const { width: SCREEN_W } = Dimensions.get("window");
 const REPORT_REASON_KEYS = [
@@ -101,7 +97,6 @@ export default function ListingDetailScreen() {
     useSession();
   const { playSound } = useSound();
   const { user, isSignedIn, isLoaded } = useUser();
-  const { requireAuth } = useAuthGate();
 
   const [listing, setListing] = useState<
     Awaited<ReturnType<typeof getListing>>["data"] | null
@@ -130,7 +125,6 @@ export default function ListingDetailScreen() {
   >("idle");
   const [selectedPlan, setSelectedPlan] = useState(0);
   const [openingChat, setOpeningChat] = useState(false);
-  const [potentialFlash, setPotentialFlash] = useState(false);
   const [marking, setMarking] = useState(false);
   const hasSignaled = useRef(false);
 
@@ -225,9 +219,10 @@ export default function ListingDetailScreen() {
   }, [id, sessionId, recordView]);
 
   useEffect(() => {
-    // Wait for Clerk to resolve; listing detail is public (optionalAuth API).
-    // Re-fetch when sign-in flips so contact_token is minted for buyers.
+    // Wait for Clerk to resolve, then skip the fetch for guests — they see the
+    // locked screen below instead of any listing detail (no transient fetch).
     if (!isLoaded) return;
+    if (!isSignedIn) return;
     loadListing();
   }, [loadListing, isLoaded, isSignedIn]);
 
@@ -255,7 +250,6 @@ export default function ListingDetailScreen() {
   }, []);
 
   const openRfq = () => {
-    if (!requireAuth()) return;
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
     setRfqState("idle");
     setRfqContact(listing?.whatsapp_enabled ? "whatsapp" : "call");
@@ -389,7 +383,6 @@ export default function ListingDetailScreen() {
   };
 
   const handleCTA = async (action: ContactLeadBodyActionType) => {
-    if (!requireAuth()) return;
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
     if (!id) return;
 
@@ -397,23 +390,17 @@ export default function ListingDetailScreen() {
       // contactLead records the contact event AND returns the revealed seller
       // phone — the public listing detail never carries it (reveal-token gated).
       const contactToken = listing?.contact_token;
-      if (!contactToken) {
-        Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
-        Alert.alert(t("listing.contactFailTitle"), t("listing.contactFailBody"));
-        return;
+      let phone: string | undefined;
+      if (contactToken) {
+        const res = await contactLead({
+          listing_id: id,
+          action_type: action,
+          contact_token: contactToken,
+          ...buyerIdentity,
+        });
+        phone = res.data?.phone ?? undefined;
       }
-      const res = await contactLead({
-        listing_id: id,
-        action_type: action,
-        contact_token: contactToken,
-        ...buyerIdentity,
-      });
-      const phone = res.data?.phone ?? undefined;
-      if (!phone) {
-        Haptics.notificationAsync(Haptics.NotificationFeedbackType.Warning);
-        Alert.alert(t("listing.contactFailTitle"), t("listing.contactFailBody"));
-        return;
-      }
+      if (!phone) return;
 
       if (action === "whatsapp") {
         await openWhatsApp(phone);
@@ -432,7 +419,6 @@ export default function ListingDetailScreen() {
 
   const openInAppChat = async () => {
     if (!id || openingChat) return;
-    if (!requireAuth()) return;
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
     setOpeningChat(true);
 
@@ -460,8 +446,10 @@ export default function ListingDetailScreen() {
         },
       });
     } catch {
+      // Fall back to WhatsApp handoff if the in-app conversation can't start
+      // (e.g. listing has no linked seller account).
       Haptics.notificationAsync(Haptics.NotificationFeedbackType.Warning);
-      Alert.alert(t("listing.contactFailTitle"), t("listing.contactFailBody"));
+      await handleCTA("chat");
     } finally {
       setOpeningChat(false);
     }
@@ -492,6 +480,88 @@ export default function ListingDetailScreen() {
   };
 
   const bottomBarHeight = 80 + (Platform.OS === "web" ? 34 : insets.bottom);
+
+  if (isLoaded && !isSignedIn) {
+    return (
+      <View
+        style={[
+          styles.centered,
+          { backgroundColor: colors.background, padding: 28 },
+        ]}
+      >
+        <Pressable
+          onPress={() =>
+            router.canGoBack() ? router.back() : router.replace("/(tabs)")
+          }
+          hitSlop={12}
+          style={{
+            position: "absolute",
+            top: insets.top + 8,
+            ...(isRTL ? { right: 16 } : { left: 16 }),
+            zIndex: 10,
+            padding: 8,
+          }}
+          testID="listing-guest-back"
+        >
+          <Feather
+            name={isRTL ? "arrow-right" : "arrow-left"}
+            size={24}
+            color={colors.foreground}
+          />
+        </Pressable>
+        <View
+          style={{
+            width: 72,
+            height: 72,
+            borderRadius: 36,
+            alignItems: "center",
+            justifyContent: "center",
+            marginBottom: 18,
+            backgroundColor: colors.primary + "1A",
+          }}
+        >
+          <Feather name="lock" size={32} color={colors.primary} />
+        </View>
+        <AppText
+          style={{
+            fontSize: 22,
+            fontFamily: "Inter_700Bold",
+            color: colors.foreground,
+            textAlign: "center",
+          }}
+        >
+          {t("authGate.title")}
+        </AppText>
+        <AppText
+          style={{
+            fontSize: 15,
+            lineHeight: 22,
+            fontFamily: "Inter_400Regular",
+            color: colors.mutedForeground,
+            textAlign: "center",
+            marginTop: 10,
+            marginBottom: 24,
+          }}
+        >
+          {t("authGate.message")}
+        </AppText>
+        <Pressable
+          onPress={() => router.replace("/(tabs)/profile")}
+          style={[
+            styles.retryBtn,
+            { backgroundColor: colors.primary, borderRadius: colors.radius },
+          ]}
+          testID="listing-guest-signin"
+        >
+          <AppText
+            style={[styles.retryText, { color: colors.primaryForeground }]}
+          >
+            {t("authGate.cta")}
+          </AppText>
+        </Pressable>
+      </View>
+    );
+  }
 
   if (loading) {
     return (
@@ -1407,16 +1477,6 @@ export default function ListingDetailScreen() {
                     )}
                   </View>
                   <View style={[styles.sellerMetaRow, { flexDirection: rowDir }]}>
-                    {listing.seller.display_title ? (
-                      <AppText
-                        style={[
-                          styles.sellerRole,
-                          { color: colors.foreground, fontWeight: "600" },
-                        ]}
-                      >
-                        {listing.seller.display_title}
-                      </AppText>
-                    ) : null}
                     {sellerRoleLabel ? (
                       <AppText
                         style={[
@@ -1453,16 +1513,6 @@ export default function ListingDetailScreen() {
                       </View>
                     ) : null}
                   </View>
-                  {listing.seller.bio ? (
-                    <AppText
-                      style={[
-                        styles.sellerBio,
-                        { color: colors.mutedForeground, textAlign },
-                      ]}
-                    >
-                      {listing.seller.bio}
-                    </AppText>
-                  ) : null}
                   {company?.stats ? (
                     <View style={[styles.trustRow, { flexDirection: rowDir }]}>
                       <View style={styles.trustStat}>
@@ -1521,9 +1571,6 @@ export default function ListingDetailScreen() {
                         </View>
                       ) : null}
                     </View>
-                  ) : null}
-                  {listing.seller.social_links?.length ? (
-                    <SellerSocialLinks links={listing.seller.social_links} />
                   ) : null}
                 </View>
               </View>
@@ -1604,61 +1651,34 @@ export default function ListingDetailScreen() {
         />
       </Pressable>
 
-      <View
+      <Pressable
         style={[
           styles.floatBtn,
           isRTL ? { left: 16 } : { right: 16 },
           { top: topOffset },
         ]}
+        onPress={() => {
+          Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+          const feedItem: FeedItem = {
+            id: listing.id,
+            media_preview: listing.media?.[0]?.url ?? "",
+            price_display: listing.price_display,
+            title: listing.title,
+            location: listing.location,
+            trust_signal: listing.seller?.name ?? "",
+            has_video: listing.media?.some((m) => m.type === "video") ?? false,
+            is_sponsored: false,
+          };
+          toggleSave(feedItem);
+        }}
         testID="listing-save"
       >
-        <BReactionButton
-          saved={saved}
-          potentialActive={potentialFlash}
-          saveIcon={
-            listing.category === "car"
-              ? "car"
-              : listing.category === "real_estate"
-                ? "key"
-                : listing.category === "industrial"
-                  ? "business"
-                  : "bookmark"
-          }
-          onPotential={() => {
-            Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
-            setPotentialFlash(true);
-            void sendBehaviorSignal({
-              session_id: sessionId,
-              listing_id: listing.id,
-              action: "interested",
-              category: listing.category ?? undefined,
-            }).catch(() => {});
-            setTimeout(() => setPotentialFlash(false), 1200);
-          }}
-          onSave={() => {
-            const feedItem: FeedItem = {
-              id: listing.id,
-              media_preview: pickListingPreviewUrl(listing.media),
-              price_display: listing.price_display,
-              title: listing.title,
-              location: listing.location,
-              trust_signal: listing.seller?.name ?? "",
-              has_video: listing.media?.some((m) => m.type === "video") ?? false,
-              is_sponsored: false,
-            };
-            toggleSave(feedItem);
-          }}
-          onAngry={() => {
-            void sendBehaviorSignal({
-              session_id: sessionId,
-              listing_id: listing.id,
-              action: "angry",
-              category: listing.category ?? undefined,
-            }).catch(() => {});
-          }}
-          height={26}
+        <Ionicons
+          name={saved ? "heart" : "heart-outline"}
+          size={22}
+          color={saved ? colors.primary : "#FFFFFF"}
         />
-      </View>
+      </Pressable>
 
       <View
         style={[
@@ -1671,19 +1691,7 @@ export default function ListingDetailScreen() {
           },
         ]}
       >
-        {isOwner && !isSold ? (
-          <CTAButton
-            icon="create-outline"
-            label={t("mine.edit")}
-            testLabel="owner-edit"
-            onPress={() =>
-              router.push(`/listings/edit/${listing.id}` as Href)
-            }
-            style={{ backgroundColor: colors.primary, flex: 1 }}
-            textColor={colors.primaryForeground}
-            radius={colors.radius}
-          />
-        ) : hasSeller && !isOwner ? (
+        {hasSeller ? (
           <>
             <CTAButton
               icon="call-outline"
@@ -1737,15 +1745,13 @@ export default function ListingDetailScreen() {
         animationType="fade"
         onRequestClose={closeReport}
       >
-        <View style={styles.modalOverlay}>
+        <Pressable
+          style={styles.modalOverlay}
+          onPress={() => {
+            if (reportState !== "submitting") closeReport();
+          }}
+        >
           <Pressable
-            style={StyleSheet.absoluteFillObject}
-            onPress={() => {
-              if (reportState !== "submitting") closeReport();
-            }}
-            accessibilityRole="button"
-          />
-          <View
             style={[
               styles.reportSheet,
               {
@@ -1754,6 +1760,7 @@ export default function ListingDetailScreen() {
                 paddingBottom: (Platform.OS === "web" ? 24 : insets.bottom) + 16,
               },
             ]}
+            onPress={(e) => e.stopPropagation()}
           >
             {reportState === "submitting" ? (
               <View style={styles.reportResult}>
@@ -1926,8 +1933,8 @@ export default function ListingDetailScreen() {
                 </Pressable>
               </>
             )}
-          </View>
-        </View>
+          </Pressable>
+        </Pressable>
       </Modal>
 
       <Modal
@@ -1940,13 +1947,8 @@ export default function ListingDetailScreen() {
           behavior={Platform.OS === "ios" ? "padding" : undefined}
           style={styles.flex}
         >
-          <View style={styles.modalOverlay}>
+          <Pressable style={styles.modalOverlay} onPress={closeRfq}>
             <Pressable
-              style={StyleSheet.absoluteFillObject}
-              onPress={closeRfq}
-              accessibilityRole="button"
-            />
-            <View
               style={[
                 styles.reportSheet,
                 {
@@ -1956,6 +1958,7 @@ export default function ListingDetailScreen() {
                     (Platform.OS === "web" ? 24 : insets.bottom) + 16,
                 },
               ]}
+              onPress={(e) => e.stopPropagation()}
             >
               {rfqState === "submitting" ? (
                 <View style={styles.reportResult}>
@@ -2283,8 +2286,8 @@ export default function ListingDetailScreen() {
                   </Pressable>
                 </>
               )}
-            </View>
-          </View>
+            </Pressable>
+          </Pressable>
         </KeyboardAvoidingView>
       </Modal>
 
@@ -2294,13 +2297,8 @@ export default function ListingDetailScreen() {
         animationType="slide"
         onRequestClose={closeApply}
       >
-        <View style={styles.modalOverlay}>
+        <Pressable style={styles.modalOverlay} onPress={closeApply}>
           <Pressable
-            style={StyleSheet.absoluteFillObject}
-            onPress={closeApply}
-            accessibilityRole="button"
-          />
-          <View
             style={[
               styles.reportSheet,
               {
@@ -2309,6 +2307,7 @@ export default function ListingDetailScreen() {
                 paddingBottom: (Platform.OS === "web" ? 24 : insets.bottom) + 16,
               },
             ]}
+            onPress={(e) => e.stopPropagation()}
           >
             {applyState === "submitting" ? (
               <View style={styles.reportResult}>
@@ -2646,8 +2645,8 @@ export default function ListingDetailScreen() {
                 </Pressable>
               </>
             )}
-          </View>
-        </View>
+          </Pressable>
+        </Pressable>
       </Modal>
     </View>
   );
@@ -3063,12 +3062,6 @@ const styles = StyleSheet.create({
     fontSize: 13,
     fontFamily: "Inter_400Regular",
     textTransform: "capitalize",
-  },
-  sellerBio: {
-    fontSize: 13,
-    fontFamily: "Inter_400Regular",
-    lineHeight: 19,
-    marginTop: 4,
   },
   reportBtn: {
     alignItems: "center",

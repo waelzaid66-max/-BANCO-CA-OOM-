@@ -22,12 +22,7 @@ const EGP = "EGP";
 
 /* ── Users ─────────────────────────────────────────────── */
 
-type UserRole =
-  | "individual"
-  | "dealer"
-  | "company"
-  | "enterprise"
-  | "financial_institution";
+type UserRole = "individual" | "dealer" | "company" | "enterprise";
 
 interface AdminUserRow {
   id: string;

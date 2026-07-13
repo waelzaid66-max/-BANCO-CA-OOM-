@@ -17,15 +17,8 @@ describe("validateAttributes — real-estate rooms floor is sub-type aware", () 
     expect(missing.errors.join(" ")).toMatch(/rooms/);
   });
 
-  it("does NOT require rooms for land / commercial_land / shop / office / clinic / warehouse", () => {
-    for (const property_type of [
-      "land",
-      "commercial_land",
-      "shop",
-      "office",
-      "clinic",
-      "warehouse",
-    ]) {
+  it("does NOT require rooms for land / shop / office / clinic", () => {
+    for (const property_type of ["land", "shop", "office", "clinic"]) {
       const res = validateAttributes("real_estate", { area: 500, property_type });
       expect(res.valid, `${property_type} should publish without rooms`).toBe(true);
     }

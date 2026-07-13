@@ -1,5 +1,6 @@
 import { db, ensureSchemaPatches } from "@workspace/db";
-import { sql } from "drizzle-orm";
+import { listings } from "@workspace/db/schema";
+import { count, eq, sql } from "drizzle-orm";
 import { logger } from "./logger";
 
 /**
@@ -31,6 +32,61 @@ export async function ensureDbExtensions(): Promise<void> {
     );
   }
   await ensureSearchIndexes();
+}
+
+/**
+ * Auto-seeds the database when it is empty so the marketplace feed is never
+ * blank on a fresh environment or after a reset.
+ *
+ * The check is a single COUNT query — fast and non-blocking. If active listings
+ * are found the function returns immediately (no-op). If the table is empty it
+ * spawns the full seed as a child process so the event loop stays free and the
+ * server continues serving health-checks during the seed run.
+ *
+ * NON-FATAL: any failure (DB unreachable, tsx missing) is logged and swallowed
+ * so a seed error never prevents the server from starting.
+ */
+export async function ensureSeedData(): Promise<void> {
+  try {
+    const [row] = await db
+      .select({ n: count() })
+      .from(listings)
+      .where(eq(listings.status, "active"));
+    const total = Number(row?.n ?? 0);
+
+    if (total > 0) {
+      logger.info({ total }, "ensureSeedData: DB already populated, skipping auto-seed");
+      return;
+    }
+
+    logger.warn("ensureSeedData: no active listings found — running seed to populate the feed");
+
+    // Use `pnpm run seed` rather than resolving a path to seed.ts so this
+    // works identically from the source (tsx) AND the compiled dist/ runtime.
+    // `process.cwd()` is the api-server package directory when the server is
+    // started via `pnpm --filter @workspace/api-server run dev/start`.
+    const { execFile } = await import("node:child_process");
+
+    await new Promise<void>((resolve) => {
+      const child = execFile(
+        "pnpm",
+        ["run", "seed"],
+        { cwd: process.cwd(), timeout: 300_000 },
+        (err, _stdout, stderr) => {
+          if (err) {
+            logger.error({ err, stderr }, "ensureSeedData: seed process failed");
+          } else {
+            logger.info("ensureSeedData: seed complete — feed is now populated");
+          }
+          resolve();
+        },
+      );
+      child.stdout?.on("data", (d: Buffer) => process.stdout.write(d));
+      child.stderr?.on("data", (d: Buffer) => process.stderr.write(d));
+    });
+  } catch (err) {
+    logger.error({ err }, "ensureSeedData: unexpected error; server continues without seeding");
+  }
 }
 
 /**

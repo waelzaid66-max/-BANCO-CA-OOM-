@@ -9,7 +9,6 @@ import React, {
   useRef,
   useState,
 } from "react";
-import { Platform } from "react-native";
 import {
   FeedItem,
   getListing,
@@ -17,16 +16,10 @@ import {
   toggleSaveListing,
 } from "@workspace/api-client-react";
 
-import type { SearchCriteria } from "@/lib/searchParams";
-import { criteriaKey, DEFAULT_CRITERIA } from "@/lib/searchParams";
-import { pickListingPreviewUrl } from "@/lib/listingMedia";
-import type { Category } from "@/components/CategoryTabs";
 import { useAuthGate } from "@/hooks/useAuthGate";
-import {
-  loadOrCreateBehaviorSessionId,
-  readBehaviorSessionIdSync,
-} from "@/lib/behaviorSession";
 
+const SESSION_ID =
+  Date.now().toString() + Math.random().toString(36).substr(2, 9);
 const SAVES_KEY = "banco_saved_v1";
 const SEARCHES_KEY = "banco_saved_searches_v1";
 const RECENT_KEY = "banco_recently_viewed_v1";
@@ -44,7 +37,7 @@ export type ListingDetailData = NonNullable<
 function feedItemFromDetail(d: ListingDetailData): FeedItem {
   return {
     id: d.id,
-    media_preview: pickListingPreviewUrl(d.media),
+    media_preview: d.media?.[0]?.url ?? "",
     price_display: d.price_display,
     installment_badge: d.payment?.badge ?? null,
     title: d.title,
@@ -70,16 +63,12 @@ export type SavedSearch = {
   location: string;
   paymentType: "any" | "installment";
   savedAt: number;
-  /** Full criteria snapshot for round-trip (v2). */
-  criteria?: SearchCriteria;
 };
 
 type SavedSearchInput = Omit<SavedSearch, "id" | "savedAt">;
 
 function searchSignature(s: SavedSearchInput): string {
-  if (s.criteria) return `v2:${criteriaKey(s.criteria)}`;
   return [
-    "v1",
     s.q.trim().toLowerCase(),
     s.category,
     s.minPrice,
@@ -89,35 +78,8 @@ function searchSignature(s: SavedSearchInput): string {
   ].join("|");
 }
 
-function legacyCriteriaFromSaved(s: SavedSearch): SearchCriteria {
-  return {
-    ...DEFAULT_CRITERIA,
-    q: s.q ?? "",
-    category: (s.category as Category) || DEFAULT_CRITERIA.category,
-    minPrice: s.minPrice ?? "",
-    maxPrice: s.maxPrice ?? "",
-    location: s.location ?? "",
-    paymentType: s.paymentType ?? "any",
-  };
-}
-
-function upgradeSavedSearches(raw: SavedSearch[]): {
-  items: SavedSearch[];
-  migrated: boolean;
-} {
-  let migrated = false;
-  const items = raw.map((s) => {
-    if (s.criteria) return s;
-    migrated = true;
-    return { ...s, criteria: legacyCriteriaFromSaved(s) };
-  });
-  return { items, migrated };
-}
-
 interface SessionContextValue {
   sessionId: string;
-  /** False until persisted behavior session id is loaded (native AsyncStorage). */
-  sessionReady: boolean;
   savedItems: SavedItem[];
   isSaved: (id: string) => boolean;
   toggleSave: (item: FeedItem) => void;
@@ -161,12 +123,6 @@ const SessionContext = createContext<SessionContextValue | null>(null);
 export function SessionProvider({ children }: { children: React.ReactNode }) {
   const { isSignedIn } = useAuth();
   const { requireAuth } = useAuthGate();
-  const [sessionId, setSessionId] = useState(
-    () => readBehaviorSessionIdSync() ?? "",
-  );
-  const [sessionReady, setSessionReady] = useState(
-    () => Platform.OS === "web" && readBehaviorSessionIdSync() !== null,
-  );
   const [savedItems, setSavedItems] = useState<SavedItem[]>([]);
   const [savedSearches, setSavedSearches] = useState<SavedSearch[]>([]);
   const [recentlyViewed, setRecentlyViewed] = useState<FeedItem[]>([]);
@@ -174,18 +130,6 @@ export function SessionProvider({ children }: { children: React.ReactNode }) {
   // Bumped on publish so the home feed + profile grid refetch (see type docs).
   const [listingsVersion, setListingsVersion] = useState(0);
   const bumpListings = useCallback(() => setListingsVersion((v) => v + 1), []);
-
-  useEffect(() => {
-    let cancelled = false;
-    void loadOrCreateBehaviorSessionId().then((id) => {
-      if (cancelled) return;
-      setSessionId(id);
-      setSessionReady(true);
-    });
-    return () => {
-      cancelled = true;
-    };
-  }, []);
 
   // Mirror of savedItems for use inside async callbacks without stale closures.
   const savedItemsRef = useRef<SavedItem[]>([]);
@@ -253,13 +197,7 @@ export function SessionProvider({ children }: { children: React.ReactNode }) {
       .catch(() => {});
     AsyncStorage.getItem(SEARCHES_KEY)
       .then((raw) => {
-        if (!raw) return;
-        const parsed = JSON.parse(raw) as SavedSearch[];
-        const { items, migrated } = upgradeSavedSearches(parsed);
-        setSavedSearches(items);
-        if (migrated) {
-          AsyncStorage.setItem(SEARCHES_KEY, JSON.stringify(items)).catch(() => {});
-        }
+        if (raw) setSavedSearches(JSON.parse(raw) as SavedSearch[]);
       })
       .catch(() => {});
     AsyncStorage.getItem(RECENT_KEY)
@@ -451,8 +389,7 @@ export function SessionProvider({ children }: { children: React.ReactNode }) {
 
   const contextValue = useMemo(
     () => ({
-      sessionId,
-      sessionReady,
+      sessionId: SESSION_ID,
       savedItems,
       isSaved,
       toggleSave,
@@ -470,8 +407,6 @@ export function SessionProvider({ children }: { children: React.ReactNode }) {
       bumpListings,
     }),
     [
-      sessionId,
-      sessionReady,
       savedItems,
       isSaved,
       toggleSave,

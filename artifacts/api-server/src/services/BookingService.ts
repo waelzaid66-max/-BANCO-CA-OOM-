@@ -167,8 +167,8 @@ export async function createBooking(
     void createNotification({
       userId: row.ownerId as string,
       type: "booking",
-      title: "طلب حجز جديد · New booking request",
-      body: `«${row.title}» · ${checkIn} → ${checkOut} · ${nights} ليلة / night${nights === 1 ? "" : "s"}`,
+      title: "New booking request",
+      body: `${nights} night${nights === 1 ? "" : "s"} · ${checkIn} → ${checkOut} for "${row.title}"`,
       data: { listing_id: listingId, booking_id: b.id },
     });
   });
@@ -315,18 +315,15 @@ export async function updateBookingStatus(
   if (recipientId) {
     const notify = isHostAction
       ? {
-          title:
-            action === "confirm"
-              ? "تم تأكيد الحجز · Booking confirmed"
-              : "تم رفض الحجز · Booking declined",
+          title: action === "confirm" ? "Booking confirmed" : "Booking declined",
           body:
             action === "confirm"
-              ? `تم تأكيد إقامتك ${updated.checkIn} → ${updated.checkOut} في «${row.listingTitle}» · Your stay is confirmed`
-              : `تم رفض طلبك على «${row.listingTitle}» — التواريخ متاحة للحجز في مكان آخر · Your request was declined`,
+              ? `Your stay ${updated.checkIn} → ${updated.checkOut} at "${row.listingTitle}" is confirmed`
+              : `Your request for "${row.listingTitle}" was declined — the dates are free to rebook elsewhere`,
         }
       : {
-          title: "تم إلغاء الحجز · Booking cancelled",
-          body: `ألغى الضيف ${updated.checkIn} → ${updated.checkOut} على «${row.listingTitle}» — التواريخ متاحة مجدداً · The guest cancelled; those dates are open again`,
+          title: "Booking cancelled",
+          body: `The guest cancelled ${updated.checkIn} → ${updated.checkOut} for "${row.listingTitle}" — those dates are open again`,
         };
     setImmediate(() => {
       void createNotification({

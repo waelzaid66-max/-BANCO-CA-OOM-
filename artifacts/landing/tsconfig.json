@@ -13,16 +13,12 @@
     "moduleResolution": "bundler",
     "types": ["node", "vite/client"],
     "paths": {
-      "@/*": ["./src/*"],
-      "@workspace/design-tokens": ["../../lib/design-tokens/src/index.ts"]
+      "@/*": ["./src/*"]
     }
   },
   "references": [
     {
       "path": "../../lib/api-client-react"
-    },
-    {
-      "path": "../../lib/design-tokens"
     }
   ]
 }

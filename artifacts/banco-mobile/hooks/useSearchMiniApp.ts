@@ -7,7 +7,6 @@ import {
   buildSearchParams,
   hasActiveCriteria,
 } from "@/lib/searchParams";
-import { readPreferredMarketCountrySync } from "@/lib/marketPreference";
 
 /** Network phase of the results surface. */
 export type ResultsPhase =
@@ -55,10 +54,7 @@ export interface UseSearchMiniApp {
 export function useSearchMiniApp(
   onCommitted?: (c: SearchCriteria) => void,
 ): UseSearchMiniApp {
-  const [criteria, setCriteria] = useState<SearchCriteria>(() => ({
-    ...DEFAULT_CRITERIA,
-    marketCountry: readPreferredMarketCountrySync(),
-  }));
+  const [criteria, setCriteria] = useState<SearchCriteria>(DEFAULT_CRITERIA);
   const [items, setItems] = useState<FeedItem[]>([]);
   const [phase, setPhase] = useState<ResultsPhase>("idle");
   const [hasNext, setHasNext] = useState(false);
@@ -69,10 +65,7 @@ export function useSearchMiniApp(
   const hasNextRef = useRef(false);
   const phaseRef = useRef<ResultsPhase>("idle");
   const cursorRef = useRef<string | undefined>(undefined);
-  const criteriaRef = useRef<SearchCriteria>({
-    ...DEFAULT_CRITERIA,
-    marketCountry: readPreferredMarketCountrySync(),
-  });
+  const criteriaRef = useRef<SearchCriteria>(DEFAULT_CRITERIA);
   const seqRef = useRef(0);
 
   const setItemsT = (next: FeedItem[]) => {

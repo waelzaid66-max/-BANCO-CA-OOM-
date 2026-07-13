@@ -12,10 +12,8 @@ import {
 } from "@workspace/api-client-react";
 import { useUser } from "@clerk/expo";
 import * as Haptics from "expo-haptics";
-import type { BottomTabNavigationProp } from "@react-navigation/bottom-tabs";
-import { router, useNavigation, type Href } from "expo-router";
+import { router, type Href } from "expo-router";
 import { Image } from "expo-image";
-import * as Notifications from "expo-notifications";
 import { FlashList, FlashListRef, ViewToken } from "@shopify/flash-list";
 import { BancoLogo } from "@/components/BancoLogo";
 import React, {
@@ -80,36 +78,13 @@ import {
 } from "@/constants/feed";
 import { useI18n } from "@/context/LanguageContext";
 import { useSession } from "@/context/SessionContext";
+import { useAuthGate } from "@/hooks/useAuthGate";
 import { useColors } from "@/hooks/useColors";
-import {
-  loadPreferredMarketCountry,
-  readPreferredMarketCountrySync,
-} from "@/lib/marketPreference";
-import { sectionAccent } from "@/lib/sectionTheme";
 
 const PAGE_SIZE = 20;
 const SCROLL_SIGNAL_THROTTLE_MS = 3000;
 const RAIL_CARD_WIDTH = 260;
 const MIN_INSTALLMENT_ITEMS = 3;
-
-// All discovery-rail arrays in ONE object so loadRails() can commit everything
-// with a single setRails() call → one re-render → one ListHeader rebuild → zero
-// cascading layout shifts during pull-to-refresh / tab reload.
-type RailsState = {
-  trending: FeedItem[];
-  recommended: FeedItem[];
-  installment: FeedItem[];
-  verified: FeedItem[];
-  bestDeals: FeedItem[];
-  nearYou: FeedItem[];
-  nearbyCity: string | null;
-  recentlyAdded: FeedItem[];
-  industrial: FeedItem[];
-};
-const EMPTY_RAILS: RailsState = {
-  trending: [], recommended: [], installment: [], verified: [],
-  bestDeals: [], nearYou: [], nearbyCity: null, recentlyAdded: [], industrial: [],
-};
 
 /**
  * Resolves the user's city from device GPS, but ONLY when location permission
@@ -297,7 +272,7 @@ function HeaderSpark() {
 export default function FeedScreen() {
   const colors = useColors();
   const insets = useSafeAreaInsets();
-  const { t, isRTL, ready: langReady } = useI18n();
+  const { t, isRTL } = useI18n();
   const { width: windowWidth } = useWindowDimensions();
   // Responsive grid (web only): native stays single-column full-width cards.
   // Wide screens fan the feed into 2–3 columns and cap+center the content so
@@ -317,9 +292,10 @@ export default function FeedScreen() {
     isWeb && windowWidth > MAX_CONTENT_WIDTH
       ? (windowWidth - MAX_CONTENT_WIDTH) / 2
       : 16;
-  const { sessionId, sessionReady, isSaved, toggleSave, recentlyViewed, listingsVersion } =
+  const { sessionId, isSaved, toggleSave, recentlyViewed, listingsVersion } =
     useSession();
-  const { isSignedIn, user, isLoaded: clerkUserLoaded } = useUser();
+  const { requireAuth } = useAuthGate();
+  const { isSignedIn, user } = useUser();
   const role = (user?.publicMetadata?.role as string) || "";
   const isBusiness = ["dealer", "company", "enterprise"].includes(role);
   const [showLogoMenu, setShowLogoMenu] = useState(false);
@@ -337,26 +313,10 @@ export default function FeedScreen() {
     (n) => !n.read_at
   ).length;
 
-  // Mirror the unread notification count onto the OS app-icon badge so it clears
-  // when the user reads them and reflects new ones as they arrive. Home stays
-  // mounted in the tab navigator, and its query refetches (20s + on focus), so
-  // this stays current app-wide. Signed-out always clears to 0.
-  useEffect(() => {
-    void Notifications.setBadgeCountAsync(isSignedIn ? unreadNotifs : 0);
-  }, [isSignedIn, unreadNotifs]);
-
   const [category, setCategory] = useState<Category>("all");
   const [industrialType, setIndustrialType] = useState<IndustrialType>("all");
   // Per-section engine filter (cars / real-estate). Key into constants/engines.
   const [engineKey, setEngineKey] = useState<string>("all");
-  // Same preferred market as Search/Create — scopes home feed inventory.
-  const [marketCountry, setMarketCountry] = useState(() =>
-    readPreferredMarketCountrySync(),
-  );
-  // Web: market is readable synchronously. Native: wait for AsyncStorage once.
-  const [marketReady, setMarketReady] = useState(() => Platform.OS === "web");
-  const prefsReady = langReady && marketReady;
-  const bootReady = prefsReady && sessionReady;
   const [items, setItems] = useState<FeedItem[]>([]);
   const [cursor, setCursor] = useState<string | undefined>();
   const [hasNext, setHasNext] = useState(true);
@@ -365,21 +325,17 @@ export default function FeedScreen() {
   const [loadingMore, setLoadingMore] = useState(false);
   const [error, setError] = useState(false);
 
-  // Lazy initializer avoids the React Compiler treating EMPTY_RAILS as a
-  // tracked prop; the object is created once at mount and never re-evaluated.
-  const [rails, setRails] = useState<RailsState>(() => ({ ...EMPTY_RAILS }));
-  // Destructure for easy reference (no behaviour change, just readability).
-  const {
-    trending: trendingItems,
-    recommended: recommendedItems,
-    installment: installmentItems,
-    verified: verifiedItems,
-    bestDeals: bestDealsItems,
-    nearYou: nearYouItems,
-    nearbyCity,
-    recentlyAdded: recentlyAddedItems,
-    industrial: industrialItems,
-  } = rails;
+  const [trendingItems, setTrendingItems] = useState<FeedItem[]>([]);
+  const [recommendedItems, setRecommendedItems] = useState<FeedItem[]>([]);
+  const [installmentItems, setInstallmentItems] = useState<FeedItem[]>([]);
+  const [verifiedItems, setVerifiedItems] = useState<FeedItem[]>([]);
+  const [bestDealsItems, setBestDealsItems] = useState<FeedItem[]>([]);
+  const [nearYouItems, setNearYouItems] = useState<FeedItem[]>([]);
+  // When geo is unavailable we show listings from the dominant market city and
+  // title the rail with that city name instead of falsely claiming proximity.
+  const [nearbyCity, setNearbyCity] = useState<string | null>(null);
+  const [recentlyAddedItems, setRecentlyAddedItems] = useState<FeedItem[]>([]);
+  const [industrialItems, setIndustrialItems] = useState<FeedItem[]>([]);
 
   const lastScrollRef = useRef({ offset: 0, time: Date.now() });
   const lastSignalTimeRef = useRef(0);
@@ -396,10 +352,6 @@ export default function FeedScreen() {
   const filterMemoryRef = useRef<
     Partial<Record<Category, { engineKey: string; industrialType: IndustrialType }>>
   >({});
-  // Last measured engine-bar pixel height per category, so returning to a section
-  // seeds the correct height immediately instead of flashing open at the bar's
-  // intrinsic height and snapping down on the next layout pass (visible flicker).
-  const barHeightByCatRef = useRef<Partial<Record<Category, number>>>({});
 
   // Hide-on-scroll: `compact` flips on scroll direction (once per flip, not per
   // event). It condenses the logo and collapses the engine bar via Reanimated —
@@ -417,10 +369,7 @@ export default function FeedScreen() {
 
   const engineBarStyle = useAnimatedStyle(() => ({
     height: engineBarH === 0 ? undefined : engineBarH * (1 - barCollapse.value),
-    // While the height is still unmeasured (0), render invisibly so the bar can
-    // measure via onLayout WITHOUT first flashing open at its intrinsic height —
-    // then reveal. Once measured, opacity tracks the collapse animation as before.
-    opacity: engineBarH === 0 ? 0 : 1 - barCollapse.value,
+    opacity: 1 - barCollapse.value,
   }));
 
   // Data-presence gating: chips only render for taxonomy that has live
@@ -479,10 +428,6 @@ export default function FeedScreen() {
   const cursorRef = useRef<string | undefined>(undefined);
   cursorRef.current = cursor;
   const prefetchedRef = useRef<Set<string>>(new Set());
-  // Invalidate in-flight feed/rail responses when filters or market change so a
-  // slow reload cannot overwrite fresher data (common on flaky mobile networks).
-  const feedRequestGenRef = useRef(0);
-  const railsRequestGenRef = useRef(0);
 
   const prefetchImages = useCallback((list: FeedItem[]) => {
     const urls: string[] = [];
@@ -499,7 +444,6 @@ export default function FeedScreen() {
 
   const fetchFeed = useCallback(
     async (reset = false, overrideCursor?: string) => {
-      const requestGen = ++feedRequestGenRef.current;
       try {
         // The two industrial groups ("facilities"/"materials") share the API
         // `industrial` category and are separated by industrial_type. We push
@@ -510,7 +454,6 @@ export default function FeedScreen() {
         const params: Parameters<typeof getFeed>[0] = {
           limit: PAGE_SIZE,
           session_id: sessionId,
-          market_country: marketCountry,
         };
         if (apiCat) {
           params.category = apiCat;
@@ -529,7 +472,6 @@ export default function FeedScreen() {
         }
 
         const res = await getFeed(params);
-        if (requestGen !== feedRequestGenRef.current) return;
         const data = res.data ?? [];
         const meta = res.meta;
 
@@ -543,97 +485,75 @@ export default function FeedScreen() {
         setError(false);
         prefetchImages(data);
       } catch {
-        if (requestGen !== feedRequestGenRef.current) return;
         if (reset) setError(true);
       }
     },
-    [category, industrialType, engineKey, marketCountry, sessionId, prefetchImages]
+    [category, industrialType, engineKey, sessionId, prefetchImages]
   );
 
-  // Discovery rails — all requests run in parallel so there is no waterfall,
-  // and ALL derived state is committed in a single setRails() call so the
-  // ListHeader rebuilds exactly ONCE (not 8–9 times) after the data arrives.
+  // Discovery rails — fetched once; independent of the category filter below.
+  // Trending, the shared pool, industrial slice, and geo city run in parallel
+  // so home rails don't waterfall three feed round-trips on cold open.
   const loadRails = useCallback(async () => {
-    const requestGen = ++railsRequestGenRef.current;
-    const [trendingRes, poolRes, industrialRes, geoCity, recRes] = await Promise.all([
+    const [trendingRes, poolRes, industrialRes, geoCity] = await Promise.all([
       getTrending().catch(() => ({ data: [] as FeedItem[] })),
-      getFeed({
-        limit: 40,
-        session_id: sessionId,
-        market_country: marketCountry,
-      }).catch(() => ({ data: [] as FeedItem[] })),
+      getFeed({ limit: 40, session_id: sessionId }).catch(() => ({
+        data: [] as FeedItem[],
+      })),
       getFeed({
         category: "industrial" as GetFeedCategory,
         limit: 20,
         session_id: sessionId,
-        market_country: marketCountry,
       }).catch(() => ({ data: [] as FeedItem[] })),
       detectCity().catch(() => null as string | null),
-      // Recommendations fetched here so all rail data lands in one setState.
-      isSignedIn
-        ? getRecommendations().catch(() => ({ data: [] as FeedItem[] }))
-        : Promise.resolve({ data: [] as FeedItem[] }),
     ]);
 
-    if (requestGen !== railsRequestGenRef.current) return;
+    setTrendingItems(trendingRes.data ?? []);
 
     const pool = poolRes.data ?? [];
+    setInstallmentItems(pool.filter((it) => !!it.installment_badge));
+    setVerifiedItems(pool.filter((it) => isVerifiedSignal(it.trust_signal)));
+
     const ranked = pool
       .map((it) => ({ it, value: parsePriceValue(it.price_display) }))
       .filter((x): x is { it: FeedItem; value: number } => x.value !== null)
       .sort((a, b) => a.value - b.value)
       .slice(0, 12)
       .map((x) => x.it);
+    setBestDealsItems(ranked);
+
     const refCity = geoCity ?? mostCommonLocation(pool);
-
-    // ONE setState → ONE re-render → ONE ListHeader rebuild → zero layout jumps.
-    setRails({
-      trending: trendingRes.data ?? [],
-      recommended: recRes.data ?? [],
-      installment: pool.filter((it) => !!it.installment_badge),
-      verified: pool.filter((it) => isVerifiedSignal(it.trust_signal)),
-      bestDeals: ranked,
-      nearYou: refCity
+    setNearbyCity(geoCity ? null : refCity);
+    setNearYouItems(
+      refCity
         ? pool.filter((it) => locationMatchesCity(it.location, refCity))
-        : [],
-      nearbyCity: geoCity ? null : refCity,
-      recentlyAdded: pool.slice(0, 12),
-      industrial: industrialRes.data ?? [],
-    });
-  }, [sessionId, marketCountry, isSignedIn]);
+        : []
+    );
+    setRecentlyAddedItems(pool.slice(0, 12));
 
-  // loadRecommendations kept as a no-op alias — callers (listingsVersion effect)
-  // already call loadRails which now includes recommendations. Removing the
-  // reference would require touching multiple call-sites; the stub is cheaper.
+    setIndustrialItems(industrialRes.data ?? []);
+  }, [sessionId]);
+
   const loadRecommendations = useCallback(async () => {
-    // Intentionally empty: recommendations are now fetched inside loadRails so
-    // both datasets land in a single setState and avoid a second layout shift.
-  }, []);
-
-  // Hydrate preferred market once on native (web reads synchronously above).
-  useEffect(() => {
-    if (Platform.OS === "web") return;
-    let cancelled = false;
-    void loadPreferredMarketCountry().then((iso) => {
-      if (!cancelled) {
-        setMarketCountry(iso);
-        setMarketReady(true);
-      }
-    });
-    return () => {
-      cancelled = true;
-    };
-  }, []);
+    if (!isSignedIn) {
+      setRecommendedItems([]);
+      return;
+    }
+    try {
+      const res = await getRecommendations();
+      setRecommendedItems(res.data ?? []);
+    } catch {
+      setRecommendedItems([]);
+    }
+  }, [isSignedIn]);
 
   useEffect(() => {
-    if (!bootReady) return;
     loadRails();
-  }, [loadRails, bootReady]);
+  }, [loadRails]);
 
   useEffect(() => {
-    if (!bootReady) return;
     loadRecommendations();
-  }, [loadRecommendations, bootReady]);
+  }, [loadRecommendations]);
 
   // When the user publishes a listing (bumpListings()), refetch the feed + rails
   // so it shows on the home tab immediately. The ref guard ensures this fires
@@ -650,30 +570,16 @@ export default function FeedScreen() {
     loadRecommendations();
   }, [listingsVersion, fetchFeed, loadRails, loadRecommendations]);
 
-  // Keep the previous feed visible while a category/engine change loads so the
-  // home tab never flashes an empty skeleton (search already preserves results).
-  // Only the true first load (no items yet) uses the full-list skeleton.
   useEffect(() => {
-    if (!bootReady) return;
-    let cancelled = false;
-    const isFirstPaint = items.length === 0;
-    if (isFirstPaint) setLoading(true);
+    setLoading(true);
     setError(false);
     setCursor(undefined);
     setHasNext(true);
-    feedRequestGenRef.current += 1;
-    fetchFeed(true).then(() => {
-      if (!cancelled) setLoading(false);
-    });
-    return () => {
-      cancelled = true;
-      feedRequestGenRef.current += 1;
-    };
-  }, [category, industrialType, engineKey, marketCountry, bootReady]);
+    fetchFeed(true).then(() => setLoading(false));
+  }, [category, industrialType, engineKey]);
 
   const handleRetry = async () => {
-    const isFirstPaint = items.length === 0;
-    if (isFirstPaint) setLoading(true);
+    setLoading(true);
     setError(false);
     setCursor(undefined);
     setHasNext(true);
@@ -687,26 +593,6 @@ export default function FeedScreen() {
     await Promise.all([fetchFeed(true), loadRails(), loadRecommendations()]);
     setRefreshing(false);
   };
-
-  // Press the Home tab again while already on Home → jump to top + reload the
-  // feed (the expected "re-tap to refresh" gesture). A ref holds the latest
-  // handler so the listener subscribes once (navigation is stable) yet always
-  // runs the current refresh logic. Only fires when Home is already focused, so
-  // navigating TO Home from another tab stays a plain navigation.
-  const navigation =
-    useNavigation<BottomTabNavigationProp<Record<string, object | undefined>>>();
-  const retapReloadRef = useRef<() => void>(() => {});
-  retapReloadRef.current = () => {
-    listRef.current?.scrollToOffset({ offset: 0, animated: true });
-    setCompact(false);
-    void handleRefresh();
-  };
-  useEffect(() => {
-    const unsub = navigation.addListener("tabPress", () => {
-      if (navigation.isFocused()) retapReloadRef.current();
-    });
-    return unsub;
-  }, [navigation]);
 
   const handleLoadMore = async () => {
     if (!hasNext || loadingMore || loading) return;
@@ -734,11 +620,10 @@ export default function FeedScreen() {
     setIndustrialType(mem?.industrialType ?? "all");
     setEngineKey(mem?.engineKey ?? "all");
     // New section → a new chip set with a different height. Expand the bar and
-    // seed the incoming category's last measured height (0 only if never seen),
-    // so the bar doesn't flash open at intrinsic height; onLayout then corrects
-    // any small delta on the next pass without a stale empty gap.
+    // drop the cached pixel height so the next layout pass re-measures the
+    // incoming content; otherwise a stale height reserves an empty gap.
     setCompact(false);
-    setEngineBarH(barHeightByCatRef.current[cat] ?? 0);
+    setEngineBarH(0);
     sendBehaviorSignal({
       session_id: sessionId,
       action: "category_tap",
@@ -748,6 +633,8 @@ export default function FeedScreen() {
 
   const handleCardPress = useCallback(
     (item: FeedItem) => {
+      // Guests are funneled into sign-up before any listing opens (Task #101).
+      if (!requireAuth()) return;
       sendBehaviorSignal({
         session_id: sessionId,
         listing_id: item.id,
@@ -755,7 +642,7 @@ export default function FeedScreen() {
       }).catch(() => {});
       router.push(`/listing/${item.id}`);
     },
-    [sessionId],
+    [sessionId, requireAuth]
   );
 
   const itemsRef = useRef<FeedItem[]>(items);
@@ -861,10 +748,6 @@ export default function FeedScreen() {
       recentlyAddedItems.length >= MIN_INSTALLMENT_ITEMS ||
       industrialItems.length >= MIN_INSTALLMENT_ITEMS ||
       recentlyViewed.length > 0);
-  // Stable boolean: flips false→true once when the first feed page arrives.
-  // Unlike items.length, it never changes again on pagination so the ListHeader
-  // useCallback dep does not invalidate on every "load more" call.
-  const hasItems = items.length > 0;
 
   // B2B bridge (Task #154 T007): when the user browses an industrial group
   // (facilities / materials) we surface a non-deceptive shortcut into the
@@ -1035,7 +918,7 @@ export default function FeedScreen() {
             isSaved={isSaved}
           />
         )}
-        {hasRails && hasItems && (
+        {hasRails && items.length > 0 && (
           <AppText
             style={[
               styles.feedTitle,
@@ -1054,15 +937,17 @@ export default function FeedScreen() {
     activeGroup,
     showRails,
     recentlyViewed,
-    // Use the single rails object as one dep instead of 8 individual arrays.
-    // This dep only flips once (after loadRails resolves) rather than 8 times,
-    // so FlashList re-measures the header exactly once per refresh cycle.
-    rails,
+    recommendedItems,
+    bestDealsItems,
+    installmentItems,
+    verifiedItems,
+    nearYouItems,
+    nearbyCity,
+    trendingItems,
+    recentlyAddedItems,
+    industrialItems,
     hasRails,
-    // hasItems is a boolean derived from items.length — it only flips false→true
-    // once per load, never on subsequent pagination. Using items.length here
-    // would rebuild the header on every "load more" page, causing a layout jump.
-    hasItems,
+    items.length,
     handleCardPress,
     toggleSave,
     isSaved,
@@ -1126,44 +1011,34 @@ export default function FeedScreen() {
     );
   };
 
-  const logoMenuRows = useMemo(() => {
-    const rows: {
-      icon: React.ComponentProps<typeof Feather>["name"];
-      label: string;
-      route: Href;
-    }[] = [
-      { icon: "grid", label: t("home.menuMyListings"), route: "/listings/mine" },
-      { icon: "bookmark", label: t("home.menuSaved"), route: "/(tabs)/saved" },
-      { icon: "bell", label: t("home.menuAlerts"), route: "/notifications" },
-      { icon: "user", label: t("home.menuProfile"), route: "/(tabs)/profile" },
-      {
-        icon: "briefcase",
-        label: t("home.menuBusiness"),
-        route: "/business/supply-hub",
-      },
-      {
-        icon: "message-square",
-        label: t("home.menuAssistant"),
-        route: "/assistant",
-      },
-      { icon: "settings", label: t("home.menuSettings"), route: "/settings" },
-    ];
-    if (!clerkUserLoaded) return rows;
-    if (isBusiness) {
-      rows.push({
-        icon: "users",
-        label: t("home.menuLeads"),
-        route: "/business/requests",
-      });
-    } else {
-      rows.unshift({
-        icon: "shield",
-        label: t("home.menuGetVerified"),
-        route: "/business/onboarding",
-      });
-    }
-    return rows;
-  }, [clerkUserLoaded, isBusiness, t]);
+  const logoMenuRows: {
+    icon: React.ComponentProps<typeof Feather>["name"];
+    label: string;
+    route: Href;
+  }[] = [
+    { icon: "grid", label: t("home.menuMyListings"), route: "/listings/mine" },
+    { icon: "bookmark", label: t("home.menuSaved"), route: "/(tabs)/saved" },
+    { icon: "bell", label: t("home.menuAlerts"), route: "/notifications" },
+    { icon: "user", label: t("home.menuProfile"), route: "/(tabs)/profile" },
+    { icon: "briefcase", label: t("home.menuBusiness"), route: "/business/supply-hub" },
+    { icon: "message-square", label: t("home.menuAssistant"), route: "/assistant" },
+    { icon: "settings", label: t("home.menuSettings"), route: "/settings" },
+  ];
+  if (isBusiness) {
+    logoMenuRows.push({
+      icon: "users",
+      label: t("home.menuLeads"),
+      route: "/business/requests",
+    });
+  } else {
+    // Prominent, always-visible path for individuals into the BANCO Business
+    // company-account + verification (KYC) flow.
+    logoMenuRows.unshift({
+      icon: "shield",
+      label: t("home.menuGetVerified"),
+      route: "/business/onboarding",
+    });
+  }
 
   const handleSort = (key: string) => {
     Haptics.selectionAsync().catch(() => {});
@@ -1181,7 +1056,6 @@ export default function FeedScreen() {
   return (
     <View style={[styles.container, { backgroundColor: colors.background }]}>
       <View
-        pointerEvents={bootReady ? "auto" : "none"}
         style={[
           styles.header,
           {
@@ -1267,18 +1141,13 @@ export default function FeedScreen() {
         </Pressable>
       </View>
 
-      <View pointerEvents={bootReady ? "auto" : "none"}>
-        <CategoryTabs
-          selected={category}
-          onChange={handleCategoryChange}
-          visible={visibleCats}
-        />
-      </View>
+      <CategoryTabs
+        selected={category}
+        onChange={handleCategoryChange}
+        visible={visibleCats}
+      />
       {showEngineBar ? (
-        <Animated.View
-          style={[styles.engineBar, engineBarStyle]}
-          pointerEvents={compact ? "none" : "auto"}
-        >
+        <Animated.View style={[styles.engineBar, engineBarStyle]}>
           <View
             onLayout={(e) => {
               // Measure on every content change (incl. while compact) so a
@@ -1286,9 +1155,8 @@ export default function FeedScreen() {
               // keeps its intrinsic height even when the outer animated wrapper
               // is clipped to height:0, so this stays accurate during collapse.
               const h = e.nativeEvent.layout.height;
-              if (h > 0) {
-                barHeightByCatRef.current[category] = h;
-                if (Math.abs(h - engineBarH) > 1) setEngineBarH(h);
+              if (h > 0 && Math.abs(h - engineBarH) > 1) {
+                setEngineBarH(h);
               }
             }}
           >
@@ -1297,21 +1165,19 @@ export default function FeedScreen() {
                 types={visibleIndTypes!}
                 selected={industrialType}
                 onChange={setIndustrialType}
-                accent={sectionAccent(category)}
               />
             ) : (
               <EngineChips
                 engines={engineList}
                 selected={engineKey}
                 onChange={setEngineKey}
-                accent={sectionAccent(category)}
               />
             )}
           </View>
         </Animated.View>
       ) : null}
 
-      {!bootReady || (loading && items.length === 0) ? (
+      {loading ? (
         renderSkeletons()
       ) : error && items.length === 0 ? (
         renderError()
@@ -1354,12 +1220,10 @@ export default function FeedScreen() {
         animationType="fade"
         onRequestClose={() => setShowLogoMenu(false)}
       >
-        <View style={styles.menuBackdrop}>
-          <Pressable
-            style={StyleSheet.absoluteFillObject}
-            onPress={() => setShowLogoMenu(false)}
-            accessibilityRole="button"
-          />
+        <Pressable
+          style={styles.menuBackdrop}
+          onPress={() => setShowLogoMenu(false)}
+        >
           <View
             style={[
               styles.menuSheet,
@@ -1369,6 +1233,7 @@ export default function FeedScreen() {
                 paddingBottom: insets.bottom + 12,
               },
             ]}
+            onStartShouldSetResponder={() => true}
           >
             <View style={styles.menuHandle} />
             <View
@@ -1420,7 +1285,7 @@ export default function FeedScreen() {
               </Pressable>
             ))}
           </View>
-        </View>
+        </Pressable>
       </Modal>
 
       <Modal
@@ -1429,12 +1294,10 @@ export default function FeedScreen() {
         animationType="fade"
         onRequestClose={() => setShowSortMenu(false)}
       >
-        <View style={styles.sortBackdrop}>
-          <Pressable
-            style={StyleSheet.absoluteFillObject}
-            onPress={() => setShowSortMenu(false)}
-            accessibilityRole="button"
-          />
+        <Pressable
+          style={styles.sortBackdrop}
+          onPress={() => setShowSortMenu(false)}
+        >
           <View
             style={[
               styles.sortSheet,
@@ -1445,6 +1308,7 @@ export default function FeedScreen() {
                 [isRTL ? "left" : "right"]: 16,
               },
             ]}
+            onStartShouldSetResponder={() => true}
           >
             <AppText
               style={[
@@ -1489,7 +1353,7 @@ export default function FeedScreen() {
               </Pressable>
             ))}
           </View>
-        </View>
+        </Pressable>
       </Modal>
     </View>
   );

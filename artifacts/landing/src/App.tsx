@@ -1,33 +1,22 @@
-import { useEffect } from "react";
 import logoUrl from "@/assets/banco-logo.png";
-import { bancoBrand } from "@workspace/design-tokens";
 
 /**
- * BANCO landing artifact — entry hub when VITE_WEB_URL is unset (local dev).
- * When VITE_WEB_URL points at banco-web, this build redirects to
- * `{VITE_WEB_URL}/directory` so the canonical hub lives in Next.js (W8).
+ * BANCO — the official entry page. Replaces the old placeholder (logo + a
+ * "دخول" button that pointed at the retired Replit mobile link) with a real
+ * directory of every surface and its main destinations: the mobile app (store
+ * links), Banco Market, and the Admin control panel.
  *
- * All bases come from Vite env:
- *   VITE_MARKET_URL · VITE_ADMIN_URL · VITE_WEB_URL · store URLs
+ * All bases come from Vite env so the SAME build works in every environment:
+ *   VITE_MARKET_URL · VITE_ADMIN_URL · VITE_APP_ANDROID_URL · VITE_APP_IOS_URL
+ * A surface whose URL isn't configured yet renders as "قريباً / soon" instead
+ * of a dead link — no stale hardcoded destinations, ever.
  */
 
 const ENV = import.meta.env as Record<string, string | undefined>;
-// Fall back to relative paths so links work on every Replit preview & production
-// deploy without any env-var setup. Override via VITE_* vars in production.
-const MARKET_URL = (ENV.VITE_MARKET_URL ?? "").trim() || "/dealer-os/";
-const ADMIN_URL  = (ENV.VITE_ADMIN_URL  ?? "").trim() || "/admin-os/";
-const MOBILE_URL = "/banco-mobile/";
-const WEB_URL    = (ENV.VITE_WEB_URL ?? "").trim().replace(/\/+$/, "");
+const MARKET_URL = ENV.VITE_MARKET_URL ?? "";
+const ADMIN_URL = ENV.VITE_ADMIN_URL ?? "";
 const ANDROID_URL = ENV.VITE_APP_ANDROID_URL ?? "";
-const IOS_URL     = ENV.VITE_APP_IOS_URL ?? "";
-
-const WEB_PAGES: Dest[] = [
-  { ar: "الرئيسية", en: "Home", path: "/" },
-  { ar: "بحث", en: "Search", path: "/search" },
-  { ar: "سيارات", en: "Cars", path: "/cars" },
-  { ar: "عقارات", en: "Real Estate", path: "/real-estate" },
-  { ar: "صناعي", en: "Industrial", path: "/industrial" },
-];
+const IOS_URL = ENV.VITE_APP_IOS_URL ?? "";
 
 type Dest = { ar: string; en: string; path: string };
 
@@ -71,27 +60,7 @@ function LinkOrSoon({ url, label }: { url: string; label: string }) {
   );
 }
 
-function ConsumerWebDirectoryRedirect() {
-  const target = `${WEB_URL}/directory`;
-
-  useEffect(() => {
-    window.location.replace(target);
-  }, [target]);
-
-  return (
-    <div style={S.redirectPage} dir="rtl">
-      <p style={S.redirectTitle}>بانكو — دليل المنصات</p>
-      <p style={S.redirectBody}>
-        يتم تحويلك إلى موقع التصفح التكميلي. التطبيق يبقى المصدر الأساسي للتجربة.
-      </p>
-      <a href={target} style={S.cta}>
-        افتح {target}
-      </a>
-    </div>
-  );
-}
-
-function StandaloneDirectoryHub() {
+function App() {
   return (
     <div style={S.page} dir="rtl">
       <header style={S.hero}>
@@ -104,32 +73,8 @@ function StandaloneDirectoryHub() {
       </header>
 
       <main style={S.grid}>
-        {/* موقع التصفح (banco-web) */}
-        <section style={{ ...S.card, borderTopColor: bancoBrand.red }}>
-          <h2 style={S.cardTitle}>🌐 تصفّح السوق</h2>
-          <p style={S.cardBody}>موقع المستهلك — بحث وإعلانات ومراكز SEO:</p>
-          <ul style={S.list}>
-            {WEB_PAGES.map((p) => (
-              <li key={p.path} style={S.li}>
-                {WEB_URL ? (
-                  <a href={WEB_URL + p.path} style={S.pageLink}>
-                    {p.ar} <span style={S.pathMono}>{p.path}</span>
-                  </a>
-                ) : (
-                  <>
-                    {p.ar} <span style={S.pathMono}>{p.path}</span>
-                  </>
-                )}
-              </li>
-            ))}
-          </ul>
-          <div style={S.ctaRow}>
-            <LinkOrSoon url={WEB_URL} label="افتح موقع التصفح" />
-          </div>
-        </section>
-
         {/* التطبيق */}
-        <section style={{ ...S.card, borderTopColor: bancoBrand.red }}>
+        <section style={{ ...S.card, borderTopColor: "#E8002D" }}>
           <h2 style={S.cardTitle}>📱 تطبيق بانكو</h2>
           <p style={S.cardBody}>التجربة الكاملة — كل الأقسام والخدمات:</p>
           <ul style={S.list}>
@@ -140,7 +85,6 @@ function StandaloneDirectoryHub() {
             ))}
           </ul>
           <div style={S.ctaRow}>
-            <a href={MOBILE_URL} style={S.cta}>افتح التطبيق</a>
             <LinkOrSoon url={ANDROID_URL} label="Google Play" />
             <LinkOrSoon url={IOS_URL} label="App Store" />
           </div>
@@ -195,34 +139,6 @@ function StandaloneDirectoryHub() {
         </section>
       </main>
 
-      {/* ===== وصول سريع ===== */}
-      <section style={S.quickSection}>
-        <h2 style={S.quickTitle}>🔗 ادخل على المنصة الآن</h2>
-        <div style={S.quickLinks}>
-          <a href={MOBILE_URL} target="_blank" rel="noreferrer" style={{ ...S.quickBtn, borderColor: bancoBrand.red }}>
-            <span style={S.quickIcon}>📱</span>
-            <span>
-              <strong>تطبيق بانكو</strong>
-              <small style={S.quickSub}>{MOBILE_URL}</small>
-            </span>
-          </a>
-          <a href={MARKET_URL} target="_blank" rel="noreferrer" style={{ ...S.quickBtn, borderColor: "#1FA97D" }}>
-            <span style={S.quickIcon}>🛒</span>
-            <span>
-              <strong>بانكو ماركت</strong>
-              <small style={S.quickSub}>{MARKET_URL}</small>
-            </span>
-          </a>
-          <a href={ADMIN_URL} target="_blank" rel="noreferrer" style={{ ...S.quickBtn, borderColor: "#3B82F6" }}>
-            <span style={S.quickIcon}>🛠️</span>
-            <span>
-              <strong>لوحة التحكم</strong>
-              <small style={S.quickSub}>{ADMIN_URL}</small>
-            </span>
-          </a>
-        </div>
-      </section>
-
       <footer style={S.footer}>
         © {new Date().getFullYear()} BANCO — جميع الحقوق محفوظة
       </footer>
@@ -230,29 +146,7 @@ function StandaloneDirectoryHub() {
   );
 }
 
-function App() {
-  if (WEB_URL) {
-    return <ConsumerWebDirectoryRedirect />;
-  }
-  return <StandaloneDirectoryHub />;
-}
-
 const S: Record<string, React.CSSProperties> = {
-  redirectPage: {
-    minHeight: "100vh",
-    background: "#0a0a0a",
-    color: "#f5f5f5",
-    fontFamily: "system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif",
-    padding: "clamp(24px, 6vw, 64px)",
-    display: "flex",
-    flexDirection: "column",
-    alignItems: "center",
-    justifyContent: "center",
-    gap: 16,
-    textAlign: "center",
-  },
-  redirectTitle: { fontSize: 22, fontWeight: 800, margin: 0 },
-  redirectBody: { color: "#b8b8b8", margin: 0, maxWidth: 420, lineHeight: 1.7 },
   page: {
     minHeight: "100vh",
     background: "#0a0a0a",
@@ -293,7 +187,7 @@ const S: Record<string, React.CSSProperties> = {
   pathMono: { color: "#7a7a7a", fontFamily: "ui-monospace, Menlo, monospace", fontSize: 12, marginInlineStart: 6 },
   ctaRow: { display: "flex", gap: 10, marginTop: "auto", paddingTop: 12, flexWrap: "wrap" },
   cta: {
-    backgroundColor: bancoBrand.red,
+    backgroundColor: "#E8002D",
     color: "#fff",
     fontWeight: 700,
     fontSize: 14.5,
@@ -310,52 +204,6 @@ const S: Record<string, React.CSSProperties> = {
     borderRadius: 999,
   },
   footer: { textAlign: "center", color: "#6a6a6a", fontSize: 12, marginTop: "auto" },
-  quickSection: {
-    maxWidth: 520,
-    width: "100%",
-    margin: "0 auto",
-    display: "flex",
-    flexDirection: "column",
-    gap: 14,
-    alignItems: "stretch",
-  },
-  quickTitle: {
-    textAlign: "center",
-    fontSize: 18,
-    fontWeight: 800,
-    margin: 0,
-    marginBottom: 4,
-    color: "#f5f5f5",
-  },
-  quickLinks: {
-    display: "flex",
-    flexDirection: "column",
-    gap: 12,
-  },
-  quickBtn: {
-    display: "flex",
-    alignItems: "center",
-    gap: 16,
-    padding: "16px 22px",
-    background: "#141414",
-    border: "2px solid",
-    borderRadius: 14,
-    textDecoration: "none",
-    color: "#f5f5f5",
-    fontFamily: "system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif",
-    fontSize: 16,
-    fontWeight: 700,
-    transition: "background 0.15s",
-  },
-  quickIcon: { fontSize: 26, lineHeight: 1 },
-  quickSub: {
-    display: "block",
-    fontSize: 12,
-    color: "#7a7a7a",
-    fontFamily: "ui-monospace, Menlo, monospace",
-    fontWeight: 400,
-    marginTop: 2,
-  },
 };
 
 export default App;

@@ -14,10 +14,8 @@ Escape `\`, `%`, and `_` in the user-supplied path segment and pass escape char 
 
 ## Files changed
 
-- `artifacts/api-server/src/lib/sqlLikeEscape.ts` — `escapeLikeLiteral()` (unit-tested)
-- `artifacts/api-server/src/controllers/uploadController.ts` — escaped LIKE
+- `artifacts/api-server/src/controllers/uploadController.ts` — `escapeLikeLiteral()` + escaped LIKE
 
 ## Verification
 
-- Automated: `artifacts/api-server/src/lib/sqlLikeEscape.test.ts` (in `pnpm run confidence`)
-- Manual: request serve path with `%` in segment should not match broader URLs
+Manual: request serve path with `%` in segment should not match broader URLs. Automated regression via existing upload/serve tests when `DATABASE_URL` is set.

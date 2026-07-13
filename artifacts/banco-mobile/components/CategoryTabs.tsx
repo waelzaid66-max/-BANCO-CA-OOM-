@@ -6,7 +6,6 @@ import { Pressable, ScrollView, StyleSheet, View } from "react-native";
 import { AppText } from "@/components/AppText";
 import { useI18n } from "@/context/LanguageContext";
 import { useColors } from "@/hooks/useColors";
-import { sectionAccent } from "@/lib/sectionTheme";
 
 /**
  * Browse-category taxonomy now lives in @workspace/taxonomy (single source of
@@ -94,10 +93,7 @@ export function CategoryTabs({ selected, onChange, visible }: CategoryTabsProps)
               style={[
                 styles.pill,
                 {
-                  // Active tab uses the section's company accent (not one global red).
-                  backgroundColor: isActive
-                    ? sectionAccent(cat.key)
-                    : colors.secondary,
+                  backgroundColor: isActive ? colors.primary : colors.secondary,
                   borderRadius: 20,
                   flexDirection: "row",
                   alignItems: "center",
@@ -150,19 +146,15 @@ function PillChips({
   selectedKey,
   onChange,
   testIdPrefix,
-  accent,
 }: {
   items: PillItem[];
   selectedKey: string;
   onChange: (key: string) => void;
   testIdPrefix: string;
-  /** Active section company accent; falls back to theme primary. */
-  accent?: string;
 }) {
   const colors = useColors();
   const { t, isRTL } = useI18n();
   const ordered = isRTL ? [...items].reverse() : items;
-  const activeColor = accent ?? colors.primary;
 
   return (
     <View
@@ -192,9 +184,9 @@ function PillChips({
                 styles.subPill,
                 {
                   backgroundColor: isActive
-                    ? activeColor + "1A"
+                    ? colors.primary + "1A"
                     : "transparent",
-                  borderColor: isActive ? activeColor : colors.border,
+                  borderColor: isActive ? colors.primary : colors.border,
                 },
               ]}
               testID={`${testIdPrefix}-${it.key}`}
@@ -203,7 +195,7 @@ function PillChips({
                 style={[
                   styles.subLabel,
                   {
-                    color: isActive ? activeColor : colors.mutedForeground,
+                    color: isActive ? colors.primary : colors.mutedForeground,
                     fontFamily: isActive
                       ? "Inter_600SemiBold"
                       : "Inter_400Regular",
@@ -231,8 +223,7 @@ export function IndustrialSubChips({
   types,
   selected,
   onChange,
-  accent,
-}: IndustrialSubChipsProps & { accent?: string }) {
+}: IndustrialSubChipsProps) {
   const items: PillItem[] = [
     { key: "all", i18nKey: "home.industrialTypes.all" },
     ...types.map((ty) => ({ key: ty, i18nKey: `home.industrialTypes.${ty}` })),
@@ -243,7 +234,6 @@ export function IndustrialSubChips({
       selectedKey={selected}
       onChange={(key) => onChange(key as IndustrialType)}
       testIdPrefix="industrial-type"
-      accent={accent}
     />
   );
 }
@@ -260,19 +250,13 @@ interface EngineChipsProps {
  * backend filter param (see constants/engines.ts); selecting one re-queries the
  * feed/search with that param, so results are always real — never fabricated.
  */
-export function EngineChips({
-  engines,
-  selected,
-  onChange,
-  accent,
-}: EngineChipsProps & { accent?: string }) {
+export function EngineChips({ engines, selected, onChange }: EngineChipsProps) {
   return (
     <PillChips
       items={engines}
       selectedKey={selected}
       onChange={onChange}
       testIdPrefix="engine"
-      accent={accent}
     />
   );
 }

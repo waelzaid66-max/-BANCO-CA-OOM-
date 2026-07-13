@@ -1,18 +1,21 @@
 /**
  * BANCO car taxonomy — real market data for Egypt + GCC, bilingual (EN/AR).
  *
- * Philosophy (open publish + adaptive learn):
- *  • Catalogue brands/models are SUGGESTIONS for faster pick + better search
- *    match — never a hard publish allowlist.
- *  • Interactive create/update runs with autoLearn + lenient normalization:
- *    unknown brands are learned into `brands`; unknown models warn rather than
- *    400. Custom / "Other" must always be reachable in the create picker.
- *  • `createSafe` / `CREATE_SAFE_*` mark well-seeded rows (preferred chips,
- *    exact dbName match) — NOT a reject gate. Bulk/import without autoLearn
- *    may still warn; sellers on the app must always be able to publish.
+ * Two layers, kept deliberately separate so nothing here ever fabricates a
+ * backend capability:
  *
- * Browse: selecting a brand (or brand+model) maps to free-text `q` / brand
- * params when wired; empty inventory → empty results, never fake rows.
+ *  • BROWSE layer (rich): the full brand/model catalogue users can browse. The
+ *    search API has no brand/model param, but listing TITLES are English and
+ *    contain "<Brand> <Model> <Year>" (e.g. "BMW 330i 2022"), so selecting a
+ *    brand (or brand+model) maps to the free-text `q` param via an ILIKE title
+ *    match. Brands/models with no inventory simply return no results — honest,
+ *    never fake.
+ *
+ *  • CREATE layer (controlled): the backend normalizes new listings in STRICT
+ *    mode and REJECTS unknown brands/models. Only the brands/models actually
+ *    seeded in the DB resolve to a brand_id/model_id. `CREATE_SAFE_BRANDS` /
+ *    `CREATE_SAFE_MODELS` mirror exactly what the backend accepts, so the
+ *    create picker can never produce a rejected listing.
  */
 
 export type Bi = { en: string; ar: string };
@@ -215,16 +218,15 @@ export const CAR_MODELS: Record<string, string[]> = {
 };
 
 /**
- * Legacy suggestion markers — preferred chips + exact dbName for seeded rows.
- * NOT a publish allowlist. Interactive create uses lenient + autoLearn; the
- * create picker shows the full catalogue + custom brand. Bulk import may warn
- * without autoLearn but never blocks app sellers.
+ * Brands the backend has seeded and will resolve to a brand_id on create.
+ * Anything outside this set is rejected by strict normalization.
  */
 export const CREATE_SAFE_BRANDS: CarBrand[] = CAR_BRANDS.filter((b) => b.createSafe);
 
 /**
- * Seeded model names per brand — suggestion list for the picker. "Other model"
- * omits specs.model so lenient normalization infers from the title.
+ * Exact model names seeded in the DB, per brand value. The create model picker
+ * only offers these (plus an "Other" path that omits specs.model so the backend
+ * infers leniently from the title) — guaranteeing a create never gets rejected.
  */
 export const CREATE_SAFE_MODELS: Record<string, string[]> = {
   audi: ["A4"],
@@ -304,30 +306,6 @@ const BRAND_BY_VALUE: Record<string, CarBrand> = Object.fromEntries(
 
 export function brandByValue(value: string | undefined): CarBrand | undefined {
   return value ? BRAND_BY_VALUE[value] : undefined;
-}
-
-/** Restore catalogue or custom brand from a listing-draft `carBrandValue`. */
-function customBrandSlugToLabel(slug: string): string {
-  return slug
-    .split(/[-_\s]+/)
-    .filter(Boolean)
-    .map((part) => part.charAt(0).toUpperCase() + part.slice(1))
-    .join(" ");
-}
-
-export function carBrandFromDraftValue(value: string): CarBrand | null {
-  if (!value) return null;
-  if (value.startsWith("custom:")) {
-    const slug = value.slice("custom:".length);
-    const label = customBrandSlugToLabel(slug);
-    return {
-      value,
-      en: label,
-      ar: label,
-      country: "other",
-    };
-  }
-  return BRAND_BY_VALUE[value] ?? null;
 }
 
 export function brandLabel(brand: CarBrand, isRTL: boolean): string {

@@ -92,17 +92,10 @@ export function feedItemsToMarkers(items: FeedItem[]): MapMarker[] {
  * Tapping a count bubble drills in; tapping a single pin posts
  * {type:"select", id} so the host can reveal the listing card.
  */
-export function buildMapHtml(
-  markers: MapMarker[],
-  theme: MapTheme,
-  center?: { lat: number; lng: number; zoom: number },
-): string {
+export function buildMapHtml(markers: MapMarker[], theme: MapTheme): string {
   // JSON is safe inside a <script> except for a literal "</script>"; escaping
   // "<" to its unicode form neutralizes that without changing the parsed data.
   const json = JSON.stringify(markers).replace(/</g, "\\u003c");
-  const lat = center?.lat ?? 26.8;
-  const lng = center?.lng ?? 30.8;
-  const zoom = center?.zoom ?? 6;
   return `<!DOCTYPE html>
 <html>
 <head>
@@ -132,10 +125,6 @@ export function buildMapHtml(
     border: 1.5px solid ${theme.primaryForeground};
     box-shadow: 0 1px 5px rgba(0,0,0,0.35);
     cursor: pointer;
-  }
-  .pin .pill.book {
-    background: #0E9F6E;
-    border-color: #E8FFF5;
   }
   .cpin .cbubble {
     position: absolute;
@@ -177,18 +166,6 @@ export function buildMapHtml(
   .marker-cluster-small,
   .marker-cluster-medium,
   .marker-cluster-large { background: rgba(0,0,0,0.18); }
-  .locate-btn {
-    width: 40px; height: 40px; background: ${theme.card};
-    border: 1px solid ${theme.border}; border-radius: 10px;
-    display: flex; align-items: center; justify-content: center;
-    box-shadow: 0 1px 5px rgba(0,0,0,0.35); cursor: pointer; margin-bottom: 8px;
-  }
-  .locate-btn svg { width: 20px; height: 20px; stroke: ${theme.primary}; }
-  .me-dot {
-    width: 16px; height: 16px; background: #2F80ED; border: 3px solid #fff;
-    border-radius: 50%; box-shadow: 0 0 0 6px rgba(47,128,237,0.25);
-    transform: translate(-50%, -50%);
-  }
 </style>
 </head>
 <body>
@@ -216,38 +193,12 @@ export function buildMapHtml(
     }
     if (!window.L) { post({ type: "error" }); return; }
     var map = L.map("map", { zoomControl: false, attributionControl: true })
-      .setView([${lat}, ${lng}], ${zoom});
+      .setView([26.8, 30.8], 6);
     L.control.zoom({ position: "topright" }).addTo(map);
     L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
       maxZoom: 19,
       attribution: "&copy; OpenStreetMap"
     }).addTo(map);
-
-    // "Locate me" control — centres the map on the device GPS and drops a
-    // you-are-here dot, so shoppers can anchor the search to where they are.
-    var meMarker = null;
-    var LocateControl = L.Control.extend({
-      options: { position: "bottomright" },
-      onAdd: function () {
-        var b = L.DomUtil.create("div", "locate-btn");
-        b.setAttribute("title", "My location");
-        b.innerHTML = '<svg viewBox="0 0 24 24" fill="none" stroke-linejoin="round" stroke-linecap="round" stroke-width="2"><circle cx="12" cy="12" r="7"></circle><line x1="12" y1="1" x2="12" y2="4"></line><line x1="12" y1="20" x2="12" y2="23"></line><line x1="1" y1="12" x2="4" y2="12"></line><line x1="20" y1="12" x2="23" y2="12"></line></svg>';
-        L.DomEvent.disableClickPropagation(b);
-        b.onclick = function () {
-          if (!navigator.geolocation) return;
-          navigator.geolocation.getCurrentPosition(function (p) {
-            var ll = [p.coords.latitude, p.coords.longitude];
-            map.setView(ll, 14);
-            if (meMarker) { map.removeLayer(meMarker); }
-            meMarker = L.marker(ll, {
-              icon: L.divIcon({ className: "", html: '<div class="me-dot"></div>', iconSize: [16, 16] })
-            }).addTo(map);
-          }, function () {}, { enableHighAccuracy: true, timeout: 8000, maximumAge: 30000 });
-        };
-        return b;
-      }
-    });
-    map.addControl(new LocateControl());
 
     // Layer 1 — the loaded page, shown instantly so the map is never blank.
     var group = L.markerClusterGroup
@@ -258,7 +209,7 @@ export function buildMapHtml(
       if (typeof d.lat !== "number" || typeof d.lng !== "number") return;
       var icon = L.divIcon({
         className: "pin",
-        html: '<div class="pill' + (d.bookable ? " book" : "") + '">' + (d.bookable ? "📅 " : "") + esc(d.label) + "</div>",
+        html: '<div class="pill">' + (d.bookable ? "📅 " : "") + esc(d.label) + "</div>",
         iconSize: [0, 0]
       });
       var m = L.marker([d.lat, d.lng], { icon: icon });
@@ -298,7 +249,7 @@ export function buildMapHtml(
             })(c.lat, c.lng);
           } else {
             var inner = c.label
-              ? '<div class="pill' + (c.bookable ? " book" : "") + '">' + (c.bookable ? "📅 " : "") + esc(c.label) + "</div>"
+              ? '<div class="pill">' + (c.bookable ? "📅 " : "") + esc(c.label) + "</div>"
               : '<div class="sdot"></div>';
             marker = L.marker([c.lat, c.lng], {
               icon: L.divIcon({
@@ -315,18 +266,6 @@ export function buildMapHtml(
         });
       }
     };
-
-    // Host → map (web iframe cannot injectJS like WebView). Parent posts
-    // {type:"setClusters", clusters:[…]} via postMessage.
-    window.addEventListener("message", function (event) {
-      try {
-        var raw = event.data;
-        var msg = typeof raw === "string" ? JSON.parse(raw) : raw;
-        if (msg && msg.type === "setClusters" && window.BANCO_MAP) {
-          window.BANCO_MAP.setClusters(msg.clusters || []);
-        }
-      } catch (e) {}
-    });
 
     // Report the visible bounds so the host can query /search/map for it.
     var vpTimer = null;

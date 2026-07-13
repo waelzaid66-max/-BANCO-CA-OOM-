@@ -471,28 +471,8 @@ const REQUIRED_SPEC_KEYS: Record<Category, string[]> = {
   industrial: ["capacity", "industry", "industrial_type"],
 };
 
-/** Effective completeness keys — raw_material commodities are scored on
- * capacity + industrial_type + material, never on factory-sector `industry`
- * (mirrors mobile raw_materials create form / requiredSpecKeysFor). */
-function requiredSpecKeysForCompleteness(
-  category: Category,
-  specs: Record<string, unknown>
-): string[] {
-  if (category !== "industrial") return REQUIRED_SPEC_KEYS[category];
-  const industrialType =
-    typeof specs.industrial_type === "string"
-      ? specs.industrial_type
-      : typeof specs.type === "string"
-        ? specs.type
-        : "";
-  if (industrialType === "raw_material") {
-    return ["capacity", "industrial_type", "material"];
-  }
-  return REQUIRED_SPEC_KEYS.industrial;
-}
-
 function attributeCompleteness(category: Category, specs: Record<string, unknown>): number {
-  const keys = requiredSpecKeysForCompleteness(category, specs);
+  const keys = REQUIRED_SPEC_KEYS[category];
   if (keys.length === 0) return 1;
   const present = keys.filter((k) => {
     const v = specs[k];
@@ -877,11 +857,6 @@ export async function normalizeListing(
     if (taxonomy.industry) taxonomy.industryId = ref.industryIds[taxonomy.industry] ?? null;
   }
 
-  /* — Market country (ISO); missing → EG so list/map market filter stays honest — */
-  const marketRaw =
-    typeof specs.market_country === "string" ? specs.market_country.trim().toUpperCase() : "";
-  specs.market_country = /^[A-Z]{2}$/.test(marketRaw) ? marketRaw : "EG";
-
   /* — Duplicate detection — */
   const yearRaw = specs.year ?? specs.year_of_manufacture;
   const year = yearRaw != null && Number.isFinite(Number(yearRaw)) ? Number(yearRaw) : null;
@@ -914,15 +889,7 @@ export async function normalizeListing(
   /* — Trust score — */
   const taxonomyKeys = Object.values(taxonomy);
   const taxonomyResolved = taxonomyKeys.filter((v) => v !== null).length;
-  // raw_material only expects industrialType (industry is N/A for commodities).
-  const taxonomyExpected =
-    category === "car"
-      ? 6
-      : category === "real_estate"
-        ? 3
-        : taxonomy.industrialType === "raw_material"
-          ? 1
-          : 2;
+  const taxonomyExpected = category === "car" ? 6 : category === "real_estate" ? 3 : 2;
   let trustScore = computeTrustScore({
     sellerVerified: opts.sellerVerified,
     imageCount: mediaResult.imageCount,

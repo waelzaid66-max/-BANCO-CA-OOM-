@@ -1,10 +1,8 @@
 import { useAuth } from "@clerk/expo";
 import {
-  getListNotificationsQueryKey,
   registerPushToken,
   unregisterPushToken,
 } from "@workspace/api-client-react";
-import { useQueryClient } from "@tanstack/react-query";
 import Constants, { ExecutionEnvironment } from "expo-constants";
 import * as Device from "expo-device";
 import * as Notifications from "expo-notifications";
@@ -13,10 +11,7 @@ import { useEffect, useRef } from "react";
 import { Platform } from "react-native";
 
 import { useSound } from "@/context/SoundContext";
-import {
-  notificationRequiresAuth,
-  routeForNotification,
-} from "@/lib/notificationRouting";
+import { routeForNotification } from "@/lib/notificationRouting";
 
 /**
  * Remote push wiring (Task #102).
@@ -70,10 +65,7 @@ function navigateWhenReady(dest: Parameters<typeof router.push>[0], attempt = 0)
   }
 }
 
-function handleResponse(
-  response: Notifications.NotificationResponse | null,
-  signedIn: boolean,
-) {
+function handleResponse(response: Notifications.NotificationResponse | null) {
   if (!response) return;
   const data = (response.notification.request.content.data ?? {}) as Record<
     string,
@@ -82,10 +74,6 @@ function handleResponse(
   const type = typeof data.type === "string" ? data.type : undefined;
   const dest = routeForNotification(type, data);
   if (!dest) return;
-  if (!signedIn && notificationRequiresAuth(dest)) {
-    navigateWhenReady("/(tabs)/profile");
-    return;
-  }
   navigateWhenReady(dest);
 }
 
@@ -122,7 +110,6 @@ async function obtainExpoPushToken(): Promise<string | null> {
 
 export function PushNotificationsBridge() {
   const { isSignedIn } = useAuth();
-  const queryClient = useQueryClient();
   // The local "Push notifications" setting gates device registration: turning it
   // off unregisters this device's token (server stops pushing here); turning it
   // back on re-registers. `ready` defers the first run until the stored pref has
@@ -156,32 +143,15 @@ export function PushNotificationsBridge() {
     };
   }, [isSignedIn, notificationsEnabled, ready]);
 
-  // Refresh in-app feed + home bell badge when a push lands while the app is open.
-  useEffect(() => {
-    if (isExpoGo) return;
-    const sub = Notifications.addNotificationReceivedListener(() => {
-      queryClient.invalidateQueries({ queryKey: getListNotificationsQueryKey() });
-    });
-    return () => sub.remove();
-  }, [queryClient]);
-
   // Deep-link on tap: cold start (opened from a notification) + warm taps.
   useEffect(() => {
     if (isExpoGo) return;
     Notifications.getLastNotificationResponseAsync()
-      .then((r) => {
-        handleResponse(r, isSignedIn === true);
-        if (r) {
-          queryClient.invalidateQueries({ queryKey: getListNotificationsQueryKey() });
-        }
-      })
+      .then(handleResponse)
       .catch(() => {});
-    const sub = Notifications.addNotificationResponseReceivedListener((r) => {
-      handleResponse(r, isSignedIn === true);
-      queryClient.invalidateQueries({ queryKey: getListNotificationsQueryKey() });
-    });
+    const sub = Notifications.addNotificationResponseReceivedListener(handleResponse);
     return () => sub.remove();
-  }, [isSignedIn, queryClient]);
+  }, []);
 
   return null;
 }

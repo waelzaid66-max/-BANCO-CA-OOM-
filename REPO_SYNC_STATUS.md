@@ -1,42 +1,70 @@
-# Repo sync status
+# BANCO — حالة مزامنة الريبوهات (نسخة الإنتاج)
 
-**Updated:** 2026-07-10 (waves 8–9 — honest deploy matrix)
+**التاريخ:** 2026-07-09  
+**HEAD على `main` (origin):** `3a95afa`  
+**aws-virgen `main`:** `39b1e63` (مزامَن + tag `v1.0.0-rc.2`)  
+**مرجع موحّد:** `DUAL_REPO_STATUS.md`
 
-| Repo | Branch | Tag | SHA | Status |
-|------|--------|-----|-----|--------|
-| `-BANCO-CA-OOM-` | `main` | — | `3b40782` | ✅ pushed (includes `5939849`) |
-| `aws-virgen` | `main` | `v1.1.3-seller-social-2026-07-10` | `d386f52` | ✅ synced (tag peels to same commit) |
+## GitHub Actions CI على `main`
 
-**Handoff:** `release/FULL-STABLE-SNAPSHOT-2026-07-10.md`  
-**Proof artifact:** `audit/mobile/live-probes/2026-07-10-full-deploy-proof.json`  
-**Manifest:** `release/AWS_VIRGEN_SYNC_MANIFEST.json` (feature commit `5939849`)
+| Run | الحالة |
+|-----|--------|
+| [28979326703](https://github.com/waelzaid66-max/-BANCO-CA-OOM-/actions/runs/28979326703) | ✅ 5/5 (Typecheck، API tests، ESLint، GCP gate، Mobile) |
 
-**Live API:** `https://banco-ca-oom.replit.app`
+**Tag:** `v1.0.0-rc.2`  
+**أداة aws-virgen:** `scripts/publish-aws-virgen-rc.sh v1.0.0-rc.2`
 
-| Gate | Result |
-|------|--------|
-| lib-hardening | 47/47 |
-| production-confidence | 17/17 (skip-typecheck) |
-| search-contract | PASS |
-| probe-full-deploy | PARTIAL (wave6 FRESH, wave8 STALE) |
-| staging upload smoke | BLOCKED — `CLERK_BEARER_TOKEN` |
-| Device QA | OPEN |
-| EAS store build | NOT_RUN |
+---
 
-### Deploy proof by layer
+## الريموتات
 
-| Layer | Proven | Evidence |
-|-------|--------|----------|
-| GitHub primary | yes | `origin/main` = `3b40782` |
-| aws-virgen sync | yes | `ls-remote main` + tag `^{}` = `d386f52` |
-| Replit API stabilize | yes | ISO 400 + map bookable/price |
-| Replit API wave 8 | **no** | seller keys: `id,name,role,is_verified` only |
-| Mobile in stores | no | needs EAS build |
+| الاسم | GitHub URL | دور | `main` @ |
+|-------|------------|-----|----------|
+| **origin** | `waelzaid66-max/-BANCO-CA-OOM-` | مصدر العمل | `3a95afa` ✅ |
+| **aws-virgen** | `waelzaid66-max/aws-virgen` | AWS EC2/CD | `39b1e63` ✅ |
+
+> **نطاق رسمي:** الريبوهان أعلاه فقط. لا مرآات.
+
+---
+
+## تقارير التشغيل (Replit + GCP + AWS)
+
+| التقرير | المسار |
+|---------|--------|
+| تسليم الوكيل | `release/PRIMARY_AGENT_HANDOFF.md` |
+| تشغيل موحّد | `release/REPLIT_GOOGLE_AWS_UNIFIED_RUNBOOK.md` |
+| GCP كامل | `deploy/gcp/reports/00-README.md` |
+| مشغّلات Google | `deploy/gcp/TRIGGER_MIGRATION.md` |
+| AWS | `deploy/aws/reports/00-README.md` |
+| فهرس النشر | `docs/DEPLOYMENT_GUIDES.md` |
+
+---
+
+## أوامر الإغلاق على Replit (مالك المستودع)
 
 ```bash
-node audit/mobile/scripts/ops-next-step.mjs
-node audit/mobile/scripts/probe-wave8-seller-social.mjs
-./scripts/publish-aws-virgen-rc.ps1 v1.1.3-seller-social-2026-07-10
+git pull origin main
+gh auth status   # يجب حساب waelzaid66-max وليس bot
+
+export AWS_VIRGEN_SYNC_TOKEN="$(gh auth token)"   # PAT بصلاحية repo على aws-virgen
+./scripts/publish-aws-virgen-rc.sh v1.0.0-rc.2
+
+./scripts/push-mirror-remotes.sh
+
+pnpm install --frozen-lockfile
+pnpm run typecheck && pnpm run lint && pnpm run confidence
+pnpm --filter @workspace/api-server test
 ```
 
-**Blocking ops:** Redeploy Replit `api-server` from `origin/main` — see `audit/mobile/NEXT-OPS-REPLIT-REDEPLOY.md`.
+---
+
+## قرار الإصدار
+
+| النطاق | الحكم |
+|--------|--------|
+| كود + CI على الأساسي | **GO** |
+| aws-virgen + مرآات | **GO** بعد أوامر الدفع أعلاه |
+| GCP Console triggers + أسرار حية | **GO WITH FIXES** |
+| متاجر عالمية | **NO GO** حتى OPS (EAS، smoke staging) |
+
+*يُحدَّث بعد كل دفع.*

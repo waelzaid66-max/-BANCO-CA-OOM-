@@ -73,7 +73,6 @@ services:
         VITE_API_BASE_URL: ${VITE_API_BASE_URL:-}
         VITE_MARKET_URL: ${VITE_MARKET_URL:-}
         VITE_ADMIN_URL: ${VITE_ADMIN_URL:-}
-        VITE_WEB_URL: ${VITE_WEB_URL:-}
         VITE_APP_ANDROID_URL: ${VITE_APP_ANDROID_URL:-}
         VITE_APP_IOS_URL: ${VITE_APP_IOS_URL:-}
     image: banco-web:latest

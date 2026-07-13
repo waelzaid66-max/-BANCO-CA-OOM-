@@ -81,26 +81,6 @@ function RootLayoutNav() {
         options={{ headerShown: false, animation: "slide_from_right" }}
       />
       <Stack.Screen
-        name="section/car"
-        options={{ headerShown: false, animation: "slide_from_right" }}
-      />
-      <Stack.Screen
-        name="section/real-estate"
-        options={{ headerShown: false, animation: "slide_from_right" }}
-      />
-      <Stack.Screen
-        name="section/factories"
-        options={{ headerShown: false, animation: "slide_from_right" }}
-      />
-      <Stack.Screen
-        name="section/materials"
-        options={{ headerShown: false, animation: "slide_from_right" }}
-      />
-      <Stack.Screen
-        name="section/booking"
-        options={{ headerShown: false, animation: "slide_from_right" }}
-      />
-      <Stack.Screen
         name="legal/privacy"
         options={{ headerShown: false, animation: "slide_from_right" }}
       />
@@ -218,18 +198,6 @@ function RootLayoutNav() {
       />
       <Stack.Screen
         name="industry/index"
-        options={{ headerShown: false, animation: "slide_from_right" }}
-      />
-      <Stack.Screen
-        name="settings"
-        options={{ headerShown: false, animation: "slide_from_right" }}
-      />
-      <Stack.Screen
-        name="business/verification"
-        options={{ headerShown: false, animation: "slide_from_right" }}
-      />
-      <Stack.Screen
-        name="assistant"
         options={{ headerShown: false, animation: "slide_from_right" }}
       />
     </Stack>

@@ -5,7 +5,6 @@ import {
   interactions,
   users,
   listings,
-  listingAttributes,
   leadBilling,
   type Plan,
 } from "@workspace/db/schema";
@@ -27,22 +26,6 @@ const LEAD_ACTION_LABEL: Record<TrackLeadInput["actionType"], string> = {
   chat: "Chat",
   finance_request: "Finance request",
 };
-
-/** Listing-level contact phones (specs.contact_phones) override the seller profile phone. */
-function revealPhoneFromListing(
-  specs: unknown,
-  sellerPhone: string | null | undefined
-): string | null {
-  if (specs && typeof specs === "object") {
-    const phones = (specs as Record<string, unknown>).contact_phones;
-    if (Array.isArray(phones)) {
-      for (const entry of phones) {
-        if (typeof entry === "string" && entry.trim()) return entry.trim();
-      }
-    }
-  }
-  return sellerPhone?.trim() ? sellerPhone.trim() : null;
-}
 
 interface TrackLeadInput {
   listingId: string;
@@ -120,11 +103,9 @@ export async function contactLead(input: ContactLeadInput): Promise<{ phone: str
       sellerRole: users.role,
       title: listings.title,
       sellerPhone: users.phone,
-      specs: listingAttributes.specs,
     })
     .from(listings)
     .leftJoin(users, eq(listings.userId, users.id))
-    .leftJoin(listingAttributes, eq(listingAttributes.listingId, listings.id))
     .where(
       and(
         eq(listings.id, input.listingId),
@@ -318,8 +299,8 @@ export async function contactLead(input: ContactLeadInput): Promise<{ phone: str
     void createNotification({
       userId: sellerId,
       type: "lead",
-      title: "عميل محتمل جديد · New lead",
-      body: `اهتمام جديد على «${listing.title}» · ${LEAD_ACTION_LABEL[input.actionType]} interest`,
+      title: "New lead",
+      body: `${LEAD_ACTION_LABEL[input.actionType]} interest on "${listing.title}"`,
       data: { listing_id: input.listingId, lead_id: billing.leadId },
     });
   });
@@ -379,9 +360,7 @@ export async function contactLead(input: ContactLeadInput): Promise<{ phone: str
       });
   });
 
-  return {
-    phone: revealPhoneFromListing(listing.specs, listing.sellerPhone),
-  };
+  return { phone: listing.sellerPhone ?? null };
 }
 
 /**
@@ -555,8 +534,8 @@ export async function processLead(input: TrackLeadInput): Promise<void> {
     await createNotification({
       userId: sellerId,
       type: "lead",
-      title: "عميل محتمل جديد · New lead",
-      body: `اهتمام جديد على «${listing.title}» · ${LEAD_ACTION_LABEL[input.actionType]} interest`,
+      title: "New lead",
+      body: `${LEAD_ACTION_LABEL[input.actionType]} interest on "${listing.title}"`,
       data: { listing_id: input.listingId, lead_id: billing.leadId },
     });
 

@@ -82,17 +82,13 @@ function AuthGateModal({
       onRequestClose={onClose}
       statusBarTranslucent
     >
-      <View style={styles.backdrop}>
+      <Pressable style={styles.backdrop} onPress={onClose}>
         <Pressable
-          style={StyleSheet.absoluteFillObject}
-          onPress={onClose}
-          accessibilityRole="button"
-        />
-        <View
           style={[
             styles.sheet,
             { backgroundColor: colors.card, borderRadius: colors.radius },
           ]}
+          onPress={(e) => e.stopPropagation()}
         >
           <View
             style={[styles.iconWrap, { backgroundColor: colors.primary + "1A" }]}
@@ -128,8 +124,8 @@ function AuthGateModal({
               {t("authGate.dismiss")}
             </AppText>
           </Pressable>
-        </View>
-      </View>
+        </Pressable>
+      </Pressable>
     </Modal>
   );
 }

@@ -18,7 +18,6 @@ import type {
 } from "@workspace/api-client-react";
 
 import { AppText } from "@/components/AppText";
-import { MarketCountryButton, MarketCountryPicker } from "@/components/MarketCountryPicker";
 import {
   apiCategoryFor,
   Category,
@@ -27,11 +26,12 @@ import {
 } from "@/components/CategoryTabs";
 import { brandLabel, type CarBrand } from "@/constants/cars";
 import { engineByKey, type EngineDef } from "@/constants/engines";
-import { INDUSTRY_TYPES, MATERIAL_TYPES } from "@/constants/listingCreateTaxonomy";
+import { INDUSTRY_TYPES } from "@/constants/listingCreateTaxonomy";
 import { useI18n } from "@/context/LanguageContext";
 import { useColors } from "@/hooks/useColors";
-import { sectionAccent } from "@/lib/sectionTheme";
 import {
+  MARKET_COUNTRIES,
+  marketCountryLabel,
   rentalTermsForSearch,
   sanitizeRentalTermForMarket,
 } from "@/lib/searchTaxonomy";
@@ -50,8 +50,9 @@ const SORTS: SearchSort[] = [
 ];
 const PAYMENTS: PaymentType[] = ["any", "installment"];
 
-// Section-specific attribute filters — cars: fuel + transmission live HERE only
-// (not as engine chips). Industrial: industry + origin. One control family = one job.
+// Section-specific attribute filters. These criteria/back-end params existed but
+// had NO controls in the sheet — cars get fuel + transmission, industrial gets
+// industry + origin, each a single-select chip row (tap again to clear).
 const FUELS: SearchListingsFuelType[] = [
   "petrol",
   "diesel",
@@ -142,7 +143,6 @@ export function FilterSheet({
 
   const rowDir = isRTL ? "row-reverse" : "row";
   const textAlign = isRTL ? "right" : "left";
-  const chipAccent = sectionAccent(criteria.category);
 
   // Price / year are drafts: re-synced from the committed criteria each time the
   // sheet opens, then applied together on the Apply button.
@@ -150,33 +150,19 @@ export function FilterSheet({
   const [maxPrice, setMaxPrice] = useState(criteria.maxPrice);
   const [minYear, setMinYear] = useState(criteria.minYear);
   const [maxYear, setMaxYear] = useState(criteria.maxYear);
-  const [marketPickerOpen, setMarketPickerOpen] = useState(false);
 
   useEffect(() => {
     if (visible) {
       setMinPrice(criteria.minPrice);
       setMaxPrice(criteria.maxPrice);
-      // Years are car-only drafts — never rehydrate RE/facilities/materials
-      // with leftover car year strings from a previous open.
-      if (criteria.category === "car") {
-        setMinYear(criteria.minYear);
-        setMaxYear(criteria.maxYear);
-      } else {
-        setMinYear("");
-        setMaxYear("");
-      }
+      setMinYear(criteria.minYear);
+      setMaxYear(criteria.maxYear);
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [visible, criteria.category]);
+  }, [visible]);
 
   const apply = () => {
-    // Gate year writes to cars only — Apply must never re-inject car years
-    // into another browse company after a mid-sheet category switch.
-    if (criteria.category === "car") {
-      onUpdate({ minPrice, maxPrice, minYear, maxYear });
-    } else {
-      onUpdate({ minPrice, maxPrice, minYear: "", maxYear: "" });
-    }
+    onUpdate({ minPrice, maxPrice, minYear, maxYear });
     onClose();
   };
 
@@ -273,7 +259,9 @@ export function FilterSheet({
                     style={[
                       styles.chip,
                       {
-                        backgroundColor: active ? chipAccent : colors.secondary,
+                        backgroundColor: active
+                          ? colors.primary
+                          : colors.secondary,
                       },
                     ]}
                     testID={`sort-${s}`}
@@ -295,21 +283,7 @@ export function FilterSheet({
               })}
             </ScrollView>
 
-            <SectionLabel
-              text={t("search.marketCountryTitle")}
-              align={textAlign}
-              colors={colors}
-            />
-            <View style={[styles.chipRow, { flexDirection: rowDir }]}>
-              <MarketCountryButton
-                selected={criteria.marketCountry}
-                onPress={() => setMarketPickerOpen(true)}
-              />
-            </View>
-
-            {/* Category — hidden on section pages where the category is locked. */}
-            {!lockCategory && (
-            <>
+            {/* Category */}
             <SectionLabel text={t("search.category")} align={textAlign} colors={colors} />
             <ScrollView
               horizontal
@@ -326,7 +300,7 @@ export function FilterSheet({
                       styles.chip,
                       {
                         backgroundColor: active
-                          ? chipAccent
+                          ? colors.primary
                           : colors.secondary,
                         flexDirection: rowDir,
                         alignItems: "center",
@@ -357,8 +331,6 @@ export function FilterSheet({
                 );
               })}
             </ScrollView>
-            </>
-            )}
 
             {/* Type (facet-gated engine chips) */}
             {showEngines && (
@@ -369,7 +341,6 @@ export function FilterSheet({
                     engines={engines}
                     selected={criteria.engineKey}
                     onChange={onSelectEngine}
-                    accent={chipAccent}
                   />
                 </View>
               </>
@@ -487,7 +458,6 @@ export function FilterSheet({
                   onToggle={(v) => onUpdate({ fuelType: v })}
                   rowDir={rowDir}
                   colors={colors}
-                  accent={chipAccent}
                   testPrefix="filter-fuel"
                 />
 
@@ -500,7 +470,6 @@ export function FilterSheet({
                   onToggle={(v) => onUpdate({ transmission: v })}
                   rowDir={rowDir}
                   colors={colors}
-                  accent={chipAccent}
                   testPrefix="filter-transmission"
                 />
               </>
@@ -511,6 +480,52 @@ export function FilterSheet({
                 while the sale (تمليك) engine chip is active (rent-only content). */}
             {showRentalTerms && (
               <>
+                <SectionLabel text={t("create.fields.market")} align={textAlign} colors={colors} />
+                <ScrollView
+                  horizontal
+                  showsHorizontalScrollIndicator={false}
+                  contentContainerStyle={[styles.chipRow, { flexDirection: rowDir }]}
+                >
+                  {MARKET_COUNTRIES.map((m) => {
+                    const active = criteria.marketCountry === m.value;
+                    return (
+                      <Pressable
+                        key={m.value}
+                        onPress={() =>
+                          onUpdate({
+                            marketCountry: m.value,
+                            rentalTerm: sanitizeRentalTermForMarket(
+                              criteria.rentalTerm,
+                              m.value,
+                            ),
+                          })
+                        }
+                        style={[
+                          styles.chip,
+                          {
+                            backgroundColor: active
+                              ? colors.primary
+                              : colors.secondary,
+                          },
+                        ]}
+                        testID={`filter-market-${m.value}`}
+                      >
+                        <AppText
+                          style={[
+                            styles.chipText,
+                            {
+                              color: active
+                                ? colors.primaryForeground
+                                : colors.mutedForeground,
+                            },
+                          ]}
+                        >
+                          {marketCountryLabel(m.value, isRTL)}
+                        </AppText>
+                      </Pressable>
+                    );
+                  })}
+                </ScrollView>
                 <SectionLabel text={t("create.fields.rentalTerm")} align={textAlign} colors={colors} />
                 <ToggleChipRow
                   options={rentalTerms.map((r) => r.value)}
@@ -519,86 +534,41 @@ export function FilterSheet({
                     const def = rentalTerms.find((r) => r.value === v);
                     return def ? (isRTL ? def.ar : def.en) : v;
                   }}
-                  onToggle={(v) =>
-                    onUpdate({
-                      rentalTerm: v,
-                      ...(v ? { engineKey: "rent" } : {}),
-                    })
-                  }
+                  onToggle={(v) => onUpdate({ rentalTerm: v })}
                   rowDir={rowDir}
                   colors={colors}
-                  accent={chipAccent}
                   testPrefix="filter-rental-term"
                 />
               </>
             )}
 
-            {/* Industry (facilities / machine / production_line) + origin + material (materials) */}
-            {(showIndustry || showOrigin || showMaterial) && (
+            {/* Industry + origin (industrial sections) */}
+            {isIndustrial && (
               <>
-                {showIndustry ? (
-                  <>
-                    <SectionLabel
-                      text={t("create.fields.industry")}
-                      align={textAlign}
-                      colors={colors}
-                    />
-                    <ToggleChipRow
-                      options={INDUSTRY_TYPES.map(
-                        (i) => i.value as SearchListingsIndustry,
-                      )}
-                      selected={criteria.industry}
-                      labelFor={(v) => {
-                        const def = INDUSTRY_TYPES.find((i) => i.value === v);
-                        return def ? (isRTL ? def.ar : def.en) : v;
-                      }}
-                      onToggle={(v) => onUpdate({ industry: v })}
-                      rowDir={rowDir}
-                      colors={colors}
-                      accent={chipAccent}
-                      testPrefix="filter-industry"
-                    />
-                  </>
-                ) : null}
+                <SectionLabel text={t("create.fields.industry")} align={textAlign} colors={colors} />
+                <ToggleChipRow
+                  options={INDUSTRY_TYPES.map((i) => i.value as SearchListingsIndustry)}
+                  selected={criteria.industry}
+                  labelFor={(v) => {
+                    const def = INDUSTRY_TYPES.find((i) => i.value === v);
+                    return def ? (isRTL ? def.ar : def.en) : v;
+                  }}
+                  onToggle={(v) => onUpdate({ industry: v })}
+                  rowDir={rowDir}
+                  colors={colors}
+                  testPrefix="filter-industry"
+                />
 
-                {showMaterial ? (
-                  <>
-                    <SectionLabel
-                      text={t("create.fields.material")}
-                      align={textAlign}
-                      colors={colors}
-                    />
-                    <ToggleChipRow
-                      options={MATERIAL_TYPES.map((m) => m.value)}
-                      selected={criteria.material}
-                      labelFor={(v) => {
-                        const def = MATERIAL_TYPES.find((m) => m.value === v);
-                        return def ? (isRTL ? def.ar : def.en) : v;
-                      }}
-                      onToggle={(v) => onUpdate({ material: v })}
-                      rowDir={rowDir}
-                      colors={colors}
-                      accent={chipAccent}
-                      testPrefix="filter-material"
-                    />
-                  </>
-                ) : null}
-
-                {showOrigin ? (
-                  <>
-                    <SectionLabel text={t("create.fields.origin")} align={textAlign} colors={colors} />
-                    <ToggleChipRow
-                      options={ORIGINS}
-                      selected={criteria.originType}
-                      labelFor={(v) => t(`create.opts.${v}`)}
-                      onToggle={(v) => onUpdate({ originType: v })}
-                      rowDir={rowDir}
-                      colors={colors}
-                      accent={chipAccent}
-                      testPrefix="filter-origin"
-                    />
-                  </>
-                ) : null}
+                <SectionLabel text={t("create.fields.origin")} align={textAlign} colors={colors} />
+                <ToggleChipRow
+                  options={ORIGINS}
+                  selected={criteria.originType}
+                  labelFor={(v) => t(`create.opts.${v}`)}
+                  onToggle={(v) => onUpdate({ originType: v })}
+                  rowDir={rowDir}
+                  colors={colors}
+                  testPrefix="filter-origin"
+                />
               </>
             )}
 
@@ -727,9 +697,7 @@ export function FilterSheet({
               />
             </View>
 
-            {/* Payment — car / RE / Discover-all only (never facilities/materials) */}
-            {showPayment && (
-              <>
+            {/* Payment */}
             <SectionLabel text={t("search.paymentType")} align={textAlign} colors={colors} />
             <View style={[styles.chipRow, { flexDirection: rowDir }]}>
               {PAYMENTS.map((pt) => {
@@ -742,7 +710,7 @@ export function FilterSheet({
                       styles.chip,
                       {
                         backgroundColor: active
-                          ? chipAccent
+                          ? colors.primary
                           : colors.secondary,
                       },
                     ]}
@@ -764,8 +732,6 @@ export function FilterSheet({
                 );
               })}
             </View>
-              </>
-            )}
           </ScrollView>
 
           {/* Apply footer */}
@@ -787,18 +753,6 @@ export function FilterSheet({
           </View>
         </View>
       </View>
-      <MarketCountryPicker
-        visible={marketPickerOpen}
-        selected={criteria.marketCountry}
-        onClose={() => setMarketPickerOpen(false)}
-        onSelect={(iso) => {
-          onUpdate({
-            marketCountry: iso,
-            rentalTerm: sanitizeRentalTermForMarket(criteria.rentalTerm, iso),
-          });
-          setMarketPickerOpen(false);
-        }}
-      />
     </Modal>
   );
 }
@@ -812,7 +766,6 @@ function ToggleChipRow<T extends string>({
   rowDir,
   colors,
   testPrefix,
-  accent,
 }: {
   options: T[];
   selected: T | null;
@@ -821,9 +774,7 @@ function ToggleChipRow<T extends string>({
   rowDir: "row" | "row-reverse";
   colors: ReturnType<typeof useColors>;
   testPrefix: string;
-  accent?: string;
 }) {
-  const activeColor = accent ?? colors.primary;
   return (
     <ScrollView
       horizontal
@@ -838,7 +789,7 @@ function ToggleChipRow<T extends string>({
             onPress={() => onToggle(active ? null : v)}
             style={[
               styles.chip,
-              { backgroundColor: active ? activeColor : colors.secondary },
+              { backgroundColor: active ? colors.primary : colors.secondary },
             ]}
             testID={`${testPrefix}-${v}`}
           >

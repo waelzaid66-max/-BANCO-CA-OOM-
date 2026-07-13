@@ -125,7 +125,7 @@ export const UserStateSchema = z
     clerk_id: z.string(),
     // Internal default account number (e.g. "BNC-…"), auto-assigned per user.
     account_number: z.string().nullable(),
-    role: z.enum(["individual", "dealer", "company", "enterprise", "financial_institution"]),
+    role: z.enum(["individual", "dealer", "company", "enterprise"]),
     // Internal staff role (separate axis from `role`). "user" = no staff access.
     staff_role: z.enum(["owner", "admin", "moderator", "support", "user"]),
     name: z.string(),
@@ -272,20 +272,6 @@ export const LogisticsInputSchema = z
   })
   .strict();
 
-export const SocialPlatformEnum = z.enum([
-  "instagram",
-  "linkedin",
-  "website",
-  "whatsapp",
-]);
-
-export const SocialLinkSchema = z
-  .object({
-    platform: SocialPlatformEnum,
-    value: z.string().trim().min(1).max(300),
-  })
-  .strict();
-
 export const ListingDetailSchema = z
   .object({
     id: z.string(),
@@ -335,12 +321,6 @@ export const ListingDetailSchema = z
         name: z.string(),
         role: z.string(),
         is_verified: z.boolean(),
-        // Public profile chips (instagram, linkedin, website, whatsapp) — not
-        // listing contact_phones; those stay in specs for lead reveal.
-        social_links: z.array(SocialLinkSchema),
-        // Presentational identity — synced from Clerk publicMetadata (Task #143).
-        bio: z.string().nullable().optional(),
-        display_title: z.string().nullable().optional(),
         // phone intentionally omitted — only obtainable via POST /leads/contact
         // to ensure every phone reveal is a server-observed billable contact event.
       })
@@ -370,8 +350,6 @@ export const ListingDetailSchema = z
     // Additive: seller opted this listing in to WhatsApp contact (opt-in only,
     // default false). The detail CTA gates the WhatsApp button on it.
     whatsapp_enabled: z.boolean().nullable(),
-    // True when this is a buyer "request/wanted" post rather than a sale listing.
-    is_request: z.boolean().optional(),
   })
   .strict();
 
@@ -592,6 +570,20 @@ export const MyMetricsSchema = z
     member_since: z.string(),
     years_active: z.number(),
     response_rate: z.number().nullable(),
+  })
+  .strict();
+
+export const SocialPlatformEnum = z.enum([
+  "instagram",
+  "linkedin",
+  "website",
+  "whatsapp",
+]);
+
+export const SocialLinkSchema = z
+  .object({
+    platform: SocialPlatformEnum,
+    value: z.string().trim().min(1).max(300),
   })
   .strict();
 
@@ -830,13 +822,6 @@ const engineFilterFields = {
   // furnished_daily / new_law / old_law; Gulf: annual_contract). Free string on
   // purpose: the catalog is client-side and grows per country (adaptive data).
   rental_term: z.string().max(40).optional(),
-  // ISO market country for inventory scoping (specs.market_country; missing → EG).
-  market_country: z
-    .string()
-    .trim()
-    .toUpperCase()
-    .regex(/^[A-Z]{2}$/, "market_country must be a 2-letter ISO code")
-    .optional(),
   // Car engine filters. fuel_type / transmission are real enum columns (with a
   // specs JSON fallback); brand / model match the English listing title (titles
   // are canonical "<Brand> <Model> <Year>") so `q` stays free for NLP text;
@@ -861,9 +846,6 @@ const engineFilterFields = {
     ])
     .optional(),
   origin_type: z.enum(["local", "imported"]).optional(),
-  // Commodity material (steel, aluminum, …) — specs.material only; materials
-  // company browse. Free string like rental_term (catalog lives client-side).
-  material: z.string().trim().max(40).optional(),
 } as const;
 
 // Result ordering for the search results screen. `recommended` (default) and
@@ -893,12 +875,8 @@ export const FeedQuerySchema = z.object({
 // signup to a role (always `dealer`) — a raw `role` is never accepted.
 export const UpdateMeSchema = z
   .object({
-    account_type: z.enum(["individual", "dealer", "company", "financial_institution"]).optional(),
+    account_type: z.enum(["individual", "dealer", "company"]).optional(),
     phone: z.string().trim().min(4).max(30).nullable().optional(),
-    /** Public seller bio — mirrored to Clerk publicMetadata server-side. */
-    bio: z.string().trim().max(500).nullable().optional(),
-    display_title: z.string().trim().max(120).nullable().optional(),
-    category_label: z.string().trim().max(80).nullable().optional(),
     business: z
       .object({
         activity_type: z.enum([
@@ -963,9 +941,6 @@ export const MapClusterSchema = z
     lng: z.number(),
     count: z.number(),
     listing_id: z.string().nullable(),
-    // Single-pin enrichment; null for multi-listing cells.
-    is_bookable: z.boolean().nullable(),
-    price_display: z.string().nullable(),
   })
   .strict();
 
@@ -1335,16 +1310,6 @@ export const DealerLeadsQuerySchema = z.object({
 
 /* ── Listing CRUD schemas ───────────────────────────────── */
 
-/** Shared media item shape for create + update listing bodies. */
-export const ListingMediaInputSchema = z.object({
-  type: z.enum(["image", "video"]),
-  url: z.string().url(),
-  thumbnail_url: z.string().url().optional(),
-  is_thumbnail: z.boolean().default(false),
-  width: z.number().int().positive().optional(),
-  height: z.number().int().positive().optional(),
-});
-
 export const UpdateListingSchema = z
   .object({
     title: z.string().min(3).max(200).optional(),
@@ -1357,8 +1322,6 @@ export const UpdateListingSchema = z
     specs: z.record(z.unknown()).optional(),
     // Additive (Task #40): optional logistics & delivery patch.
     logistics: LogisticsInputSchema.optional(),
-    // Replace listing media in seller order. Sale listings must keep >=1 item.
-    media: z.array(ListingMediaInputSchema).optional(),
   })
   .refine((data) => Object.keys(data).length > 0, {
     message: "At least one field must be provided for update",
@@ -1716,7 +1679,7 @@ const adminListingStatusEnum = z.enum([
 
 export const AdminUsersQuerySchema = z.object({
   search: z.string().optional(),
-  role: z.enum(["individual", "dealer", "company", "enterprise", "financial_institution"]).optional(),
+  role: z.enum(["individual", "dealer", "company", "enterprise"]).optional(),
   banned: z.coerce.boolean().optional(),
   cursor: z.string().optional(),
   limit: z.coerce.number().min(1).max(100).default(30),
@@ -1798,7 +1761,7 @@ export const AdminUserSchema = z
     name: z.string(),
     email: z.string().nullable(),
     phone: z.string().nullable(),
-    role: z.enum(["individual", "dealer", "company", "enterprise", "financial_institution"]),
+    role: z.enum(["individual", "dealer", "company", "enterprise"]),
     staff_role: z.enum(["owner", "admin", "moderator", "support", "user"]),
     is_admin: z.boolean(),
     is_verified: z.boolean(),

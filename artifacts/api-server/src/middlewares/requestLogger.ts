@@ -22,15 +22,6 @@ export function requestLogger(req: Request, res: Response, next: NextFunction) {
     return;
   }
 
-  // Root-path liveness probes (GET /) are infrastructure noise: Replit's reverse
-  // proxy and uptime monitors hit "/" repeatedly to confirm the process is alive.
-  // The route itself returns 200 (see app.ts root handler) so there is nothing to
-  // record — logging every ping would flood the access channel with zero signal.
-  if (req.method === "GET" && req.path === "/") {
-    next();
-    return;
-  }
-
   req.requestId = randomUUID();
   req.startTime = Date.now();
 

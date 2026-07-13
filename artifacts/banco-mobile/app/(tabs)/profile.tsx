@@ -23,26 +23,6 @@ import {
   type SocialLinkPlatform,
 } from "@workspace/api-client-react";
 import React, { useEffect, useRef, useState } from "react";
-
-type ClerkProfileUser = {
-  publicMetadata?: Record<string, unknown> | null;
-  unsafeMetadata?: Record<string, unknown> | null;
-} | null | undefined;
-
-function readClerkPresentational(
-  user: ClerkProfileUser,
-  key: "bio" | "displayTitle" | "categoryLabel",
-): string {
-  if (!user) return "";
-  const pub = user.publicMetadata ?? {};
-  const unsafe = user.unsafeMetadata ?? {};
-  const pubVal = pub[key];
-  const unsafeVal = unsafe[key];
-  const raw =
-    (typeof pubVal === "string" ? pubVal : "") ||
-    (typeof unsafeVal === "string" ? unsafeVal : "");
-  return raw.trim();
-}
 import {
   ActivityIndicator,
   Alert,
@@ -60,24 +40,16 @@ import {
 } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
-import { useQueryClient } from "@tanstack/react-query";
-
 import { AppText } from "@/components/AppText";
 import { BancoLogo } from "@/components/BancoLogo";
-import { CountryCodePicker } from "@/components/CountryCodePicker";
 import { KeyboardAwareScrollViewCompat } from "@/components/KeyboardAwareScrollViewCompat";
 import { PermissionRationaleModal } from "@/components/PermissionRationaleModal";
 import { PromoteButton } from "@/components/PromoteButton";
-import {
-  countryByIso,
-  isValidNationalNumber,
-  parsePhone,
-  toE164,
-} from "@/constants/countryCodes";
 import { useI18n } from "@/context/LanguageContext";
 import { useSession } from "@/context/SessionContext";
+import { filterBookableListings } from "@/lib/rentalHost";
 import { useColors } from "@/hooks/useColors";
-import { buildAvatarDataUri, uploadErrorMessageKey, uploadMediaAsset, verifyUploadWithRetry } from "@/lib/upload";
+import { buildAvatarDataUri, uploadMediaAsset } from "@/lib/upload";
 
 // Finalizes any pending OAuth redirect when the in-app browser returns.
 WebBrowser.maybeCompleteAuthSession();
@@ -166,13 +138,9 @@ export default function ProfileScreen() {
   const [lastName, setLastName] = useState("");
 
   const [showPhotoRationale, setShowPhotoRationale] = useState(false);
-  const [showCoverRationale, setShowCoverRationale] = useState(false);
   const [uploadingPhoto, setUploadingPhoto] = useState(false);
   const [agreedToTerms, setAgreedToTerms] = useState(false);
-  const [signupPhoneIso, setSignupPhoneIso] = useState("EG");
-  const [signupPhoneNumber, setSignupPhoneNumber] = useState("");
-  const [showSignupPhoneCountryPicker, setShowSignupPhoneCountryPicker] =
-    useState(false);
+  const [phone, setPhone] = useState("");
   const [accountType, setAccountType] = useState<"personal" | "business">(
     "personal"
   );
@@ -188,7 +156,7 @@ export default function ProfileScreen() {
   const [needsAccountType, setNeedsAccountType] = useState(false);
   const [savingAccountType, setSavingAccountType] = useState(false);
   const [pendingType, setPendingType] = useState<
-    "individual" | "dealer" | "company" | "financial_institution"
+    "individual" | "dealer" | "company"
   >("individual");
   // Set only after an in-session SSO auth, so the account-type prompt never
   // appears on a cold launch for an already-signed-in user.
@@ -230,7 +198,6 @@ export default function ProfileScreen() {
   const [displayTitleDraft, setDisplayTitleDraft] = useState("");
   const [categoryLabelDraft, setCategoryLabelDraft] = useState("");
   const [bioDraft, setBioDraft] = useState("");
-  const queryClient = useQueryClient();
 
   const isSigningIn = signInStatus === "fetching";
   const isSigningUp = signUpStatus === "fetching";
@@ -353,7 +320,7 @@ export default function ProfileScreen() {
   // Cover photo — reuses the shared media upload (returns a hosted URL) and
   // stores only the URL string in Clerk unsafeMetadata. No new endpoint.
   const launchCoverPicker = async () => {
-    setShowCoverRationale(false);
+    setShowMenu(false);
     try {
       const perm = await ImagePicker.requestMediaLibraryPermissionsAsync();
       if (!perm.granted) {
@@ -382,7 +349,6 @@ export default function ProfileScreen() {
       if (result.canceled || !asset) return;
       setUploadingCover(true);
       const uploaded = await uploadMediaAsset(asset);
-      await verifyUploadWithRetry(uploaded.url);
       // Covers upload PRIVATE; promote to public ACL so the serve handler returns
       // them without auth (web + mobile <Image> send no bearer). Promote BEFORE
       // persisting the URL — a coverUrl that 403s is worse than no cover.
@@ -399,7 +365,7 @@ export default function ProfileScreen() {
       console.warn("[profile] cover upload failed", e);
       Alert.alert(
         t("profile.photoUploadFailedTitle"),
-        t(uploadErrorMessageKey(e)),
+        t("profile.photoUploadFailedBody"),
       );
     } finally {
       setUploadingCover(false);
@@ -409,9 +375,14 @@ export default function ProfileScreen() {
   const openEditProfile = () => {
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
     setShowMenu(false);
-    setDisplayTitleDraft(readClerkPresentational(user, "displayTitle"));
-    setCategoryLabelDraft(readClerkPresentational(user, "categoryLabel"));
-    setBioDraft(readClerkPresentational(user, "bio"));
+    const meta = (user?.unsafeMetadata ?? {}) as Record<string, unknown>;
+    setDisplayTitleDraft(
+      typeof meta.displayTitle === "string" ? meta.displayTitle : "",
+    );
+    setCategoryLabelDraft(
+      typeof meta.categoryLabel === "string" ? meta.categoryLabel : "",
+    );
+    setBioDraft(typeof meta.bio === "string" ? meta.bio : "");
     setShowEditProfile(true);
   };
 
@@ -420,13 +391,15 @@ export default function ProfileScreen() {
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
     setSavingProfile(true);
     try {
-      await updateMe({
-        bio: bioDraft.trim() || null,
-        display_title: displayTitleDraft.trim() || null,
-        category_label: categoryLabelDraft.trim() || null,
+      await user?.update({
+        unsafeMetadata: {
+          ...(user.unsafeMetadata ?? {}),
+          displayTitle: displayTitleDraft.trim(),
+          categoryLabel: categoryLabelDraft.trim(),
+          bio: bioDraft.trim(),
+        },
       });
-      await user?.reload?.();
-      await queryClient.invalidateQueries({ queryKey: getGetMeQueryKey() });
+      await user?.reload();
       Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
       setShowEditProfile(false);
     } catch {
@@ -485,9 +458,7 @@ export default function ProfileScreen() {
     if (!firstName.trim() || !lastName.trim()) return;
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
     consentPendingRef.current = true;
-    pendingPhoneRef.current = signupPhoneNumber.trim()
-      ? toE164(signupPhoneNumber.trim(), countryByIso(signupPhoneIso))
-      : "";
+    pendingPhoneRef.current = phone.trim();
     pendingBusinessRef.current = accountType === "business";
     pendingFirstNameRef.current = firstName.trim();
     pendingLastNameRef.current = lastName.trim();
@@ -535,44 +506,34 @@ export default function ProfileScreen() {
   };
 
   const chooseAccountType = async (
-    type: "individual" | "dealer" | "company" | "financial_institution"
+    type: "individual" | "dealer" | "company"
   ) => {
     if (savingAccountType) return;
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
     setSavingAccountType(true);
-    // Record the choice + dismiss the gate FIRST so a flaky/slow backend can never
-    // trap a brand-new account on this screen (the reported "stuck at account type"
-    // bug). The account_type sync to the API is best-effort and can be re-applied
-    // any time from settings — getting the user into the app matters more here.
-    try {
-      await user?.update({
-        unsafeMetadata: {
-          ...(user.unsafeMetadata ?? {}),
-          accountTypeChosen: true,
-        },
-      });
-      await user?.reload();
-    } catch (e) {
-      console.warn("[profile] accountTypeChosen flag save failed", e);
-    }
-    setNeedsAccountType(false);
     try {
       await updateMe({ account_type: type });
-    } catch (e) {
-      console.warn("[profile] account_type sync failed (retry from settings)", e);
+      try {
+        await user?.update({
+          unsafeMetadata: {
+            ...(user.unsafeMetadata ?? {}),
+            accountTypeChosen: true,
+          },
+        });
+        await user?.reload();
+      } catch (e) {
+        console.warn("[profile] accountTypeChosen flag save failed", e);
+      }
+      Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+      setNeedsAccountType(false);
+      if (type === "dealer" || type === "company") {
+        router.push("/business/onboarding");
+      }
+    } catch {
+      Alert.alert(t("profile.accountTypeError"));
+    } finally {
+      setSavingAccountType(false);
     }
-    Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
-    // Dealer / company / financial-institution all continue to the business
-    // onboarding, where verification (KYC / bank approval) is collected. A
-    // financial institution's financing features stay locked until it verifies.
-    if (
-      type === "dealer" ||
-      type === "company" ||
-      type === "financial_institution"
-    ) {
-      router.push("/business/onboarding");
-    }
-    setSavingAccountType(false);
   };
 
   const openSocialEdit = () => {
@@ -621,8 +582,7 @@ export default function ProfileScreen() {
     setShowPassword(false);
     setShowNewPassword(false);
     setAgreedToTerms(false);
-    setSignupPhoneIso("EG");
-    setSignupPhoneNumber("");
+    setPhone("");
     setAccountType("personal");
     // Abandon any in-flight signup intent so a returning sign-in never
     // inherits a previous draft's consent, phone, name, or business routing.
@@ -658,38 +618,14 @@ export default function ProfileScreen() {
 
   if (user && needsAccountType) {
     return (
-      <View style={[styles.container, { backgroundColor: colors.background }]}>
-        {/* Skip / dismiss row — tapping continues as individual (default) */}
-        <View
-          style={{
-            paddingTop: topPad + 6,
-            paddingHorizontal: 16,
-            paddingBottom: 4,
-            alignItems: isRTL ? "flex-start" : "flex-end",
-          }}
-        >
-          <Pressable
-            onPress={() => chooseAccountType("individual")}
-            disabled={savingAccountType}
-            hitSlop={12}
-            style={{ padding: 8 }}
-          >
-            <AppText
-              style={{
-                color: colors.mutedForeground,
-                fontSize: 14,
-                fontFamily: "Inter_500Medium",
-              }}
-            >
-              {isRTL ? "تخطى" : "Skip"}
-            </AppText>
-          </Pressable>
-        </View>
-        <ScrollView
-          style={{ flex: 1 }}
-          contentContainerStyle={[styles.authContent, { paddingTop: 20 }]}
-          keyboardShouldPersistTaps="handled"
-        >
+      <ScrollView
+        style={[styles.container, { backgroundColor: colors.background }]}
+        contentContainerStyle={[
+          styles.authContent,
+          { paddingTop: topPad + 40 },
+        ]}
+        keyboardShouldPersistTaps="handled"
+      >
         <BancoLogo height={40} style={styles.authLogoImg} />
         <AppText style={[styles.authTitle, { color: colors.foreground }]}>
           {t("profile.chooseAccountType")}
@@ -718,12 +654,6 @@ export default function ProfileScreen() {
               icon: "office-building-outline",
               label: "accountCompany",
               hint: "accountCompanyHint",
-            },
-            {
-              type: "financial_institution",
-              icon: "bank-outline",
-              label: "accountFinancial",
-              hint: "accountFinancialHint",
             },
           ] as const
         ).map((opt) => {
@@ -819,8 +749,7 @@ export default function ProfileScreen() {
             </AppText>
           )}
         </Pressable>
-        </ScrollView>
-      </View>
+      </ScrollView>
     );
   }
 
@@ -838,21 +767,18 @@ export default function ProfileScreen() {
     })();
 
     const role = (user.publicMetadata?.role as string) || "";
-    const isBusiness = [
-      "dealer",
-      "company",
-      "enterprise",
-      "financial_institution",
-    ].includes(role);
+    const isBusiness = ["dealer", "company", "enterprise"].includes(role);
 
     const metrics = metricsQuery.data?.data;
     const social = socialQuery.data?.data ?? [];
-    // Presentational identity — prefer publicMetadata (same as listing API).
+    // Presentational identity fields persisted in Clerk unsafeMetadata (Task #143).
     const meta = (user.unsafeMetadata ?? {}) as Record<string, unknown>;
     const coverUrl = typeof meta.coverUrl === "string" ? meta.coverUrl : "";
-    const displayTitle = readClerkPresentational(user, "displayTitle");
-    const categoryLabel = readClerkPresentational(user, "categoryLabel");
-    const bio = readClerkPresentational(user, "bio");
+    const displayTitle =
+      typeof meta.displayTitle === "string" ? meta.displayTitle : "";
+    const categoryLabel =
+      typeof meta.categoryLabel === "string" ? meta.categoryLabel : "";
+    const bio = typeof meta.bio === "string" ? meta.bio : "";
     const displayName = user.firstName ?? t("profile.member");
     const userEmail = user.emailAddresses[0]?.emailAddress ?? "";
     // Verification reflects the account state from /me (UserState), not metrics.
@@ -863,16 +789,13 @@ export default function ProfileScreen() {
     const responseRate =
       typeof metrics?.response_rate === "number" ? metrics.response_rate : null;
 
-    // Profile-completion nudge: photo + bio + public contact links (not account
-    // phone — that is optional at signup until OTP; listing phones live on ads).
+    // Profile-completion nudge (own profile only): the three signals that make a
+    // seller trustworthy + reachable. Each missing item is a one-tap fix. The
+    // whole block vanishes once complete — no nagging.
     const completionItems = [
       { key: "photo", done: !!user.hasImage, onPress: () => setShowPhotoRationale(true) },
       { key: "bio", done: !!bio, onPress: openEditProfile },
-      {
-        key: "social",
-        done: social.some((l) => l.value?.trim()),
-        onPress: openSocialEdit,
-      },
+      { key: "phone", done: !!meQuery.data?.data?.phone?.trim(), onPress: openEditProfile },
     ];
     const completionMissing = completionItems.filter((i) => !i.done);
     const statNum = (n: number | undefined) =>
@@ -911,8 +834,8 @@ export default function ProfileScreen() {
       });
     }
     const posts = listingsQuery.data?.data ?? [];
-    // Host hub is a first-class journey — never hide behind bookable inventory.
-    const showRentalHub = true;
+    const hasBookableRentals = filterBookableListings(posts).length > 0;
+    const showRentalHub = hasBookableRentals || isBusiness;
 
     const menuItems: {
       key: string;
@@ -931,10 +854,7 @@ export default function ProfileScreen() {
         key: "cover",
         icon: "image",
         label: t("profile.changeCover"),
-        onPress: () => {
-          setShowMenu(false);
-          setShowCoverRationale(true);
-        },
+        onPress: launchCoverPicker,
       },
       {
         key: "listings",
@@ -943,42 +863,6 @@ export default function ProfileScreen() {
         onPress: () => {
           setShowMenu(false);
           router.push("/listings/mine");
-        },
-      },
-      {
-        key: "saved",
-        icon: "heart",
-        label: t("profile.tabSaved"),
-        onPress: () => {
-          setShowMenu(false);
-          router.push("/(tabs)/saved");
-        },
-      },
-      {
-        key: "activity",
-        icon: "bell",
-        label: t("profile.tabActivity"),
-        onPress: () => {
-          setShowMenu(false);
-          router.push("/notifications");
-        },
-      },
-      {
-        key: "business",
-        icon: "briefcase",
-        label: t("profile.menuBusiness"),
-        onPress: () => {
-          setShowMenu(false);
-          router.push("/business/supply-hub" as Href);
-        },
-      },
-      {
-        key: "industry",
-        icon: "tool",
-        label: t("profile.menuIndustry"),
-        onPress: () => {
-          setShowMenu(false);
-          router.push("/industry" as Href);
         },
       },
       ...(showRentalHub
@@ -1054,7 +938,7 @@ export default function ProfileScreen() {
         label: t("profile.menuHelp"),
         onPress: () => {
           setShowMenu(false);
-          router.push("/assistant");
+          router.push("/settings");
         },
       },
       {
@@ -1104,9 +988,21 @@ export default function ProfileScreen() {
             style={[
               styles.coverActions,
               { top: topPad + 8 },
-              isRTL ? { left: 16 } : { right: 16 },
+              isRTL && styles.rowReverse,
             ]}
           >
+            <Pressable
+              onPress={launchCoverPicker}
+              hitSlop={8}
+              style={styles.coverActionBtn}
+              testID="cover-edit"
+            >
+              {uploadingCover ? (
+                <ActivityIndicator size="small" color="#ffffff" />
+              ) : (
+                <Feather name="camera" size={18} color="#ffffff" />
+              )}
+            </Pressable>
             <Pressable
               onPress={() => {
                 Haptics.selectionAsync();
@@ -1117,26 +1013,6 @@ export default function ProfileScreen() {
               testID="profile-menu"
             >
               <Ionicons name="ellipsis-horizontal" size={20} color="#ffffff" />
-            </Pressable>
-          </View>
-          <View
-            style={[
-              styles.coverActions,
-              { top: topPad + 8 },
-              isRTL ? { right: 16 } : { left: 16 },
-            ]}
-          >
-            <Pressable
-              onPress={() => setShowCoverRationale(true)}
-              hitSlop={8}
-              style={styles.coverActionBtn}
-              testID="cover-edit"
-            >
-              {uploadingCover ? (
-                <ActivityIndicator size="small" color="#ffffff" />
-              ) : (
-                <Feather name="camera" size={18} color="#ffffff" />
-              )}
             </Pressable>
           </View>
         </View>
@@ -1193,6 +1069,22 @@ export default function ProfileScreen() {
                   <Feather name="camera" size={13} color={colors.foreground} />
                 )}
               </View>
+            </Pressable>
+
+            <Pressable
+              onPress={openEditProfile}
+              style={[
+                styles.editProfileBtn,
+                { borderColor: colors.border, borderRadius: colors.radius },
+              ]}
+              testID="edit-profile"
+            >
+              <Feather name="edit-2" size={14} color={colors.foreground} />
+              <AppText
+                style={[styles.editProfileText, { color: colors.foreground }]}
+              >
+                {t("profile.editProfile")}
+              </AppText>
             </Pressable>
           </View>
 
@@ -1261,75 +1153,8 @@ export default function ProfileScreen() {
               {bio || t("profile.bioEmpty")}
             </AppText>
           </Pressable>
-
-        {/* Server-backed social links — primary public contact (not account phone). */}
-        <View style={styles.socialSection}>
-          <View
-            style={[
-              styles.socialHeader,
-              { flexDirection: isRTL ? "row-reverse" : "row" },
-            ]}
-          >
-            <AppText style={[styles.socialTitle, { color: colors.foreground }]}>
-              {t("profile.socialLinks")}
-            </AppText>
-            {social.length === 0 ? (
-              <AppText
-                style={[
-                  styles.socialHint,
-                  {
-                    color: colors.mutedForeground,
-                    textAlign: isRTL ? "right" : "left",
-                  },
-                ]}
-              >
-                {t("profile.addSocial")}
-              </AppText>
-            ) : null}
-          </View>
-          <View
-            style={[
-              styles.socialRow,
-              { flexDirection: isRTL ? "row-reverse" : "row" },
-            ]}
-          >
-            {social.map((l) => (
-              <Pressable
-                key={l.platform}
-                onPress={() => Linking.openURL(socialHref(l)).catch(() => {})}
-                style={[
-                  styles.socialBtn,
-                  {
-                    backgroundColor: colors.card,
-                    borderColor: colors.border,
-                    borderRadius: colors.radius,
-                  },
-                ]}
-                testID={`social-${l.platform}`}
-              >
-                <Ionicons
-                  name={socialIcon(l.platform)}
-                  size={18}
-                  color={colors.foreground}
-                />
-              </Pressable>
-            ))}
-            <Pressable
-              onPress={openSocialEdit}
-              style={[
-                styles.socialBtn,
-                {
-                  backgroundColor: colors.card,
-                  borderColor: colors.primary + "55",
-                  borderRadius: colors.radius,
-                },
-              ]}
-              testID="social-edit"
-            >
-              <Feather name="edit-2" size={15} color={colors.primary} />
-            </Pressable>
-          </View>
-        </View>
+          {/* numberOfLines above: 3 lines reads like Instagram without pushing
+              the trust row off-screen; tap opens the editor either way. */}
 
           {meQuery.data?.data?.account_number && (
             <AppText
@@ -1473,6 +1298,50 @@ export default function ProfileScreen() {
               </AppText>
             </View>
           ))}
+        </View>
+
+        {/* Server-backed social links + edit */}
+        <View
+          style={[
+            styles.socialRow,
+            { flexDirection: isRTL ? "row-reverse" : "row" },
+          ]}
+        >
+          {social.map((l) => (
+            <Pressable
+              key={l.platform}
+              onPress={() => Linking.openURL(socialHref(l)).catch(() => {})}
+              style={[
+                styles.socialBtn,
+                {
+                  backgroundColor: colors.card,
+                  borderColor: colors.border,
+                  borderRadius: colors.radius,
+                },
+              ]}
+              testID={`social-${l.platform}`}
+            >
+              <Ionicons
+                name={socialIcon(l.platform)}
+                size={18}
+                color={colors.foreground}
+              />
+            </Pressable>
+          ))}
+          <Pressable
+            onPress={openSocialEdit}
+            style={[
+              styles.socialBtn,
+              {
+                backgroundColor: colors.card,
+                borderColor: colors.primary + "55",
+                borderRadius: colors.radius,
+              },
+            ]}
+            testID="social-edit"
+          >
+            <Feather name="edit-2" size={15} color={colors.primary} />
+          </Pressable>
         </View>
 
         {/* Instagram-style content tabs → REAL screens */}
@@ -1977,23 +1846,6 @@ export default function ProfileScreen() {
           }}
         />
 
-        <PermissionRationaleModal
-          visible={showCoverRationale}
-          onAcknowledge={launchCoverPicker}
-          onCancel={() => setShowCoverRationale(false)}
-          config={{
-            icon: "image-outline",
-            title: t("profile.coverAccessTitle"),
-            message: t("profile.coverAccessMessage"),
-            bullets: [
-              t("profile.coverAccessBullet1"),
-              t("profile.coverAccessBullet2"),
-              t("profile.coverAccessBullet3"),
-            ],
-            confirmLabel: t("profile.coverAccessConfirm"),
-          }}
-        />
-
         {/* Edit profile — presentational fields saved to Clerk unsafeMetadata */}
         <Modal
           visible={showEditProfile}
@@ -2108,17 +1960,6 @@ export default function ProfileScreen() {
                 >
                   {t("profile.bioLabel")}
                 </AppText>
-                <AppText
-                  style={[
-                    styles.editHint,
-                    {
-                      color: colors.mutedForeground,
-                      textAlign: isRTL ? "right" : "left",
-                    },
-                  ]}
-                >
-                  {t("profile.bioHint")}
-                </AppText>
                 <TextInput
                   value={bioDraft}
                   onChangeText={setBioDraft}
@@ -2198,16 +2039,6 @@ export default function ProfileScreen() {
           </View>
         </Modal>
 
-        <CountryCodePicker
-          visible={showSignupPhoneCountryPicker}
-          selectedIso={signupPhoneIso}
-          onClose={() => setShowSignupPhoneCountryPicker(false)}
-          onSelect={(iso) => {
-            setSignupPhoneIso(iso);
-            setShowSignupPhoneCountryPicker(false);
-          }}
-        />
-
         {/* Overflow menu → existing routes only */}
         <Modal
           visible={showMenu}
@@ -2215,17 +2046,16 @@ export default function ProfileScreen() {
           animationType="slide"
           onRequestClose={() => setShowMenu(false)}
         >
-          <View style={styles.menuBackdrop}>
-            <Pressable
-              style={StyleSheet.absoluteFillObject}
-              onPress={() => setShowMenu(false)}
-              accessibilityRole="button"
-            />
+          <Pressable
+            style={styles.menuBackdrop}
+            onPress={() => setShowMenu(false)}
+          >
             <View
               style={[
                 styles.menuSheet,
                 { backgroundColor: colors.card, borderColor: colors.border },
               ]}
+              onStartShouldSetResponder={() => true}
             >
               <View
                 style={[styles.menuHandle, { backgroundColor: colors.border }]}
@@ -2241,18 +2071,10 @@ export default function ProfileScreen() {
                   {userEmail}
                 </AppText>
               ) : null}
-              <ScrollView
-                showsVerticalScrollIndicator={false}
-                bounces={false}
-              >
               {menuItems.map((mi) => (
                 <Pressable
                   key={mi.key}
-                  onPress={() => {
-                    Haptics.selectionAsync();
-                    setShowMenu(false);
-                    mi.onPress();
-                  }}
+                  onPress={mi.onPress}
                   style={[styles.menuItem, isRTL && styles.rowReverse]}
                   testID={`menu-${mi.key}`}
                 >
@@ -2281,9 +2103,8 @@ export default function ProfileScreen() {
                   />
                 </Pressable>
               ))}
-              </ScrollView>
             </View>
-          </View>
+          </Pressable>
         </Modal>
       </ScrollView>
     );
@@ -2706,86 +2527,16 @@ export default function ProfileScreen() {
 
       {mode === "signup" && (
         <View style={styles.field}>
-          <AppText
-            style={[
-              styles.accountTypeLabel,
-              {
-                color: colors.mutedForeground,
-                textAlign: isRTL ? "right" : "left",
-              },
-            ]}
-          >
-            {t("profile.phoneLabel")}
-          </AppText>
-          <AppText
-            style={[
-              styles.accountTypeLabel,
-              {
-                color: colors.mutedForeground,
-                textAlign: isRTL ? "right" : "left",
-                marginBottom: 6,
-              },
-            ]}
-          >
-            {t("profile.phoneOptional")}
-          </AppText>
-          <View
-            style={[
-              styles.editPhoneRow,
-              { flexDirection: isRTL ? "row-reverse" : "row" },
-            ]}
-          >
-            <Pressable
-              onPress={() => {
-                Haptics.selectionAsync();
-                setShowSignupPhoneCountryPicker(true);
-              }}
-              style={[
-                styles.editDialBtn,
-                {
-                  borderColor: colors.border,
-                  borderRadius: colors.radius,
-                  backgroundColor: colors.secondary,
-                  flexDirection: isRTL ? "row-reverse" : "row",
-                },
-              ]}
-              testID="signup-phone-country"
-            >
-              <AppText style={styles.editDialFlag}>
-                {countryByIso(signupPhoneIso).flag}
-              </AppText>
-              <AppText
-                style={[styles.editDialCode, { color: colors.foreground }]}
-              >
-                +{countryByIso(signupPhoneIso).dial}
-              </AppText>
-              <Feather
-                name="chevron-down"
-                size={16}
-                color={colors.mutedForeground}
-              />
-            </Pressable>
-            <TextInput
-              value={signupPhoneNumber}
-              onChangeText={setSignupPhoneNumber}
-              placeholder={countryByIso(signupPhoneIso).sample}
-              placeholderTextColor={colors.mutedForeground}
-              keyboardType="phone-pad"
-              autoCorrect={false}
-              style={[
-                styles.editInput,
-                styles.editPhoneInput,
-                {
-                  color: colors.foreground,
-                  backgroundColor: colors.secondary,
-                  borderColor: colors.border,
-                  borderRadius: colors.radius,
-                  textAlign: isRTL ? "right" : "left",
-                },
-              ]}
-              testID="phone-input"
-            />
-          </View>
+          <TextInput
+            value={phone}
+            onChangeText={setPhone}
+            placeholder={t("profile.phonePlaceholder")}
+            placeholderTextColor={colors.mutedForeground}
+            style={[inputStyle, { textAlign: isRTL ? "right" : "left" }]}
+            keyboardType="phone-pad"
+            autoCorrect={false}
+            testID="phone-input"
+          />
         </View>
       )}
 
@@ -3405,31 +3156,9 @@ const styles = StyleSheet.create({
     marginTop: 4,
     letterSpacing: 0.5,
   },
-  profilePhone: {
-    fontSize: 14,
-    fontFamily: "Inter_500Medium",
-    marginTop: 8,
-  },
-  socialSection: {
-    marginBottom: 16,
-    gap: 8,
-  },
-  socialHeader: {
-    alignItems: "center",
-    justifyContent: "space-between",
-    gap: 8,
-  },
-  socialTitle: {
-    fontSize: 14,
-    fontFamily: "Inter_600SemiBold",
-  },
-  socialHint: {
-    fontSize: 12,
-    fontFamily: "Inter_400Regular",
-    flex: 1,
-  },
   socialRow: {
     gap: 10,
+    marginBottom: 16,
   },
   socialBtn: {
     width: 42,
@@ -3739,6 +3468,7 @@ const styles = StyleSheet.create({
   },
   coverActions: {
     position: "absolute",
+    right: 16,
     flexDirection: "row",
     gap: 8,
   },
@@ -3920,12 +3650,6 @@ const styles = StyleSheet.create({
     fontFamily: "Inter_600SemiBold",
     marginBottom: 6,
   },
-  editHint: {
-    fontSize: 12,
-    fontFamily: "Inter_400Regular",
-    marginBottom: 8,
-    lineHeight: 18,
-  },
   editInput: {
     borderWidth: 1,
     paddingHorizontal: 12,
@@ -3942,27 +3666,6 @@ const styles = StyleSheet.create({
     fontFamily: "Inter_400Regular",
     marginTop: 4,
   },
-  editPhoneRow: {
-    alignItems: "center",
-    gap: 8,
-  },
-  editDialBtn: {
-    borderWidth: 1,
-    paddingHorizontal: 10,
-    paddingVertical: 10,
-    alignItems: "center",
-    gap: 4,
-  },
-  editDialFlag: {
-    fontSize: 16,
-  },
-  editDialCode: {
-    fontSize: 14,
-    fontFamily: "Inter_600SemiBold",
-  },
-  editPhoneInput: {
-    flex: 1,
-  },
 
   // Overflow menu
   menuBackdrop: {
@@ -3976,9 +3679,6 @@ const styles = StyleSheet.create({
     padding: 20,
     paddingBottom: 36,
     borderWidth: 1,
-    // Cap the sheet so a long menu (11+ rows on a small screen) scrolls inside
-    // instead of overflowing above the top of the screen.
-    maxHeight: "85%",
   },
   menuHandle: {
     width: 40,

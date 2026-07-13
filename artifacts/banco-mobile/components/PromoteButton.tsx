@@ -214,17 +214,16 @@ export function PromoteButton({
         animationType="slide"
         onRequestClose={() => !boost.isPending && setOpen(false)}
       >
-        <View style={styles.backdrop}>
-          <Pressable
-            style={StyleSheet.absoluteFillObject}
-            onPress={() => !boost.isPending && setOpen(false)}
-            accessibilityRole="button"
-          />
+        <Pressable
+          style={styles.backdrop}
+          onPress={() => !boost.isPending && setOpen(false)}
+        >
           <View
             style={[
               styles.sheet,
               { backgroundColor: colors.card, borderColor: colors.border },
             ]}
+            onStartShouldSetResponder={() => true}
           >
             <View style={styles.handle} />
             <AppText style={[styles.sheetTitle, { color: colors.foreground }]}>
@@ -364,7 +363,7 @@ export function PromoteButton({
               </AppText>
             </Pressable>
           </View>
-        </View>
+        </Pressable>
       </Modal>
     </>
   );
