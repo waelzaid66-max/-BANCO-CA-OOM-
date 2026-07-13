@@ -1143,7 +1143,7 @@ export function SectionSearchApp({
             >
               <Feather
                 name={mapMode ? "list" : "map"}
-                size={16}
+                size={19}
                 color={colors.background}
               />
               <AppText
@@ -1343,17 +1343,19 @@ const styles = StyleSheet.create({
   },
   mapToggle: {
     alignItems: "center",
-    gap: 7,
-    paddingVertical: 10,
-    paddingHorizontal: 18,
+    gap: 9,
+    paddingVertical: 14,
+    paddingHorizontal: 26,
     borderRadius: 999,
-    elevation: 6,
+    borderWidth: 1.5,
+    borderColor: "rgba(255,255,255,0.9)",
+    elevation: 10,
     shadowColor: "#000000",
-    shadowOpacity: 0.2,
-    shadowRadius: 8,
-    shadowOffset: { width: 0, height: 3 },
+    shadowOpacity: 0.3,
+    shadowRadius: 12,
+    shadowOffset: { width: 0, height: 5 },
   },
-  mapToggleText: { fontSize: 14, fontWeight: "700" },
+  mapToggleText: { fontSize: 15.5, fontWeight: "700", letterSpacing: 0.2 },
   applyBtn: {
     marginTop: 14,
     paddingVertical: 12,
