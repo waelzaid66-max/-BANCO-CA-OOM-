@@ -1,6 +1,7 @@
 # BANCO — Booking & Stays Review + Maintenance Orders
 
 _Updated: 2026-07-13 · Scope: `artifacts/banco-mobile` (+ notes on api-server & secrets)._
+_Latest: M1 (Booking redesign) DONE; full real run of all services verified — see §7 & §8._
 
 This is the honest status handoff. It records **corrected understanding**, an
 **inventory** (done / not done / broken), the **secrets audit** (with reasons),
@@ -113,13 +114,15 @@ You approved M1, M2, M3, M7 to start. Progress below.
 |---|-------|--------|
 | M2 | Every card type gets an expressive, section-indicating background app-wide | **DONE** — see §6 |
 | M3 | Banks & Financiers blue identity (accent + expressive hero) | **DONE** — see §6 |
-| M1 | Redesign the Booking page from scratch (not the old UI) | NEXT (in progress) |
-| M7 | Redesign the filters sheet (smaller, cleaner, works everywhere) | NEXT |
-| M4 | Glass/transparent bottom bar on mini-app search pages | task #23 |
-| M5 | Car Import end-to-end | task #24 |
-| M6 | Working, evolved maps for every section | task #25 |
-| B1 | Fix Arabic-header crash in weekly report emails (`EmailService.ts`) | pending approval |
-| B2 | Add Paymob sandbox credentials | task #7 |
+| M1 | Redesign the Booking page from scratch (not the old UI) | **DONE** — see §7 |
+| M7 | Redesign the filters sheet (smaller, cleaner, works everywhere) | **NEXT — not started** |
+| M4 | Glass/transparent bottom bar on mini-app search pages | **CANCELLED** by user (was task #23) |
+| M5 | Car Import end-to-end | **CANCELLED** by user (was task #24) |
+| M6 | Working, evolved maps for every section | **CANCELLED** by user (was task #25) |
+| B1 | Arabic-header crash in weekly report emails (`EmailService.ts`) | **FIXED IN CODE** — needs redeploy only |
+| B2 | Add Paymob sandbox credentials | task #7 (needs your creds) |
+| #19 | Booking Discover card real photo + rose identity | **DONE** |
+| #20 | Rental term chips (daily/monthly/annual) auto | **DONE** (already present as term tabs) |
 
 ## 6. Delivered this round (M2 + M3)
 
@@ -141,3 +144,63 @@ You approved M1, M2, M3, M7 to start. Progress below.
 **Rule for all orders:** no random/partial execution, delete no existing
 feature, hide no problem, never block publishing (BANCO Market or elsewhere),
 and keep each section conceptually separate and self-evident.
+
+## 7. Delivered this round (M1 — Booking page redesign)
+
+`components/search/BookingStaysApp.tsx` — **presentation rebuilt from scratch,
+logic untouched**:
+
+- Replaced the generic marketplace search chrome (three-icon header + separate
+  tall search rectangle) with a purpose-built **hospitality "stays" hero** in the
+  section's rose real-estate identity (`SectionBackdrop section="real_estate"` as
+  the hero background — gradient + faint motif).
+- The hero holds: back button, title + subtitle, save-search and filter actions
+  (translucent-white; active = solid white with rose icon; filter shows a count
+  badge), and a single **"Where to?" search pill** (closed = a `Pressable`
+  placeholder, open = a `View` + `TextInput`; this split avoids RN focus quirks
+  from wrapping a `TextInput` in a `Pressable`).
+- Autocomplete now drops down **directly under the search pill** (previously it
+  rendered oddly below the term tabs).
+- Rebuilt spacing/proportions; removed all dead header/search styles.
+- **All wiring preserved** — search engine (`useSearchMiniApp`), rental-term
+  tabs, market-country picker, near-me, save-search, FilterSheet, results
+  (`StayCard` via `SearchResultsSurface`), map + map-toggle FAB, exit-confirm.
+- Architect code review: **PASS**, no dropped wiring, no regressions.
+- `tsc --noEmit` clean (except the pre-existing, unrelated `profile.tsx`).
+- **Caveat:** verified by typecheck + review, not a live screenshot — the Expo
+  app can't be screenshotted from here.
+
+**Still open:** M7 (FilterSheet redesign). M4/M5/M6 cancelled by user.
+
+## 8. Full real run — verified (2026-07-13)
+
+Brought the whole system up and tested it end-to-end:
+
+- **All 6 workflows running:** api-server (:8080), landing (web), dealer-os
+  (:21539), admin-os (:22357), banco-mobile expo (:23351), mockup-sandbox
+  (stopped, not needed).
+- **Database populated:** 120 **active** listings — car 53, real_estate 36,
+  industrial 31; 13 users. No seed needed (seed is non-idempotent — not re-run).
+- **Booking has real inventory:** 15 rental (`offer_type=rent`) real-estate
+  listings, with varied `rental_term` (furnished_daily, new_law, old_law), so the
+  redesigned Booking page and its term tabs show real results.
+- **End-to-end feed test PASS:** `GET /api/v1/search?limit=3` on the api-server
+  returns real listings JSON, incl. a rental (`price_display: "5K EGP /شهر"`,
+  `trust_signal: "Private Seller"`) — honest fields, no client math. DB →
+  api-server → feed verified live.
+
+## 9. How to publish (only you can do this)
+
+I can't publish for you — Publish is a button you press, and native mobile
+binaries can't be built from the iOS app. When ready, on **replit.com**:
+
+1. Open this project → **Publish**. Replit diffs the dev DB schema to production
+   and applies it (post-merge uses `drizzle push-force`).
+2. Before a real production launch (not required for a dev/preview publish):
+   - **Clerk production keys** (`pk_live_…` + matching secret) — only test keys
+     exist today.
+   - **Production AI key** (own `OPENAI_API_KEY`) — the dev modelfarm URL won't
+     work in prod.
+   - **Paymob sandbox creds** if you want to test checkout (task #7).
+3. The Arabic-email fix (B1) is already in code; publishing ships it.
+4. Native app store build (AAB/IPA) must be done from replit.com, not here.
