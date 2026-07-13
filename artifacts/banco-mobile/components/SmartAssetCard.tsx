@@ -13,6 +13,7 @@ import Animated, {
 import { FeedItem, sendBehaviorSignal } from "@workspace/api-client-react";
 
 import { BReactionButton } from "@/components/BReactionButton";
+import { SectionBackdrop } from "@/components/SectionBackdrop";
 import { isVerifiedSignal } from "@/constants/feed";
 import { useColors } from "@/hooks/useColors";
 import { useI18n } from "@/context/LanguageContext";
@@ -161,18 +162,23 @@ function SmartAssetCardComponent({
           testID={`asset-card-${item.id}`}
         >
           <View style={[styles.imageWrapper, { height: imageHeight }]}>
-            <Image
-              source={{ uri: item.media_preview }}
-              style={[
-                styles.image,
-                {
-                  borderTopLeftRadius: colors.radius,
-                  borderTopRightRadius: colors.radius,
-                },
-              ]}
-              contentFit="cover"
-              transition={200}
-            />
+            {/* Section-identity backdrop sits under the photo. If the listing
+                has no photo, this is what shows — never a blank grey box. */}
+            <SectionBackdrop section={item.category} motifSize={compact ? 52 : 72} />
+            {item.media_preview ? (
+              <Image
+                source={{ uri: item.media_preview }}
+                style={[
+                  styles.image,
+                  {
+                    borderTopLeftRadius: colors.radius,
+                    borderTopRightRadius: colors.radius,
+                  },
+                ]}
+                contentFit="cover"
+                transition={200}
+              />
+            ) : null}
 
             <View style={styles.topBadges}>
               {item.is_sponsored && (

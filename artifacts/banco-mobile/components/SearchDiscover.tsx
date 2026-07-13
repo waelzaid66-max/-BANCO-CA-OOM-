@@ -347,14 +347,14 @@ export function SearchDiscover(_props: Props) {
         testID="discover-banks-hub"
       >
         <LinearGradient
-          colors={["#1A1200", "#0A0800"]}
+          colors={["#0A2A4A", "#05121F"]}
           start={{ x: 0, y: 0 }}
           end={{ x: 1, y: 1 }}
           style={styles.hubCard}
         >
           <View style={[styles.hubCardRow, { flexDirection: rowDir }]}>
-            <View style={[styles.hubBadge, { backgroundColor: "#C9A84C" }]}>
-              <Feather name="credit-card" size={20} color="#000000" />
+            <View style={[styles.hubBadge, { backgroundColor: "#1668B5" }]}>
+              <Feather name="credit-card" size={20} color="#FFFFFF" />
             </View>
             <View style={styles.hubCardText}>
               <AppText style={[styles.hubTitle, { textAlign }]}>

@@ -105,23 +105,38 @@ _No secret values were read or printed._
 
 ---
 
-## 5. Maintenance orders — pending your approval
+## 5. Maintenance orders — status
 
-Approve these (all, or pick a priority order) and I will execute them one by one.
-The three cross-cutting ones are already filed as project tasks; the rest are
-listed here as orders to file/execute on your go-ahead.
+You approved M1, M2, M3, M7 to start. Progress below.
 
-| # | Order | Filed as |
-|---|-------|----------|
-| M1 | Redesign the Booking (furnished/residential rental) page from scratch — correct card proportions, spacing, states; not the old UI | to file on approval |
-| M2 | Give every card type an expressive, section-indicating background app-wide | to file on approval |
-| M3 | Finish the Banks & Financiers blue identity (accent + backgrounds) | to file on approval |
+| # | Order | Status |
+|---|-------|--------|
+| M2 | Every card type gets an expressive, section-indicating background app-wide | **DONE** — see §6 |
+| M3 | Banks & Financiers blue identity (accent + expressive hero) | **DONE** — see §6 |
+| M1 | Redesign the Booking page from scratch (not the old UI) | NEXT (in progress) |
+| M7 | Redesign the filters sheet (smaller, cleaner, works everywhere) | NEXT |
 | M4 | Glass/transparent bottom bar on mini-app search pages | task #23 |
 | M5 | Car Import end-to-end | task #24 |
 | M6 | Working, evolved maps for every section | task #25 |
-| M7 | Redesign the filters sheet (smaller, cleaner, works everywhere) | to file on approval |
-| B1 | Fix Arabic-header crash in weekly report emails (`EmailService.ts`) | to file on approval |
+| B1 | Fix Arabic-header crash in weekly report emails (`EmailService.ts`) | pending approval |
 | B2 | Add Paymob sandbox credentials | task #7 |
+
+## 6. Delivered this round (M2 + M3)
+
+- **Shared section-identity system** (`lib/sectionTheme.ts` + `components/SectionBackdrop.tsx`):
+  every section now has a colour gradient + a motif icon. `SectionBackdrop` is
+  the reusable backdrop.
+- **M2 — all three card types** (`SmartAssetCard`, `IndustrialAssetCard`,
+  `StayCard`) now fall back to their section's gradient + motif when a listing
+  has **no photo** — a card is never a blank grey box again. Photos still show
+  when present; nothing else about the cards changed (reactions, memo, prices
+  verbatim all intact).
+- **M3 — Banks & Financiers is now blue**, not gold: the portal hero is a blue
+  gradient banner, the join CTA is blue, and the Discover hub card is blue.
+- Code review ran: it caught that my first motif icon names weren't in the
+  app's icon registry (would have shown a warning glyph) — **fixed** to
+  registry-mapped names. Typecheck clean (except the pre-existing profile.tsx
+  compile issue tracked separately).
 
 **Rule for all orders:** no random/partial execution, delete no existing
 feature, hide no problem, never block publishing (BANCO Market or elsewhere),

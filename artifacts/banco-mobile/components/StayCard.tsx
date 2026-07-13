@@ -15,6 +15,7 @@ import { FeedItem, sendBehaviorSignal } from "@workspace/api-client-react";
 
 import { AppText } from "@/components/AppText";
 import { BReactionButton } from "@/components/BReactionButton";
+import { SectionBackdrop } from "@/components/SectionBackdrop";
 import { isVerifiedSignal } from "@/constants/feed";
 import { useI18n } from "@/context/LanguageContext";
 import { useSession } from "@/context/SessionContext";
@@ -166,6 +167,7 @@ function StayCardComponent({ item, onPress, onSave, isSaved }: StayCardProps) {
         >
           {/* ── Photo-forward hero: the unit photo IS the section background ── */}
           <View style={styles.imageWrap}>
+            <SectionBackdrop section="real_estate" motifSize={54} />
             {hasPhoto ? (
               <Image
                 source={{ uri: item.media_preview }}
@@ -173,13 +175,7 @@ function StayCardComponent({ item, onPress, onSave, isSaved }: StayCardProps) {
                 contentFit="cover"
                 transition={200}
               />
-            ) : (
-              <View style={[StyleSheet.absoluteFill, { backgroundColor: STAYS_ACCENT }]}>
-                <View style={styles.fallbackIcon}>
-                  <Ionicons name="home" size={46} color="rgba(255,255,255,0.28)" />
-                </View>
-              </View>
-            )}
+            ) : null}
 
             {/* Bottom scrim so the white title/location always read */}
             <LinearGradient
@@ -305,7 +301,6 @@ const styles = StyleSheet.create({
   outer: { marginBottom: 14 },
   inner: { borderWidth: 1, overflow: "hidden" },
   imageWrap: { position: "relative", width: "100%", height: 208 },
-  fallbackIcon: { ...StyleSheet.absoluteFillObject, alignItems: "center", justifyContent: "center" },
   scrim: { ...StyleSheet.absoluteFillObject },
   topBadges: {
     position: "absolute",

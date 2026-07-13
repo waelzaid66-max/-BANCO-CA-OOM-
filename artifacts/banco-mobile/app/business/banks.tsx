@@ -1,6 +1,7 @@
-// Banks & Financiers portal — financial institutions hub
-// Gold accent theme: #C9A84C / dark amber. Premium institutional UX.
+// Banks & Financiers portal — financial institutions hub.
+// Trust-blue identity: the ONE section outside BANCO's red family, in BANKS_ACCENT.
 import { Feather, MaterialCommunityIcons } from "@/components/icons";
+import { LinearGradient } from "expo-linear-gradient";
 import { router } from "expo-router";
 import React from "react";
 import {
@@ -17,11 +18,12 @@ import { useAuth } from "@clerk/expo";
 import { AppText } from "@/components/AppText";
 import { useI18n } from "@/context/LanguageContext";
 import { useColors } from "@/hooks/useColors";
+import { BANKS_ACCENT, SECTION_GRADIENT } from "@/lib/sectionTheme";
 
-const GOLD = "#C9A84C";
-const GOLD_DIM = "#8A6E2F";
-const GOLD_BG = "#C9A84C18";
-const GOLD_BORDER = "#C9A84C38";
+const BLUE = BANKS_ACCENT;
+const BLUE_DIM = "#0E4C92";
+const BLUE_BG = "#1668B518";
+const BLUE_BORDER = "#1668B538";
 
 type Product = {
   icon: React.ComponentProps<typeof MaterialCommunityIcons>["name"];
@@ -97,30 +99,27 @@ export default function BanksScreen() {
         contentContainerStyle={styles.scroll}
         showsVerticalScrollIndicator={false}
       >
-        {/* Hero */}
-        <View
-          style={[
-            styles.hero,
-            { borderColor: GOLD_BORDER, backgroundColor: GOLD_BG },
-          ]}
+        {/* Hero — expressive blue-gradient banner that states the section's world */}
+        <LinearGradient
+          colors={SECTION_GRADIENT.banks}
+          start={{ x: 0, y: 0 }}
+          end={{ x: 1, y: 1 }}
+          style={[styles.hero, { borderWidth: 0 }]}
         >
-          <View style={[styles.heroBadge, { backgroundColor: GOLD_BG }]}>
-            <MaterialCommunityIcons name="bank-outline" size={40} color={GOLD} />
-          </View>
-          <AppText
-            style={[styles.heroTitle, { color: colors.foreground, textAlign }]}
+          <View
+            style={[styles.heroBadge, { backgroundColor: "rgba(255,255,255,0.16)" }]}
           >
+            <MaterialCommunityIcons name="bank-outline" size={40} color="#FFFFFF" />
+          </View>
+          <AppText style={[styles.heroTitle, { color: "#FFFFFF", textAlign }]}>
             {t("business.banks.title")}
           </AppText>
           <AppText
-            style={[
-              styles.heroSub,
-              { color: colors.mutedForeground, textAlign },
-            ]}
+            style={[styles.heroSub, { color: "rgba(255,255,255,0.88)", textAlign }]}
           >
             {t("business.banks.subtitle")}
           </AppText>
-        </View>
+        </LinearGradient>
 
         {/* Products section */}
         <AppText
@@ -145,11 +144,11 @@ export default function BanksScreen() {
               },
             ]}
           >
-            <View style={[styles.productIcon, { backgroundColor: GOLD_BG }]}>
+            <View style={[styles.productIcon, { backgroundColor: BLUE_BG }]}>
               <MaterialCommunityIcons
                 name={p.icon}
                 size={22}
-                color={GOLD_DIM}
+                color={BLUE_DIM}
               />
             </View>
             <View style={{ flex: 1, gap: 3 }}>
@@ -183,17 +182,17 @@ export default function BanksScreen() {
           style={[
             styles.joinBox,
             {
-              backgroundColor: GOLD_BG,
-              borderColor: GOLD_BORDER,
+              backgroundColor: BLUE_BG,
+              borderColor: BLUE_BORDER,
               borderRadius: colors.radius,
             },
           ]}
         >
-          <View style={[styles.joinIconWrap, { backgroundColor: GOLD_BG }]}>
+          <View style={[styles.joinIconWrap, { backgroundColor: BLUE_BG }]}>
             <MaterialCommunityIcons
               name="bank-check"
               size={32}
-              color={GOLD}
+              color={BLUE}
             />
           </View>
           <AppText
@@ -226,7 +225,7 @@ export default function BanksScreen() {
             <MaterialCommunityIcons
               name="bank-plus"
               size={18}
-              color="#000000"
+              color="#FFFFFF"
             />
             <AppText style={styles.joinBtnText}>
               {t("business.banks.joinCta")}
@@ -356,7 +355,7 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     alignItems: "center",
     gap: 8,
-    backgroundColor: "#C9A84C",
+    backgroundColor: BLUE,
     paddingHorizontal: 24,
     paddingVertical: 14,
     borderRadius: 12,
@@ -367,7 +366,7 @@ const styles = StyleSheet.create({
   joinBtnText: {
     fontSize: 15,
     fontFamily: "Inter_700Bold",
-    color: "#000000",
+    color: "#FFFFFF",
   },
 
   // Disclaimer

@@ -9,6 +9,7 @@ import { Pressable, StyleSheet, View } from "react-native";
 
 import { FeedItem } from "@workspace/api-client-react";
 import { AppText } from "@/components/AppText";
+import { SectionBackdrop } from "@/components/SectionBackdrop";
 import { isVerifiedSignal } from "@/constants/feed";
 import { useI18n } from "@/context/LanguageContext";
 import { useSession } from "@/context/SessionContext";
@@ -121,12 +122,19 @@ function IndustrialAssetCardComponent({ item, onPress }: Props) {
       </View>
 
       <View style={styles.thumbWrap}>
-        <Image
-          source={{ uri: item.media_preview }}
-          style={[styles.thumb, { borderRadius: colors.radius - 2 }]}
-          contentFit="cover"
-          transition={150}
+        <SectionBackdrop
+          section={item.category}
+          rounded={colors.radius - 2}
+          motifSize={30}
         />
+        {item.media_preview ? (
+          <Image
+            source={{ uri: item.media_preview }}
+            style={[styles.thumb, { borderRadius: colors.radius - 2 }]}
+            contentFit="cover"
+            transition={150}
+          />
+        ) : null}
         {item.is_sponsored && (
           <View style={styles.adBadge}>
             <AppText style={styles.adText}>{t("common.ad")}</AppText>
