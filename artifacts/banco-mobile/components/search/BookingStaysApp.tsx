@@ -30,6 +30,7 @@ import { SectionBackdrop } from "@/components/SectionBackdrop";
 import { SearchResultsSurface } from "@/components/search/SearchResultsSurface";
 import { SearchResultsMap } from "@/components/search/SearchResultsMap";
 import { FilterSheet } from "@/components/search/FilterSheet";
+import { MiniAppBottomNav } from "@/components/MiniAppBottomNav";
 import { apiCategoryFor } from "@/components/CategoryTabs";
 import { labelForValue } from "@/constants/locations";
 import { DEFAULT_MARKET_COUNTRY } from "@/constants/listingCreateTaxonomy";
@@ -728,6 +729,7 @@ export function BookingStaysApp() {
           onRefresh={retry}
           overlay={overlay}
           CardComponent={StayCard}
+          contentPaddingBottom={insets.bottom + 150}
         />
 
         {mapMode && inResultsView ? (
@@ -743,7 +745,7 @@ export function BookingStaysApp() {
 
         {inResultsView ? (
           <View
-            style={[styles.mapToggleWrap, { bottom: insets.bottom + 24 }]}
+            style={[styles.mapToggleWrap, { bottom: insets.bottom + 100 }]}
             pointerEvents="box-none"
           >
             <Pressable
@@ -794,6 +796,8 @@ export function BookingStaysApp() {
           setMarketPickerOpen(false);
         }}
       />
+
+      <MiniAppBottomNav />
     </View>
   );
 }

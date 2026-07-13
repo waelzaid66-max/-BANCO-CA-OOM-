@@ -34,6 +34,7 @@ import { SkeletonCard } from "@/components/SkeletonCard";
 import { SearchResultsSurface } from "@/components/search/SearchResultsSurface";
 import { SearchResultsMap } from "@/components/search/SearchResultsMap";
 import { FilterSheet } from "@/components/search/FilterSheet";
+import { MiniAppBottomNav } from "@/components/MiniAppBottomNav";
 import {
   Category,
   CategoryIcon,
@@ -1102,6 +1103,7 @@ export function SectionSearchApp({
           onRetry={retry}
           onRefresh={retry}
           overlay={overlay}
+          contentPaddingBottom={insets.bottom + 150}
         />
 
         {mapMode && inResultsView ? (
@@ -1123,7 +1125,7 @@ export function SectionSearchApp({
 
         {showMapChrome ? (
           <View
-            style={[styles.mapToggleWrap, { bottom: insets.bottom + 24 }]}
+            style={[styles.mapToggleWrap, { bottom: insets.bottom + 100 }]}
             pointerEvents="box-none"
           >
             <Pressable
@@ -1197,6 +1199,8 @@ export function SectionSearchApp({
           setMarketPickerOpen(false);
         }}
       />
+
+      <MiniAppBottomNav />
     </View>
   );
 }

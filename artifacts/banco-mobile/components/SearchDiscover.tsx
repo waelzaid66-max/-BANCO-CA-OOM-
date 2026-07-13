@@ -4,7 +4,6 @@ import { Image } from "expo-image";
 import { LinearGradient } from "expo-linear-gradient";
 import React, { useState } from "react";
 import {
-  ActivityIndicator,
   Pressable,
   ScrollView,
   StyleSheet,
@@ -17,22 +16,16 @@ import {
   CategoryIcon,
   EngineChips,
 } from "@/components/CategoryTabs";
-import { CompanyOffers } from "@/components/search/CompanyOffers";
-import {
-  POPULAR_BRANDS,
-  brandLabel,
-  type CarBrand,
-} from "@/constants/cars";
+import { type CarBrand } from "@/constants/cars";
 import { enginesForCategory } from "@/constants/engines";
 import { useI18n } from "@/context/LanguageContext";
-import { SavedSearch, useSession } from "@/context/SessionContext";
+import { SavedSearch } from "@/context/SessionContext";
 import { useColors } from "@/hooks/useColors";
 
 // Concrete, browseable sections (no "all" — these are the real catalogues a
 // shopper picks between). Each gets a bold image-style card; cars / real-estate
 // then reveal their engine chips, others go straight to results.
 const SECTIONS: Category[] = ["car", "real_estate", "facilities", "materials"];
-const QUICK_BRANDS: CarBrand[] = POPULAR_BRANDS.filter((b) => b.createSafe);
 
 // On-brand gradient pairs per section so each card reads as its own world while
 // staying in the BANCO red/charcoal family.
@@ -82,63 +75,6 @@ interface Props {
   onSearchQuery: (q: string) => void;
 }
 
-function CompactCard({
-  item,
-  onPress,
-}: {
-  item: FeedItem;
-  onPress: (item: FeedItem) => void;
-}) {
-  const colors = useColors();
-  const { isRTL } = useI18n();
-  const textAlign = isRTL ? "right" : "left";
-  return (
-    <Pressable
-      onPress={() => onPress(item)}
-      style={[
-        styles.cCard,
-        {
-          backgroundColor: colors.card,
-          borderColor: colors.border,
-          borderRadius: colors.radius,
-        },
-      ]}
-    >
-      <View style={[styles.cImgWrap, { backgroundColor: colors.secondary }]}>
-        {item.media_preview ? (
-          <Image
-            source={{ uri: item.media_preview }}
-            style={styles.cImg}
-            contentFit="cover"
-            transition={150}
-          />
-        ) : (
-          <Feather name="image" size={22} color={colors.mutedForeground} />
-        )}
-        {item.is_sponsored && (
-          <View style={[styles.cTag, { backgroundColor: colors.primary }]}>
-            <AppText style={styles.cTagText}>★</AppText>
-          </View>
-        )}
-      </View>
-      <View style={styles.cBody}>
-        <AppText
-          numberOfLines={1}
-          style={[styles.cPrice, { color: colors.foreground, textAlign }]}
-        >
-          {item.price_display}
-        </AppText>
-        <AppText
-          numberOfLines={1}
-          style={[styles.cTitle, { color: colors.mutedForeground, textAlign }]}
-        >
-          {item.title}
-        </AppText>
-      </View>
-    </Pressable>
-  );
-}
-
 export function SearchDiscover({
   onBrowseBrand,
   onApplySaved,
@@ -149,14 +85,13 @@ export function SearchDiscover({
 }: Props) {
   const colors = useColors();
   const { t, isRTL } = useI18n();
-  const { recentlyViewed, savedSearches, recentQueries } = useSession();
   const rowDir = isRTL ? "row-reverse" : "row";
   const textAlign = isRTL ? "right" : "left";
 
   // Which section card is expanded to reveal its engine chips (cars/real-estate).
   const [openSection, setOpenSection] = useState<Category | null>(null);
 
-  const { data: trendingRes, isLoading: trendingLoading } = useGetTrending();
+  const { data: trendingRes } = useGetTrending();
   const trending = trendingRes?.data ?? [];
 
   // Honest gate for the "Explore on map" entry: only surface it when we have
@@ -339,142 +274,6 @@ export function SearchDiscover({
         </Pressable>
       )}
 
-      {/* Companies & developers with live inventory (hidden when none). */}
-      <CompanyOffers />
-
-      {/* Recent text searches — the fastest re-entry for a returning user.
-          Local-only history (SessionContext), hidden entirely when empty. */}
-      {recentQueries.length > 0 && (
-        <>
-          <SectionHeader label={t("search.discover.recent")} />
-          <ScrollView
-            horizontal
-            showsHorizontalScrollIndicator={false}
-            contentContainerStyle={[styles.chipRow, { flexDirection: rowDir }]}
-          >
-            {recentQueries.map((q) => (
-              <Pressable
-                key={q}
-                onPress={() => onSearchQuery(q)}
-                style={[
-                  styles.savedChip,
-                  {
-                    backgroundColor: colors.card,
-                    borderColor: colors.border,
-                    flexDirection: rowDir,
-                  },
-                ]}
-                testID={`recent-query-${q}`}
-              >
-                <Feather name="clock" size={13} color={colors.mutedForeground} />
-                <AppText
-                  numberOfLines={1}
-                  style={[styles.savedChipText, { color: colors.foreground }]}
-                >
-                  {q}
-                </AppText>
-              </Pressable>
-            ))}
-          </ScrollView>
-        </>
-      )}
-
-      {/* Popular brands */}
-      <SectionHeader label={t("search.discover.popularBrands")} />
-      <ScrollView
-        horizontal
-        showsHorizontalScrollIndicator={false}
-        contentContainerStyle={[styles.chipRow, { flexDirection: rowDir }]}
-      >
-        {QUICK_BRANDS.map((b) => (
-          <Pressable
-            key={b.value}
-            onPress={() => onBrowseBrand(b)}
-            style={[
-              styles.brandChip,
-              { backgroundColor: colors.secondary, borderRadius: 20 },
-            ]}
-          >
-            <AppText style={[styles.brandChipText, { color: colors.foreground }]}>
-              {brandLabel(b, isRTL)}
-            </AppText>
-          </Pressable>
-        ))}
-      </ScrollView>
-
-      {/* Saved searches */}
-      {savedSearches.length > 0 && (
-        <>
-          <SectionHeader label={t("search.discover.saved")} />
-          <ScrollView
-            horizontal
-            showsHorizontalScrollIndicator={false}
-            contentContainerStyle={[styles.chipRow, { flexDirection: rowDir }]}
-          >
-            {savedSearches.map((s) => (
-              <Pressable
-                key={s.id}
-                onPress={() => onApplySaved(s)}
-                style={[
-                  styles.savedChip,
-                  {
-                    backgroundColor: colors.card,
-                    borderColor: colors.border,
-                    flexDirection: rowDir,
-                  },
-                ]}
-              >
-                <Feather name="bookmark" size={13} color={colors.primary} />
-                <AppText
-                  numberOfLines={1}
-                  style={[styles.savedChipText, { color: colors.foreground }]}
-                >
-                  {s.q.trim() || t(`home.categories.${s.category}` as never)}
-                </AppText>
-              </Pressable>
-            ))}
-          </ScrollView>
-        </>
-      )}
-
-      {/* Trending — hidden entirely when there is nothing real to show (no
-          empty-state hint; honesty rule). */}
-      {(trendingLoading || trending.length > 0) && (
-        <>
-          <SectionHeader label={t("search.discover.trending")} />
-          {trendingLoading ? (
-            <View style={styles.loadingRow}>
-              <ActivityIndicator color={colors.primary} />
-            </View>
-          ) : (
-            <ScrollView
-              horizontal
-              showsHorizontalScrollIndicator={false}
-              contentContainerStyle={[styles.cardRow, { flexDirection: rowDir }]}
-            >
-              {trending.map((item) => (
-                <CompactCard key={item.id} item={item} onPress={onOpenListing} />
-              ))}
-            </ScrollView>
-          )}
-        </>
-      )}
-
-      {/* Recently viewed */}
-      {recentlyViewed.length > 0 && (
-        <>
-          <SectionHeader label={t("search.discover.recentlyViewed")} />
-          <ScrollView
-            horizontal
-            showsHorizontalScrollIndicator={false}
-            contentContainerStyle={[styles.cardRow, { flexDirection: rowDir }]}
-          >
-            {recentlyViewed.map((item) => (
-              <CompactCard key={item.id} item={item} onPress={onOpenListing} />
-            ))}
-          </ScrollView>
-        </>
-      )}
     </ScrollView>
   );
 }
