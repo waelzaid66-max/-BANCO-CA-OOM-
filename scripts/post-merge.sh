@@ -1,6 +1,6 @@
 #!/bin/bash
 set -e
-pnpm install --frozen-lockfile
+pnpm install --no-frozen-lockfile
 
 # Before pushing the schema, collapse any pre-existing duplicate saves so the new
 # UNIQUE(user_id, listing_id) index on saved_listings can be created. Keeps the
