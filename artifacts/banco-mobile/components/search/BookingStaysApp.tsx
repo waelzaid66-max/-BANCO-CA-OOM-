@@ -25,6 +25,7 @@ import { AppText } from "@/components/AppText";
 import { LocationPicker } from "@/components/LocationPicker";
 import { SkeletonCard } from "@/components/SkeletonCard";
 import { StayCard, STAYS_ACCENT } from "@/components/StayCard";
+import { SectionBackdrop } from "@/components/SectionBackdrop";
 import { SearchResultsSurface } from "@/components/search/SearchResultsSurface";
 import { SearchResultsMap } from "@/components/search/SearchResultsMap";
 import { FilterSheet } from "@/components/search/FilterSheet";
@@ -453,124 +454,68 @@ export function BookingStaysApp() {
 
   return (
     <View style={[styles.container, { backgroundColor: colors.background }]}>
-      {/* Header */}
-      <View
-        style={[
-          styles.header,
-          {
-            paddingTop: topPad + 10,
-            backgroundColor: colors.background,
-            borderBottomColor: colors.border,
-            flexDirection: rowDir,
-          },
-        ]}
-      >
-        <Pressable onPress={goBack} style={styles.backBtn} hitSlop={12} testID="stays-back">
-          <Feather
-            name={isRTL ? "arrow-right" : "arrow-left"}
-            size={22}
-            color={colors.foreground}
-          />
-        </Pressable>
-        <View style={styles.headerTitleWrap}>
-          <View style={[styles.headerTitleRow, { flexDirection: rowDir }]}>
-            <View style={[styles.headerIcon, { backgroundColor: STAYS_ACCENT }]}>
-              <Ionicons name="calendar" size={15} color="#FFFFFF" />
-            </View>
-            <AppText
-              style={[styles.headerTitle, { color: colors.foreground, textAlign }]}
-              numberOfLines={1}
-            >
+      {/* ── Stays hero — the section's rose real-estate identity, not the generic
+          marketplace search chrome. Carries title, save/filter actions and a
+          single "Where to?" search pill. ─────────────────────────────────── */}
+      <View style={[styles.hero, { paddingTop: topPad + 12 }]}>
+        <SectionBackdrop section="real_estate" motifSize={140} />
+        <View style={[styles.heroTopRow, { flexDirection: rowDir }]}>
+          <Pressable onPress={goBack} style={styles.heroBackBtn} hitSlop={12} testID="stays-back">
+            <Feather
+              name={isRTL ? "arrow-right" : "arrow-left"}
+              size={20}
+              color="#FFFFFF"
+            />
+          </Pressable>
+          <View style={styles.heroTitleWrap}>
+            <AppText style={[styles.heroTitle, { textAlign }]} numberOfLines={1}>
               {t("home.categories.booking")}
             </AppText>
+            <AppText style={[styles.heroSub, { textAlign }]} numberOfLines={1}>
+              {t("search.discover.section.bookingSub")}
+            </AppText>
           </View>
-          <AppText
-            style={[styles.headerSub, { color: colors.mutedForeground, textAlign }]}
-            numberOfLines={1}
+          <Pressable
+            onPress={handleSaveSearch}
+            disabled={searchSaved}
+            style={[styles.heroActionBtn, searchSaved && styles.heroActionBtnActive]}
+            testID="stays-save-search"
           >
-            {t("search.discover.section.bookingSub")}
-          </AppText>
-        </View>
-        <Pressable
-          onPress={() => (searchOpen ? closeSearch() : openSearch())}
-          style={[
-            styles.iconBtnSm,
-            {
-              backgroundColor: searchOpen ? STAYS_ACCENT : colors.secondary,
-              borderRadius: colors.radius,
-            },
-          ]}
-          testID="stays-search-toggle"
-        >
-          <Feather
-            name="search"
-            size={17}
-            color={searchOpen ? "#FFFFFF" : colors.foreground}
-          />
-        </Pressable>
-        <Pressable
-          onPress={handleSaveSearch}
-          disabled={searchSaved}
-          style={[
-            styles.iconBtnSm,
-            {
-              backgroundColor: searchSaved ? STAYS_ACCENT : colors.secondary,
-              borderRadius: colors.radius,
-            },
-          ]}
-          testID="stays-save-search"
-        >
-          <Feather
-            name="bookmark"
-            size={17}
-            color={searchSaved ? "#FFFFFF" : colors.foreground}
-          />
-        </Pressable>
-        <Pressable
-          onPress={() => {
-            playSound("tap");
-            setShowFilters((v) => !v);
-          }}
-          style={[
-            styles.iconBtnSm,
-            {
-              backgroundColor: activeFilterCount > 0 ? STAYS_ACCENT : colors.secondary,
-              borderRadius: colors.radius,
-            },
-          ]}
-          testID="stays-filter-toggle"
-        >
-          <Feather
-            name="sliders"
-            size={18}
-            color={activeFilterCount > 0 ? "#FFFFFF" : colors.foreground}
-          />
-          {activeFilterCount > 0 && (
-            <View style={[styles.filterBadge, { backgroundColor: "#FFFFFF" }]}>
-              <AppText style={[styles.filterBadgeText, { color: STAYS_ACCENT }]}>
-                {activeFilterCount}
-              </AppText>
-            </View>
-          )}
-        </Pressable>
-      </View>
-
-      {/* Collapsible search box — revealed by the header search icon, not a
-          permanent rectangle. Auto-focuses on open; submit/clear closes it. */}
-      {searchOpen && (
-        <View style={[styles.searchWrap, { flexDirection: rowDir }]}>
-          <View
+            <Feather
+              name="bookmark"
+              size={16}
+              color={searchSaved ? STAYS_ACCENT : "#FFFFFF"}
+            />
+          </Pressable>
+          <Pressable
+            onPress={() => {
+              playSound("tap");
+              setShowFilters((v) => !v);
+            }}
             style={[
-              styles.searchRow,
-              {
-                backgroundColor: colors.card,
-                borderColor: colors.border,
-                borderRadius: colors.radius,
-                flexDirection: rowDir,
-              },
+              styles.heroActionBtn,
+              activeFilterCount > 0 && styles.heroActionBtnActive,
             ]}
+            testID="stays-filter-toggle"
           >
-            <Ionicons name="location-outline" size={17} color={colors.mutedForeground} />
+            <Feather
+              name="sliders"
+              size={17}
+              color={activeFilterCount > 0 ? STAYS_ACCENT : "#FFFFFF"}
+            />
+            {activeFilterCount > 0 && (
+              <View style={styles.filterBadge}>
+                <AppText style={styles.filterBadgeText}>{activeFilterCount}</AppText>
+              </View>
+            )}
+          </Pressable>
+        </View>
+
+        {/* Single "Where to?" pill — tap to reveal the field; the field itself
+            replaces the placeholder in place (no separate rectangle). */}
+        {searchOpen ? (
+          <View style={[styles.heroSearch, { flexDirection: rowDir }]}>
+            <Ionicons name="location-outline" size={18} color="rgba(255,255,255,0.9)" />
             <TextInput
               ref={inputRef}
               value={draftQuery}
@@ -580,8 +525,8 @@ export function BookingStaysApp() {
                 if (!draftQuery.trim()) closeSearch();
               }}
               placeholder={t("search.discover.section.staysWhere")}
-              placeholderTextColor={colors.mutedForeground}
-              style={[styles.input, { color: colors.foreground, textAlign }]}
+              placeholderTextColor="rgba(255,255,255,0.6)"
+              style={[styles.heroSearchInput, { textAlign }]}
               returnKeyType="search"
               testID="stays-search-input"
               autoCorrect={false}
@@ -591,13 +536,74 @@ export function BookingStaysApp() {
               hitSlop={8}
               testID="stays-search-close"
             >
-              <Feather name="x" size={16} color={colors.mutedForeground} />
+              <Feather name="x" size={16} color="rgba(255,255,255,0.9)" />
             </Pressable>
           </View>
+        ) : (
+          <Pressable
+            onPress={openSearch}
+            style={[styles.heroSearch, { flexDirection: rowDir }]}
+            testID="stays-search-toggle"
+          >
+            <Ionicons name="location-outline" size={18} color="rgba(255,255,255,0.9)" />
+            <AppText
+              style={[
+                styles.heroSearchText,
+                {
+                  textAlign,
+                  color: draftQuery ? "#FFFFFF" : "rgba(255,255,255,0.72)",
+                },
+              ]}
+              numberOfLines={1}
+            >
+              {draftQuery || t("search.discover.section.staysWhere")}
+            </AppText>
+            {draftQuery.length > 0 ? (
+              <Pressable onPress={clearQuery} hitSlop={8} testID="stays-search-clear">
+                <Feather name="x" size={16} color="rgba(255,255,255,0.9)" />
+              </Pressable>
+            ) : (
+              <Feather name="search" size={16} color="rgba(255,255,255,0.9)" />
+            )}
+          </Pressable>
+        )}
+      </View>
+
+      {/* Autocomplete — anchored directly under the hero search pill. */}
+      {showSuggestions && suggestions.length > 0 && (
+        <View
+          style={[
+            styles.suggestions,
+            {
+              backgroundColor: colors.card,
+              borderColor: colors.border,
+              borderRadius: colors.radius,
+            },
+          ]}
+        >
+          {suggestions.map((s, i) => (
+            <Pressable
+              key={i}
+              onPress={() => handleSuggestionTap(s)}
+              style={[
+                styles.suggestionItem,
+                {
+                  flexDirection: rowDir,
+                  borderBottomColor:
+                    i < suggestions.length - 1 ? colors.border : "transparent",
+                },
+              ]}
+            >
+              <Ionicons name="search-outline" size={14} color={colors.mutedForeground} />
+              <AppText style={[styles.suggestionText, { color: colors.foreground }]}>
+                {s}
+              </AppText>
+            </Pressable>
+          ))}
         </View>
       )}
 
-      {/* Compact controls: inline market chip + primary term tabs on one line */}
+      {/* Controls: market chip + primary rental-term segmentation. */}
       <View style={[styles.controlsRow, { flexDirection: rowDir }]}>
         <MarketCountryButton
           selected={criteria.marketCountry}
@@ -681,39 +687,6 @@ export function BookingStaysApp() {
         onToggleNearMe={() => void toggleNearMe()}
         onClearAll={clearAllFilters}
       />
-
-      {showSuggestions && suggestions.length > 0 && (
-        <View
-          style={[
-            styles.suggestions,
-            {
-              backgroundColor: colors.card,
-              borderColor: colors.border,
-              borderRadius: colors.radius,
-            },
-          ]}
-        >
-          {suggestions.map((s, i) => (
-            <Pressable
-              key={i}
-              onPress={() => handleSuggestionTap(s)}
-              style={[
-                styles.suggestionItem,
-                {
-                  flexDirection: rowDir,
-                  borderBottomColor:
-                    i < suggestions.length - 1 ? colors.border : "transparent",
-                },
-              ]}
-            >
-              <Ionicons name="search-outline" size={14} color={colors.mutedForeground} />
-              <AppText style={[styles.suggestionText, { color: colors.foreground }]}>
-                {s}
-              </AppText>
-            </Pressable>
-          ))}
-        </View>
-      )}
 
       <View style={styles.resultsArea}>
         <SearchResultsSurface
@@ -802,59 +775,87 @@ export function BookingStaysApp() {
 const styles = StyleSheet.create({
   container: { flex: 1 },
   resultsArea: { flex: 1 },
-  header: {
-    paddingHorizontal: 12,
-    paddingBottom: 10,
-    borderBottomWidth: 1,
-    alignItems: "center",
-    gap: 6,
+
+  // ── Stays hero ───────────────────────────────────────────────────────────
+  hero: {
+    paddingHorizontal: 14,
+    paddingBottom: 16,
+    borderBottomLeftRadius: 24,
+    borderBottomRightRadius: 24,
+    overflow: "hidden",
+    backgroundColor: "#650E36",
   },
-  backBtn: { padding: 4 },
-  headerTitleWrap: { flex: 1 },
-  headerTitleRow: { alignItems: "center", gap: 8 },
-  headerIcon: {
-    width: 26,
-    height: 26,
-    borderRadius: 8,
+  heroTopRow: { alignItems: "center", gap: 8, marginBottom: 14 },
+  heroBackBtn: {
+    width: 36,
+    height: 36,
+    borderRadius: 12,
+    backgroundColor: "rgba(255,255,255,0.18)",
     alignItems: "center",
     justifyContent: "center",
   },
-  headerTitle: { fontSize: 18, fontFamily: "Inter_700Bold", flexShrink: 1 },
-  headerSub: { fontSize: 12, fontFamily: "Inter_400Regular", marginTop: 2 },
-  iconBtnSm: {
-    width: 38,
-    height: 38,
+  heroTitleWrap: { flex: 1 },
+  heroTitle: {
+    fontSize: 20,
+    fontFamily: "Inter_700Bold",
+    color: "#FFFFFF",
+    letterSpacing: 0.2,
+  },
+  heroSub: {
+    fontSize: 12.5,
+    fontFamily: "Inter_400Regular",
+    color: "rgba(255,255,255,0.78)",
+    marginTop: 2,
+  },
+  heroActionBtn: {
+    width: 36,
+    height: 36,
+    borderRadius: 12,
+    backgroundColor: "rgba(255,255,255,0.18)",
     alignItems: "center",
     justifyContent: "center",
     position: "relative",
   },
+  heroActionBtnActive: { backgroundColor: "#FFFFFF" },
   filterBadge: {
     position: "absolute",
-    top: 4,
-    right: 4,
-    minWidth: 16,
-    height: 16,
+    top: 3,
+    right: 3,
+    minWidth: 15,
+    height: 15,
     borderRadius: 8,
+    backgroundColor: STAYS_ACCENT,
     alignItems: "center",
     justifyContent: "center",
     paddingHorizontal: 3,
   },
-  filterBadgeText: { fontSize: 10, fontFamily: "Inter_700Bold" },
-  searchWrap: {
-    paddingHorizontal: 12,
-    paddingTop: 10,
-    gap: 8,
-    alignItems: "center",
+  filterBadgeText: {
+    fontSize: 9.5,
+    fontFamily: "Inter_700Bold",
+    color: "#FFFFFF",
   },
-  searchRow: {
-    flex: 1,
+  heroSearch: {
+    height: 50,
+    borderRadius: 15,
+    paddingHorizontal: 14,
     alignItems: "center",
-    gap: 8,
-    paddingHorizontal: 12,
-    height: 42,
+    gap: 10,
+    backgroundColor: "rgba(255,255,255,0.16)",
     borderWidth: 1,
+    borderColor: "rgba(255,255,255,0.24)",
   },
-  input: { flex: 1, fontSize: 14.5, fontFamily: "Inter_400Regular", padding: 0 },
+  heroSearchText: {
+    flex: 1,
+    fontSize: 15,
+    fontFamily: "Inter_500Medium",
+  },
+  heroSearchInput: {
+    flex: 1,
+    fontSize: 15,
+    fontFamily: "Inter_400Regular",
+    color: "#FFFFFF",
+    padding: 0,
+  },
   controlsRow: {
     alignItems: "center",
     gap: 8,
