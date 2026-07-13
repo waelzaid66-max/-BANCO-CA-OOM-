@@ -1,113 +1,128 @@
-# Booking & Stays Rebuild — Status Report
+# BANCO — Booking & Stays Review + Maintenance Orders
 
-_Last updated: 2026-07-13. Scope: `artifacts/banco-mobile` (BANCO Mobile). Task #22._
+_Updated: 2026-07-13 · Scope: `artifacts/banco-mobile` (+ notes on api-server & secrets)._
 
-This document is the running record for the Booking & Stays ("الإيجار / بوكينج")
-section rebuild — what was built, what was fixed after the user's design
-corrections, the honest constraints, and the outstanding maintenance requests
-that are being handled as separate follow-up tasks. It is written to be handed
-off to any developer (or agent) picking this up.
+This is the honest status handoff. It records **corrected understanding**, an
+**inventory** (done / not done / broken), the **secrets audit** (with reasons),
+and the **maintenance orders** (gaps written as commands, pending your approval).
+Nothing here is hidden.
 
 ---
 
-## 1. What Booking & Stays IS (the essence — do not drift)
+## 0. Corrected understanding (where I was wrong)
 
-Booking & Stays is **NOT hotels**. It is the **residential rental** world:
-furnished / rent housing. Under the hood it is the Real-Estate section filtered
-to `offer_type = rent` (engine locked to `rent`), with the market's real rental
-taxonomy as the primary segmentation. It exists to connect people to places to
-live — that is the product's purpose.
+1. **The light-blue colour belongs to the Banks & Financiers section — NOT to
+   Booking.** It was an alternative accent for the *Banks & Financiers* world
+   (`/business/banks`) from an earlier request that was never finished. I wrongly
+   applied a navy/blue to the Booking cards. → Blue is now removed from Booking
+   (correct). Giving Banks & Financiers its proper blue identity is still an
+   **open gap** (see Order M3).
+2. **Every card — not only the 4 main Discover cards — should carry an
+   expressive background that indicates its section**, in the spirit of the 4
+   main Discover cards (no logos; identity via colour + a section-telling
+   backdrop). I initially thought only the 4 main cards get this. → StayCard now
+   does it, but the rule is **app-wide** across card types (open gap, Order M2).
+3. **Booking = residential & furnished RENTAL, never hotels.** (I had this right;
+   confirming it explicitly.)
+4. **The B reaction has two layers and both must exist** (confirmed working now):
+   - single tap = like/save → B turns accent-red, reaches the owner/notifications;
+   - long-press = menu with **Potential** (interested affinity) and **not-for-me**.
+5. **The Booking page must be genuinely redesigned, not ported.** Reusing the old
+   section-search UI carried its old problems (card size/shape, spacing, tall
+   search chrome). This is the core open gap (Order M1).
 
-- The section wears **Real-Estate's identity**, not a foreign colour. Accent =
-  `sectionAccent("real_estate")` (a rose-burgundy in the BANCO family). There is
-  **no blue** anywhere in this section anymore.
-- Rental taxonomy values (real, from the taxonomy package): `furnished_daily`,
-  `new_law`, `old_law`, `annual_contract`. Egypt demo data uses
-  furnished_daily / new_law / old_law only.
-- Only `furnished_daily` units are **bookable** (they get the "bookable now"
-  ribbon and the `BookingCard` reserve flow on the detail screen). Everything
-  else is a contact-the-owner rental. This gate lives in `app/listing/[id].tsx`.
-- **Honesty rule:** the card renders `item.price_display` verbatim. The BFF
-  already bakes the per-term suffix ("/يوم" etc.) into that string. No
-  client-side price math, ever.
+---
 
-## 2. What was built
+## 1. Inventory — DONE (this task, #22)
 
-- **`components/StayCard.tsx`** — a Booking.com-style, photo-forward stay card.
-  The unit's real photo is the full-bleed background (a section-indicating
-  visual, exactly like the four main Discover section cards), under a bottom
-  scrim that carries the title + location in white. Bookable ribbon, sponsored
-  badge, share, and the identity-B reaction sit over the photo; trust signal +
-  honest price + reserve affordance sit in a compact strip below.
-- **`components/search/BookingStaysApp.tsx`** — the section mini-app. Locks
-  category=real_estate + engine=rent, makes the market's rental-term tabs the
-  primary segmentation, and reuses the proven mini-app machinery (baseline-delta
-  dirty/exit-confirm, market hydration, pull-to-refresh, infinite scroll, map,
-  near-me, autocomplete). No backend changes.
-- **`components/search/SearchResultsSurface.tsx`** — accepts an optional
-  `CardComponent` so the booking surface renders `StayCard`s.
-- **`app/section/booking.tsx`** — renders `<BookingStaysApp />`.
+- **StayCard** (`components/StayCard.tsx`): removed the blue accent → uses the
+  real-estate identity accent; photo-forward card (real unit photo as the
+  section-indicating background + scrim + overlaid title/location); honest
+  `price_display` (verbatim, no client math); **B reaction restored to full
+  parity with SmartAssetCard** (tap = save, long-press = Potential/not-for-me);
+  bookable ribbon, sponsored badge, share.
+- **BookingStaysApp** (`components/search/BookingStaysApp.tsx`): removed the
+  always-visible text search rectangle → **tap-to-open search icon** that
+  collapses after use; **market-country picker merged inline** with the term
+  tabs, smaller/balanced; filters are icon buttons; rental-term tabs are the
+  primary segmentation (this subsumes the separate "term chips" request).
+- Detail screen `BookingCard` reserve flow still gated on `furnished_daily`;
+  `?focus=booking` deep-scroll intact.
+- i18n keys present (en + ar). `tsc --noEmit` clean except the pre-existing,
+  unrelated `app/(tabs)/profile.tsx` error (tracked separately as compile task).
+- No feature deleted; publishing / BANCO Market / the rest of the system untouched.
 
-## 3. Design corrections applied (from user feedback)
+## 2. Inventory — NOT DONE / needs real work (open gaps)
 
-1. **No blue cards.** The earlier navy `BOOKING_ACCENT (#0A2840)` was removed
-   everywhere in the section and replaced with `STAYS_ACCENT` =
-   `sectionAccent("real_estate")`. Cards now lead with a **real photo
-   background that indicates the section/unit**, matching the four main search
-   section cards — not a flat colour.
-2. **Reaction feature restored to full parity.** The new StayCard had gutted the
-   identity-B reaction (dead `onAngry`, a hardcoded heart icon, dropped affinity
-   signal). It is now wired **identically to `SmartAssetCard`**:
-   - Tap on B = save (turns the B accent-red; reaches the owner).
-   - Long-press opens the menu: **Potential** (save + `interested` affinity
-     signal) and **not-for-me** (`angry` affinity signal), via
-     `sendBehaviorSignal`.
-   - Section-aware save glyph (a key for residences), `potentialFlash` visual.
-   No feature is dropped versus the feed card.
-3. **Search chrome slimmed.** The always-visible "Where to?" text rectangle is
-   gone. Search is now a **tap-to-open icon** in the header that reveals a
-   collapsible input (auto-focus; submit/clear collapses it). Save-search and
-   filters are icon buttons too. The market-country picker is now an **inline
-   compact chip** sitting on the same row as the primary term tabs — smaller and
-   balanced.
+- **M1 — Booking page true redesign.** It still sits on the old section-search
+  foundation. Needs a purpose-built stays layout (correct card proportions,
+  spacing, empty/loading states) — a real redesign, not the old UI.
+- **M2 — Expressive section backgrounds for ALL card types**, app-wide (not just
+  StayCard), following the 4-main-Discover-cards idea; colour + section-telling
+  backdrop, no logos.
+- **M3 — Banks & Financiers identity** (the unfinished blue-accent request):
+  give that section its blue accent + expressive backgrounds.
+- **M4 — Glass bottom bar on mini-app search pages** (proposed task #23): keep
+  the bottom bar visible but transparent/frosted inside the search area.
+- **M5 — Car Import (استيراد السيارات) end-to-end** (proposed task #24).
+- **M6 — Maps functional & evolved across every section** (proposed task #25).
+- **M7 — Filters redesign** beyond the search box (the FilterSheet itself), so it
+  is smaller/cleaner and works correctly in every section.
 
-## 4. Verified / intact (nothing broken)
+## 3. Inventory — BROKEN (found; reasons only, not yet fixed)
 
-- `npx tsc --noEmit` is clean (excluding the pre-existing, unrelated
-  `app/(tabs)/profile.tsx` error tracked under Task #18).
-- The `furnished_daily` → `BookingCard` gate on the detail screen is intact, as
-  is the `?focus=booking` deep-scroll.
-- i18n keys used by the section exist in both `en` and `ar`
-  (`home.categories.booking`, `search.discover.section.bookingSub`, `staysWhere`,
-  `staysAll`, `staysBookable`, `staysMap`, `staysList`).
-- Publishing (النشر), BANCO Market (dealer-os), and the rest of the system are
-  untouched — this work is additive to the mobile Search surface only.
+- **Weekly dealer report emails crash.** `api-server` throws
+  `Cannot convert argument to a ByteString … value 1575` in `EmailService.ts`.
+  **Reason:** Arabic text is placed into an email/HTTP header (e.g. Subject)
+  without RFC-2047 encoding; headers must be Latin-1/ASCII.
+- **Paymob checkout cannot be tested.** **Reason:** `PAYMOB_MODE=sandbox` is set
+  but no Paymob API/secret/HMAC credentials exist (see §4). (Task #7.)
+- **AI features depend on a dev-only endpoint.** `AI_INTEGRATIONS_OPENAI_BASE_URL`
+  points at `localhost:1106/modelfarm/...`. **Reason:** the managed-AI sidecar is
+  dev-only and is not reachable in a published deployment; a production fallback
+  (own `OPENAI_API_KEY`) is needed for any AI-dependent feature in prod.
+- **Clerk is on a TEST instance** (`pk_test_…`). **Reason:** dev Clerk keys;
+  publishing to production needs a Clerk **production** instance (`pk_live_…`).
 
-## 5. Honest constraints (read before "fixing" these)
+## 4. Secrets audit (existence only — values never shown)
 
-- **No backend changes** were made for this task. Reactions ride the existing
-  `sendBehaviorSignal` (adaptive-feed affinity) + the existing saves system. The
-  "reaches the owner / notifications" behaviour is whatever those existing
-  systems already do — no new notification backend was invented.
-- The seed is **non-idempotent**; demo rental term/price data is patched via SQL
-  on the live DB, never by re-running the seed.
-- Term tabs are intentionally thin for the demo (Egypt: furnished_daily=2,
-  new_law=2, old_law=1; the 10 dealer rentals carry no term and appear only
-  under "All"). This is honest, not a bug.
+**Present & OK:** `CLERK_SECRET_KEY`, `CLERK_PUBLISHABLE_KEY` (test),
+`VITE_CLERK_PUBLISHABLE_KEY` (test), `RESEND_API_KEY`, `SESSION_SECRET`,
+`EXPO_TOKEN`, `DEFAULT_OBJECT_STORAGE_BUCKET_ID`, `PRIVATE_OBJECT_DIR`,
+`PUBLIC_OBJECT_SEARCH_PATHS`, `ADMIN_EMAILS`, `PAYMOB_MODE=sandbox`.
 
-## 6. Outstanding maintenance requests (tracked as follow-up tasks)
+**Missing / needs attention:**
+- **Paymob sandbox credentials** — none present (no API key / secret / HMAC).
+  Reason: never provided → checkout untestable.
+- **Clerk production keys** (`pk_live_…` / matching secret) — only test keys
+  exist. Reason: needed for production publish, not for dev.
+- **Production AI key** (own `OPENAI_API_KEY`) — absent. Reason: the dev modelfarm
+  URL won't work in production.
+- `CLERK_PROXY_URL` is empty (referenced by the Expo workflow). Likely optional;
+  flag only.
 
-These were raised by the user as part of "complete every section properly." They
-are **larger, cross-cutting** efforts and are proposed as separate tasks rather
-than bundled here:
+_No secret values were read or printed._
 
-- **Booking & Stays Discover card photo** — give the 5th (Booking) Discover card
-  a real photo background like the other four (currently still a gradient).
-- **Glassy bottom tab bar on search/mini-app pages** — instead of hiding the tab
-  bar on section search pages, give it a transparent/glass treatment within the
-  search area.
-- **Car Import (استيراد السيارات) end-to-end** — complete the flow smartly.
-- **Map features** — make every section's map genuinely functional and enhance it.
-- **Per-section standalone polish** — ensure each section stands on its own.
+---
 
-See the project task list for the live status of each.
+## 5. Maintenance orders — pending your approval
+
+Approve these (all, or pick a priority order) and I will execute them one by one.
+The three cross-cutting ones are already filed as project tasks; the rest are
+listed here as orders to file/execute on your go-ahead.
+
+| # | Order | Filed as |
+|---|-------|----------|
+| M1 | Redesign the Booking (furnished/residential rental) page from scratch — correct card proportions, spacing, states; not the old UI | to file on approval |
+| M2 | Give every card type an expressive, section-indicating background app-wide | to file on approval |
+| M3 | Finish the Banks & Financiers blue identity (accent + backgrounds) | to file on approval |
+| M4 | Glass/transparent bottom bar on mini-app search pages | task #23 |
+| M5 | Car Import end-to-end | task #24 |
+| M6 | Working, evolved maps for every section | task #25 |
+| M7 | Redesign the filters sheet (smaller, cleaner, works everywhere) | to file on approval |
+| B1 | Fix Arabic-header crash in weekly report emails (`EmailService.ts`) | to file on approval |
+| B2 | Add Paymob sandbox credentials | task #7 |
+
+**Rule for all orders:** no random/partial execution, delete no existing
+feature, hide no problem, never block publishing (BANCO Market or elsewhere),
+and keep each section conceptually separate and self-evident.
