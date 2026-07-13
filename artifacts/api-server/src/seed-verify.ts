@@ -47,8 +47,10 @@ async function verify() {
   console.log(`   Locations       : ${locRow?.n ?? 0}`);
   console.log(`   Car brands      : ${brandRow?.n ?? 0}`);
 
-  // Sanity: warn if any category is suspiciously empty.
-  const EXPECTED: Record<string, number> = { car: 1, real_estate: 1, industrial: 1 };
+  // Sanity: warn if any category is suspiciously under-populated.
+  // Thresholds reflect the verified post-seed counts (see SEED_RUNBOOK.md):
+  //   car=25, real_estate=15, industrial=18 (12 main + 6 B2B)
+  const EXPECTED: Record<string, number> = { car: 20, real_estate: 10, industrial: 10 };
   let warned = false;
   for (const [cat, min] of Object.entries(EXPECTED)) {
     const row = byCategory.find((r) => r.category === cat);
@@ -56,6 +58,13 @@ async function verify() {
       console.warn(`\n⚠️  Category "${cat}" has fewer than ${min} active listing(s). Re-run seed.`);
       warned = true;
     }
+  }
+
+  // Total active listing floor (52 main + 6 B2B = 58 after a full seed).
+  const TOTAL_MIN = 50;
+  if (total < TOTAL_MIN) {
+    console.warn(`\n⚠️  Only ${total} active listings found (expected ≥${TOTAL_MIN}). Re-run seed.`);
+    warned = true;
   }
 
   if (warned) process.exit(1);

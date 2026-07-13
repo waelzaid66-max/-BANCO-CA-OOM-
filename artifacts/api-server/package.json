@@ -12,6 +12,7 @@
     "test:watch": "vitest",
     "seed": "tsx src/seed.ts",
     "seed:verify": "tsx src/seed-verify.ts",
+    "seed:fresh": "pnpm run seed && pnpm run seed:verify",
     "seed:admin": "tsx src/seed-admin.ts",
     "seed:reference": "tsx src/seed-reference.ts",
     "seed:car-brands": "tsx src/seed-car-brands.ts",
