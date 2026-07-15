@@ -1836,6 +1836,7 @@ const en = {
   },
   booking: {
     title: "Book your stay",
+    poweredBy: "powered by",
     night: "night",
     currency: "EGP",
     pickHint: "Pick your check-in and check-out dates",
@@ -3698,6 +3699,7 @@ const ar: typeof en = {
   },
   booking: {
     title: "احجز إقامتك",
+    poweredBy: "powered by",
     night: "ليلة",
     currency: "ج.م",
     pickHint: "اختر تاريخ الوصول والمغادرة",

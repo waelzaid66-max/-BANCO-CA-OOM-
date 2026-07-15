@@ -51,6 +51,9 @@ export interface SearchCriteria {
   /** Real-estate rental system (specs.rental_term) — furnished_daily / new_law /
    *  old_law / annual_contract; null = any. */
   rentalTerm: string | null;
+  /** Real-estate property type (specs.property_type) — apartment / villa /
+   *  studio / chalet / …; null = any. Drives the Booking & Stays type tabs. */
+  propertyType: string | null;
   /** Car brand/model — matched against the English listing title server-side. */
   brand: string | null;
   model: string | null;
@@ -87,6 +90,7 @@ export const DEFAULT_CRITERIA: SearchCriteria = {
   location: "",
   paymentType: "any",
   rentalTerm: null,
+  propertyType: null,
   brand: null,
   model: null,
   fuelType: null,
@@ -121,6 +125,7 @@ export function hasActiveCriteria(c: SearchCriteria): boolean {
     !!c.location ||
     c.paymentType !== "any" ||
     !!c.rentalTerm ||
+    !!c.propertyType ||
     !!c.brand ||
     !!c.model ||
     !!c.fuelType ||
@@ -152,6 +157,7 @@ export function criteriaKey(c: SearchCriteria): string {
     c.location.trim(),
     c.paymentType,
     c.rentalTerm,
+    c.propertyType,
     c.brand,
     c.model,
     c.fuelType,
@@ -227,6 +233,12 @@ export function buildSearchParams(
   // Engine chip params (condition / payment_plan / property_type / compound / …).
   const engine = engineByKey(c.category, c.engineKey);
   if (engine) Object.assign(sp, engine.params);
+
+  // Explicit property-type selection (Booking & Stays type tabs). Assigned
+  // AFTER engine params so a user's explicit choice wins over an engine preset.
+  if (c.category === "real_estate" && c.propertyType) {
+    (sp as SearchParams & { property_type?: string }).property_type = c.propertyType;
+  }
 
   // recommended is the server default — omit it to keep params minimal.
   if (c.sort !== "recommended") sp.sort = c.sort;

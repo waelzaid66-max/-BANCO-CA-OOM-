@@ -33,7 +33,10 @@ import { FilterSheet } from "@/components/search/FilterSheet";
 import { MiniAppBottomNav } from "@/components/MiniAppBottomNav";
 import { apiCategoryFor } from "@/components/CategoryTabs";
 import { labelForValue } from "@/constants/locations";
-import { DEFAULT_MARKET_COUNTRY } from "@/constants/listingCreateTaxonomy";
+import {
+  DEFAULT_MARKET_COUNTRY,
+  PROPERTY_TYPES,
+} from "@/constants/listingCreateTaxonomy";
 import {
   loadPreferredMarketCountry,
   savePreferredMarketCountry,
@@ -60,6 +63,14 @@ import {
 
 const ALL_TAB = "__all__";
 const BANCO_LOGO = require("../../assets/images/banco-logo.png");
+// B-OOM sub-brand mark for the STAY header wordmark (official asset, used as-is).
+const BOOM_LOGO = require("../../assets/images/boom-logo.png");
+
+// The stays type tabs (per the approved header mock): Stays (all) · Studio ·
+// Apartment · Villa · Chalet. Labels come from the canonical PROPERTY_TYPES
+// taxonomy so the tab wording always matches create/search. Rental TERM moved
+// to the FilterSheet (rentalTerm chips) — type is the primary segmentation.
+const STAY_TYPE_VALUES = ["studio", "apartment", "villa", "chalet"] as const;
 
 /** Deterministic, key-sorted serialization used for baseline-delta dirty checks
  *  (mirrors SectionSearchApp — a freshly-landed page is never falsely dirty). */
@@ -280,14 +291,16 @@ export function BookingStaysApp() {
 
   // ── Term tabs (primary segmentation, market-driven taxonomy) ──
   const rentalTerms = rentalTermsForSearch(criteria.marketCountry);
-  const activeTerm = criteria.rentalTerm ?? ALL_TAB;
-  const selectTerm = (value: string) => {
+  // Type tabs: Stays(all) / studio / apartment / villa / chalet. The rental
+  // TERM (daily/new-law/annual) is a FilterSheet chip now, not the tab axis.
+  const activeStayType = criteria.propertyType ?? ALL_TAB;
+  const selectStayType = (value: string) => {
     playSound("tap");
     Haptics.selectionAsync();
     if (value === ALL_TAB) {
-      update({ rentalTerm: null });
+      update({ propertyType: null });
     } else {
-      update({ rentalTerm: value, engineKey: "rent" });
+      update({ propertyType: value, engineKey: "rent" });
     }
   };
 
@@ -496,12 +509,41 @@ export function BookingStaysApp() {
             />
           </Pressable>
           <View style={styles.heroTitleWrap}>
-            <AppText style={[styles.heroTitle, { textAlign }]} numberOfLines={1}>
-              {t("home.categories.booking")}
-            </AppText>
-            <AppText style={[styles.heroSub, { textAlign }]} numberOfLines={1}>
-              {t("search.discover.section.bookingSub")}
-            </AppText>
+            {/* ── B-OOM STAY wordmark (approved header mock, option A compact):
+                the official B-OOM mark used AS-IS + "STAY", with a small
+                "powered by BANCO" line beneath. Never altered, never recolored
+                beyond the white tint the dark hero requires for legibility. */}
+            <View
+              style={[
+                styles.wordmarkRow,
+                { flexDirection: isRTL ? "row-reverse" : "row" },
+              ]}
+            >
+              <Image
+                source={BOOM_LOGO}
+                style={styles.wordmarkBoom}
+                contentFit="contain"
+              />
+              <AppText style={styles.wordmarkStay} numberOfLines={1}>
+                STAY
+              </AppText>
+            </View>
+            <View
+              style={[
+                styles.poweredRow,
+                { flexDirection: isRTL ? "row-reverse" : "row" },
+              ]}
+            >
+              <AppText style={styles.poweredText} numberOfLines={1}>
+                {t("booking.poweredBy")}
+              </AppText>
+              <Image
+                source={BANCO_LOGO}
+                style={styles.poweredLogo}
+                contentFit="contain"
+                tintColor="#FFFFFF"
+              />
+            </View>
           </View>
           <Pressable
             onPress={handleSaveSearch}
@@ -648,14 +690,17 @@ export function BookingStaysApp() {
         <View style={[styles.controlsDivider, { backgroundColor: colors.border }]} />
         {[{ value: ALL_TAB, label: t("search.discover.section.staysAll") }]
           .concat(
-            rentalTerms.map((r) => ({ value: r.value, label: isRTL ? r.ar : r.en })),
+            STAY_TYPE_VALUES.map((v) => {
+              const def = PROPERTY_TYPES.find((p) => p.value === v);
+              return { value: v, label: def ? (isRTL ? def.ar : def.en) : v };
+            }),
           )
           .map((tab) => {
-            const active = activeTerm === tab.value;
+            const active = activeStayType === tab.value;
             return (
               <Pressable
                 key={tab.value}
-                onPress={() => selectTerm(tab.value)}
+                onPress={() => selectStayType(tab.value)}
                 style={[
                   styles.termTab,
                   {
@@ -663,7 +708,7 @@ export function BookingStaysApp() {
                     borderColor: active ? STAYS_ACCENT : colors.border,
                   },
                 ]}
-                testID={`stays-term-${tab.value}`}
+                testID={`stays-type-${tab.value}`}
               >
                 <AppText
                   style={[
@@ -837,6 +882,37 @@ const styles = StyleSheet.create({
     fontFamily: "Inter_400Regular",
     color: "rgba(255,255,255,0.78)",
     marginTop: 2,
+  },
+  wordmarkRow: {
+    alignItems: "center",
+    gap: 6,
+  },
+  wordmarkBoom: {
+    width: 76,
+    height: 26,
+  },
+  wordmarkStay: {
+    fontSize: 19,
+    fontFamily: "Inter_700Bold",
+    color: "#FFFFFF",
+    letterSpacing: 2.5,
+  },
+  poweredRow: {
+    alignItems: "center",
+    gap: 4,
+    marginTop: 2,
+  },
+  poweredText: {
+    fontSize: 10,
+    fontFamily: "Inter_500Medium",
+    color: "rgba(255,255,255,0.7)",
+    letterSpacing: 0.8,
+    textTransform: "uppercase",
+  },
+  poweredLogo: {
+    width: 46,
+    height: 12,
+    opacity: 0.9,
   },
   heroActionBtn: {
     width: 36,
