@@ -210,12 +210,13 @@ function StayCardComponent({ item, onPress, onSave, isSaved }: StayCardProps) {
               </Pressable>
               {onSave ? (
                 <View style={styles.actionBtn}>
+                  {/* Mirrors SmartAssetCard's BReactionButton contract exactly:
+                      tap = like/save, long-press menu = Potential + not-for-me. */}
                   <BReactionButton
                     saved={!!isSaved}
-                    potentialActive={potentialFlash}
-                    saveIcon={saveIconFor(item.category, isSaved)}
-                    onPotential={handlePotential}
-                    onSave={handleSave}
+                    likeIcon={saveIconFor(item.category, true)}
+                    onLike={handleSave}
+                    onInterested={handlePotential}
                     onAngry={() => sendReaction("angry")}
                     height={26}
                     testID={`stay-save-${item.id}`}

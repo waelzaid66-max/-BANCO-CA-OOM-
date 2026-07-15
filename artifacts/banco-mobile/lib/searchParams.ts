@@ -28,6 +28,9 @@ export type SearchSort =
 
 export type PaymentType = "any" | "installment";
 
+/** Browse sale listings vs buyer requests (maps to API is_request). */
+export type ListingMode = "all" | "sale" | "buy";
+
 /**
  * The committed search criteria for the Search mini-app. This is the single
  * source of truth the data hook fetches from — every field maps to a real,
@@ -59,6 +62,8 @@ export interface SearchCriteria {
   /** Industrial attribute filters. */
   industry: SearchListingsIndustry | null;
   originType: SearchListingsOriginType | null;
+  /** Commodity material filter — materials company only (never facilities/cars/RE). */
+  material: string | null;
   /** Facilities/materials sub-type within the industrial group ("all" = whole group). */
   industrialType: IndustrialType;
   /** UI-only market selector for rental-term chips (not sent to API). */
@@ -68,6 +73,8 @@ export interface SearchCriteria {
   nearLat: number | null;
   nearLng: number | null;
   nearRadiusKm: number;
+  /** Sale vs buyer-request filter — maps to API is_request when not "all". */
+  listingMode: ListingMode;
 }
 
 export const DEFAULT_CRITERIA: SearchCriteria = {
@@ -88,12 +95,14 @@ export const DEFAULT_CRITERIA: SearchCriteria = {
   maxYear: "",
   industry: null,
   originType: null,
+  material: null,
   industrialType: "all",
   marketCountry: DEFAULT_MARKET_COUNTRY,
   nearMeEnabled: false,
   nearLat: null,
   nearLng: null,
   nearRadiusKm: DEFAULT_NEAR_RADIUS_KM,
+  listingMode: "all",
 };
 
 /**
@@ -120,8 +129,10 @@ export function hasActiveCriteria(c: SearchCriteria): boolean {
     !!c.maxYear ||
     !!c.industry ||
     !!c.originType ||
+    !!c.material ||
     c.industrialType !== "all" ||
-    c.nearMeEnabled
+    c.nearMeEnabled ||
+    c.listingMode !== "all"
   );
 }
 
@@ -149,12 +160,14 @@ export function criteriaKey(c: SearchCriteria): string {
     c.maxYear,
     c.industry,
     c.originType,
+    c.material,
     c.industrialType,
     c.marketCountry,
     c.nearMeEnabled,
     c.nearLat,
     c.nearLng,
     c.nearRadiusKm,
+    c.listingMode,
   ]);
 }
 
@@ -165,6 +178,31 @@ type SearchParams = Parameters<typeof searchListings>[0];
  * so the tab and the pushed browse screen stay in lockstep (category→api mapping,
  * industrial-group expansion, engine param merge, sort, attribute filters).
  */
+/** When section/engine/market changes, exit sticky map (not on every filter tweak). */
+export function mapAnchorKey(c: SearchCriteria): string {
+  return `${c.category}|${c.engineKey}|${c.marketCountry}`;
+}
+
+/**
+ * Section-scoped attributes cleared when the browse category changes. Prevents
+ * fuel/rent/material leaking across car ↔ real-estate ↔ facilities ↔ materials.
+ * Mirrors @workspace/search-contract's CLEAR_SECTION_ATTRS 1:1.
+ */
+export const CLEAR_SECTION_ATTRS: Partial<SearchCriteria> = {
+  engineKey: "all",
+  brand: null,
+  model: null,
+  fuelType: null,
+  transmission: null,
+  minYear: "",
+  maxYear: "",
+  industry: null,
+  originType: null,
+  material: null,
+  industrialType: "all",
+  rentalTerm: null,
+};
+
 export function buildSearchParams(
   c: SearchCriteria,
   cursor?: string,
@@ -214,6 +252,19 @@ export function buildSearchParams(
 
   if (c.industry) sp.industry = c.industry;
   if (c.originType) sp.origin_type = c.originType;
+
+  // Commodity material — materials company only (never facilities / cars / RE).
+  if (c.category === "materials" && c.material) {
+    (sp as SearchParams & { material?: string }).material = c.material;
+  }
+
+  // Sale vs buyer-request browse — mirrors @workspace/search-contract.
+  if (c.listingMode === "sale") {
+    (sp as SearchParams & { is_request?: boolean }).is_request = false;
+  }
+  if (c.listingMode === "buy") {
+    (sp as SearchParams & { is_request?: boolean }).is_request = true;
+  }
 
   if (
     c.nearMeEnabled &&

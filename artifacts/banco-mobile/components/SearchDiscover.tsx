@@ -2,6 +2,7 @@ import { Feather } from "@/components/icons";
 import { FeedItem, useGetTrending } from "@workspace/api-client-react";
 import { Image } from "expo-image";
 import { LinearGradient } from "expo-linear-gradient";
+import { router, type Href } from "expo-router";
 import React, { useState } from "react";
 import {
   Pressable,
@@ -52,6 +53,11 @@ const SECTION_PHOTO: Partial<Record<Category, number>> = {
 // on-brand finish (white-tinted, very low opacity, sits above the scrim but
 // below the badge/label/chevron so it never fights legibility).
 const BANCO_WATERMARK = require("../assets/images/banco-logo.png");
+
+// 5th portal — Booking & Stays (residential + furnished rental, NOT hotels).
+// Wears the real-estate rose identity (blue is reserved for Banks & Financiers)
+// and leads with a real photo like the four section cards.
+const BOOKING_PHOTO = require("../assets/images/categories/booking.jpg");
 
 interface Props {
   onBrowseBrand: (brand: CarBrand) => void;
@@ -232,6 +238,76 @@ export function SearchDiscover({
         </View>
       )}
 
+      {/* ── 5th portal card — Booking & Stays (إيجار وحجز) ──────────────────
+          Residential + furnished rental (NOT hotels). Full-width to read as a
+          portal into its own mini-app (/section/booking → BookingStaysApp),
+          not a same-tier catalogue section. Real photo + scrim + watermark,
+          exactly like the four section cards; rose real-estate identity —
+          blue is reserved for Banks & Financiers. */}
+      <Pressable
+        onPress={() => router.push("/section/booking" as Href)}
+        style={styles.bookingCardWrap}
+        testID="section-card-booking"
+      >
+        <View
+          style={[styles.bookingCard, { backgroundColor: SECTION_GRADIENT.real_estate[1] }]}
+        >
+          <Image
+            source={BOOKING_PHOTO}
+            style={styles.sectionPhoto}
+            contentFit="cover"
+            transition={220}
+          />
+          <LinearGradient
+            colors={[
+              "rgba(12,4,5,0.10)",
+              "rgba(12,4,5,0.46)",
+              "rgba(12,4,5,0.88)",
+            ]}
+            locations={[0, 0.55, 1]}
+            start={{ x: 0, y: 0 }}
+            end={{ x: 0, y: 1 }}
+            style={styles.sectionScrim}
+          />
+          <View pointerEvents="none" style={styles.sectionWatermarkWrap}>
+            <Image
+              source={BANCO_WATERMARK}
+              style={styles.sectionWatermark}
+              contentFit="contain"
+              tintColor="#FFFFFF"
+            />
+          </View>
+          <View style={[styles.bookingTopRow, { flexDirection: rowDir }]}>
+            <View style={styles.sectionBadge}>
+              <Feather name="calendar" size={18} color="#FFFFFF" />
+            </View>
+            <Feather
+              name={isRTL ? "chevron-left" : "chevron-right"}
+              size={20}
+              color="rgba(255,255,255,0.85)"
+            />
+          </View>
+          <View>
+            <View
+              style={[
+                styles.sectionLabelRow,
+                isRTL && { flexDirection: "row-reverse" },
+              ]}
+            >
+              <View
+                style={[styles.sectionAccent, { backgroundColor: colors.primary }]}
+              />
+              <AppText style={[styles.sectionLabel, { textAlign, fontSize: 18 }]}>
+                {t("search.discover.bookingHub")}
+              </AppText>
+            </View>
+            <AppText style={[styles.bookingSub, { textAlign }]}>
+              {t("search.discover.bookingHubSub")}
+            </AppText>
+          </View>
+        </View>
+      </Pressable>
+
       {/* Explore on map — gated on real coordinate-bearing inventory (see
           mapAvailable). If a browse still resolves with no coordinates the host
           falls back to the list, so this never lands on an empty map. */}
@@ -273,6 +349,175 @@ export function SearchDiscover({
           </LinearGradient>
         </Pressable>
       )}
+
+      {/* Car import — marketplace cars scoped to the import engine (this is a
+          car-catalogue entry, deliberately NOT under the Business hub). */}
+      <Pressable
+        onPress={() => goToResults("car", "import")}
+        style={styles.hubCtaWrap}
+        testID="discover-car-import"
+      >
+        <LinearGradient
+          colors={["#8A0E14", "#1C0507"]}
+          start={{ x: 0, y: 0 }}
+          end={{ x: 1, y: 1 }}
+          style={styles.hubCta}
+        >
+          <View pointerEvents="none" style={styles.sectionWatermarkWrap}>
+            <Image
+              source={BANCO_WATERMARK}
+              style={styles.hubWatermark}
+              contentFit="contain"
+              tintColor="#FFFFFF"
+            />
+          </View>
+          <View style={[styles.mapCtaRow, { flexDirection: rowDir }]}>
+            <View style={[styles.mapBadge, { backgroundColor: colors.primary }]}>
+              <CategoryIcon category="car" color="#FFFFFF" />
+            </View>
+            <View style={styles.mapCtaText}>
+              <AppText style={[styles.mapTitle, { textAlign }]}>
+                {t("search.discover.carImport")}
+              </AppText>
+              <AppText style={[styles.mapSub, { textAlign }]}>
+                {t("search.discover.carImportSub")}
+              </AppText>
+            </View>
+            <Feather
+              name={isRTL ? "chevron-left" : "chevron-right"}
+              size={20}
+              color="rgba(255,255,255,0.8)"
+            />
+          </View>
+        </LinearGradient>
+      </Pressable>
+
+      {/* ── Business & supply hubs (الأعمال والتوريد) ────────────────────────
+          Rectangular portal rows into the B2B worlds. Each carries the BANCO
+          watermark so the identity never drops. Colours: supply = deep red
+          family, importers = neutral charcoal, Banks & Financiers = the ONE
+          trust-blue section outside the red family (deliberate, banks only). */}
+      <SectionHeader label={t("search.discover.businessHub")} />
+
+      <Pressable
+        onPress={() => router.push("/business/global-supply")}
+        style={styles.hubCtaWrap}
+        testID="discover-supply-portal"
+      >
+        <LinearGradient
+          colors={["#4A0D12", "#170506"]}
+          start={{ x: 0, y: 0 }}
+          end={{ x: 1, y: 1 }}
+          style={styles.hubCta}
+        >
+          <View pointerEvents="none" style={styles.sectionWatermarkWrap}>
+            <Image
+              source={BANCO_WATERMARK}
+              style={styles.hubWatermark}
+              contentFit="contain"
+              tintColor="#FFFFFF"
+            />
+          </View>
+          <View style={[styles.mapCtaRow, { flexDirection: rowDir }]}>
+            <View style={[styles.mapBadge, { backgroundColor: colors.primary }]}>
+              <Feather name="globe" size={20} color="#FFFFFF" />
+            </View>
+            <View style={styles.mapCtaText}>
+              <AppText style={[styles.mapTitle, { textAlign }]}>
+                {t("search.discover.supplyPortal")}
+              </AppText>
+              <AppText style={[styles.mapSub, { textAlign }]}>
+                {t("search.discover.supplyPortalSub")}
+              </AppText>
+            </View>
+            <Feather
+              name={isRTL ? "chevron-left" : "chevron-right"}
+              size={20}
+              color="rgba(255,255,255,0.8)"
+            />
+          </View>
+        </LinearGradient>
+      </Pressable>
+
+      <Pressable
+        onPress={() => router.push("/business/supply-hub")}
+        style={styles.hubCtaWrap}
+        testID="discover-importers-hub"
+      >
+        <LinearGradient
+          colors={["#23252B", "#0C0D10"]}
+          start={{ x: 0, y: 0 }}
+          end={{ x: 1, y: 1 }}
+          style={styles.hubCta}
+        >
+          <View pointerEvents="none" style={styles.sectionWatermarkWrap}>
+            <Image
+              source={BANCO_WATERMARK}
+              style={styles.hubWatermark}
+              contentFit="contain"
+              tintColor="#FFFFFF"
+            />
+          </View>
+          <View style={[styles.mapCtaRow, { flexDirection: rowDir }]}>
+            <View style={[styles.mapBadge, { backgroundColor: "rgba(255,255,255,0.16)" }]}>
+              <Feather name="package" size={20} color="#FFFFFF" />
+            </View>
+            <View style={styles.mapCtaText}>
+              <AppText style={[styles.mapTitle, { textAlign }]}>
+                {t("search.discover.importersHub")}
+              </AppText>
+              <AppText style={[styles.mapSub, { textAlign }]}>
+                {t("search.discover.importersHubSub")}
+              </AppText>
+            </View>
+            <Feather
+              name={isRTL ? "chevron-left" : "chevron-right"}
+              size={20}
+              color="rgba(255,255,255,0.8)"
+            />
+          </View>
+        </LinearGradient>
+      </Pressable>
+
+      <Pressable
+        onPress={() => router.push("/business/banks" as Href)}
+        style={styles.hubCtaWrap}
+        testID="discover-banks-hub"
+      >
+        <LinearGradient
+          colors={["#0D2B4A", "#071522"]}
+          start={{ x: 0, y: 0 }}
+          end={{ x: 1, y: 1 }}
+          style={styles.hubCta}
+        >
+          <View pointerEvents="none" style={styles.sectionWatermarkWrap}>
+            <Image
+              source={BANCO_WATERMARK}
+              style={styles.hubWatermark}
+              contentFit="contain"
+              tintColor="#FFFFFF"
+            />
+          </View>
+          <View style={[styles.mapCtaRow, { flexDirection: rowDir }]}>
+            <View style={[styles.mapBadge, { backgroundColor: "#1E6FD9" }]}>
+              <Feather name="credit-card" size={20} color="#FFFFFF" />
+            </View>
+            <View style={styles.mapCtaText}>
+              <AppText style={[styles.mapTitle, { textAlign }]}>
+                {t("search.discover.banksHub")}
+              </AppText>
+              <AppText style={[styles.mapSub, { textAlign }]}>
+                {t("search.discover.banksHubSub")}
+              </AppText>
+            </View>
+            <Feather
+              name={isRTL ? "chevron-left" : "chevron-right"}
+              size={20}
+              color="rgba(255,255,255,0.8)"
+            />
+          </View>
+        </LinearGradient>
+      </Pressable>
 
     </ScrollView>
   );
@@ -403,6 +648,53 @@ const styles = StyleSheet.create({
     fontFamily: "Inter_400Regular",
     color: "rgba(255,255,255,0.78)",
     marginTop: 2,
+  },
+  bookingCardWrap: {
+    marginHorizontal: 16,
+    marginTop: 12,
+  },
+  bookingCard: {
+    height: 150,
+    borderRadius: 20,
+    overflow: "hidden",
+    padding: 14,
+    justifyContent: "space-between",
+    borderWidth: 1,
+    borderColor: "rgba(255,255,255,0.10)",
+    shadowColor: "#000000",
+    shadowOpacity: 0.28,
+    shadowRadius: 10,
+    shadowOffset: { width: 0, height: 6 },
+    elevation: 5,
+  },
+  bookingTopRow: {
+    alignItems: "center",
+    justifyContent: "space-between",
+  },
+  bookingSub: {
+    fontSize: 12.5,
+    fontFamily: "Inter_400Regular",
+    color: "rgba(255,255,255,0.85)",
+    marginTop: 3,
+    textShadowColor: "rgba(0,0,0,0.55)",
+    textShadowOffset: { width: 0, height: 1 },
+    textShadowRadius: 6,
+  },
+  hubCtaWrap: {
+    marginHorizontal: 16,
+    marginTop: 12,
+  },
+  hubCta: {
+    borderRadius: 18,
+    overflow: "hidden",
+    padding: 16,
+    borderWidth: 1,
+    borderColor: "rgba(255,255,255,0.08)",
+  },
+  hubWatermark: {
+    width: "40%",
+    height: "60%",
+    opacity: 0.08,
   },
   sectionTitle: {
     fontSize: 16,

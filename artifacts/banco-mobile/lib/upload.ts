@@ -1,6 +1,6 @@
 import * as ImagePicker from "expo-image-picker";
 import { ImageManipulator, SaveFormat } from "expo-image-manipulator";
-import { requestUploadUrl } from "@workspace/api-client-react";
+import { requestUploadUrl, verifyUpload } from "@workspace/api-client-react";
 
 export type UploadedMedia = { url: string; type: "image" | "video" };
 
@@ -18,6 +18,31 @@ const IMAGE_QUALITY = 0.85;
 // failing the whole upload (and, for listings, the whole multi-asset set).
 const PUT_TIMEOUT_MS = 60_000;
 const MAX_PUT_ATTEMPTS = 3;
+
+/**
+ * Confirm the stored object is readable before promote/publish. The verify
+ * endpoint can return 503 while storage metadata settles; retry a few times.
+ */
+export async function verifyUploadWithRetry(
+  url: string,
+  opts?: { signal?: AbortSignal; maxAttempts?: number },
+): Promise<void> {
+  const maxAttempts = opts?.maxAttempts ?? 4;
+  for (let attempt = 1; attempt <= maxAttempts; attempt += 1) {
+    if (opts?.signal?.aborted) return;
+    try {
+      await verifyUpload({ url });
+      return;
+    } catch (e) {
+      const status = (e as { status?: number } | null)?.status;
+      if (status === 503 && attempt < maxAttempts) {
+        await new Promise((r) => setTimeout(r, 700 * attempt));
+        continue;
+      }
+      throw e;
+    }
+  }
+}
 
 // The presigned-URL request and the local file read can both hang on a flaky
 // network/ContentProvider with no native timeout. Bound them and retry the

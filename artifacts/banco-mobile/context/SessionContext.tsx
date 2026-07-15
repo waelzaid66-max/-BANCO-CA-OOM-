@@ -63,6 +63,13 @@ export type SavedSearch = {
   location: string;
   paymentType: "any" | "installment";
   savedAt: number;
+  /**
+   * Full rich criteria snapshot (section mini-apps save every filter, not just
+   * the legacy six fields above). Typed `object` (not Record) so interface-typed
+   * criteria assign without an index signature; appliers narrow it back to their
+   * own SearchCriteria. Legacy saves without it keep working.
+   */
+  criteria?: object;
 };
 
 type SavedSearchInput = Omit<SavedSearch, "id" | "savedAt">;

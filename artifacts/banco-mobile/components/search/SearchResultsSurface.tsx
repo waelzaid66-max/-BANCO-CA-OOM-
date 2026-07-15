@@ -4,6 +4,7 @@ import {
   ActivityIndicator,
   FlatList,
   Pressable,
+  RefreshControl,
   StyleSheet,
   View,
 } from "react-native";
@@ -33,11 +34,28 @@ interface SearchResultsSurfaceProps {
   error?: boolean;
   onRetry?: () => void;
   /**
+   * Pull-to-refresh: re-run the current query in place. Optional — when set, a
+   * RefreshControl whose spinner is bound to the `refreshing` phase is attached.
+   * Omitted on surfaces where the host owns refresh (e.g. embedded overlays).
+   */
+  onRefresh?: () => void;
+  /**
    * Overlay rendered above the (always-mounted) list for the non-results states
    * (discover / blocking-load / error / empty). When null the list is shown.
    */
   overlay: React.ReactNode;
   contentPaddingBottom?: number;
+  /**
+   * Card renderer override. Defaults to SmartAssetCard; the Booking & Stays
+   * mini-app passes StayCard so it can render stay cards without duplicating
+   * the list machinery (virtualization, entrance animation, refresh, footer).
+   */
+  CardComponent?: React.ComponentType<{
+    item: FeedItem;
+    onPress?: (item: FeedItem) => void;
+    onSave?: (item: FeedItem) => void;
+    isSaved?: boolean;
+  }>;
 }
 
 /**
@@ -61,11 +79,14 @@ export function SearchResultsSurface({
   refreshing,
   error,
   onRetry,
+  onRefresh,
   overlay,
   contentPaddingBottom = 120,
+  CardComponent,
 }: SearchResultsSurfaceProps) {
   const colors = useColors();
   const { t, isRTL } = useI18n();
+  const Card = CardComponent ?? SmartAssetCard;
 
   // Ids that have already played their entrance animation. We only ever add, so
   // each card animates exactly once per surface lifetime — remounts during
@@ -90,7 +111,7 @@ export function SearchResultsSurface({
                 firstAppearance ? FadeInDown.duration(220) : undefined
               }
             >
-              <SmartAssetCard
+              <Card
                 item={item}
                 onPress={onCardPress}
                 onSave={onSave}
@@ -107,6 +128,15 @@ export function SearchResultsSurface({
         onEndReached={onEndReached}
         onEndReachedThreshold={0.5}
         scrollEnabled={items.length > 0}
+        refreshControl={
+          onRefresh ? (
+            <RefreshControl
+              refreshing={refreshing}
+              onRefresh={onRefresh}
+              tintColor={colors.primary}
+            />
+          ) : undefined
+        }
         ListFooterComponent={
           loadingMore ? (
             <View style={styles.footer}>
