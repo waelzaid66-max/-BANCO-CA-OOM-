@@ -231,7 +231,8 @@ export function BookingStaysApp() {
     }
     const seq = ++autocompleteSeq.current;
     try {
-      const res = await getAutocomplete({ q, category: "real_estate" });
+      // Autocomplete takes only `q` (no category param on the endpoint).
+      const res = await getAutocomplete({ q });
       if (seq !== autocompleteSeq.current) return;
       setSuggestions(res.data ?? []);
     } catch {

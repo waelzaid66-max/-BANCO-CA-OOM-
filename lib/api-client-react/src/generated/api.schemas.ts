@@ -91,6 +91,7 @@ export const UserStateRole = {
   dealer: 'dealer',
   company: 'company',
   enterprise: 'enterprise',
+  financial_institution: 'financial_institution',
 } as const;
 
 /**
@@ -1014,6 +1015,7 @@ export const AdminUserRole = {
   dealer: 'dealer',
   company: 'company',
   enterprise: 'enterprise',
+  financial_institution: 'financial_institution',
 } as const;
 
 /**
@@ -1501,6 +1503,7 @@ export const AdminPlanUpdateAudience = {
   dealer: 'dealer',
   company: 'company',
   enterprise: 'enterprise',
+  financial_institution: 'financial_institution',
 } as const;
 
 export type AdminPlanUpdateFeatures = { [key: string]: unknown } | null;
@@ -1855,6 +1858,7 @@ export const PlanAudience = {
   dealer: 'dealer',
   company: 'company',
   enterprise: 'enterprise',
+  financial_institution: 'financial_institution',
 } as const;
 
 export type PlanFeatures = {[key: string]: boolean} | null;
@@ -2309,7 +2313,7 @@ export type GetMe200 = {
 };
 
 /**
- * Account type chosen at onboarding. Server is authoritative for the resulting role (individual/dealer/company); a client can never request admin/enterprise.
+ * Account type chosen at onboarding. Server is authoritative for the resulting role (individual/dealer/company/financial_institution); a client can never request admin/enterprise. A financial_institution must still pass verification before its financing features unlock.
  */
 export type UpdateMeBodyAccountType = typeof UpdateMeBodyAccountType[keyof typeof UpdateMeBodyAccountType];
 
@@ -2318,6 +2322,7 @@ export const UpdateMeBodyAccountType = {
   individual: 'individual',
   dealer: 'dealer',
   company: 'company',
+  financial_institution: 'financial_institution',
 } as const;
 
 export type UpdateMeBodyBusinessActivityType = typeof UpdateMeBodyBusinessActivityType[keyof typeof UpdateMeBodyBusinessActivityType];
@@ -2346,7 +2351,7 @@ export type UpdateMeBodyBusiness = {
 };
 
 export type UpdateMeBody = {
-  /** Account type chosen at onboarding. Server is authoritative for the resulting role (individual/dealer/company); a client can never request admin/enterprise. */
+  /** Account type chosen at onboarding. Server is authoritative for the resulting role (individual/dealer/company/financial_institution); a client can never request admin/enterprise. A financial_institution must still pass verification before its financing features unlock. */
   account_type?: UpdateMeBodyAccountType;
   phone?: string | null;
   /** When present, upgrades the account to a Banco Business (dealer) seller. */
@@ -2403,6 +2408,16 @@ offer_type?: GetFeedOfferType;
  * Rental system within rent — the country's legal/duration regime (Egypt: furnished_daily from 1 day, new_law up to 5 years, old_law up to 59 years; Gulf: annual_contract). Free string; the catalog is client-side and grows per country.
  */
 rental_term?: string;
+/**
+ * ISO 3166-1 alpha-2 market country (EG, SA, …). Filters inventory by specs.market_country; listings without the key are treated as EG.
+ * @pattern ^[A-Za-z]{2}$
+ */
+market_country?: string;
+/**
+ * Filter raw-material commodity listings by specs.material (steel, aluminum, copper, …). Free string; catalog is client-side.
+ * @maxLength 40
+ */
+material?: string;
 /**
  * Filter cars by fuel type (listing_attributes.fuel_type or specs).
  */
@@ -2748,6 +2763,23 @@ export type UpdateListingBodyLogistics = {
   shipping_method?: UpdateListingBodyLogisticsShippingMethod;
 };
 
+export type UpdateListingBodyMediaItemType = typeof UpdateListingBodyMediaItemType[keyof typeof UpdateListingBodyMediaItemType];
+
+
+export const UpdateListingBodyMediaItemType = {
+  image: 'image',
+  video: 'video',
+} as const;
+
+export type UpdateListingBodyMediaItem = {
+  type: UpdateListingBodyMediaItemType;
+  url: string;
+  thumbnail_url?: string;
+  is_thumbnail?: boolean;
+  width?: number;
+  height?: number;
+};
+
 export type UpdateListingBody = {
   title?: string;
   description?: string;
@@ -2758,6 +2790,8 @@ export type UpdateListingBody = {
   specs?: UpdateListingBodySpecs;
   /** Additive (Task #40). Optional logistics & delivery patch. All fields optional/nullable. */
   logistics?: UpdateListingBodyLogistics;
+  /** Replace listing media in seller order. Omit to leave photos unchanged. Sale listings must keep at least one item. */
+  media?: UpdateListingBodyMediaItem[];
 };
 
 export type UpdateListing200Data = {
@@ -2894,6 +2928,16 @@ offer_type?: SearchListingsOfferType;
  * Rental system within rent — the country's legal/duration regime (Egypt: furnished_daily from 1 day, new_law up to 5 years, old_law up to 59 years; Gulf: annual_contract). Free string; the catalog is client-side and grows per country.
  */
 rental_term?: string;
+/**
+ * ISO 3166-1 alpha-2 market country (EG, SA, …). Filters inventory by specs.market_country; listings without the key are treated as EG.
+ * @pattern ^[A-Za-z]{2}$
+ */
+market_country?: string;
+/**
+ * Filter raw-material commodity listings by specs.material (steel, aluminum, copper, …). Free string; catalog is client-side.
+ * @maxLength 40
+ */
+material?: string;
 /**
  * Filter cars by fuel type (listing_attributes.fuel_type or specs).
  */
@@ -3073,6 +3117,16 @@ offer_type?: GetMapClustersOfferType;
  * Rental regime (furnished_daily / new_law / old_law / annual_contract).
  */
 rental_term?: string;
+/**
+ * ISO market country (EG, SA, …); missing specs coalesce to EG.
+ * @pattern ^[A-Za-z]{2}$
+ */
+market_country?: string;
+/**
+ * Commodity material filter (specs.material) — free string.
+ * @maxLength 40
+ */
+material?: string;
 fuel_type?: GetMapClustersFuelType;
 transmission?: GetMapClustersTransmission;
 brand?: string;
@@ -4013,6 +4067,7 @@ export const GetAdminUsersRole = {
   dealer: 'dealer',
   company: 'company',
   enterprise: 'enterprise',
+  financial_institution: 'financial_institution',
 } as const;
 
 export type GetAdminUsers200 = {

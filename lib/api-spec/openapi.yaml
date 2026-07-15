@@ -154,7 +154,7 @@ components:
           description: Internal default account number, auto-assigned per user.
         role:
           type: string
-          enum: [individual, dealer, company, enterprise]
+          enum: [individual, dealer, company, enterprise, financial_institution]
         staff_role:
           type: string
           enum: [owner, admin, moderator, support, user]
@@ -1451,7 +1451,7 @@ components:
           nullable: true
         role:
           type: string
-          enum: [individual, dealer, company, enterprise]
+          enum: [individual, dealer, company, enterprise, financial_institution]
         staff_role:
           type: string
           enum: [owner, admin, moderator, support, user]
@@ -2084,7 +2084,7 @@ components:
           nullable: true
         audience:
           type: string
-          enum: [individual, dealer, company, enterprise]
+          enum: [individual, dealer, company, enterprise, financial_institution]
         is_baseline:
           type: boolean
         monthly_price:
@@ -2629,7 +2629,7 @@ components:
           nullable: true
         audience:
           type: string
-          enum: [individual, dealer, company, enterprise]
+          enum: [individual, dealer, company, enterprise, financial_institution]
         is_baseline:
           type: boolean
         monthly_price:
@@ -3414,8 +3414,8 @@ paths:
               properties:
                 account_type:
                   type: string
-                  description: Account type chosen at onboarding. Server is authoritative for the resulting role (individual/dealer/company); a client can never request admin/enterprise.
-                  enum: [individual, dealer, company]
+                  description: Account type chosen at onboarding. Server is authoritative for the resulting role (individual/dealer/company/financial_institution); a client can never request admin/enterprise. A financial_institution must still pass verification before its financing features unlock.
+                  enum: [individual, dealer, company, financial_institution]
                 phone:
                   type: string
                   nullable: true
@@ -3545,6 +3545,22 @@ paths:
             client-side and grows per country.
           schema:
             type: string
+        - in: query
+          name: market_country
+          description: >-
+            ISO 3166-1 alpha-2 market country (EG, SA, …). Filters inventory by
+            specs.market_country; listings without the key are treated as EG.
+          schema:
+            type: string
+            pattern: "^[A-Za-z]{2}$"
+        - in: query
+          name: material
+          description: >-
+            Filter raw-material commodity listings by specs.material
+            (steel, aluminum, copper, …). Free string; catalog is client-side.
+          schema:
+            type: string
+            maxLength: 40
         - in: query
           name: fuel_type
           description: Filter cars by fuel type (listing_attributes.fuel_type or specs).
@@ -3981,6 +3997,30 @@ paths:
                       type: string
                       enum: [container, bulk, air]
                       nullable: true
+                media:
+                  type: array
+                  description: >
+                    Replace listing media in seller order. Omit to leave photos
+                    unchanged. Sale listings must keep at least one item.
+                  items:
+                    type: object
+                    required: [type, url]
+                    properties:
+                      type:
+                        type: string
+                        enum: [image, video]
+                      url:
+                        type: string
+                        format: uri
+                      thumbnail_url:
+                        type: string
+                        format: uri
+                      is_thumbnail:
+                        type: boolean
+                      width:
+                        type: integer
+                      height:
+                        type: integer
       responses:
         "200":
           description: Updated
@@ -4399,6 +4439,22 @@ paths:
           schema:
             type: string
         - in: query
+          name: market_country
+          description: >-
+            ISO 3166-1 alpha-2 market country (EG, SA, …). Filters inventory by
+            specs.market_country; listings without the key are treated as EG.
+          schema:
+            type: string
+            pattern: "^[A-Za-z]{2}$"
+        - in: query
+          name: material
+          description: >-
+            Filter raw-material commodity listings by specs.material
+            (steel, aluminum, copper, …). Free string; catalog is client-side.
+          schema:
+            type: string
+            maxLength: 40
+        - in: query
           name: fuel_type
           description: Filter cars by fuel type (listing_attributes.fuel_type or specs).
           schema:
@@ -4582,6 +4638,14 @@ paths:
           name: rental_term
           description: Rental regime (furnished_daily / new_law / old_law / annual_contract).
           schema: { type: string }
+        - in: query
+          name: market_country
+          description: ISO market country (EG, SA, …); missing specs coalesce to EG.
+          schema: { type: string, pattern: "^[A-Za-z]{2}$" }
+        - in: query
+          name: material
+          description: Commodity material filter (specs.material) — free string.
+          schema: { type: string, maxLength: 40 }
         - in: query
           name: fuel_type
           schema: { type: string, enum: [petrol, diesel, hybrid, electric, natural_gas] }
@@ -6743,7 +6807,7 @@ paths:
           name: role
           schema:
             type: string
-            enum: [individual, dealer, company, enterprise]
+            enum: [individual, dealer, company, enterprise, financial_institution]
         - in: query
           name: banned
           schema:

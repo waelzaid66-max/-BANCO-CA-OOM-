@@ -62,7 +62,7 @@ export async function syncRoleToClerk(clerkId: string, role: string): Promise<vo
 }
 
 export interface UpdateUserProfileInput {
-  account_type?: "individual" | "dealer" | "company";
+  account_type?: "individual" | "dealer" | "company" | "financial_institution";
   phone?: string | null;
   business?: {
     activity_type: "car_dealer" | "real_estate_developer" | "factory" | "supplier";
@@ -129,16 +129,20 @@ export async function updateUserProfile(
   if (input.phone !== undefined) patch.phone = input.phone;
 
   // Account-type selection is SERVER-authoritative. The client can only ever
-  // request one of three onboarding types — individual / dealer / company —
-  // and we map each to a concrete role here. A client can never request
-  // `admin` or any privileged role; those are unreachable through this path.
+  // request one of four onboarding types — individual / dealer (Business Pro) /
+  // company / financial_institution — and we map each to a concrete role here.
+  // A client can never request `admin` or any privileged role; those are
+  // unreachable through this path. A financial institution still has to pass
+  // verification (KYC / bank approval) before its financing features unlock.
   if (input.account_type) {
     patch.role =
       input.account_type === "individual"
         ? "individual"
         : input.account_type === "company"
           ? "company"
-          : "dealer";
+          : input.account_type === "financial_institution"
+            ? "financial_institution"
+            : "dealer";
   }
 
   // A business signup always hard-maps to a seller role. If the client also

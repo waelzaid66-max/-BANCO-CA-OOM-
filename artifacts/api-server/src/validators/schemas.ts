@@ -125,7 +125,7 @@ export const UserStateSchema = z
     clerk_id: z.string(),
     // Internal default account number (e.g. "BNC-…"), auto-assigned per user.
     account_number: z.string().nullable(),
-    role: z.enum(["individual", "dealer", "company", "enterprise"]),
+    role: z.enum(["individual", "dealer", "company", "enterprise", "financial_institution"]),
     // Internal staff role (separate axis from `role`). "user" = no staff access.
     staff_role: z.enum(["owner", "admin", "moderator", "support", "user"]),
     name: z.string(),
@@ -875,7 +875,7 @@ export const FeedQuerySchema = z.object({
 // signup to a role (always `dealer`) — a raw `role` is never accepted.
 export const UpdateMeSchema = z
   .object({
-    account_type: z.enum(["individual", "dealer", "company"]).optional(),
+    account_type: z.enum(["individual", "dealer", "company", "financial_institution"]).optional(),
     phone: z.string().trim().min(4).max(30).nullable().optional(),
     business: z
       .object({
@@ -1310,6 +1310,16 @@ export const DealerLeadsQuerySchema = z.object({
 
 /* ── Listing CRUD schemas ───────────────────────────────── */
 
+/** Shared media item shape for create + update listing bodies. */
+export const ListingMediaInputSchema = z.object({
+  type: z.enum(["image", "video"]),
+  url: z.string().url(),
+  thumbnail_url: z.string().url().optional(),
+  is_thumbnail: z.boolean().default(false),
+  width: z.number().int().positive().optional(),
+  height: z.number().int().positive().optional(),
+});
+
 export const UpdateListingSchema = z
   .object({
     title: z.string().min(3).max(200).optional(),
@@ -1322,6 +1332,9 @@ export const UpdateListingSchema = z
     specs: z.record(z.unknown()).optional(),
     // Additive (Task #40): optional logistics & delivery patch.
     logistics: LogisticsInputSchema.optional(),
+    // Replace listing media in seller order. Omit to leave photos unchanged.
+    // Sale listings must keep >=1 item (service-enforced; requests may be empty).
+    media: z.array(ListingMediaInputSchema).optional(),
   })
   .refine((data) => Object.keys(data).length > 0, {
     message: "At least one field must be provided for update",
@@ -1679,7 +1692,7 @@ const adminListingStatusEnum = z.enum([
 
 export const AdminUsersQuerySchema = z.object({
   search: z.string().optional(),
-  role: z.enum(["individual", "dealer", "company", "enterprise"]).optional(),
+  role: z.enum(["individual", "dealer", "company", "enterprise", "financial_institution"]).optional(),
   banned: z.coerce.boolean().optional(),
   cursor: z.string().optional(),
   limit: z.coerce.number().min(1).max(100).default(30),
@@ -1761,7 +1774,7 @@ export const AdminUserSchema = z
     name: z.string(),
     email: z.string().nullable(),
     phone: z.string().nullable(),
-    role: z.enum(["individual", "dealer", "company", "enterprise"]),
+    role: z.enum(["individual", "dealer", "company", "enterprise", "financial_institution"]),
     staff_role: z.enum(["owner", "admin", "moderator", "support", "user"]),
     is_admin: z.boolean(),
     is_verified: z.boolean(),

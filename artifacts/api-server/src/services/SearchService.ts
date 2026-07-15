@@ -51,6 +51,8 @@ export interface ParsedSearchQuery {
   max_year?: number;
   industry?: string;
   origin_type?: string;
+  // Commodity material (specs.material) — materials/raw_material browse only.
+  material?: string;
   // Near-me / radius search. All three are required together; when present,
   // results are limited to listings whose EFFECTIVE coordinate (the listing's
   // own override, else its area centroid) lies within radius_km of the point.

@@ -156,7 +156,7 @@ export default function ProfileScreen() {
   const [needsAccountType, setNeedsAccountType] = useState(false);
   const [savingAccountType, setSavingAccountType] = useState(false);
   const [pendingType, setPendingType] = useState<
-    "individual" | "dealer" | "company"
+    "individual" | "dealer" | "company" | "financial_institution"
   >("individual");
   // Set only after an in-session SSO auth, so the account-type prompt never
   // appears on a cold launch for an already-signed-in user.
@@ -506,7 +506,7 @@ export default function ProfileScreen() {
   };
 
   const chooseAccountType = async (
-    type: "individual" | "dealer" | "company"
+    type: "individual" | "dealer" | "company" | "financial_institution"
   ) => {
     if (savingAccountType) return;
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
@@ -526,7 +526,14 @@ export default function ProfileScreen() {
       }
       Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
       setNeedsAccountType(false);
-      if (type === "dealer" || type === "company") {
+      // Dealer / company / financial-institution all continue to the business
+      // onboarding, where verification (KYC / bank approval) is collected. A
+      // financial institution's financing features stay locked until verified.
+      if (
+        type === "dealer" ||
+        type === "company" ||
+        type === "financial_institution"
+      ) {
         router.push("/business/onboarding");
       }
     } catch {
@@ -655,6 +662,12 @@ export default function ProfileScreen() {
               label: "accountCompany",
               hint: "accountCompanyHint",
             },
+            {
+              type: "financial_institution",
+              icon: "bank-outline",
+              label: "accountFinancial",
+              hint: "accountFinancialHint",
+            },
           ] as const
         ).map((opt) => {
           const active = pendingType === opt.type;
@@ -767,7 +780,12 @@ export default function ProfileScreen() {
     })();
 
     const role = (user.publicMetadata?.role as string) || "";
-    const isBusiness = ["dealer", "company", "enterprise"].includes(role);
+    const isBusiness = [
+      "dealer",
+      "company",
+      "enterprise",
+      "financial_institution",
+    ].includes(role);
 
     const metrics = metricsQuery.data?.data;
     const social = socialQuery.data?.data ?? [];

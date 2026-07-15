@@ -158,9 +158,114 @@ async function main(): Promise<void> {
     },
   ];
 
+  // ── Booking & rental listings — appear in the Booking portal (offer_type=
+  // rent) AND the main feed. rental_term uses the CANONICAL taxonomy values
+  // (furnished_daily / new_law / old_law / annual_contract) — an earlier seed
+  // used invented "daily"/"monthly"/"annual" strings, which never matched the
+  // term filters and mislabeled the BFF price suffix. furnished_daily is the
+  // bookable (hotel-model) mode; the rest are contact-the-owner rentals.
+  const rentalDrafts: Draft[] = [
+    {
+      title: "شقة مفروشة للإيجار الشهري - القاهرة الجديدة",
+      description:
+        "شقة 120 متر مفروشة بالكامل، 2 غرف، مطبخ مجهز، واي فاي، جاهزة للسكن الفوري. إيجار شهري بعقد قانون جديد.",
+      category: "real_estate",
+      base_price_cash: 12000,
+      location: at(0),
+      specs: {
+        area: 120,
+        rooms: 2,
+        offer_type: "rent",
+        rental_term: "new_law",
+        furnished: true,
+      },
+      media: [
+        { type: "image", url: img("1522708323749-97834809b785"), is_thumbnail: true },
+      ],
+      payment_options: [{ mode: "cash" }],
+    },
+    {
+      title: "فيلا مفروشة للإيجار السنوي - الشيخ زايد",
+      description:
+        "فيلا 350 متر، 4 غرف، حديقة خاصة، جراج، مجمع راقي مع حمام سباحة. عقد إيجار سنوي.",
+      category: "real_estate",
+      base_price_cash: 180000,
+      location: at(1),
+      specs: {
+        area: 350,
+        rooms: 4,
+        offer_type: "rent",
+        rental_term: "annual_contract",
+        furnished: true,
+      },
+      media: [
+        { type: "image", url: img("1613977257363-10ce2b6f6e88"), is_thumbnail: true },
+      ],
+      payment_options: [{ mode: "cash" }],
+    },
+    {
+      title: "استوديو مفروش للإيجار اليومي - وسط البلد",
+      description:
+        "استوديو أنيق 55 متر، مفروش بالكامل، قريب من جميع الخدمات والمواصلات. مناسب للزيارات القصيرة — حجز يومي.",
+      category: "real_estate",
+      base_price_cash: 800,
+      location: at(2),
+      specs: {
+        area: 55,
+        rooms: 1,
+        offer_type: "rent",
+        rental_term: "furnished_daily",
+        furnished: true,
+      },
+      media: [
+        { type: "image", url: img("1586023492125-27b2c045efd7"), is_thumbnail: true },
+      ],
+      payment_options: [{ mode: "cash" }],
+    },
+    {
+      title: "شاليه بالبحر للإيجار اليومي - الساحل الشمالي",
+      description:
+        "شاليه 180 متر على البحر مباشرة، 3 غرف، مكيف، مطبخ كامل، تراس. للحجز اليومي أو الأسبوعي.",
+      category: "real_estate",
+      base_price_cash: 3500,
+      location: at(3),
+      specs: {
+        area: 180,
+        rooms: 3,
+        offer_type: "rent",
+        rental_term: "furnished_daily",
+        furnished: true,
+      },
+      media: [
+        { type: "image", url: img("1507525428034-b723cf961d3e"), is_thumbnail: true },
+      ],
+      payment_options: [{ mode: "cash" }],
+    },
+    {
+      title: "شقة 90 متر للإيجار السنوي - مدينتي",
+      description:
+        "شقة 90 متر، 2 غرف وريسبشن، بدون فرش، بحالة ممتازة. عقد إيجار سنوي بمبلغ ثابت.",
+      category: "real_estate",
+      base_price_cash: 60000,
+      location: at(4),
+      specs: {
+        area: 90,
+        rooms: 2,
+        offer_type: "rent",
+        rental_term: "annual_contract",
+        furnished: false,
+      },
+      media: [
+        { type: "image", url: img("1560448204-e02f11c3d0e2"), is_thumbnail: true },
+      ],
+      payment_options: [{ mode: "cash" }],
+    },
+  ];
+
   const a = await seedGroup("sale", "demo-banco-seller", "بانكو ديمو", "dealer", saleDrafts);
   const b = await seedGroup("request", "demo-banco-buyer", "بانكو ديمو (طلبات)", "individual", requestDrafts);
-  const missing = a.missing + b.missing;
+  const c = await seedGroup("rental", "demo-banco-host", "بانكو ديمو (إيجار)", "individual", rentalDrafts);
+  const missing = a.missing + b.missing + c.missing;
   if (missing > 0) {
     // Honesty: never exit 0 with demo data missing.
     throw new Error(`${missing} demo listing(s) still missing — see FAILED lines above.`);

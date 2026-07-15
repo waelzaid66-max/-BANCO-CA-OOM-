@@ -599,6 +599,9 @@ importers:
       '@workspace/api-client-react':
         specifier: workspace:*
         version: link:../../lib/api-client-react
+      '@workspace/search-contract':
+        specifier: workspace:*
+        version: link:../../lib/search-contract
       '@workspace/taxonomy':
         specifier: workspace:*
         version: link:../../lib/taxonomy

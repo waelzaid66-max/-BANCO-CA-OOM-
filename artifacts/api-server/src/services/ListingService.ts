@@ -8,7 +8,7 @@ import {
   interactions,
   locations,
 } from "@workspace/db/schema";
-import { eq, and, desc, sql, count } from "drizzle-orm";
+import { eq, and, desc, asc, sql, count } from "drizzle-orm";
 import { normalizePaymentOptions, computeOffers } from "./PaymentService";
 import { normalizeListing, detectDuplicate, computeTrustScore, validateMedia } from "./NormalizationService";
 import { checkListingRate, auditListingFlag } from "./AbuseService";
@@ -965,6 +965,16 @@ export async function getPublicListings(options: {
 
 /* ── Update Listing ────────────────────────────────────── */
 
+/** Media item accepted by updateListing — mirrors ListingMediaInputSchema. */
+type ListingMediaPatch = {
+  type: "image" | "video";
+  url: string;
+  thumbnail_url?: string;
+  is_thumbnail?: boolean;
+  width?: number;
+  height?: number;
+};
+
 export async function updateListing(
   id: string,
   clerkUserId: string,
@@ -983,6 +993,9 @@ export async function updateListing(
       country_of_origin?: string | null;
       shipping_method?: "container" | "bulk" | "air" | null;
     };
+    // Replace listing media in seller order. Omitted = photos unchanged. Sale
+    // listings must keep at least one item; buyer requests may go photo-less.
+    media?: ListingMediaPatch[];
   }
 ): Promise<{ id: string; updated: boolean }> {
   const [user] = await db
@@ -1001,6 +1014,8 @@ export async function updateListing(
       category: listings.category,
       basePriceCash: listings.basePriceCash,
       location: listings.location,
+      // Buyer requests may legitimately hold zero media; sale listings may not.
+      isRequest: listings.isRequest,
     })
     .from(listings)
     .where(and(eq(listings.id, id), eq(listings.userId, user.id)))
@@ -1020,7 +1035,40 @@ export async function updateListing(
   const mediaRows = await db
     .select({ type: listingMedia.type, url: listingMedia.url })
     .from(listingMedia)
-    .where(eq(listingMedia.listingId, id));
+    .where(eq(listingMedia.listingId, id))
+    .orderBy(desc(listingMedia.isThumbnail), asc(listingMedia.sortOrder));
+
+  // Only NEW urls get promoted/claim-consumed after commit — re-ordering the
+  // existing photos must not re-run promotion on already-public objects.
+  const previousMediaUrls = new Set(mediaRows.map((m) => m.url));
+
+  if (updates.media !== undefined) {
+    // Sale listings must keep at least one media item; buyer requests may be
+    // photo-less (mirrors createListing's request relaxation).
+    if (!listing.isRequest && updates.media.length === 0) {
+      throw Object.assign(new Error("At least one media file is required"), { code: "INVALID_DATA" });
+    }
+    // Same server-side guards as create: verify the ACTUAL stored objects
+    // (type + size) and that the caller owns every upload it references.
+    await assertVideosWithinSizeLimit(updates.media, (url) =>
+      objectStorageService.getServingObjectMetadata(url)
+    );
+    await assertImagesWithinSizeLimit(updates.media, (url) =>
+      objectStorageService.getServingObjectMetadata(url)
+    );
+    for (const m of updates.media) {
+      await assertCallerMayUseUpload(m.url, clerkUserId);
+    }
+  }
+
+  const mediaForNormalize =
+    updates.media !== undefined
+      ? updates.media.map((m) => ({
+          type: m.type,
+          url: m.url,
+          thumbnail_url: m.thumbnail_url,
+        }))
+      : mediaRows.map((m) => ({ type: m.type as "image" | "video", url: m.url }));
 
   const mergedSpecs = {
     ...((existingAttr?.specs as Record<string, unknown>) ?? {}),
@@ -1035,11 +1083,20 @@ export async function updateListing(
       base_price_cash: updates.base_price_cash ?? Number(listing.basePriceCash),
       location: updates.location ?? listing.location,
       specs: mergedSpecs,
-      media: mediaRows.map((m) => ({ type: m.type, url: m.url })),
+      media: mediaForNormalize,
     },
     // Always-publish (see createListing): edits never 400 on an unmatched
     // controlled value — it warns + ranks lower instead of rejecting.
-    { sellerId: user.id, sellerVerified: !!user.isVerified, excludeListingId: id, lenient: true, autoLearn: true }
+    {
+      sellerId: user.id,
+      sellerVerified: !!user.isVerified,
+      excludeListingId: id,
+      lenient: true,
+      autoLearn: true,
+      // Media floor applies only when the caller is actually replacing media,
+      // and never to buyer requests (they may go photo-less).
+      requireMedia: updates.media !== undefined ? !listing.isRequest : false,
+    }
   );
 
   // Additive (Task #40): only patch logistics when the caller provided it, so an
@@ -1101,7 +1158,45 @@ export async function updateListing(
         ...logisticsPatch,
       } as Partial<typeof listingAttributes.$inferInsert>)
       .where(eq(listingAttributes.listingId, id));
+
+    // Replace media in seller order (delete + reinsert inside the SAME tx so a
+    // failure can never leave the listing half-photo'd). First image becomes
+    // the thumbnail unless the seller flagged one explicitly.
+    if (updates.media !== undefined) {
+      await tx.delete(listingMedia).where(eq(listingMedia.listingId, id));
+      if (updates.media.length > 0) {
+        await tx.insert(listingMedia).values(
+          updates.media.map((m, idx) => {
+            const firstImageIdx = updates.media!.findIndex((x) => x.type === "image");
+            return {
+              listingId: id,
+              type: m.type,
+              url: m.url,
+              thumbnailUrl: m.thumbnail_url ?? null,
+              isThumbnail: m.is_thumbnail ?? idx === firstImageIdx,
+              sortOrder: idx,
+            };
+          })
+        );
+      }
+    }
   });
+
+  // Best-effort: promote only the NEWLY-added objects to public ACL and consume
+  // their upload claims (existing photos were already promoted at create time).
+  // Runs after commit — a failed promotion must not roll back the edit.
+  if (updates.media !== undefined) {
+    await Promise.all(
+      updates.media
+        .filter((m) => !previousMediaUrls.has(m.url))
+        .map(async (m) => {
+          await assertCallerMayUseUpload(m.url, clerkUserId);
+          await objectStorageService.promoteServingUrlToPublic(m.url, clerkUserId);
+          const wildcard = parseServingWildcard(m.url);
+          if (wildcard) await consumeUploadClaim(servingWildcardToObjectPath(wildcard));
+        })
+    );
+  }
 
   // Durable audit trail for any abuse-flagged/demoted listing on edit.
   await auditListingFlag({
