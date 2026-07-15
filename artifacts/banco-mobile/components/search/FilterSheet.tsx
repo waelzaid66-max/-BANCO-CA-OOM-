@@ -194,12 +194,15 @@ export function FilterSheet({
     criteria.category === "materials" &&
     (criteria.industrialType === "all" ||
       criteria.industrialType === "raw_material");
-  // Installment is a car / real-estate financing axis — not facilities/materials/rent.
+  // Installment is a car / real-estate SALE-financing axis — never facilities/
+  // materials, and never rent: a rental is paid per period, not financed, so
+  // offering "تقسيط" while the rent engine is active is a wrong field.
   const showPayment =
     !hidePaymentType &&
     (criteria.category === "car" ||
       criteria.category === "real_estate" ||
-      criteria.category === "all");
+      criteria.category === "all") &&
+    selectedEngine?.params.offer_type !== "rent";
   const rentalTerms = rentalTermsForSearch(criteria.marketCountry);
 
   return (
@@ -283,7 +286,62 @@ export function FilterSheet({
               })}
             </ScrollView>
 
-            {/* Category */}
+            {/* Market country — a universal axis, so it lives here for EVERY
+                section as one compact, balanced inline row (not buried under
+                rent only, not a separate oversized button). Switching market
+                re-sanitizes the rental term to that market's legal regimes. */}
+            <SectionLabel text={t("create.fields.market")} align={textAlign} colors={colors} />
+            <ScrollView
+              horizontal
+              showsHorizontalScrollIndicator={false}
+              contentContainerStyle={[styles.chipRow, { flexDirection: rowDir }]}
+            >
+              {MARKET_COUNTRIES.map((m) => {
+                const active = criteria.marketCountry === m.value;
+                return (
+                  <Pressable
+                    key={m.value}
+                    onPress={() =>
+                      onUpdate({
+                        marketCountry: m.value,
+                        rentalTerm: sanitizeRentalTermForMarket(
+                          criteria.rentalTerm,
+                          m.value,
+                        ),
+                      })
+                    }
+                    style={[
+                      styles.chipSm,
+                      {
+                        backgroundColor: active
+                          ? colors.primary
+                          : colors.secondary,
+                      },
+                    ]}
+                    testID={`filter-market-${m.value}`}
+                  >
+                    <AppText
+                      style={[
+                        styles.chipSmText,
+                        {
+                          color: active
+                            ? colors.primaryForeground
+                            : colors.mutedForeground,
+                        },
+                      ]}
+                    >
+                      {marketCountryLabel(m.value, isRTL)}
+                    </AppText>
+                  </Pressable>
+                );
+              })}
+            </ScrollView>
+
+            {/* Category — hidden inside the section mini-apps (lockCategory):
+                the section is locked there, so a single dead chip is pure
+                cross-section noise. The prop existed but was never wired. */}
+            {!lockCategory && (
+            <>
             <SectionLabel text={t("search.category")} align={textAlign} colors={colors} />
             <ScrollView
               horizontal
@@ -331,6 +389,8 @@ export function FilterSheet({
                 );
               })}
             </ScrollView>
+            </>
+            )}
 
             {/* Type (facet-gated engine chips) */}
             {showEngines && (
@@ -480,52 +540,6 @@ export function FilterSheet({
                 while the sale (تمليك) engine chip is active (rent-only content). */}
             {showRentalTerms && (
               <>
-                <SectionLabel text={t("create.fields.market")} align={textAlign} colors={colors} />
-                <ScrollView
-                  horizontal
-                  showsHorizontalScrollIndicator={false}
-                  contentContainerStyle={[styles.chipRow, { flexDirection: rowDir }]}
-                >
-                  {MARKET_COUNTRIES.map((m) => {
-                    const active = criteria.marketCountry === m.value;
-                    return (
-                      <Pressable
-                        key={m.value}
-                        onPress={() =>
-                          onUpdate({
-                            marketCountry: m.value,
-                            rentalTerm: sanitizeRentalTermForMarket(
-                              criteria.rentalTerm,
-                              m.value,
-                            ),
-                          })
-                        }
-                        style={[
-                          styles.chip,
-                          {
-                            backgroundColor: active
-                              ? colors.primary
-                              : colors.secondary,
-                          },
-                        ]}
-                        testID={`filter-market-${m.value}`}
-                      >
-                        <AppText
-                          style={[
-                            styles.chipText,
-                            {
-                              color: active
-                                ? colors.primaryForeground
-                                : colors.mutedForeground,
-                            },
-                          ]}
-                        >
-                          {marketCountryLabel(m.value, isRTL)}
-                        </AppText>
-                      </Pressable>
-                    );
-                  })}
-                </ScrollView>
                 <SectionLabel text={t("create.fields.rentalTerm")} align={textAlign} colors={colors} />
                 <ToggleChipRow
                   options={rentalTerms.map((r) => r.value)}
@@ -697,7 +711,10 @@ export function FilterSheet({
               />
             </View>
 
-            {/* Payment */}
+            {/* Payment — gated by showPayment (the flag was computed but never
+                wired, so "تقسيط" leaked into rent/industrial sheets). */}
+            {showPayment && (
+            <>
             <SectionLabel text={t("search.paymentType")} align={textAlign} colors={colors} />
             <View style={[styles.chipRow, { flexDirection: rowDir }]}>
               {PAYMENTS.map((pt) => {
@@ -732,6 +749,8 @@ export function FilterSheet({
                 );
               })}
             </View>
+            </>
+            )}
           </ScrollView>
 
           {/* Apply footer */}
@@ -868,8 +887,8 @@ const styles = StyleSheet.create({
     fontSize: 11,
     fontFamily: "Inter_600SemiBold",
     letterSpacing: 1,
-    marginTop: 16,
-    marginBottom: 8,
+    marginTop: 12,
+    marginBottom: 6,
   },
   chipRow: {
     gap: 8,
@@ -879,12 +898,23 @@ const styles = StyleSheet.create({
     marginHorizontal: -16,
   },
   chip: {
-    paddingHorizontal: 14,
-    paddingVertical: 8,
-    borderRadius: 20,
+    paddingHorizontal: 12,
+    paddingVertical: 7,
+    borderRadius: 18,
   },
   chipText: {
-    fontSize: 13,
+    fontSize: 12.5,
+    fontFamily: "Inter_500Medium",
+  },
+  // Compact variant — the always-visible market-country row: one notch smaller
+  // than the standard chips so the strip reads balanced, never dominant.
+  chipSm: {
+    paddingHorizontal: 10,
+    paddingVertical: 5,
+    borderRadius: 16,
+  },
+  chipSmText: {
+    fontSize: 12,
     fontFamily: "Inter_500Medium",
   },
   rangeRow: {
@@ -894,7 +924,7 @@ const styles = StyleSheet.create({
   rangeInput: {
     flex: 1,
     paddingHorizontal: 12,
-    paddingVertical: 11,
+    paddingVertical: 10,
     borderRadius: 10,
     fontSize: 14,
     fontFamily: "Inter_400Regular",
@@ -903,7 +933,7 @@ const styles = StyleSheet.create({
     alignItems: "center",
     justifyContent: "space-between",
     paddingHorizontal: 12,
-    paddingVertical: 12,
+    paddingVertical: 10,
     borderWidth: 1,
     borderRadius: 10,
   },
