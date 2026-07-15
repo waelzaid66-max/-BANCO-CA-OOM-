@@ -78,7 +78,17 @@ function useUnreadMessages(): number {
  * a floating hint. Android avoids BlurView (it swallows touches on New Arch) and
  * relies on a near-opaque fill + elevation for the floating shadow.
  */
-export function MiniAppBottomNav() {
+export function MiniAppBottomNav({
+  lightened = false,
+}: {
+  /**
+   * One notch MORE transparent while the user is actively inside the search
+   * (input open). The bar never hides — it stays fixed and only its glass
+   * lightens slightly, per the standing requirement ("يخف درجة زجاجيته سنة
+   * فقط وقت الدخول على السيرش"). Everywhere else keeps the heavier glass.
+   */
+  lightened?: boolean;
+}) {
   const colors = useColors();
   const { t } = useI18n();
   const insets = useSafeAreaInsets();
@@ -124,7 +134,7 @@ export function MiniAppBottomNav() {
           {useBlur ? (
             <BlurView
               pointerEvents="none"
-              intensity={isDark ? 60 : 90}
+              intensity={lightened ? (isDark ? 42 : 66) : isDark ? 60 : 90}
               tint={isDark ? "dark" : "light"}
               style={StyleSheet.absoluteFill}
             />
@@ -132,9 +142,13 @@ export function MiniAppBottomNav() {
             <LinearGradient
               pointerEvents="none"
               colors={
-                isDark
-                  ? ["rgba(28,28,33,0.99)", "rgba(16,16,20,1)"]
-                  : ["rgba(255,255,255,0.99)", "rgba(244,244,247,0.99)"]
+                lightened
+                  ? isDark
+                    ? ["rgba(28,28,33,0.88)", "rgba(16,16,20,0.90)"]
+                    : ["rgba(255,255,255,0.88)", "rgba(244,244,247,0.90)"]
+                  : isDark
+                    ? ["rgba(28,28,33,0.99)", "rgba(16,16,20,1)"]
+                    : ["rgba(255,255,255,0.99)", "rgba(244,244,247,0.99)"]
               }
               style={StyleSheet.absoluteFill}
             />
@@ -146,8 +160,12 @@ export function MiniAppBottomNav() {
                 StyleSheet.absoluteFill,
                 {
                   backgroundColor: isDark
-                    ? "rgba(22,22,26,0.72)"
-                    : "rgba(255,255,255,0.72)",
+                    ? lightened
+                      ? "rgba(22,22,26,0.55)"
+                      : "rgba(22,22,26,0.72)"
+                    : lightened
+                      ? "rgba(255,255,255,0.55)"
+                      : "rgba(255,255,255,0.72)",
                 },
               ]}
             />

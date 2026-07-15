@@ -1200,7 +1200,7 @@ export function SectionSearchApp({
         }}
       />
 
-      <MiniAppBottomNav />
+      <MiniAppBottomNav lightened={searchOpen} />
     </View>
   );
 }

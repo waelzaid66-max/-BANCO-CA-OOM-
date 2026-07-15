@@ -797,7 +797,7 @@ export function BookingStaysApp() {
         }}
       />
 
-      <MiniAppBottomNav />
+      <MiniAppBottomNav lightened={searchOpen} />
     </View>
   );
 }
