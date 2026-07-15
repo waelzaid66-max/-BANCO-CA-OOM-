@@ -9,6 +9,7 @@ import { Pressable, StyleSheet, View } from "react-native";
 
 import { FeedItem } from "@workspace/api-client-react";
 import { AppText } from "@/components/AppText";
+import { SectionBackdrop } from "@/components/SectionBackdrop";
 import { isVerifiedSignal } from "@/constants/feed";
 import { useI18n } from "@/context/LanguageContext";
 import { useSession } from "@/context/SessionContext";
@@ -121,6 +122,12 @@ function IndustrialAssetCardComponent({ item, onPress }: Props) {
       </View>
 
       <View style={styles.thumbWrap}>
+        {/* M2 — section-identity fallback under the thumb (never a grey box). */}
+        <SectionBackdrop
+          section={item.category}
+          motifSize={30}
+          style={{ borderRadius: colors.radius - 2, overflow: "hidden" }}
+        />
         <Image
           source={{ uri: item.media_preview }}
           style={[styles.thumb, { borderRadius: colors.radius - 2 }]}

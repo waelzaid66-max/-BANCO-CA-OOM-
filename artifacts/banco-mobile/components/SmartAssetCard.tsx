@@ -13,6 +13,7 @@ import Animated, {
 import { FeedItem, sendBehaviorSignal } from "@workspace/api-client-react";
 
 import { BReactionButton } from "@/components/BReactionButton";
+import { SectionBackdrop } from "@/components/SectionBackdrop";
 import { isVerifiedSignal } from "@/constants/feed";
 import { useColors } from "@/hooks/useColors";
 import { useI18n } from "@/context/LanguageContext";
@@ -142,6 +143,19 @@ function SmartAssetCardComponent({
           testID={`asset-card-${item.id}`}
         >
           <View style={[styles.imageWrapper, { height: imageHeight }]}>
+            {/* M2 — section-identity fallback: sits UNDER the photo, so a
+                listing with no/broken media is never a blank grey box; it shows
+                its world's gradient + faint motif (same language as the four
+                Discover section cards). Photos fully cover it when present. */}
+            <SectionBackdrop
+              section={item.category}
+              motifSize={54}
+              style={{
+                borderTopLeftRadius: colors.radius,
+                borderTopRightRadius: colors.radius,
+                overflow: "hidden",
+              }}
+            />
             <Image
               source={{ uri: item.media_preview }}
               style={[
