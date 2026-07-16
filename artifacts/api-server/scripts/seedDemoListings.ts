@@ -142,6 +142,50 @@ async function main(): Promise<void> {
     },
   ];
 
+  // ── Imported cars — the Car Import journey's inventory. The Discover CTA
+  // (car + import engine → origin_type=imported) was landing on ZERO results
+  // because every seeded "imported" origin belonged to industrial logistics.
+  // logistics.origin_type flows through createListing → listing_attributes,
+  // exactly what the import engine filters on.
+  const importedCarDrafts: Draft[] = [
+    {
+      title: "BMW X5 2022 وارد ألمانيا - أعلى فئة",
+      description:
+        "بي إم دبليو X5 موديل 2022 وارد ألمانيا، فل أوبشن، بانوراما، ماشية 28 ألف كيلو، حالة الوكالة.",
+      category: "car",
+      base_price_cash: 4200000,
+      location: at(5),
+      specs: { mileage: 28000, condition: "مستعمل", year: 2022, origin_type: "imported" },
+      logistics: {
+        origin_type: "imported",
+        country_of_origin: "Germany",
+        shipping_method: "container",
+      },
+      media: [
+        { type: "image", url: img("1555215695-3004980ad54e"), is_thumbnail: true },
+      ],
+      payment_options: [{ mode: "cash" }],
+    },
+    {
+      title: "تويوتا لاند كروزر 2023 وارد الخليج",
+      description:
+        "لاند كروزر GXR موديل 2023 وارد الإمارات، عدّاد 12 ألف، ضمان ساري، جميع الصيانات بالتوكيل.",
+      category: "car",
+      base_price_cash: 7800000,
+      location: at(6),
+      specs: { mileage: 12000, condition: "مستعمل", year: 2023, origin_type: "imported" },
+      logistics: {
+        origin_type: "imported",
+        country_of_origin: "United Arab Emirates",
+        shipping_method: "container",
+      },
+      media: [
+        { type: "image", url: img("1519641471654-76ce0107ad1b"), is_thumbnail: true },
+      ],
+      payment_options: [{ mode: "cash" }],
+    },
+  ];
+
   const requestDrafts: Draft[] = [
     {
       title: "مطلوب سيارة عائلية نظيفة موديل حديث",
@@ -177,6 +221,7 @@ async function main(): Promise<void> {
         rooms: 2,
         offer_type: "rent",
         rental_term: "new_law",
+        property_type: "apartment",
         furnished: true,
       },
       media: [
@@ -196,6 +241,7 @@ async function main(): Promise<void> {
         rooms: 4,
         offer_type: "rent",
         rental_term: "annual_contract",
+        property_type: "villa",
         furnished: true,
       },
       media: [
@@ -215,6 +261,7 @@ async function main(): Promise<void> {
         rooms: 1,
         offer_type: "rent",
         rental_term: "furnished_daily",
+        property_type: "studio",
         furnished: true,
       },
       media: [
@@ -234,6 +281,7 @@ async function main(): Promise<void> {
         rooms: 3,
         offer_type: "rent",
         rental_term: "furnished_daily",
+        property_type: "chalet",
         furnished: true,
       },
       media: [
@@ -253,6 +301,7 @@ async function main(): Promise<void> {
         rooms: 2,
         offer_type: "rent",
         rental_term: "annual_contract",
+        property_type: "apartment",
         furnished: false,
       },
       media: [
@@ -265,7 +314,8 @@ async function main(): Promise<void> {
   const a = await seedGroup("sale", "demo-banco-seller", "بانكو ديمو", "dealer", saleDrafts);
   const b = await seedGroup("request", "demo-banco-buyer", "بانكو ديمو (طلبات)", "individual", requestDrafts);
   const c = await seedGroup("rental", "demo-banco-host", "بانكو ديمو (إيجار)", "individual", rentalDrafts);
-  const missing = a.missing + b.missing + c.missing;
+  const d = await seedGroup("imported", "demo-banco-importer", "بانكو ديمو (استيراد)", "dealer", importedCarDrafts);
+  const missing = a.missing + b.missing + c.missing + d.missing;
   if (missing > 0) {
     // Honesty: never exit 0 with demo data missing.
     throw new Error(`${missing} demo listing(s) still missing — see FAILED lines above.`);
