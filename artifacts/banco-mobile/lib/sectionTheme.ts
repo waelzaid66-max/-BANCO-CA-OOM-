@@ -6,16 +6,18 @@ import type { Category } from "@workspace/taxonomy/categories";
  * family so publish chrome never fights brand, but active Search tabs/chips
  * shift enough that cars ≠ real-estate ≠ facilities ≠ materials.
  */
-// Sharper, more saturated accents than the previous near-identical dark reds, so
-// each section reads as its own space while staying in BANCO's warm red identity:
-// brand red → vivid red (cars) → rose-burgundy (real estate) → burnt terracotta
-// (factories) → bronze (raw materials). All keep white foreground contrast.
+// ⚑ IDENTITY RULE (user-locked): BANCO's visual identity is THE LOGO RED and
+// its derivatives — every section color is a red-family derivative. Sections
+// differentiate through DEPTH and slight warmth shifts (small percentages),
+// never by leaving the red family. An earlier palette (burnt orange / bronze /
+// magenta) came from a misread report and is corrected here. The single
+// deliberate exception is Banks & Financiers (trust-blue, below).
 export const SECTION_ACCENT: Record<Category, string> = {
   all: "#B4121A",
-  car: "#CC1E24",
-  real_estate: "#9C1650",
-  facilities: "#B0400F",
-  materials: "#A8600F",
+  car: "#CC1E24", // the vivid flagship red, nearest the logo
+  real_estate: "#B81E3C", // crimson — a touch cooler, same red family
+  facilities: "#BE3222", // warm red — a slight ember hint, still red
+  materials: "#A82A1C", // deep brick red — darkest of the family
 };
 
 export function sectionAccent(category: Category | null | undefined): string {
@@ -41,10 +43,10 @@ export type SectionKey = Category | "banks" | "industrial";
 export const SECTION_GRADIENT: Record<SectionKey, readonly [string, string]> = {
   all: ["#B4121A", "#7E0C12"],
   car: ["#CC1E24", "#8E1519"],
-  real_estate: ["#9C1650", "#650E36"],
-  facilities: ["#B0400F", "#772909"],
-  materials: ["#A8600F", "#71400A"],
-  industrial: ["#9A4A16", "#642A0A"],
+  real_estate: ["#B81E3C", "#7A1226"],
+  facilities: ["#BE3222", "#7E1F14"],
+  materials: ["#A82A1C", "#6E1A10"],
+  industrial: ["#B22E1F", "#731D11"],
   banks: ["#1E7BD0", "#0E4C92"],
 };
 

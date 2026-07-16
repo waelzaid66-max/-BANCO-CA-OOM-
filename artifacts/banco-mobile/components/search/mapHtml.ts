@@ -132,12 +132,14 @@ export function buildMapHtml(markers: MapMarker[], theme: MapTheme): string {
     box-shadow: 0 1px 5px rgba(0,0,0,0.35);
     cursor: pointer;
   }
-  /* Section identity ON the map — each section's pins wear its world's color.
+  /* Section hint ON the map — all pins stay in BANCO's red family (identity
+     rule: logo red + derivatives; depth varies, the family never changes).
      Values mirror lib/sectionTheme SECTION_GRADIENT heads; keep in lockstep. */
   .pin .pill.car { background: #CC1E24; }
-  .pin .pill.real_estate { background: #9C1650; }
-  .pin .pill.industrial { background: #9A4A16; }
-  /* Bookable (furnished/daily) — emerald, always wins over the section tint. */
+  .pin .pill.real_estate { background: #B81E3C; }
+  .pin .pill.industrial { background: #B22E1F; }
+  /* Bookable (furnished/daily) — emerald, a functional status (not identity),
+     always wins over the section tint so a reservable stay reads instantly. */
   .pin .pill.book { background: #0E9F6E; }
   .cpin .cbubble {
     position: absolute;

@@ -30,12 +30,14 @@ const SECTIONS: Category[] = ["car", "real_estate", "facilities", "materials"];
 
 // On-brand gradient pairs per section so each card reads as its own world while
 // staying in the BANCO red/charcoal family.
+// Red-family fallback fills behind the section photos (identity rule: logo red
+// + derivatives only — aligned with lib/sectionTheme's corrected palette).
 const SECTION_GRADIENT: Record<Category, [string, string]> = {
   all: ["#7A0C12", "#1C0507"],
   car: ["#8A0E14", "#1C0507"],
-  real_estate: ["#5A0A2A", "#190509"],
-  facilities: ["#6A1410", "#140505"],
-  materials: ["#7A2A0C", "#160805"],
+  real_estate: ["#7A1226", "#190509"],
+  facilities: ["#7E1F14", "#140505"],
+  materials: ["#6E1A10", "#160805"],
 };
 
 // Real, representative cover photography per browse section, bundled locally so
