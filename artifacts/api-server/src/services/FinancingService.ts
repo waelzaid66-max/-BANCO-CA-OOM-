@@ -6,9 +6,12 @@ import {
   paymentOptions,
   financingRequests,
   financingIntermediaries,
+  financingBranches,
+  financingSeats,
 } from "@workspace/db/schema";
-import { and, asc, desc, eq, ilike, lt, or, sql, type SQL } from "drizzle-orm";
+import { and, asc, desc, eq, ilike, isNull, lt, or, sql, type SQL } from "drizzle-orm";
 import { writeAudit } from "./AbuseService";
+import { createNotification } from "./NotificationService";
 
 /* ── Types ─────────────────────────────────────────────── */
 
@@ -362,6 +365,19 @@ export async function updateFinancingRequest(params: {
   if (!updated) {
     throw Object.assign(new Error("Finance request not found"), { code: "NOT_FOUND" });
   }
+
+  // FI phase 2 — AUTO-handoff: the moment Banco's filtration forwards a request
+  // to an institution, the bank's own people (owner account + every seat) are
+  // notified in-app immediately. Fire-and-forget: a notification hiccup must
+  // never fail the admin action. Re-forwarding re-notifies (deliberate: it is
+  // the admin saying "look at this again").
+  const effectiveIntermediary = params.intermediaryId ?? updated.intermediary_id;
+  if (params.status === "forwarded" && effectiveIntermediary) {
+    void notifyInstitutionHandoff(leadId, effectiveIntermediary, updated.listing_title).catch(
+      () => {},
+    );
+  }
+
   return updated;
 }
 
@@ -470,4 +486,441 @@ export async function updateIntermediary(params: {
   });
 
   return mapIntermediary(row);
+}
+
+/* ── FI phase 2: institution access (the bank's own side) ─────────────────
+ *
+ * The flow (user-locked): buyer requests financing → BANCO admin studies the
+ * risk (existing pipeline: new → forwarded) → the moment it is forwarded, it
+ * hands off AUTOMATICALLY to the bank's own people. BANCO remains a verified
+ * ads platform — it brokers the introduction, never the loan.
+ */
+
+export interface InstitutionMembership {
+  intermediary_id: string;
+  intermediary_name: string;
+  /** owner = the FI account that owns the intermediary; manager sees all
+   *  branches; agent is scoped to its branch (plus unrouted requests). */
+  role: "owner" | "manager" | "agent";
+  branch_id: string | null;
+}
+
+/**
+ * Resolve which institution (if any) a marketplace user belongs to — either as
+ * the owning FI account or via an employee seat. Null = not institution staff.
+ */
+export async function resolveInstitutionMembership(
+  dbUserId: string,
+): Promise<InstitutionMembership | null> {
+  const [owned] = await db
+    .select({ id: financingIntermediaries.id, name: financingIntermediaries.name })
+    .from(financingIntermediaries)
+    .where(
+      and(
+        eq(financingIntermediaries.ownerUserId, dbUserId),
+        eq(financingIntermediaries.isActive, true),
+      ),
+    )
+    .limit(1);
+  if (owned) {
+    return {
+      intermediary_id: owned.id,
+      intermediary_name: owned.name,
+      role: "owner",
+      branch_id: null,
+    };
+  }
+
+  const [seat] = await db
+    .select({
+      intermediaryId: financingSeats.intermediaryId,
+      branchId: financingSeats.branchId,
+      role: financingSeats.role,
+      name: financingIntermediaries.name,
+    })
+    .from(financingSeats)
+    .innerJoin(
+      financingIntermediaries,
+      eq(financingSeats.intermediaryId, financingIntermediaries.id),
+    )
+    .where(
+      and(eq(financingSeats.userId, dbUserId), eq(financingIntermediaries.isActive, true)),
+    )
+    .limit(1);
+  if (!seat) return null;
+
+  return {
+    intermediary_id: seat.intermediaryId,
+    intermediary_name: seat.name,
+    role: seat.role === "manager" ? "manager" : "agent",
+    branch_id: seat.branchId,
+  };
+}
+
+/**
+ * The institution's request inbox — ONLY requests Banco explicitly forwarded to
+ * this institution (intermediaryId match), never the raw "new" pool. Agent
+ * seats with a branch see their branch's requests plus unrouted ones; owner /
+ * manager see everything.
+ */
+export async function listInstitutionRequests(params: {
+  dbUserId: string;
+  status?: FinancingStatus;
+  cursor?: string;
+  limit: number;
+}): Promise<{
+  membership: InstitutionMembership;
+  items: FinancingRequestRow[];
+  cursor?: string;
+  has_next: boolean;
+}> {
+  const membership = await resolveInstitutionMembership(params.dbUserId);
+  if (!membership) {
+    throw Object.assign(new Error("Not a financial-institution member"), {
+      code: "FORBIDDEN",
+    });
+  }
+
+  const conditions: SQL[] = [
+    eq(leadHistory.actionType, "finance_request"),
+    eq(financingRequests.intermediaryId, membership.intermediary_id),
+  ];
+  if (params.status) conditions.push(eq(effectiveStatus, params.status));
+  if (membership.role === "agent" && membership.branch_id) {
+    conditions.push(
+      or(
+        isNull(financingRequests.branchId),
+        eq(financingRequests.branchId, membership.branch_id),
+      )!,
+    );
+  }
+  if (params.cursor) {
+    const cursorDate = new Date(params.cursor);
+    if (!Number.isNaN(cursorDate.getTime())) {
+      conditions.push(lt(leadHistory.createdAt, cursorDate));
+    }
+  }
+
+  const rows = (await baseQuery(conditions).limit(params.limit + 1)) as RawRow[];
+  const has_next = rows.length > params.limit;
+  const page = rows.slice(0, params.limit);
+  const last = page[page.length - 1];
+
+  return {
+    membership,
+    items: page.map(mapRow),
+    cursor: has_next && last?.createdAt ? last.createdAt.toISOString() : undefined,
+    has_next,
+  };
+}
+
+/**
+ * Bank-side lifecycle transitions: contacted / closed only (the admin owns
+ * new/forwarded/rejected). Owner + manager may also route a request to one of
+ * the institution's branches. Scoped hard to the caller's institution — a
+ * request belonging to another bank reads as NOT_FOUND, never FORBIDDEN, so
+ * membership probing leaks nothing.
+ */
+export async function updateInstitutionRequest(params: {
+  dbUserId: string;
+  leadId: string;
+  status?: Extract<FinancingStatus, "contacted" | "closed">;
+  branchId?: string | null;
+}): Promise<FinancingRequestRow> {
+  const membership = await resolveInstitutionMembership(params.dbUserId);
+  if (!membership) {
+    throw Object.assign(new Error("Not a financial-institution member"), {
+      code: "FORBIDDEN",
+    });
+  }
+
+  const existing = await getFinancingRequestByLeadId(params.leadId);
+  if (!existing || existing.intermediary_id !== membership.intermediary_id) {
+    throw Object.assign(new Error("Finance request not found"), { code: "NOT_FOUND" });
+  }
+
+  const set: Partial<typeof financingRequests.$inferInsert> = { updatedAt: new Date() };
+  if (params.status !== undefined) set.status = params.status;
+  if (params.branchId !== undefined) {
+    if (membership.role === "agent") {
+      throw Object.assign(new Error("Only the institution owner or a manager can route to a branch"), {
+        code: "FORBIDDEN",
+      });
+    }
+    if (params.branchId) {
+      const [branch] = await db
+        .select({ id: financingBranches.id })
+        .from(financingBranches)
+        .where(
+          and(
+            eq(financingBranches.id, params.branchId),
+            eq(financingBranches.intermediaryId, membership.intermediary_id),
+          ),
+        )
+        .limit(1);
+      if (!branch) {
+        throw Object.assign(new Error("Branch not found"), { code: "NOT_FOUND" });
+      }
+    }
+    set.branchId = params.branchId;
+  }
+
+  await db
+    .update(financingRequests)
+    .set(set)
+    .where(eq(financingRequests.leadId, params.leadId));
+
+  writeAudit({
+    eventType: "admin_action",
+    severity: "info",
+    actorUserId: params.dbUserId,
+    reason: "financing_request_institution_update",
+    metadata: {
+      lead_id: params.leadId,
+      intermediary_id: membership.intermediary_id,
+      status: params.status ?? null,
+      branch_id: params.branchId ?? null,
+    },
+  });
+
+  const updated = await getFinancingRequestByLeadId(params.leadId);
+  if (!updated) {
+    throw Object.assign(new Error("Finance request not found"), { code: "NOT_FOUND" });
+  }
+  return updated;
+}
+
+/**
+ * The auto-handoff ping: notify the institution's owner account + every seat
+ * the moment Banco forwards a request. In-app (bilingual) with the lead id so
+ * the client can deep-link into the bank inbox. Best-effort by design.
+ */
+async function notifyInstitutionHandoff(
+  leadId: string,
+  intermediaryId: string,
+  listingTitle: string,
+): Promise<void> {
+  const [inst] = await db
+    .select({
+      ownerUserId: financingIntermediaries.ownerUserId,
+      name: financingIntermediaries.name,
+    })
+    .from(financingIntermediaries)
+    .where(eq(financingIntermediaries.id, intermediaryId))
+    .limit(1);
+  if (!inst) return;
+
+  const seats = await db
+    .select({ userId: financingSeats.userId })
+    .from(financingSeats)
+    .where(eq(financingSeats.intermediaryId, intermediaryId));
+
+  const recipients = new Set<string>(seats.map((s) => s.userId));
+  if (inst.ownerUserId) recipients.add(inst.ownerUserId);
+  if (recipients.size === 0) return;
+
+  await Promise.all(
+    Array.from(recipients).map((userId) =>
+      createNotification({
+        userId,
+        type: "system",
+        title: "طلب تمويل جديد محوّل إليكم · Financing request forwarded",
+        body: `حوّلت بانكو طلب تمويل على «${listingTitle}» بعد الدراسة · Banco forwarded a financing request after review`,
+        data: { financing_lead_id: leadId },
+      }).catch(() => {}),
+    ),
+  );
+}
+
+/* ── FI phase 2: branches + seats (admin-managed) ──────── */
+
+export interface FinancingBranchRow {
+  id: string;
+  intermediary_id: string;
+  name: string;
+  city: string | null;
+  is_active: boolean;
+  created_at: string | null;
+}
+
+export interface FinancingSeatRow {
+  id: string;
+  intermediary_id: string;
+  branch_id: string | null;
+  user_id: string;
+  user_name: string | null;
+  user_email: string | null;
+  role: "manager" | "agent";
+  created_at: string | null;
+}
+
+export async function listBranches(intermediaryId: string): Promise<FinancingBranchRow[]> {
+  const rows = await db
+    .select()
+    .from(financingBranches)
+    .where(eq(financingBranches.intermediaryId, intermediaryId))
+    .orderBy(asc(financingBranches.createdAt));
+  return rows.map((r) => ({
+    id: r.id,
+    intermediary_id: r.intermediaryId,
+    name: r.name,
+    city: r.city,
+    is_active: r.isActive,
+    created_at: r.createdAt ? r.createdAt.toISOString() : null,
+  }));
+}
+
+export async function createBranch(params: {
+  intermediaryId: string;
+  name: string;
+  city?: string | null;
+  adminUserId: string;
+}): Promise<FinancingBranchRow> {
+  const [im] = await db
+    .select({ id: financingIntermediaries.id })
+    .from(financingIntermediaries)
+    .where(eq(financingIntermediaries.id, params.intermediaryId))
+    .limit(1);
+  if (!im) {
+    throw Object.assign(new Error("Intermediary not found"), { code: "NOT_FOUND" });
+  }
+
+  const [row] = await db
+    .insert(financingBranches)
+    .values({
+      intermediaryId: params.intermediaryId,
+      name: params.name,
+      city: params.city ?? null,
+    })
+    .returning();
+
+  writeAudit({
+    eventType: "admin_action",
+    severity: "info",
+    actorUserId: params.adminUserId,
+    reason: "financing_branch_create",
+    metadata: { intermediary_id: params.intermediaryId, branch_id: row.id },
+  });
+
+  return {
+    id: row.id,
+    intermediary_id: row.intermediaryId,
+    name: row.name,
+    city: row.city,
+    is_active: row.isActive,
+    created_at: row.createdAt ? row.createdAt.toISOString() : null,
+  };
+}
+
+export async function listSeats(intermediaryId: string): Promise<FinancingSeatRow[]> {
+  const rows = await db
+    .select({
+      id: financingSeats.id,
+      intermediaryId: financingSeats.intermediaryId,
+      branchId: financingSeats.branchId,
+      userId: financingSeats.userId,
+      role: financingSeats.role,
+      createdAt: financingSeats.createdAt,
+      userName: users.name,
+      userEmail: users.email,
+    })
+    .from(financingSeats)
+    .innerJoin(users, eq(financingSeats.userId, users.id))
+    .where(eq(financingSeats.intermediaryId, intermediaryId))
+    .orderBy(asc(financingSeats.createdAt));
+  return rows.map((r) => ({
+    id: r.id,
+    intermediary_id: r.intermediaryId,
+    branch_id: r.branchId,
+    user_id: r.userId,
+    user_name: r.userName,
+    user_email: r.userEmail,
+    role: r.role === "manager" ? "manager" : "agent",
+    created_at: r.createdAt ? r.createdAt.toISOString() : null,
+  }));
+}
+
+export async function createSeat(params: {
+  intermediaryId: string;
+  userId: string;
+  branchId?: string | null;
+  role?: "manager" | "agent";
+  adminUserId: string;
+}): Promise<FinancingSeatRow> {
+  const [im] = await db
+    .select({ id: financingIntermediaries.id })
+    .from(financingIntermediaries)
+    .where(eq(financingIntermediaries.id, params.intermediaryId))
+    .limit(1);
+  if (!im) {
+    throw Object.assign(new Error("Intermediary not found"), { code: "NOT_FOUND" });
+  }
+
+  const [member] = await db
+    .select({ id: users.id, name: users.name, email: users.email })
+    .from(users)
+    .where(eq(users.id, params.userId))
+    .limit(1);
+  if (!member) {
+    throw Object.assign(new Error("User not found"), { code: "NOT_FOUND" });
+  }
+
+  if (params.branchId) {
+    const [branch] = await db
+      .select({ id: financingBranches.id })
+      .from(financingBranches)
+      .where(
+        and(
+          eq(financingBranches.id, params.branchId),
+          eq(financingBranches.intermediaryId, params.intermediaryId),
+        ),
+      )
+      .limit(1);
+    if (!branch) {
+      throw Object.assign(new Error("Branch not found"), { code: "NOT_FOUND" });
+    }
+  }
+
+  const inserted = await db
+    .insert(financingSeats)
+    .values({
+      intermediaryId: params.intermediaryId,
+      userId: params.userId,
+      branchId: params.branchId ?? null,
+      role: params.role ?? "agent",
+    })
+    .onConflictDoNothing({
+      target: [financingSeats.intermediaryId, financingSeats.userId],
+    })
+    .returning();
+
+  if (inserted.length === 0) {
+    throw Object.assign(new Error("User is already a member of this institution"), {
+      code: "CONFLICT",
+    });
+  }
+  const row = inserted[0];
+
+  writeAudit({
+    eventType: "admin_action",
+    severity: "info",
+    actorUserId: params.adminUserId,
+    reason: "financing_seat_create",
+    metadata: {
+      intermediary_id: params.intermediaryId,
+      seat_id: row.id,
+      user_id: params.userId,
+    },
+  });
+
+  return {
+    id: row.id,
+    intermediary_id: row.intermediaryId,
+    branch_id: row.branchId,
+    user_id: row.userId,
+    user_name: member.name,
+    user_email: member.email,
+    role: row.role === "manager" ? "manager" : "agent",
+    created_at: row.createdAt ? row.createdAt.toISOString() : null,
+  };
 }

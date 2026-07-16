@@ -39,6 +39,10 @@ import {
   financingRequestsExportHandler,
   updateFinancingRequestHandler,
   financingIntermediariesHandler,
+  financingBranchesHandler,
+  createFinancingBranchHandler,
+  financingSeatsHandler,
+  createFinancingSeatHandler,
   createFinancingIntermediaryHandler,
   updateFinancingIntermediaryHandler,
 } from "../../controllers/financingController";
@@ -104,6 +108,11 @@ router.patch("/financing/requests/:leadId", writeRateLimiter, requirePermission(
 router.get("/financing/intermediaries", publicRateLimiter, requirePermission("manage_financing"), financingIntermediariesHandler);
 router.post("/financing/intermediaries", writeRateLimiter, requirePermission("manage_financing"), createFinancingIntermediaryHandler);
 router.patch("/financing/intermediaries/:id", writeRateLimiter, requirePermission("manage_financing"), updateFinancingIntermediaryHandler);
+// FI phase 2 — an institution's branches + employee seats (admin-provisioned).
+router.get("/financing/intermediaries/:id/branches", publicRateLimiter, requirePermission("manage_financing"), financingBranchesHandler);
+router.post("/financing/intermediaries/:id/branches", writeRateLimiter, requirePermission("manage_financing"), createFinancingBranchHandler);
+router.get("/financing/intermediaries/:id/seats", publicRateLimiter, requirePermission("manage_financing"), financingSeatsHandler);
+router.post("/financing/intermediaries/:id/seats", writeRateLimiter, requirePermission("manage_financing"), createFinancingSeatHandler);
 
 // Promo ad-credit campaign — the separate virtual ad-only allowance. Gated to
 // the same finance-grade permission as payments since it governs free credit.

@@ -2299,11 +2299,66 @@ export const financingIntermediaries = pgTable(
     contactEmail: text("contact_email"),
     contactPhone: text("contact_phone"),
     notes: text("notes"),
+    // FI phase 2: the bank's own marketplace account (role financial_institution)
+    // that OWNS this intermediary. Once linked, forwarded requests auto-hand off
+    // to the bank's people instead of living only in the admin CRM. Nullable —
+    // legacy hand-off-list rows keep working without an account.
+    ownerUserId: uuid("owner_user_id").references(() => users.id, {
+      onDelete: "set null",
+    }),
     isActive: boolean("is_active").notNull().default(true),
     createdAt: timestamp("created_at").defaultNow(),
     updatedAt: timestamp("updated_at").defaultNow(),
   },
-  (table) => [index("idx_financing_intermediaries_active").on(table.isActive)]
+  (table) => [
+    index("idx_financing_intermediaries_active").on(table.isActive),
+    index("idx_financing_intermediaries_owner").on(table.ownerUserId),
+  ]
+);
+
+// FI phase 2: a bank's physical/organizational branches. Requests can be routed
+// to a branch; agent seats scoped to a branch see that branch's requests (plus
+// unrouted ones). Purely additive — institutions without branches work fine.
+export const financingBranches = pgTable(
+  "financing_branches",
+  {
+    id: uuid("id").defaultRandom().primaryKey(),
+    intermediaryId: uuid("intermediary_id")
+      .references(() => financingIntermediaries.id, { onDelete: "cascade" })
+      .notNull(),
+    name: text("name").notNull(),
+    city: text("city"),
+    isActive: boolean("is_active").notNull().default(true),
+    createdAt: timestamp("created_at").defaultNow(),
+  },
+  (table) => [index("idx_financing_branches_intermediary").on(table.intermediaryId)]
+);
+
+// FI phase 2: employee seats inside a financial institution. A seat links a
+// normal marketplace user account to the institution so forwarded requests
+// reach the bank's own people ("after Banco's filtration it hands off
+// automatically to the bank employee"). role: "manager" sees everything;
+// "agent" is scoped to its branch (when set) plus unrouted requests.
+export const financingSeats = pgTable(
+  "financing_seats",
+  {
+    id: uuid("id").defaultRandom().primaryKey(),
+    intermediaryId: uuid("intermediary_id")
+      .references(() => financingIntermediaries.id, { onDelete: "cascade" })
+      .notNull(),
+    branchId: uuid("branch_id").references(() => financingBranches.id, {
+      onDelete: "set null",
+    }),
+    userId: uuid("user_id")
+      .references(() => users.id, { onDelete: "cascade" })
+      .notNull(),
+    role: text("role").notNull().default("agent"),
+    createdAt: timestamp("created_at").defaultNow(),
+  },
+  (table) => [
+    uniqueIndex("uq_financing_seats_member").on(table.intermediaryId, table.userId),
+    index("idx_financing_seats_user").on(table.userId),
+  ]
 );
 
 // CRM sidecar that EXTENDS a finance_request lead (lead_history) with the
@@ -2324,6 +2379,11 @@ export const financingRequests = pgTable(
       () => financingIntermediaries.id,
       { onDelete: "set null" }
     ),
+    // FI phase 2: optional routing to one of the institution's branches. Agent
+    // seats scoped to a branch see that branch's requests + unrouted ones.
+    branchId: uuid("branch_id").references(() => financingBranches.id, {
+      onDelete: "set null",
+    }),
     assignedAt: timestamp("assigned_at"),
     notes: text("notes"),
     createdAt: timestamp("created_at").defaultNow(),
@@ -2339,6 +2399,10 @@ export type FinancingIntermediary = typeof financingIntermediaries.$inferSelect;
 export type InsertFinancingIntermediary = typeof financingIntermediaries.$inferInsert;
 export type FinancingRequest = typeof financingRequests.$inferSelect;
 export type InsertFinancingRequest = typeof financingRequests.$inferInsert;
+export type FinancingBranch = typeof financingBranches.$inferSelect;
+export type InsertFinancingBranch = typeof financingBranches.$inferInsert;
+export type FinancingSeat = typeof financingSeats.$inferSelect;
+export type InsertFinancingSeat = typeof financingSeats.$inferInsert;
 
 /* ── Task #40 inferred types ───────────────────────────── */
 export type InvestmentOpportunity = typeof investmentOpportunities.$inferSelect;

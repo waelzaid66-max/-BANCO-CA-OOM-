@@ -27,6 +27,8 @@ export const ApiErrorCode = {
   INTERNAL_ERROR: 'INTERNAL_ERROR',
   FORBIDDEN: 'FORBIDDEN',
   RATE_LIMITED: 'RATE_LIMITED',
+  INVALID_TOKEN: 'INVALID_TOKEN',
+  CONFLICT: 'CONFLICT',
 } as const;
 
 export interface ApiError {
@@ -1132,6 +1134,60 @@ export interface FinancingIntermediary {
   notes?: string | null;
   is_active?: boolean;
   created_at?: string | null;
+}
+
+export interface FinancingBranch {
+  id?: string;
+  intermediary_id?: string;
+  name?: string;
+  city?: string | null;
+  is_active?: boolean;
+  created_at?: string | null;
+}
+
+export type FinancingSeatRole = typeof FinancingSeatRole[keyof typeof FinancingSeatRole];
+
+
+export const FinancingSeatRole = {
+  manager: 'manager',
+  agent: 'agent',
+} as const;
+
+export interface FinancingSeat {
+  id?: string;
+  intermediary_id?: string;
+  branch_id?: string | null;
+  user_id?: string;
+  user_name?: string | null;
+  user_email?: string | null;
+  role?: FinancingSeatRole;
+  created_at?: string | null;
+}
+
+export type InstitutionMembershipRole = typeof InstitutionMembershipRole[keyof typeof InstitutionMembershipRole];
+
+
+export const InstitutionMembershipRole = {
+  owner: 'owner',
+  manager: 'manager',
+  agent: 'agent',
+} as const;
+
+/**
+ * Who the caller is inside a financial institution — the owning FI account or an employee seat (manager sees all branches; agent is scoped to its branch plus unrouted requests).
+ */
+export interface InstitutionMembership {
+  intermediary_id?: string;
+  intermediary_name?: string;
+  role?: InstitutionMembershipRole;
+  branch_id?: string | null;
+}
+
+export interface InstitutionInbox {
+  membership: InstitutionMembership;
+  items: FinancingRequest[];
+  cursor?: string | null;
+  has_next: boolean;
 }
 
 export type ReportReason = typeof ReportReason[keyof typeof ReportReason];
@@ -4312,6 +4368,83 @@ export type UpdateFinancingIntermediaryBody = {
 
 export type UpdateFinancingIntermediary200 = {
   data?: FinancingIntermediary;
+  error?: ApiError | null;
+};
+
+export type GetFinancingBranches200 = {
+  data?: FinancingBranch[];
+  error?: ApiError | null;
+};
+
+export type CreateFinancingBranchBody = {
+  name: string;
+  city?: string | null;
+};
+
+export type CreateFinancingBranch200 = {
+  data?: FinancingBranch;
+  error?: ApiError | null;
+};
+
+export type GetFinancingSeats200 = {
+  data?: FinancingSeat[];
+  error?: ApiError | null;
+};
+
+export type CreateFinancingSeatBodyRole = typeof CreateFinancingSeatBodyRole[keyof typeof CreateFinancingSeatBodyRole];
+
+
+export const CreateFinancingSeatBodyRole = {
+  manager: 'manager',
+  agent: 'agent',
+} as const;
+
+export type CreateFinancingSeatBody = {
+  user_id: string;
+  branch_id?: string | null;
+  role?: CreateFinancingSeatBodyRole;
+};
+
+export type CreateFinancingSeat200 = {
+  data?: FinancingSeat;
+  error?: ApiError | null;
+};
+
+export type GetInstitutionInboxParams = {
+status?: GetInstitutionInboxStatus;
+cursor?: string;
+limit?: number;
+};
+
+export type GetInstitutionInboxStatus = typeof GetInstitutionInboxStatus[keyof typeof GetInstitutionInboxStatus];
+
+
+export const GetInstitutionInboxStatus = {
+  forwarded: 'forwarded',
+  contacted: 'contacted',
+  closed: 'closed',
+} as const;
+
+export type GetInstitutionInbox200 = {
+  data?: InstitutionInbox;
+  error?: ApiError | null;
+};
+
+export type UpdateInstitutionRequestBodyStatus = typeof UpdateInstitutionRequestBodyStatus[keyof typeof UpdateInstitutionRequestBodyStatus];
+
+
+export const UpdateInstitutionRequestBodyStatus = {
+  contacted: 'contacted',
+  closed: 'closed',
+} as const;
+
+export type UpdateInstitutionRequestBody = {
+  status?: UpdateInstitutionRequestBodyStatus;
+  branch_id?: string | null;
+};
+
+export type UpdateInstitutionRequest200 = {
+  data?: FinancingRequest;
   error?: ApiError | null;
 };
 

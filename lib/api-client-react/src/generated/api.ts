@@ -42,8 +42,12 @@ import type {
   CreateBookingBody,
   CreateConversation200,
   CreateConversationBody,
+  CreateFinancingBranch200,
+  CreateFinancingBranchBody,
   CreateFinancingIntermediary200,
   CreateFinancingIntermediaryBody,
+  CreateFinancingSeat200,
+  CreateFinancingSeatBody,
   CreateGlobalSupply201,
   CreateGlobalSupplyBody,
   CreateInvestment201,
@@ -110,11 +114,15 @@ import type {
   GetFacetsParams,
   GetFeed200,
   GetFeedParams,
+  GetFinancingBranches200,
   GetFinancingIntermediaries200,
   GetFinancingRequests200,
   GetFinancingRequestsParams,
+  GetFinancingSeats200,
   GetFraudSignals200,
   GetGlobalSupply200,
+  GetInstitutionInbox200,
+  GetInstitutionInboxParams,
   GetInvestment200,
   GetInvoice200,
   GetListing200,
@@ -244,6 +252,8 @@ import type {
   UpdateFinancingIntermediaryBody,
   UpdateFinancingRequest200,
   UpdateFinancingRequestBody,
+  UpdateInstitutionRequest200,
+  UpdateInstitutionRequestBody,
   UpdateInvestment200,
   UpdateInvestmentBody,
   UpdateLeadStatusBody,
@@ -7660,6 +7670,457 @@ export const useUpdateFinancingIntermediary = <TError = ErrorType<unknown>,
         TContext
       > => {
       return useMutation(getUpdateFinancingIntermediaryMutationOptions(options));
+    }
+
+export const getGetFinancingBranchesUrl = (id: string,) => {
+
+
+
+
+  return `/api/v1/admin/financing/intermediaries/${id}/branches`
+}
+
+/**
+ * @summary FI phase 2 — an institution's branches
+ */
+export const getFinancingBranches = async (id: string, options?: RequestInit): Promise<GetFinancingBranches200> => {
+
+  return customFetch<GetFinancingBranches200>(getGetFinancingBranchesUrl(id),
+  {
+    ...options,
+    method: 'GET'
+
+
+  }
+);}
+
+
+
+
+
+export const getGetFinancingBranchesQueryKey = (id: string,) => {
+    return [
+    `/api/v1/admin/financing/intermediaries/${id}/branches`
+    ] as const;
+    }
+
+
+export const getGetFinancingBranchesQueryOptions = <TData = Awaited<ReturnType<typeof getFinancingBranches>>, TError = ErrorType<unknown>>(id: string, options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof getFinancingBranches>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
+) => {
+
+const {query: queryOptions, request: requestOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getGetFinancingBranchesQueryKey(id);
+
+
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof getFinancingBranches>>> = ({ signal }) => getFinancingBranches(id, { signal, ...requestOptions });
+
+
+
+
+
+   return  { queryKey, queryFn, enabled: id !== null && id !== undefined, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof getFinancingBranches>>, TError, TData> & { queryKey: QueryKey }
+}
+
+export type GetFinancingBranchesQueryResult = NonNullable<Awaited<ReturnType<typeof getFinancingBranches>>>
+export type GetFinancingBranchesQueryError = ErrorType<unknown>
+
+
+/**
+ * @summary FI phase 2 — an institution's branches
+ */
+
+export function useGetFinancingBranches<TData = Awaited<ReturnType<typeof getFinancingBranches>>, TError = ErrorType<unknown>>(
+ id: string, options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof getFinancingBranches>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
+
+ ):  UseQueryResult<TData, TError> & { queryKey: QueryKey } {
+
+  const queryOptions = getGetFinancingBranchesQueryOptions(id,options)
+
+  const query = useQuery(queryOptions) as  UseQueryResult<TData, TError> & { queryKey: QueryKey };
+
+  return { ...query, queryKey: queryOptions.queryKey };
+}
+
+
+
+
+
+
+
+export const getCreateFinancingBranchUrl = (id: string,) => {
+
+
+
+
+  return `/api/v1/admin/financing/intermediaries/${id}/branches`
+}
+
+/**
+ * @summary FI phase 2 — add a branch to an institution
+ */
+export const createFinancingBranch = async (id: string,
+    createFinancingBranchBody: CreateFinancingBranchBody, options?: RequestInit): Promise<CreateFinancingBranch200> => {
+
+  return customFetch<CreateFinancingBranch200>(getCreateFinancingBranchUrl(id),
+  {
+    ...options,
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', ...options?.headers },
+    body: JSON.stringify(createFinancingBranchBody)
+  }
+);}
+
+
+
+
+export const getCreateFinancingBranchMutationOptions = <TError = ErrorType<unknown>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof createFinancingBranch>>, TError,{id: string;data: BodyType<CreateFinancingBranchBody>}, TContext>, request?: SecondParameter<typeof customFetch>}
+): UseMutationOptions<Awaited<ReturnType<typeof createFinancingBranch>>, TError,{id: string;data: BodyType<CreateFinancingBranchBody>}, TContext> => {
+
+const mutationKey = ['createFinancingBranch'];
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof createFinancingBranch>>, {id: string;data: BodyType<CreateFinancingBranchBody>}> = (props) => {
+          const {id,data} = props ?? {};
+
+          return  createFinancingBranch(id,data,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type CreateFinancingBranchMutationResult = NonNullable<Awaited<ReturnType<typeof createFinancingBranch>>>
+    export type CreateFinancingBranchMutationBody = BodyType<CreateFinancingBranchBody>
+    export type CreateFinancingBranchMutationError = ErrorType<unknown>
+
+    /**
+ * @summary FI phase 2 — add a branch to an institution
+ */
+export const useCreateFinancingBranch = <TError = ErrorType<unknown>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof createFinancingBranch>>, TError,{id: string;data: BodyType<CreateFinancingBranchBody>}, TContext>, request?: SecondParameter<typeof customFetch>}
+ ): UseMutationResult<
+        Awaited<ReturnType<typeof createFinancingBranch>>,
+        TError,
+        {id: string;data: BodyType<CreateFinancingBranchBody>},
+        TContext
+      > => {
+      return useMutation(getCreateFinancingBranchMutationOptions(options));
+    }
+
+export const getGetFinancingSeatsUrl = (id: string,) => {
+
+
+
+
+  return `/api/v1/admin/financing/intermediaries/${id}/seats`
+}
+
+/**
+ * @summary FI phase 2 — an institution's employee seats
+ */
+export const getFinancingSeats = async (id: string, options?: RequestInit): Promise<GetFinancingSeats200> => {
+
+  return customFetch<GetFinancingSeats200>(getGetFinancingSeatsUrl(id),
+  {
+    ...options,
+    method: 'GET'
+
+
+  }
+);}
+
+
+
+
+
+export const getGetFinancingSeatsQueryKey = (id: string,) => {
+    return [
+    `/api/v1/admin/financing/intermediaries/${id}/seats`
+    ] as const;
+    }
+
+
+export const getGetFinancingSeatsQueryOptions = <TData = Awaited<ReturnType<typeof getFinancingSeats>>, TError = ErrorType<unknown>>(id: string, options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof getFinancingSeats>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
+) => {
+
+const {query: queryOptions, request: requestOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getGetFinancingSeatsQueryKey(id);
+
+
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof getFinancingSeats>>> = ({ signal }) => getFinancingSeats(id, { signal, ...requestOptions });
+
+
+
+
+
+   return  { queryKey, queryFn, enabled: id !== null && id !== undefined, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof getFinancingSeats>>, TError, TData> & { queryKey: QueryKey }
+}
+
+export type GetFinancingSeatsQueryResult = NonNullable<Awaited<ReturnType<typeof getFinancingSeats>>>
+export type GetFinancingSeatsQueryError = ErrorType<unknown>
+
+
+/**
+ * @summary FI phase 2 — an institution's employee seats
+ */
+
+export function useGetFinancingSeats<TData = Awaited<ReturnType<typeof getFinancingSeats>>, TError = ErrorType<unknown>>(
+ id: string, options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof getFinancingSeats>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
+
+ ):  UseQueryResult<TData, TError> & { queryKey: QueryKey } {
+
+  const queryOptions = getGetFinancingSeatsQueryOptions(id,options)
+
+  const query = useQuery(queryOptions) as  UseQueryResult<TData, TError> & { queryKey: QueryKey };
+
+  return { ...query, queryKey: queryOptions.queryKey };
+}
+
+
+
+
+
+
+
+export const getCreateFinancingSeatUrl = (id: string,) => {
+
+
+
+
+  return `/api/v1/admin/financing/intermediaries/${id}/seats`
+}
+
+/**
+ * @summary FI phase 2 — seat a marketplace user inside an institution
+ */
+export const createFinancingSeat = async (id: string,
+    createFinancingSeatBody: CreateFinancingSeatBody, options?: RequestInit): Promise<CreateFinancingSeat200> => {
+
+  return customFetch<CreateFinancingSeat200>(getCreateFinancingSeatUrl(id),
+  {
+    ...options,
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', ...options?.headers },
+    body: JSON.stringify(createFinancingSeatBody)
+  }
+);}
+
+
+
+
+export const getCreateFinancingSeatMutationOptions = <TError = ErrorType<unknown>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof createFinancingSeat>>, TError,{id: string;data: BodyType<CreateFinancingSeatBody>}, TContext>, request?: SecondParameter<typeof customFetch>}
+): UseMutationOptions<Awaited<ReturnType<typeof createFinancingSeat>>, TError,{id: string;data: BodyType<CreateFinancingSeatBody>}, TContext> => {
+
+const mutationKey = ['createFinancingSeat'];
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof createFinancingSeat>>, {id: string;data: BodyType<CreateFinancingSeatBody>}> = (props) => {
+          const {id,data} = props ?? {};
+
+          return  createFinancingSeat(id,data,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type CreateFinancingSeatMutationResult = NonNullable<Awaited<ReturnType<typeof createFinancingSeat>>>
+    export type CreateFinancingSeatMutationBody = BodyType<CreateFinancingSeatBody>
+    export type CreateFinancingSeatMutationError = ErrorType<unknown>
+
+    /**
+ * @summary FI phase 2 — seat a marketplace user inside an institution
+ */
+export const useCreateFinancingSeat = <TError = ErrorType<unknown>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof createFinancingSeat>>, TError,{id: string;data: BodyType<CreateFinancingSeatBody>}, TContext>, request?: SecondParameter<typeof customFetch>}
+ ): UseMutationResult<
+        Awaited<ReturnType<typeof createFinancingSeat>>,
+        TError,
+        {id: string;data: BodyType<CreateFinancingSeatBody>},
+        TContext
+      > => {
+      return useMutation(getCreateFinancingSeatMutationOptions(options));
+    }
+
+export const getGetInstitutionInboxUrl = (params?: GetInstitutionInboxParams,) => {
+  const normalizedParams = new URLSearchParams();
+
+  Object.entries(params || {}).forEach(([key, value]) => {
+
+    if (value !== undefined) {
+      normalizedParams.append(key, value === null ? 'null' : String(value))
+    }
+  });
+
+  const stringifiedParams = normalizedParams.toString();
+
+  return stringifiedParams.length > 0 ? `/api/v1/financing/inbox?${stringifiedParams}` : `/api/v1/financing/inbox`
+}
+
+/**
+ * @summary FI phase 2 — the bank's own inbox: requests Banco forwarded to the caller's institution after its risk review. Owner/manager see all; an agent seat is scoped to its branch plus unrouted requests.
+ */
+export const getInstitutionInbox = async (params?: GetInstitutionInboxParams, options?: RequestInit): Promise<GetInstitutionInbox200> => {
+
+  return customFetch<GetInstitutionInbox200>(getGetInstitutionInboxUrl(params),
+  {
+    ...options,
+    method: 'GET'
+
+
+  }
+);}
+
+
+
+
+
+export const getGetInstitutionInboxQueryKey = (params?: GetInstitutionInboxParams,) => {
+    return [
+    `/api/v1/financing/inbox`, ...(params ? [params] : [])
+    ] as const;
+    }
+
+
+export const getGetInstitutionInboxQueryOptions = <TData = Awaited<ReturnType<typeof getInstitutionInbox>>, TError = ErrorType<unknown>>(params?: GetInstitutionInboxParams, options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof getInstitutionInbox>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
+) => {
+
+const {query: queryOptions, request: requestOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getGetInstitutionInboxQueryKey(params);
+
+
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof getInstitutionInbox>>> = ({ signal }) => getInstitutionInbox(params, { signal, ...requestOptions });
+
+
+
+
+
+   return  { queryKey, queryFn, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof getInstitutionInbox>>, TError, TData> & { queryKey: QueryKey }
+}
+
+export type GetInstitutionInboxQueryResult = NonNullable<Awaited<ReturnType<typeof getInstitutionInbox>>>
+export type GetInstitutionInboxQueryError = ErrorType<unknown>
+
+
+/**
+ * @summary FI phase 2 — the bank's own inbox: requests Banco forwarded to the caller's institution after its risk review. Owner/manager see all; an agent seat is scoped to its branch plus unrouted requests.
+ */
+
+export function useGetInstitutionInbox<TData = Awaited<ReturnType<typeof getInstitutionInbox>>, TError = ErrorType<unknown>>(
+ params?: GetInstitutionInboxParams, options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof getInstitutionInbox>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
+
+ ):  UseQueryResult<TData, TError> & { queryKey: QueryKey } {
+
+  const queryOptions = getGetInstitutionInboxQueryOptions(params,options)
+
+  const query = useQuery(queryOptions) as  UseQueryResult<TData, TError> & { queryKey: QueryKey };
+
+  return { ...query, queryKey: queryOptions.queryKey };
+}
+
+
+
+
+
+
+
+export const getUpdateInstitutionRequestUrl = (leadId: string,) => {
+
+
+
+
+  return `/api/v1/financing/inbox/${leadId}`
+}
+
+/**
+ * @summary FI phase 2 — bank-side lifecycle: mark a forwarded request contacted or closed, and (owner/manager only) route it to a branch.
+ */
+export const updateInstitutionRequest = async (leadId: string,
+    updateInstitutionRequestBody: UpdateInstitutionRequestBody, options?: RequestInit): Promise<UpdateInstitutionRequest200> => {
+
+  return customFetch<UpdateInstitutionRequest200>(getUpdateInstitutionRequestUrl(leadId),
+  {
+    ...options,
+    method: 'PATCH',
+    headers: { 'Content-Type': 'application/json', ...options?.headers },
+    body: JSON.stringify(updateInstitutionRequestBody)
+  }
+);}
+
+
+
+
+export const getUpdateInstitutionRequestMutationOptions = <TError = ErrorType<unknown>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof updateInstitutionRequest>>, TError,{leadId: string;data: BodyType<UpdateInstitutionRequestBody>}, TContext>, request?: SecondParameter<typeof customFetch>}
+): UseMutationOptions<Awaited<ReturnType<typeof updateInstitutionRequest>>, TError,{leadId: string;data: BodyType<UpdateInstitutionRequestBody>}, TContext> => {
+
+const mutationKey = ['updateInstitutionRequest'];
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof updateInstitutionRequest>>, {leadId: string;data: BodyType<UpdateInstitutionRequestBody>}> = (props) => {
+          const {leadId,data} = props ?? {};
+
+          return  updateInstitutionRequest(leadId,data,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type UpdateInstitutionRequestMutationResult = NonNullable<Awaited<ReturnType<typeof updateInstitutionRequest>>>
+    export type UpdateInstitutionRequestMutationBody = BodyType<UpdateInstitutionRequestBody>
+    export type UpdateInstitutionRequestMutationError = ErrorType<unknown>
+
+    /**
+ * @summary FI phase 2 — bank-side lifecycle: mark a forwarded request contacted or closed, and (owner/manager only) route it to a branch.
+ */
+export const useUpdateInstitutionRequest = <TError = ErrorType<unknown>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof updateInstitutionRequest>>, TError,{leadId: string;data: BodyType<UpdateInstitutionRequestBody>}, TContext>, request?: SecondParameter<typeof customFetch>}
+ ): UseMutationResult<
+        Awaited<ReturnType<typeof updateInstitutionRequest>>,
+        TError,
+        {leadId: string;data: BodyType<UpdateInstitutionRequestBody>},
+        TContext
+      > => {
+      return useMutation(getUpdateInstitutionRequestMutationOptions(options));
     }
 
 export const getGetAdminAdsUrl = (params?: GetAdminAdsParams,) => {

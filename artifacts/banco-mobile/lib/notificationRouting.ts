@@ -54,6 +54,12 @@ export function routeForNotification(
     return "/billing" as Href;
   }
 
+  // FI phase 2 — a financing request Banco forwarded to the caller's
+  // institution lands in the Banks & Financiers hub (the bank-side surface).
+  if (typeof d.financing_lead_id === "string") {
+    return "/business/banks" as Href;
+  }
+
   // comment, price_drop, new_match, lead, review, system → listing when present.
   if (typeof d.listing_id === "string") {
     return { pathname: "/listing/[id]", params: { id: d.listing_id } };

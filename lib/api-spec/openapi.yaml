@@ -47,7 +47,7 @@ components:
       properties:
         code:
           type: string
-          enum: [INVALID_DATA, NOT_FOUND, UNAUTHORIZED, INTERNAL_ERROR, FORBIDDEN, RATE_LIMITED]
+          enum: [INVALID_DATA, NOT_FOUND, UNAUTHORIZED, INTERNAL_ERROR, FORBIDDEN, RATE_LIMITED, INVALID_TOKEN, CONFLICT]
         message:
           type: string
 
@@ -1584,6 +1584,83 @@ components:
         created_at:
           type: string
           nullable: true
+
+    FinancingBranch:
+      type: object
+      properties:
+        id:
+          type: string
+        intermediary_id:
+          type: string
+        name:
+          type: string
+        city:
+          type: string
+          nullable: true
+        is_active:
+          type: boolean
+        created_at:
+          type: string
+          nullable: true
+
+    FinancingSeat:
+      type: object
+      properties:
+        id:
+          type: string
+        intermediary_id:
+          type: string
+        branch_id:
+          type: string
+          nullable: true
+        user_id:
+          type: string
+        user_name:
+          type: string
+          nullable: true
+        user_email:
+          type: string
+          nullable: true
+        role:
+          type: string
+          enum: [manager, agent]
+        created_at:
+          type: string
+          nullable: true
+
+    InstitutionMembership:
+      type: object
+      description: >-
+        Who the caller is inside a financial institution — the owning FI account
+        or an employee seat (manager sees all branches; agent is scoped to its
+        branch plus unrouted requests).
+      properties:
+        intermediary_id:
+          type: string
+        intermediary_name:
+          type: string
+        role:
+          type: string
+          enum: [owner, manager, agent]
+        branch_id:
+          type: string
+          nullable: true
+
+    InstitutionInbox:
+      type: object
+      required: [membership, items, has_next]
+      properties:
+        membership:
+          $ref: "#/components/schemas/InstitutionMembership"
+        items:
+          type: array
+          items:
+            $ref: "#/components/schemas/FinancingRequest"
+        cursor:
+          type: string
+          nullable: true
+        has_next:
+          type: boolean
 
     Report:
       type: object
@@ -7360,6 +7437,214 @@ paths:
                 properties:
                   data:
                     $ref: "#/components/schemas/FinancingIntermediary"
+                  error:
+                    $ref: "#/components/schemas/ApiError"
+                    nullable: true
+
+  /v1/admin/financing/intermediaries/{id}/branches:
+    parameters:
+      - in: path
+        name: id
+        required: true
+        schema:
+          type: string
+    get:
+      operationId: getFinancingBranches
+      summary: FI phase 2 — an institution's branches
+      tags: [admin]
+      security:
+        - ClerkAuth: []
+      responses:
+        "200":
+          description: Branches
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    type: array
+                    items:
+                      $ref: "#/components/schemas/FinancingBranch"
+                  error:
+                    $ref: "#/components/schemas/ApiError"
+                    nullable: true
+    post:
+      operationId: createFinancingBranch
+      summary: FI phase 2 — add a branch to an institution
+      tags: [admin]
+      security:
+        - ClerkAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [name]
+              properties:
+                name:
+                  type: string
+                city:
+                  type: string
+                  nullable: true
+      responses:
+        "200":
+          description: Created branch
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    $ref: "#/components/schemas/FinancingBranch"
+                  error:
+                    $ref: "#/components/schemas/ApiError"
+                    nullable: true
+
+  /v1/admin/financing/intermediaries/{id}/seats:
+    parameters:
+      - in: path
+        name: id
+        required: true
+        schema:
+          type: string
+    get:
+      operationId: getFinancingSeats
+      summary: FI phase 2 — an institution's employee seats
+      tags: [admin]
+      security:
+        - ClerkAuth: []
+      responses:
+        "200":
+          description: Seats
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    type: array
+                    items:
+                      $ref: "#/components/schemas/FinancingSeat"
+                  error:
+                    $ref: "#/components/schemas/ApiError"
+                    nullable: true
+    post:
+      operationId: createFinancingSeat
+      summary: FI phase 2 — seat a marketplace user inside an institution
+      tags: [admin]
+      security:
+        - ClerkAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [user_id]
+              properties:
+                user_id:
+                  type: string
+                  format: uuid
+                branch_id:
+                  type: string
+                  format: uuid
+                  nullable: true
+                role:
+                  type: string
+                  enum: [manager, agent]
+      responses:
+        "200":
+          description: Created seat
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    $ref: "#/components/schemas/FinancingSeat"
+                  error:
+                    $ref: "#/components/schemas/ApiError"
+                    nullable: true
+
+  /v1/financing/inbox:
+    get:
+      operationId: getInstitutionInbox
+      summary: >-
+        FI phase 2 — the bank's own inbox: requests Banco forwarded to the
+        caller's institution after its risk review. Owner/manager see all;
+        an agent seat is scoped to its branch plus unrouted requests.
+      tags: [financing]
+      security:
+        - ClerkAuth: []
+      parameters:
+        - in: query
+          name: status
+          schema:
+            type: string
+            enum: [forwarded, contacted, closed]
+        - in: query
+          name: cursor
+          schema:
+            type: string
+        - in: query
+          name: limit
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Institution inbox
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    $ref: "#/components/schemas/InstitutionInbox"
+                  error:
+                    $ref: "#/components/schemas/ApiError"
+                    nullable: true
+
+  /v1/financing/inbox/{leadId}:
+    patch:
+      operationId: updateInstitutionRequest
+      summary: >-
+        FI phase 2 — bank-side lifecycle: mark a forwarded request contacted or
+        closed, and (owner/manager only) route it to a branch.
+      tags: [financing]
+      security:
+        - ClerkAuth: []
+      parameters:
+        - in: path
+          name: leadId
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                status:
+                  type: string
+                  enum: [contacted, closed]
+                branch_id:
+                  type: string
+                  format: uuid
+                  nullable: true
+      responses:
+        "200":
+          description: Updated request
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    $ref: "#/components/schemas/FinancingRequest"
                   error:
                     $ref: "#/components/schemas/ApiError"
                     nullable: true

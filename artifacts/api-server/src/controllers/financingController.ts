@@ -10,8 +10,16 @@ import {
   UpdateFinancingIntermediarySchema,
   FinancingRequestSchema,
   FinancingIntermediarySchema,
+  InstitutionInboxQuerySchema,
+  InstitutionInboxSchema,
+  UpdateInstitutionRequestSchema,
+  FinancingBranchSchema,
+  FinancingSeatSchema,
+  CreateFinancingBranchSchema,
+  CreateFinancingSeatSchema,
 } from "../validators/schemas";
 import * as FinancingService from "../services/FinancingService";
+import { getDbUser } from "../services/UserService";
 
 function handleError(res: Response, err: unknown, label: string, fallback: string) {
   if (err instanceof ZodError) {
@@ -23,6 +31,12 @@ function handleError(res: Response, err: unknown, label: string, fallback: strin
   }
   if (e.code === "INVALID_DATA") {
     return res.status(400).json(errorResponse("INVALID_DATA", e.message ?? "Invalid data"));
+  }
+  if (e.code === "FORBIDDEN") {
+    return res.status(403).json(errorResponse("FORBIDDEN", e.message ?? "Forbidden"));
+  }
+  if (e.code === "CONFLICT") {
+    return res.status(409).json(errorResponse("CONFLICT", e.message ?? "Conflict"));
   }
   console.error(label, err);
   return res.status(500).json(errorResponse("INTERNAL_ERROR", fallback));
@@ -130,5 +144,117 @@ export async function updateFinancingIntermediaryHandler(req: Request, res: Resp
     return res.json(successResponse(validateResponse(FinancingIntermediarySchema, result)));
   } catch (err) {
     return handleError(res, err, "[Financing intermediary update]", "Failed to update intermediary");
+  }
+}
+
+/* ── FI phase 2: institution inbox (bank-side, requireAuth) ─────────────── */
+
+/** Resolve the caller's db user id (requireAuth gives us the Clerk id only). */
+async function requireDbUser(req: Request): Promise<string> {
+  const dbUser = await getDbUser(req.userId!);
+  if (!dbUser) {
+    throw Object.assign(new Error("User not found"), { code: "FORBIDDEN" });
+  }
+  return dbUser.id;
+}
+
+export async function institutionInboxHandler(req: Request, res: Response) {
+  try {
+    const dbUserId = await requireDbUser(req);
+    const query = InstitutionInboxQuerySchema.parse(req.query);
+    const result = await FinancingService.listInstitutionRequests({
+      dbUserId,
+      status: query.status,
+      cursor: query.cursor,
+      limit: query.limit,
+    });
+    return res.json(
+      successResponse(
+        validateResponse(InstitutionInboxSchema, {
+          membership: result.membership,
+          items: result.items,
+          cursor: result.cursor ?? null,
+          has_next: result.has_next,
+        }),
+      ),
+    );
+  } catch (err) {
+    return handleError(res, err, "[Financing institution inbox]", "Failed to load inbox");
+  }
+}
+
+export async function institutionUpdateRequestHandler(req: Request, res: Response) {
+  try {
+    const dbUserId = await requireDbUser(req);
+    const leadId = req.params.leadId as string;
+    const input = UpdateInstitutionRequestSchema.parse(req.body);
+    const result = await FinancingService.updateInstitutionRequest({
+      dbUserId,
+      leadId,
+      status: input.status,
+      branchId: input.branch_id,
+    });
+    return res.json(successResponse(validateResponse(FinancingRequestSchema, result)));
+  } catch (err) {
+    return handleError(res, err, "[Financing institution update]", "Failed to update request");
+  }
+}
+
+/* ── FI phase 2: branches + seats (admin) ─────────────── */
+
+export async function financingBranchesHandler(req: Request, res: Response) {
+  try {
+    const intermediaryId = req.params.id as string;
+    const result = await FinancingService.listBranches(intermediaryId);
+    return res.json(
+      successResponse(validateResponse(FinancingBranchSchema.array(), result)),
+    );
+  } catch (err) {
+    return handleError(res, err, "[Financing branches list]", "Failed to load branches");
+  }
+}
+
+export async function createFinancingBranchHandler(req: Request, res: Response) {
+  try {
+    const intermediaryId = req.params.id as string;
+    const input = CreateFinancingBranchSchema.parse(req.body);
+    const result = await FinancingService.createBranch({
+      intermediaryId,
+      name: input.name,
+      city: input.city ?? null,
+      adminUserId: req.dbUserId!,
+    });
+    return res.json(successResponse(validateResponse(FinancingBranchSchema, result)));
+  } catch (err) {
+    return handleError(res, err, "[Financing branch create]", "Failed to create branch");
+  }
+}
+
+export async function financingSeatsHandler(req: Request, res: Response) {
+  try {
+    const intermediaryId = req.params.id as string;
+    const result = await FinancingService.listSeats(intermediaryId);
+    return res.json(
+      successResponse(validateResponse(FinancingSeatSchema.array(), result)),
+    );
+  } catch (err) {
+    return handleError(res, err, "[Financing seats list]", "Failed to load seats");
+  }
+}
+
+export async function createFinancingSeatHandler(req: Request, res: Response) {
+  try {
+    const intermediaryId = req.params.id as string;
+    const input = CreateFinancingSeatSchema.parse(req.body);
+    const result = await FinancingService.createSeat({
+      intermediaryId,
+      userId: input.user_id,
+      branchId: input.branch_id ?? null,
+      role: input.role,
+      adminUserId: req.dbUserId!,
+    });
+    return res.json(successResponse(validateResponse(FinancingSeatSchema, result)));
+  } catch (err) {
+    return handleError(res, err, "[Financing seat create]", "Failed to create seat");
   }
 }

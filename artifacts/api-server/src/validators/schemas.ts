@@ -39,7 +39,9 @@ export function errorResponse(
     | "INTERNAL_ERROR"
     | "FORBIDDEN"
     | "RATE_LIMITED"
-    | "INVALID_TOKEN",
+    | "INVALID_TOKEN"
+    // Duplicate resource (e.g. seating a user twice in the same institution).
+    | "CONFLICT",
   message: string
 ): GlobalResponse<never[]> {
   return { data: [], error: { code, message }, meta: {} };
@@ -1886,6 +1888,68 @@ export const FinancingIntermediarySchema = z
   })
   .strict();
 
+/* ── FI phase 2: institution inbox + branches + seats ──── */
+
+export const InstitutionInboxQuerySchema = z.object({
+  status: z.enum(["forwarded", "contacted", "closed"]).optional(),
+  cursor: z.string().optional(),
+  limit: z.coerce.number().min(1).max(50).default(20),
+});
+
+export const InstitutionMembershipSchema = z
+  .object({
+    intermediary_id: z.string(),
+    intermediary_name: z.string(),
+    role: z.enum(["owner", "manager", "agent"]),
+    branch_id: z.string().nullable(),
+  })
+  .strict();
+
+// Bank-side transitions only — the admin owns new/forwarded/rejected.
+export const UpdateInstitutionRequestSchema = z
+  .object({
+    status: z.enum(["contacted", "closed"]).optional(),
+    branch_id: z.string().uuid().nullable().optional(),
+  })
+  .refine((d) => d.status !== undefined || d.branch_id !== undefined, {
+    message: "Provide a status and/or a branch_id",
+  });
+
+export const FinancingBranchSchema = z
+  .object({
+    id: z.string(),
+    intermediary_id: z.string(),
+    name: z.string(),
+    city: z.string().nullable(),
+    is_active: z.boolean(),
+    created_at: z.string().nullable(),
+  })
+  .strict();
+
+export const FinancingSeatSchema = z
+  .object({
+    id: z.string(),
+    intermediary_id: z.string(),
+    branch_id: z.string().nullable(),
+    user_id: z.string(),
+    user_name: z.string().nullable(),
+    user_email: z.string().nullable(),
+    role: z.enum(["manager", "agent"]),
+    created_at: z.string().nullable(),
+  })
+  .strict();
+
+export const CreateFinancingBranchSchema = z.object({
+  name: z.string().min(2).max(120),
+  city: z.string().max(80).nullable().optional(),
+});
+
+export const CreateFinancingSeatSchema = z.object({
+  user_id: z.string().uuid(),
+  branch_id: z.string().uuid().nullable().optional(),
+  role: z.enum(["manager", "agent"]).optional(),
+});
+
 export const FinancingRequestSchema = z
   .object({
     // Keyed by the underlying finance_request lead — the stable identity the
@@ -1910,6 +1974,18 @@ export const FinancingRequestSchema = z
     assigned_at: z.string().nullable(),
     created_at: z.string().nullable(),
     updated_at: z.string().nullable(),
+  })
+  .strict();
+
+// FI phase 2 — the bank-side inbox envelope: who the caller is inside the
+// institution + the page of requests Banco forwarded to it. Defined AFTER
+// FinancingRequestSchema (const initialization order).
+export const InstitutionInboxSchema = z
+  .object({
+    membership: InstitutionMembershipSchema,
+    items: z.array(FinancingRequestSchema),
+    cursor: z.string().nullable(),
+    has_next: z.boolean(),
   })
   .strict();
 
