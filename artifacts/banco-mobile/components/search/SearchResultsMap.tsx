@@ -4,6 +4,7 @@ import { ActivityIndicator, StyleSheet, View } from "react-native";
 import { WebView } from "react-native-webview";
 import type { WebViewMessageEvent } from "react-native-webview";
 
+import { apiCategoryFor } from "@/components/CategoryTabs";
 import { useColors } from "@/hooks/useColors";
 import {
   buildMapClusterParams,
@@ -141,6 +142,13 @@ export function SearchResultsMap({
         const bookableById = new Set(
           itemsRef.current.filter((i) => i.is_bookable === true).map((i) => i.id),
         );
+        // Section tint for single pins: exact category when the listing is on
+        // the loaded page, else the browse section itself (a section mini-app
+        // only ever maps its own world; "all" search falls back to primary).
+        const catById = new Map(
+          itemsRef.current.map((i) => [i.id, i.category ?? undefined]),
+        );
+        const defaultCat = apiCategoryFor(criteria.category) ?? undefined;
         const enriched: MapClusterMarker[] = clusters.map((c) => ({
           lat: c.lat,
           lng: c.lng,
@@ -150,6 +158,10 @@ export function SearchResultsMap({
             c.count === 1 && c.listing_id ? priceById.get(c.listing_id) : undefined,
           bookable:
             c.count === 1 && c.listing_id ? bookableById.has(c.listing_id) : false,
+          cat:
+            c.count === 1
+              ? (c.listing_id ? catById.get(c.listing_id) : undefined) ?? defaultCat
+              : undefined,
         }));
         const total = clusters.reduce((sum, c) => sum + c.count, 0);
         const cache = clusterCacheRef.current;

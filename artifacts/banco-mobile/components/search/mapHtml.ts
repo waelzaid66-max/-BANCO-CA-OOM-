@@ -9,6 +9,9 @@ export interface MapMarker {
   label: string;
   /** Furnished/daily rental → the pin gets a 📅 "bookable" prefix. */
   bookable?: boolean;
+  /** API section (car / real_estate / industrial) — tints the pin with the
+   *  section's identity color so every section's map wears its own world. */
+  cat?: string;
 }
 
 /**
@@ -25,6 +28,8 @@ export interface MapClusterMarker {
   label?: string;
   /** Single-listing furnished/daily rental → 📅 "bookable" prefix on the pin. */
   bookable?: boolean;
+  /** Section tint for single-listing pins (falls back to the app primary). */
+  cat?: string;
 }
 
 /** Brand colors threaded into the Leaflet page so pins match the app theme. */
@@ -70,6 +75,7 @@ export function feedItemsToMarkers(items: FeedItem[]): MapMarker[] {
         lng: c.lng,
         label: item.price_display,
         bookable: item.is_bookable === true,
+        cat: item.category ?? undefined,
       });
     }
   }
@@ -126,6 +132,13 @@ export function buildMapHtml(markers: MapMarker[], theme: MapTheme): string {
     box-shadow: 0 1px 5px rgba(0,0,0,0.35);
     cursor: pointer;
   }
+  /* Section identity ON the map — each section's pins wear its world's color.
+     Values mirror lib/sectionTheme SECTION_GRADIENT heads; keep in lockstep. */
+  .pin .pill.car { background: #CC1E24; }
+  .pin .pill.real_estate { background: #9C1650; }
+  .pin .pill.industrial { background: #9A4A16; }
+  /* Bookable (furnished/daily) — emerald, always wins over the section tint. */
+  .pin .pill.book { background: #0E9F6E; }
   .cpin .cbubble {
     position: absolute;
     transform: translate(-50%, -50%);
@@ -205,11 +218,19 @@ export function buildMapHtml(markers: MapMarker[], theme: MapTheme): string {
       ? L.markerClusterGroup({ maxClusterRadius: 48, showCoverageOnHover: false, spiderfyOnMaxZoom: true })
       : L.layerGroup();
     var pts = [];
+    // Section class is allow-listed (server enum values only) so a stray value
+    // can never inject markup or an unexpected CSS class.
+    function pillClass(cat, bookable) {
+      var cls = "pill";
+      if (typeof cat === "string" && /^[a-z_]+$/.test(cat)) cls += " " + cat;
+      if (bookable) cls += " book";
+      return cls;
+    }
     DATA.forEach(function (d) {
       if (typeof d.lat !== "number" || typeof d.lng !== "number") return;
       var icon = L.divIcon({
         className: "pin",
-        html: '<div class="pill">' + (d.bookable ? "📅 " : "") + esc(d.label) + "</div>",
+        html: '<div class="' + pillClass(d.cat, d.bookable) + '">' + (d.bookable ? "📅 " : "") + esc(d.label) + "</div>",
         iconSize: [0, 0]
       });
       var m = L.marker([d.lat, d.lng], { icon: icon });
@@ -249,7 +270,7 @@ export function buildMapHtml(markers: MapMarker[], theme: MapTheme): string {
             })(c.lat, c.lng);
           } else {
             var inner = c.label
-              ? '<div class="pill">' + (c.bookable ? "📅 " : "") + esc(c.label) + "</div>"
+              ? '<div class="' + pillClass(c.cat, c.bookable) + '">' + (c.bookable ? "📅 " : "") + esc(c.label) + "</div>"
               : '<div class="sdot"></div>';
             marker = L.marker([c.lat, c.lng], {
               icon: L.divIcon({
