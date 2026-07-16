@@ -1579,6 +1579,13 @@ components:
         notes:
           type: string
           nullable: true
+        owner_user_id:
+          type: string
+          nullable: true
+          description: >-
+            FI phase 2 — the bank's own marketplace account that owns this
+            intermediary (null = legacy admin-only row). Linking it enables the
+            automatic hand-off of forwarded requests to the bank's people.
         is_active:
           type: boolean
         created_at:
@@ -7427,6 +7434,14 @@ paths:
                   nullable: true
                 is_active:
                   type: boolean
+                owner_user_id:
+                  type: string
+                  format: uuid
+                  nullable: true
+                  description: >-
+                    FI phase 2 — link (or null to unlink) the bank's own
+                    marketplace account; enables the automatic hand-off of
+                    forwarded requests to the bank's people.
       responses:
         "200":
           description: Updated intermediary

@@ -139,6 +139,7 @@ export async function updateFinancingIntermediaryHandler(req: Request, res: Resp
       contactPhone: input.contact_phone,
       notes: input.notes,
       isActive: input.is_active,
+      ownerUserId: input.owner_user_id,
       adminUserId: req.dbUserId!,
     });
     return res.json(successResponse(validateResponse(FinancingIntermediarySchema, result)));

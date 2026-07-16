@@ -45,6 +45,8 @@ export interface FinancingIntermediaryRow {
   contact_email: string | null;
   contact_phone: string | null;
   notes: string | null;
+  /** FI phase 2 — the bank's own marketplace account (null = admin-only row). */
+  owner_user_id: string | null;
   is_active: boolean;
   created_at: string | null;
 }
@@ -389,6 +391,7 @@ function mapIntermediary(r: {
   contactEmail: string | null;
   contactPhone: string | null;
   notes: string | null;
+  ownerUserId: string | null;
   isActive: boolean | null;
   createdAt: Date | null;
 }): FinancingIntermediaryRow {
@@ -398,6 +401,7 @@ function mapIntermediary(r: {
     contact_email: r.contactEmail,
     contact_phone: r.contactPhone,
     notes: r.notes,
+    owner_user_id: r.ownerUserId,
     is_active: r.isActive ?? true,
     created_at: r.createdAt ? r.createdAt.toISOString() : null,
   };
@@ -409,6 +413,7 @@ const intermediarySelection = {
   contactEmail: financingIntermediaries.contactEmail,
   contactPhone: financingIntermediaries.contactPhone,
   notes: financingIntermediaries.notes,
+  ownerUserId: financingIntermediaries.ownerUserId,
   isActive: financingIntermediaries.isActive,
   createdAt: financingIntermediaries.createdAt,
 } as const;
@@ -456,6 +461,10 @@ export async function updateIntermediary(params: {
   contactPhone?: string | null;
   notes?: string | null;
   isActive?: boolean;
+  // FI phase 2: link (or unlink with null) the bank's own marketplace account
+  // to this intermediary — this is what turns forwarded requests into an
+  // auto-handoff to the bank's people instead of an admin-only CRM row.
+  ownerUserId?: string | null;
   adminUserId: string;
 }): Promise<FinancingIntermediaryRow> {
   const set: Partial<typeof financingIntermediaries.$inferInsert> = {
@@ -466,6 +475,19 @@ export async function updateIntermediary(params: {
   if (params.contactPhone !== undefined) set.contactPhone = params.contactPhone;
   if (params.notes !== undefined) set.notes = params.notes;
   if (params.isActive !== undefined) set.isActive = params.isActive;
+  if (params.ownerUserId !== undefined) {
+    if (params.ownerUserId) {
+      const [owner] = await db
+        .select({ id: users.id })
+        .from(users)
+        .where(eq(users.id, params.ownerUserId))
+        .limit(1);
+      if (!owner) {
+        throw Object.assign(new Error("Owner user not found"), { code: "NOT_FOUND" });
+      }
+    }
+    set.ownerUserId = params.ownerUserId;
+  }
 
   const [row] = await db
     .update(financingIntermediaries)

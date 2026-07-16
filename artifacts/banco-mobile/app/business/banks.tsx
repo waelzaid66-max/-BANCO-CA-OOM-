@@ -1,10 +1,18 @@
 // Banks & Financiers portal — financial institutions hub.
 // Trust-blue identity: the ONE section outside BANCO's red family, in BANKS_ACCENT.
 import { Feather, MaterialCommunityIcons } from "@/components/icons";
+import {
+  useGetInstitutionInbox,
+  getGetInstitutionInboxQueryKey,
+  useUpdateInstitutionRequest,
+  type FinancingRequest,
+} from "@workspace/api-client-react";
+import { useQueryClient } from "@tanstack/react-query";
 import { LinearGradient } from "expo-linear-gradient";
 import { router } from "expo-router";
 import React from "react";
 import {
+  ActivityIndicator,
   Platform,
   Pressable,
   ScrollView,
@@ -53,6 +61,197 @@ const PRODUCTS: Product[] = [
     descKey: "business.banks.personalLoanDesc",
   },
 ];
+
+/**
+ * FI phase 2 — the bank's own inbox, rendered ONLY for institution members
+ * (the owning FI account or an employee seat). Everyone else gets a 403 from
+ * the API and sees the unchanged public hub — no flicker, no error banner.
+ * Requests here are exclusively the ones Banco forwarded after its risk
+ * review; the bank marks them contacted / closed as it works them.
+ */
+function InstitutionInboxSection() {
+  const colors = useColors();
+  const { t, isRTL } = useI18n();
+  const { isSignedIn } = useAuth();
+  const queryClient = useQueryClient();
+  const rowDir = isRTL ? "row-reverse" : "row";
+  const textAlign: "left" | "right" = isRTL ? "right" : "left";
+
+  const inbox = useGetInstitutionInbox(
+    { limit: 30 },
+    {
+      query: {
+        queryKey: getGetInstitutionInboxQueryKey({ limit: 30 }),
+        enabled: !!isSignedIn,
+        // 403 = simply not institution staff — never retry-spam it.
+        retry: false,
+        refetchInterval: 30000,
+        refetchOnWindowFocus: true,
+      },
+    },
+  );
+
+  const { mutate: updateRequest, isPending } = useUpdateInstitutionRequest();
+  const [pendingLead, setPendingLead] = React.useState<string | null>(null);
+
+  const transition = (leadId: string, status: "contacted" | "closed") => {
+    setPendingLead(leadId);
+    updateRequest(
+      { leadId, data: { status } },
+      {
+        onSettled: () => {
+          setPendingLead(null);
+          queryClient.invalidateQueries({
+            queryKey: getGetInstitutionInboxQueryKey({ limit: 30 }),
+          });
+        },
+      },
+    );
+  };
+
+  // Not signed in, still loading, or not a member (403/any error) → nothing.
+  const data = inbox.data?.data;
+  if (!isSignedIn || inbox.isLoading || inbox.isError || !data) return null;
+
+  const { membership, items } = data;
+
+  const statusLabel = (s: FinancingRequest["status"]) =>
+    t(`business.banks.inboxStatus.${s}`);
+  const statusTint = (s: FinancingRequest["status"]) =>
+    s === "forwarded" ? BLUE : s === "contacted" ? "#0E9F6E" : colors.mutedForeground;
+
+  return (
+    <View style={styles.inboxWrap} testID="banks-inbox">
+      {/* Membership strip — who you are inside the institution */}
+      <View
+        style={[
+          styles.inboxMember,
+          { backgroundColor: BLUE_BG, borderColor: BLUE_BORDER, flexDirection: rowDir },
+        ]}
+      >
+        <MaterialCommunityIcons name="bank-check" size={20} color={BLUE} />
+        <View style={{ flex: 1 }}>
+          <AppText style={[styles.inboxMemberName, { color: colors.foreground, textAlign }]}>
+            {membership.intermediary_name}
+          </AppText>
+          <AppText style={[styles.inboxMemberRole, { color: colors.mutedForeground, textAlign }]}>
+            {t(`business.banks.inboxRole.${membership.role}`)}
+          </AppText>
+        </View>
+        <View style={[styles.inboxCountPill, { backgroundColor: BLUE }]}>
+          <AppText style={styles.inboxCountText}>{items.length}</AppText>
+        </View>
+      </View>
+
+      <AppText style={[styles.sectionTitle, { color: colors.foreground, textAlign }]}>
+        {t("business.banks.inboxTitle")}
+      </AppText>
+
+      {items.length === 0 ? (
+        <AppText style={[styles.inboxEmpty, { color: colors.mutedForeground, textAlign }]}>
+          {t("business.banks.inboxEmpty")}
+        </AppText>
+      ) : (
+        items.map((r) => {
+          // Generated fields are optional; a row without its lead id is
+          // unactionable — skip it rather than render dead buttons.
+          const leadId = r.lead_id;
+          if (!leadId) return null;
+          const busy = isPending && pendingLead === leadId;
+          return (
+            <View
+              key={leadId}
+              style={[
+                styles.inboxCard,
+                { backgroundColor: colors.card, borderColor: colors.border },
+              ]}
+              testID={`banks-inbox-${leadId}`}
+            >
+              <View style={[styles.inboxCardTop, { flexDirection: rowDir }]}>
+                <AppText
+                  style={[styles.inboxListing, { color: colors.foreground, textAlign }]}
+                  numberOfLines={1}
+                >
+                  {r.listing_title}
+                </AppText>
+                <View
+                  style={[styles.inboxStatus, { backgroundColor: statusTint(r.status) + "22" }]}
+                >
+                  <AppText style={[styles.inboxStatusText, { color: statusTint(r.status) }]}>
+                    {statusLabel(r.status)}
+                  </AppText>
+                </View>
+              </View>
+
+              <View style={[styles.inboxRow, { flexDirection: rowDir }]}>
+                <Feather name="user" size={13} color={colors.mutedForeground} />
+                <AppText style={[styles.inboxMeta, { color: colors.mutedForeground }]}>
+                  {r.buyer_name ?? "—"}
+                  {r.buyer_phone ? ` · ${r.buyer_phone}` : ""}
+                </AppText>
+              </View>
+
+              {(r.down_payment || r.monthly_payment) && (
+                <View style={[styles.inboxRow, { flexDirection: rowDir }]}>
+                  <Feather name="credit-card" size={13} color={colors.mutedForeground} />
+                  <AppText style={[styles.inboxMeta, { color: colors.mutedForeground }]}>
+                    {r.down_payment
+                      ? `${t("business.banks.inboxDown")} ${r.down_payment}`
+                      : ""}
+                    {r.down_payment && r.monthly_payment ? " · " : ""}
+                    {r.monthly_payment
+                      ? `${t("business.banks.inboxMonthly")} ${r.monthly_payment}`
+                      : ""}
+                    {r.duration_months
+                      ? ` · ${r.duration_months} ${t("business.banks.inboxMonths")}`
+                      : ""}
+                  </AppText>
+                </View>
+              )}
+
+              {r.status !== "closed" && r.status !== "rejected" && (
+                <View style={[styles.inboxActions, { flexDirection: rowDir }]}>
+                  {r.status === "forwarded" && (
+                    <Pressable
+                      onPress={() => transition(leadId, "contacted")}
+                      disabled={busy}
+                      style={[styles.inboxBtn, { backgroundColor: BLUE }]}
+                      testID={`banks-contacted-${leadId}`}
+                    >
+                      {busy ? (
+                        <ActivityIndicator size="small" color="#FFFFFF" />
+                      ) : (
+                        <AppText style={styles.inboxBtnText}>
+                          {t("business.banks.inboxContacted")}
+                        </AppText>
+                      )}
+                    </Pressable>
+                  )}
+                  {r.status === "contacted" && (
+                    <Pressable
+                      onPress={() => transition(leadId, "closed")}
+                      disabled={busy}
+                      style={[styles.inboxBtn, styles.inboxBtnOutline, { borderColor: BLUE }]}
+                      testID={`banks-close-${leadId}`}
+                    >
+                      {busy ? (
+                        <ActivityIndicator size="small" color={BLUE} />
+                      ) : (
+                        <AppText style={[styles.inboxBtnText, { color: BLUE }]}>
+                          {t("business.banks.inboxClose")}
+                        </AppText>
+                      )}
+                    </Pressable>
+                  )}
+                </View>
+              )}
+            </View>
+          );
+        })
+      )}
+    </View>
+  );
+}
 
 export default function BanksScreen() {
   const colors = useColors();
@@ -120,6 +319,9 @@ export default function BanksScreen() {
             {t("business.banks.subtitle")}
           </AppText>
         </LinearGradient>
+
+        {/* FI phase 2 — the bank's own inbox (members only; hidden otherwise) */}
+        <InstitutionInboxSection />
 
         {/* Products section */}
         <AppText
@@ -384,4 +586,61 @@ const styles = StyleSheet.create({
     fontFamily: "Inter_400Regular",
     lineHeight: 18,
   },
+  /* ── FI phase 2: institution inbox ── */
+  inboxWrap: { marginTop: 4 },
+  inboxMember: {
+    alignItems: "center",
+    gap: 10,
+    marginHorizontal: 16,
+    marginTop: 14,
+    paddingHorizontal: 14,
+    paddingVertical: 12,
+    borderRadius: 14,
+    borderWidth: 1,
+  },
+  inboxMemberName: { fontSize: 15, fontFamily: "Inter_700Bold" },
+  inboxMemberRole: { fontSize: 12, fontFamily: "Inter_400Regular", marginTop: 1 },
+  inboxCountPill: {
+    minWidth: 26,
+    height: 26,
+    borderRadius: 13,
+    alignItems: "center",
+    justifyContent: "center",
+    paddingHorizontal: 8,
+  },
+  inboxCountText: { color: "#FFFFFF", fontSize: 13, fontFamily: "Inter_700Bold" },
+  inboxEmpty: {
+    fontSize: 13,
+    fontFamily: "Inter_400Regular",
+    marginHorizontal: 16,
+    marginTop: 4,
+  },
+  inboxCard: {
+    marginHorizontal: 16,
+    marginTop: 10,
+    padding: 13,
+    borderRadius: 14,
+    borderWidth: 1,
+    gap: 7,
+  },
+  inboxCardTop: { alignItems: "center", justifyContent: "space-between", gap: 8 },
+  inboxListing: { flex: 1, fontSize: 14.5, fontFamily: "Inter_600SemiBold" },
+  inboxStatus: {
+    paddingHorizontal: 9,
+    paddingVertical: 4,
+    borderRadius: 10,
+  },
+  inboxStatusText: { fontSize: 11.5, fontFamily: "Inter_600SemiBold" },
+  inboxRow: { alignItems: "center", gap: 6 },
+  inboxMeta: { fontSize: 12.5, fontFamily: "Inter_400Regular", flexShrink: 1 },
+  inboxActions: { gap: 8, marginTop: 3 },
+  inboxBtn: {
+    paddingHorizontal: 16,
+    height: 36,
+    borderRadius: 10,
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  inboxBtnOutline: { backgroundColor: "transparent", borderWidth: 1.5 },
+  inboxBtnText: { color: "#FFFFFF", fontSize: 13, fontFamily: "Inter_600SemiBold" },
 });

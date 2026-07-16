@@ -3277,6 +3277,7 @@ export const GetFinancingIntermediariesResponse = zod.object({
   "contact_email": zod.string().nullish(),
   "contact_phone": zod.string().nullish(),
   "notes": zod.string().nullish(),
+  "owner_user_id": zod.string().nullish().describe('FI phase 2 — the bank\'s own marketplace account that owns this intermediary (null = legacy admin-only row). Linking it enables the automatic hand-off of forwarded requests to the bank\'s people.'),
   "is_active": zod.boolean().optional(),
   "created_at": zod.string().nullish()
 })).optional(),
@@ -3309,6 +3310,7 @@ export const CreateFinancingIntermediaryResponse = zod.object({
   "contact_email": zod.string().nullish(),
   "contact_phone": zod.string().nullish(),
   "notes": zod.string().nullish(),
+  "owner_user_id": zod.string().nullish().describe('FI phase 2 — the bank\'s own marketplace account that owns this intermediary (null = legacy admin-only row). Linking it enables the automatic hand-off of forwarded requests to the bank\'s people.'),
   "is_active": zod.boolean().optional(),
   "created_at": zod.string().nullish()
 }).optional(),
@@ -3331,7 +3333,8 @@ export const UpdateFinancingIntermediaryBody = zod.object({
   "contact_email": zod.string().nullish(),
   "contact_phone": zod.string().nullish(),
   "notes": zod.string().nullish(),
-  "is_active": zod.boolean().optional()
+  "is_active": zod.boolean().optional(),
+  "owner_user_id": zod.string().uuid().nullish().describe('FI phase 2 — link (or null to unlink) the bank\'s own marketplace account; enables the automatic hand-off of forwarded requests to the bank\'s people.')
 })
 
 export const UpdateFinancingIntermediaryResponse = zod.object({
@@ -3341,6 +3344,7 @@ export const UpdateFinancingIntermediaryResponse = zod.object({
   "contact_email": zod.string().nullish(),
   "contact_phone": zod.string().nullish(),
   "notes": zod.string().nullish(),
+  "owner_user_id": zod.string().nullish().describe('FI phase 2 — the bank\'s own marketplace account that owns this intermediary (null = legacy admin-only row). Linking it enables the automatic hand-off of forwarded requests to the bank\'s people.'),
   "is_active": zod.boolean().optional(),
   "created_at": zod.string().nullish()
 }).optional(),

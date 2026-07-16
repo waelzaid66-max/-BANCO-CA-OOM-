@@ -1871,6 +1871,8 @@ export const UpdateFinancingIntermediarySchema = z
     contact_phone: z.string().max(40).nullable().optional(),
     notes: z.string().max(2000).nullable().optional(),
     is_active: z.boolean().optional(),
+    // FI phase 2: link/unlink the bank's own account (enables auto-handoff).
+    owner_user_id: z.string().uuid().nullable().optional(),
   })
   .refine((v) => Object.keys(v).length > 0, {
     message: "At least one field must be provided",
@@ -1883,6 +1885,8 @@ export const FinancingIntermediarySchema = z
     contact_email: z.string().nullable(),
     contact_phone: z.string().nullable(),
     notes: z.string().nullable(),
+    // FI phase 2 — the bank's own account (null = legacy admin-only row).
+    owner_user_id: z.string().nullable(),
     is_active: z.boolean(),
     created_at: z.string().nullable(),
   })

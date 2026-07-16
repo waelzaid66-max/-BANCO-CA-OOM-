@@ -1132,6 +1132,8 @@ export interface FinancingIntermediary {
   contact_email?: string | null;
   contact_phone?: string | null;
   notes?: string | null;
+  /** FI phase 2 — the bank's own marketplace account that owns this intermediary (null = legacy admin-only row). Linking it enables the automatic hand-off of forwarded requests to the bank's people. */
+  owner_user_id?: string | null;
   is_active?: boolean;
   created_at?: string | null;
 }
@@ -4364,6 +4366,8 @@ export type UpdateFinancingIntermediaryBody = {
   contact_phone?: string | null;
   notes?: string | null;
   is_active?: boolean;
+  /** FI phase 2 — link (or null to unlink) the bank's own marketplace account; enables the automatic hand-off of forwarded requests to the bank's people. */
+  owner_user_id?: string | null;
 };
 
 export type UpdateFinancingIntermediary200 = {
