@@ -169,7 +169,9 @@ export async function createBooking(
       type: "booking",
       title: "New booking request",
       body: `${nights} night${nights === 1 ? "" : "s"} · ${checkIn} → ${checkOut} for "${row.title}"`,
-      data: { listing_id: listingId, booking_id: b.id },
+      // role tells the client which SIDE of the bookings inbox to open — this
+      // "new request" ping goes to the HOST.
+      data: { listing_id: listingId, booking_id: b.id, role: "host" },
     });
   });
 
@@ -331,7 +333,13 @@ export async function updateBookingStatus(
         type: "booking",
         title: notify.title,
         body: notify.body,
-        data: { listing_id: updated.listingId, booking_id: updated.id },
+        // Host actions (confirm/decline) notify the GUEST; a guest cancel
+        // notifies the HOST — role opens the right side of the inbox on tap.
+        data: {
+          listing_id: updated.listingId,
+          booking_id: updated.id,
+          role: isHostAction ? "guest" : "host",
+        },
       });
     });
   }

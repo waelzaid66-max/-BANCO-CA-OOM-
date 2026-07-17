@@ -43,7 +43,13 @@ export function routeForNotification(
   // A new booking request → the host's booking inbox (not the listing), so the
   // host lands right where they confirm/reject.
   if (type === "booking") {
-    return { pathname: "/bookings", params: { role: "host" } } as Href;
+    // The server stamps which SIDE this booking ping belongs to (a guest's
+    // "confirmed" must open their trips, not the hosting inbox). Old
+    // notifications without the hint keep the host default.
+    return {
+      pathname: "/bookings",
+      params: { role: d.role === "guest" ? "guest" : "host" },
+    } as Href;
   }
 
   if (
