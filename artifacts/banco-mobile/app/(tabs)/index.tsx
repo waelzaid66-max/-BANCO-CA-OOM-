@@ -12,7 +12,8 @@ import {
 } from "@workspace/api-client-react";
 import { useUser } from "@clerk/expo";
 import * as Haptics from "expo-haptics";
-import { router, type Href } from "expo-router";
+import type { BottomTabNavigationProp } from "@react-navigation/bottom-tabs";
+import { router, useNavigation, type Href } from "expo-router";
 import { Image } from "expo-image";
 import { FlashList, FlashListRef, ViewToken } from "@shopify/flash-list";
 import { BancoLogo } from "@/components/BancoLogo";
@@ -594,6 +595,28 @@ export default function FeedScreen() {
     setRefreshing(false);
   };
 
+  // Press the Home tab again while already on Home → jump to top + reload the
+  // feed (the expected "re-tap to refresh" gesture; a state-batching rewrite
+  // had dropped it). The jump is deliberately NOT animated: an animated scroll
+  // would race the engine bar's expand animation and the refresh re-render —
+  // three simultaneous motions read as the reload "scramble". A ref holds the
+  // latest handler so the listener subscribes once yet runs current logic; it
+  // only fires when Home is already focused, so navigating TO Home stays plain.
+  const navigation =
+    useNavigation<BottomTabNavigationProp<Record<string, object | undefined>>>();
+  const retapReloadRef = useRef<() => void>(() => {});
+  retapReloadRef.current = () => {
+    listRef.current?.scrollToOffset({ offset: 0, animated: false });
+    setCompact(false);
+    void handleRefresh();
+  };
+  useEffect(() => {
+    const unsub = navigation.addListener("tabPress", () => {
+      if (navigation.isFocused()) retapReloadRef.current();
+    });
+    return unsub;
+  }, [navigation]);
+
   const handleLoadMore = async () => {
     if (!hasNext || loadingMore || loading) return;
     setLoadingMore(true);
@@ -824,7 +847,14 @@ export default function FeedScreen() {
     );
   };
 
-  const ListHeader = useCallback(() => {
+  // MEMOIZED ELEMENT, deliberately NOT a component type. Passing an inline
+  // useCallback component as ListHeaderComponent gives React a brand-new
+  // component TYPE whenever any dep changes — during a reload the deps change
+  // several times in sequence (feed → rails → recommendations), so the whole
+  // header subtree unmounted/remounted repeatedly: every rail lost its scroll
+  // state, images flashed back in, heights re-measured — the reported
+  // "scrambles then recovers in seconds". An element reconciles in place.
+  const listHeaderElement = useMemo(() => {
     if (activeGroup) return renderIndustrialBridge();
     if (!showRails) return null;
     return (
@@ -1199,7 +1229,7 @@ export default function FeedScreen() {
           scrollEventThrottle={16}
           onViewableItemsChanged={handleViewableItemsChanged}
           viewabilityConfig={viewabilityConfig}
-          ListHeaderComponent={ListHeader}
+          ListHeaderComponent={listHeaderElement}
           refreshControl={
             <RefreshControl
               refreshing={refreshing}
