@@ -60,6 +60,7 @@ import { SellerRatingBar, SellerReviews } from "@/components/SellerReviews";
 import { SkeletonCard } from "@/components/SkeletonCard";
 import { SmartAssetCard } from "@/components/SmartAssetCard";
 import { formatSpecs } from "@/constants/listingSpecs";
+import { RENTAL_TERMS } from "@/constants/listingCreateTaxonomy";
 import { useI18n } from "@/context/LanguageContext";
 import { useSession } from "@/context/SessionContext";
 import { useSound } from "@/context/SoundContext";
@@ -725,12 +726,21 @@ export default function ListingDetailScreen() {
   // Role separation, made visible: only furnished/daily real-estate is bookable
   // (the hotel mode). Long-term rent and sale keep the plain contact-owner flow.
   // Owners and sold listings never show the guest booking widget.
+  const rentalTermValue =
+    listing.category === "real_estate"
+      ? ((listing.specs as Record<string, unknown> | undefined)?.rental_term as
+          | string
+          | undefined)
+      : undefined;
   const isBookable =
-    listing.category === "real_estate" &&
-    (listing.specs as Record<string, unknown> | undefined)?.rental_term ===
-      "furnished_daily" &&
-    !isOwner &&
-    !isSold;
+    rentalTermValue === "furnished_daily" && !isOwner && !isSold;
+
+  // The rental regime, made explicit for the tenant: which legal/duration
+  // system this rent falls under, and whether it's a bookable stay vs a
+  // contact-the-owner lease. Only for rent listings that carry a known term.
+  const rentalTermDef = rentalTermValue
+    ? RENTAL_TERMS.find((r) => r.value === rentalTermValue)
+    : undefined;
 
   // Distinct real monthly amounts from the listing's plans — the buyer picks a
   // target budget; we never fabricate figures.
@@ -1067,6 +1077,40 @@ export default function ListingDetailScreen() {
               </Pressable>
             ) : null}
           </View>
+
+          {/* Rental-system chip: the tenant sees the regime instantly — a
+              bookable furnished/daily stay reads emerald, a long-term lease
+              reads in the section identity. */}
+          {rentalTermDef ? (
+            <View style={[styles.rentalTermRow, { flexDirection: rowDir }]}>
+              <View
+                style={[
+                  styles.rentalTermChip,
+                  {
+                    backgroundColor: isBookable
+                      ? "rgba(14,159,110,0.14)"
+                      : colors.secondary,
+                    borderColor: isBookable ? "#0E9F6E" : colors.border,
+                    flexDirection: rowDir,
+                  },
+                ]}
+              >
+                <Ionicons
+                  name={isBookable ? "calendar-outline" : "document-text-outline"}
+                  size={14}
+                  color={isBookable ? "#0E9F6E" : colors.mutedForeground}
+                />
+                <AppText
+                  style={[
+                    styles.rentalTermText,
+                    { color: isBookable ? "#0E9F6E" : colors.foreground },
+                  ]}
+                >
+                  {isRTL ? rentalTermDef.ar : rentalTermDef.en}
+                </AppText>
+              </View>
+            </View>
+          ) : null}
 
           {isBookable ? (
             <View ref={bookingWrapRef} collapsable={false}>
@@ -2857,6 +2901,22 @@ const styles = StyleSheet.create({
     flexShrink: 1,
     fontSize: 14,
     fontFamily: "Inter_400Regular",
+  },
+  rentalTermRow: {
+    alignItems: "center",
+    marginTop: 10,
+  },
+  rentalTermChip: {
+    alignItems: "center",
+    gap: 6,
+    paddingHorizontal: 11,
+    paddingVertical: 6,
+    borderRadius: 20,
+    borderWidth: 1,
+  },
+  rentalTermText: {
+    fontSize: 12.5,
+    fontFamily: "Inter_600SemiBold",
   },
   mapsBtn: {
     marginStart: "auto",
