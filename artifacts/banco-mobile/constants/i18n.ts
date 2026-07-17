@@ -93,6 +93,16 @@ const en = {
   },
   messages: {
     title: "Messages",
+    offer: {
+      button: "Make a price offer",
+      title: "Make a price offer",
+      placeholder: "Amount in EGP",
+      send: "Send offer",
+      accept: "Accept offer ✓",
+      decline: "Decline",
+      acceptBody: "✅ تم قبول العرض — نكمل الاتفاق؟ · Offer accepted — shall we proceed?",
+      declineBody: "❌ نعتذر، العرض غير مناسب · Sorry, the offer doesn't work for us",
+    },
     signInTitle: "Sign in to view messages",
     signInHint: "Your chats with dealers and buyers will appear here.",
     signInCta: "Go to Profile",
@@ -2000,6 +2010,16 @@ const ar: typeof en = {
   },
   messages: {
     title: "الرسائل",
+    offer: {
+      button: "قدّم عرض سعر",
+      title: "قدّم عرض سعر",
+      placeholder: "المبلغ بالجنيه",
+      send: "إرسال العرض",
+      accept: "قبول العرض ✓",
+      decline: "رفض",
+      acceptBody: "✅ تم قبول العرض — نكمل الاتفاق؟ · Offer accepted — shall we proceed?",
+      declineBody: "❌ نعتذر، العرض غير مناسب · Sorry, the offer doesn't work for us",
+    },
     signInTitle: "سجّل الدخول لعرض الرسائل",
     signInHint: "ستظهر محادثاتك مع التجار والمشترين هنا.",
     signInCta: "الذهاب إلى الحساب",

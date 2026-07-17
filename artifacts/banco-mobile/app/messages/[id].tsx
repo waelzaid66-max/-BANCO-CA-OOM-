@@ -42,6 +42,17 @@ import { uploadImageAsset } from "@/lib/upload";
 // REACTION_EMOJIS (ConversationService) so toggles aren't rejected.
 const REACTION_EMOJIS = ["❤️", "👍", "😂", "😮", "😢", "🔥"];
 
+// ── Chat-native price negotiation ────────────────────────────────────────────
+// An offer is a STRUCTURED TEXT message (no schema change, works with every
+// existing pipeline: optimistic send, replies, notifications, search). The
+// renderer recognizes the prefix and gives the OTHER party one-tap Accept /
+// Decline quick replies that quote the offer — negotiation the way this market
+// actually haggles, kept honest: it's all real messages in the thread.
+const OFFER_PREFIX = "💰 عرض سعر · Offer: ";
+const offerBody = (amount: string) => `${OFFER_PREFIX}${amount} EGP`;
+const isOfferBody = (b: string | null | undefined): boolean =>
+  !!b && b.startsWith(OFFER_PREFIX);
+
 // Optimistic, client-only message that renders instantly while the send is in
 // flight. It carries a delivery status so the bubble can show sending/failed and
 // offer a tap-to-retry, then it is dropped once the server echo arrives.
@@ -211,6 +222,35 @@ export default function ThreadScreen() {
     setPending((p) => [...p, { tempId, body, status: "sending" }]);
     scrollToEnd(true);
     void deliver(tempId, { body, ...(replyId ? { reply_to_id: replyId } : {}) });
+  };
+
+  // Negotiation: compose + send a structured price offer (listing chats only).
+  const [offerOpen, setOfferOpen] = useState(false);
+  const [offerAmount, setOfferAmount] = useState("");
+  const sendOffer = () => {
+    const n = Number(offerAmount.replace(/[^\d]/g, ""));
+    if (!conversationId || !Number.isFinite(n) || n <= 0) return;
+    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+    setOfferOpen(false);
+    setOfferAmount("");
+    const body = offerBody(n.toLocaleString("en-EG"));
+    const tempId = `t-${Date.now()}`;
+    setPending((p) => [...p, { tempId, body, status: "sending" }]);
+    scrollToEnd(true);
+    void deliver(tempId, { body });
+  };
+  // One-tap answer to an incoming offer — a reply QUOTING the offer, so the
+  // thread reads unambiguously even after counter-offers.
+  const answerOffer = (offerMsgId: string, accept: boolean) => {
+    if (!conversationId) return;
+    Haptics.selectionAsync();
+    const body = accept
+      ? t("messages.offer.acceptBody")
+      : t("messages.offer.declineBody");
+    const tempId = `t-${Date.now()}`;
+    setPending((p) => [...p, { tempId, body, status: "sending" }]);
+    scrollToEnd(true);
+    void deliver(tempId, { body, reply_to_id: offerMsgId });
   };
 
   // Toggle an emoji reaction on a message, then refetch so the chips update.
@@ -469,6 +509,35 @@ export default function ThreadScreen() {
           >
             {body}
           </AppText>
+        ) : null}
+        {/* Negotiation quick replies — only on a delivered offer from the
+            OTHER party: one tap answers by quoting the offer. */}
+        {server && !mine && isOfferBody(body) ? (
+          <View
+            style={[
+              styles.offerActions,
+              { flexDirection: isRTL ? "row-reverse" : "row" },
+            ]}
+          >
+            <Pressable
+              onPress={() => answerOffer(server.id, true)}
+              style={[styles.offerBtn, { backgroundColor: "#0E9F6E" }]}
+              testID={`offer-accept-${server.id}`}
+            >
+              <AppText style={styles.offerBtnText}>
+                {t("messages.offer.accept")}
+              </AppText>
+            </Pressable>
+            <Pressable
+              onPress={() => answerOffer(server.id, false)}
+              style={[styles.offerBtn, { backgroundColor: colors.secondary }]}
+              testID={`offer-decline-${server.id}`}
+            >
+              <AppText style={[styles.offerBtnText, { color: colors.foreground }]}>
+                {t("messages.offer.decline")}
+              </AppText>
+            </Pressable>
+          </View>
         ) : null}
         <View
           style={[
@@ -764,6 +833,16 @@ export default function ThreadScreen() {
               <Feather name="tag" size={19} color={colors.mutedForeground} />
             </Pressable>
           ) : null}
+          {params.listingId ? (
+            <Pressable
+              onPress={() => setOfferOpen(true)}
+              style={[styles.attachBtn, { backgroundColor: colors.card, borderColor: colors.border }]}
+              testID="message-offer"
+              accessibilityLabel={t("messages.offer.button")}
+            >
+              <Feather name="tag" size={20} color={colors.primary} />
+            </Pressable>
+          ) : null}
           <Pressable
             onPress={handleAttachImage}
             disabled={uploading}
@@ -919,6 +998,71 @@ export default function ThreadScreen() {
             <Feather name="x" size={26} color="#fff" />
           </Pressable>
         </Pressable>
+      </Modal>
+
+      {/* Negotiation — compose a structured price offer. */}
+      <Modal
+        visible={offerOpen}
+        transparent
+        animationType="fade"
+        onRequestClose={() => setOfferOpen(false)}
+      >
+        <View style={styles.offerBackdrop}>
+          <Pressable
+            style={StyleSheet.absoluteFillObject}
+            onPress={() => setOfferOpen(false)}
+            accessibilityRole="button"
+          />
+          <View
+            style={[
+              styles.offerSheet,
+              { backgroundColor: colors.card, borderColor: colors.border },
+            ]}
+          >
+            <AppText
+              style={[
+                styles.offerTitle,
+                { color: colors.foreground, textAlign: isRTL ? "right" : "left" },
+              ]}
+            >
+              {t("messages.offer.title")}
+            </AppText>
+            <AppTextInput
+              value={offerAmount}
+              onChangeText={setOfferAmount}
+              placeholder={t("messages.offer.placeholder")}
+              placeholderTextColor={colors.mutedForeground}
+              keyboardType="numeric"
+              autoFocus
+              style={[
+                styles.offerInput,
+                {
+                  backgroundColor: colors.secondary,
+                  color: colors.foreground,
+                  textAlign: isRTL ? "right" : "left",
+                },
+              ]}
+              testID="offer-amount"
+            />
+            <Pressable
+              onPress={sendOffer}
+              disabled={!offerAmount.trim()}
+              style={[
+                styles.offerSend,
+                {
+                  backgroundColor: offerAmount.trim()
+                    ? colors.primary
+                    : colors.secondary,
+                },
+              ]}
+              testID="offer-send"
+            >
+              <AppText style={styles.offerBtnText}>
+                {t("messages.offer.send")}
+              </AppText>
+            </Pressable>
+          </View>
+        </View>
       </Modal>
 
       {/* Long-press action sheet: react with an emoji, or quote-reply. */}
@@ -1225,4 +1369,43 @@ const styles = StyleSheet.create({
     paddingHorizontal: 4,
   },
   sheetActionText: { fontSize: 15, fontFamily: "Inter_500Medium" },
+  /* ── Negotiation (price offers) ── */
+  offerActions: { gap: 8, marginTop: 8 },
+  offerBtn: {
+    paddingHorizontal: 14,
+    height: 32,
+    borderRadius: 9,
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  offerBtnText: { color: "#FFFFFF", fontSize: 13, fontFamily: "Inter_600SemiBold" },
+  offerBackdrop: {
+    flex: 1,
+    backgroundColor: "rgba(0,0,0,0.45)",
+    alignItems: "center",
+    justifyContent: "center",
+    padding: 24,
+  },
+  offerSheet: {
+    width: "100%",
+    maxWidth: 360,
+    borderRadius: 18,
+    borderWidth: 1,
+    padding: 18,
+    gap: 12,
+  },
+  offerTitle: { fontSize: 16, fontFamily: "Inter_700Bold" },
+  offerInput: {
+    borderRadius: 12,
+    paddingHorizontal: 14,
+    paddingVertical: 12,
+    fontSize: 16,
+    fontFamily: "Inter_600SemiBold",
+  },
+  offerSend: {
+    height: 46,
+    borderRadius: 12,
+    alignItems: "center",
+    justifyContent: "center",
+  },
 });
