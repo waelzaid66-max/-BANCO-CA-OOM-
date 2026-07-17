@@ -40,6 +40,9 @@ const ACTIVITIES: {
   { value: "real_estate_developer", icon: "office-building-outline" },
   { value: "factory", icon: "factory" },
   { value: "supplier", icon: "truck-outline" },
+  // FI accounts verify through the same flow — with their OWN activity, so a
+  // bank never has to mislabel itself as a dealer/factory to get verified.
+  { value: "financial_institution", icon: "bank-outline" },
 ];
 
 export default function BusinessOnboardingScreen() {

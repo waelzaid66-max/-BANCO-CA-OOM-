@@ -65,7 +65,12 @@ export interface UpdateUserProfileInput {
   account_type?: "individual" | "dealer" | "company" | "financial_institution";
   phone?: string | null;
   business?: {
-    activity_type: "car_dealer" | "real_estate_developer" | "factory" | "supplier";
+    activity_type:
+      | "car_dealer"
+      | "real_estate_developer"
+      | "factory"
+      | "supplier"
+      | "financial_institution";
     business_name: string;
     trade_name?: string;
     owner_name?: string;
@@ -148,7 +153,16 @@ export async function updateUserProfile(
   // A business signup always hard-maps to a seller role. If the client also
   // sent account_type, the business block wins (it carries the richer intent).
   if (input.business) {
-    if (!input.account_type || input.account_type === "individual") {
+    // Default a business signup to the dealer role — but NEVER downgrade an
+    // account that already holds an elevated role: the onboarding form sends
+    // `business` WITHOUT account_type, and blindly forcing "dealer" here was
+    // silently wiping financial_institution/company the moment they verified.
+    if (
+      (!input.account_type || input.account_type === "individual") &&
+      user.role !== "financial_institution" &&
+      user.role !== "company" &&
+      user.role !== "enterprise"
+    ) {
       patch.role = "dealer";
     }
     patch.companyDetails = {

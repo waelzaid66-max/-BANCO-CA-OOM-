@@ -3510,7 +3510,7 @@ paths:
                   properties:
                     activity_type:
                       type: string
-                      enum: [car_dealer, real_estate_developer, factory, supplier]
+                      enum: [car_dealer, real_estate_developer, factory, supplier, financial_institution]
                     business_name:
                       type: string
                     trade_name:

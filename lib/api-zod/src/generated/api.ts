@@ -85,7 +85,7 @@ export const UpdateMeBody = zod.object({
   "account_type": zod.enum(['individual', 'dealer', 'company', 'financial_institution']).optional().describe('Account type chosen at onboarding. Server is authoritative for the resulting role (individual\/dealer\/company\/financial_institution); a client can never request admin\/enterprise. A financial_institution must still pass verification before its financing features unlock.'),
   "phone": zod.string().nullish(),
   "business": zod.object({
-  "activity_type": zod.enum(['car_dealer', 'real_estate_developer', 'factory', 'supplier']),
+  "activity_type": zod.enum(['car_dealer', 'real_estate_developer', 'factory', 'supplier', 'financial_institution']),
   "business_name": zod.string(),
   "trade_name": zod.string().optional().describe('Optional trade\/brand name (الاسم التجاري) shown publicly; falls back to business_name when omitted.'),
   "owner_name": zod.string().optional().describe('Optional name of the business owner \/ decision-maker, captured for verification.'),

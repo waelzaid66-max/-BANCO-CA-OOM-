@@ -2391,6 +2391,7 @@ export const UpdateMeBodyBusinessActivityType = {
   real_estate_developer: 'real_estate_developer',
   factory: 'factory',
   supplier: 'supplier',
+  financial_institution: 'financial_institution',
 } as const;
 
 /**

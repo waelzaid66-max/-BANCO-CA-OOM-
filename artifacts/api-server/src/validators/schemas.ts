@@ -886,6 +886,9 @@ export const UpdateMeSchema = z
           "real_estate_developer",
           "factory",
           "supplier",
+          // FI: a bank/lender verifying as a business — its own activity, so
+          // it never has to mislabel itself as a dealer/factory to onboard.
+          "financial_institution",
         ]),
         business_name: z.string().trim().min(2).max(120),
         // Optional trade/brand name shown publicly and the owner/decision-maker
