@@ -237,6 +237,9 @@ export async function getFeed(options: {
       trust_score: listings.trustScore,
       is_duplicate: listings.isDuplicate,
       industrial_type: listingAttributes.industrialType,
+      // Origin (local / imported) — drives the "مستورد / Imported" card badge on
+      // industrial + car listings, the key B2B / import-journey signal.
+      origin_type: listingAttributes.originType,
       bumped_at: listings.bumpedAt,
       saves_count: listings.savesCount,
       is_request: listings.isRequest,

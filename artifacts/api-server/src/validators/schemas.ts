@@ -222,6 +222,9 @@ export const FeedItemSchema = z
     best_offer_badge: z.string().nullable(),
     // Additive: industrial sub-type for client-side category grouping.
     industrial_type: z.string().nullable(),
+    // Additive: "imported" when the listing is imported (else null) — drives the
+    // "مستورد / Imported" card badge on industrial + car listings.
+    origin_type: z.string().nullable().optional(),
     // Additive: the listing's main section — lets clients adapt per-section UI
     // (e.g. the save glyph) without re-deriving it from other fields.
     category: z.enum(["car", "real_estate", "industrial"]).nullable().optional(),

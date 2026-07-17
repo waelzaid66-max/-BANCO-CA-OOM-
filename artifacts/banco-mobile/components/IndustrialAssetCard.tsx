@@ -87,6 +87,29 @@ function IndustrialAssetCardComponent({ item, onPress }: Props) {
           </View>
         ) : null}
 
+        {/* Imported — the B2B / supply signal at a glance. */}
+        {item.origin_type === "imported" ? (
+          <View
+            style={[
+              styles.badge,
+              {
+                backgroundColor: colors.primary + "14",
+                borderColor: colors.primary + "33",
+                alignSelf: isRTL ? "flex-end" : "flex-start",
+                flexDirection: rowDir,
+              },
+            ]}
+          >
+            <MaterialCommunityIcons name="earth" size={12} color={colors.primary} />
+            <AppText
+              style={[styles.badgeText, { color: colors.primary }]}
+              numberOfLines={1}
+            >
+              {t("home.engines.import")}
+            </AppText>
+          </View>
+        ) : null}
+
         <View style={[styles.metaRow, { flexDirection: rowDir }]}>
           <Ionicons
             name="location-outline"

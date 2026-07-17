@@ -34,6 +34,10 @@ interface RawListingRow {
   // Additive: rental context from specs — drives the honest price-period suffix.
   offer_type?: string | null;
   rental_term?: string | null;
+  // Additive: origin (local / imported) — drives the "مستورد / Imported" card
+  // badge on industrial + car listings. Optional so row builders that don't
+  // select it degrade gracefully (no badge) instead of failing to compile.
+  origin_type?: string | null;
 }
 
 /**
@@ -116,6 +120,8 @@ export function transformToFeedItem(row: RawListingRow): FeedItem | null {
     coordinates: row.coordinates,
     best_offer_badge: row.best_offer_badge,
     industrial_type: row.industrial_type,
+    // "imported" only — a local listing carries no badge (the default).
+    origin_type: row.origin_type === "imported" ? "imported" : null,
     // The listing's main section, verbatim — powers per-section client UI.
     category: row.category ?? null,
     // Owner-facing surfaces gate Promote on this; public feeds are already

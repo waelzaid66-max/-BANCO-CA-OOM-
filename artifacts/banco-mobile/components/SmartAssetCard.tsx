@@ -185,6 +185,15 @@ function SmartAssetCardComponent({
                   <Text style={styles.urgencyText}>{item.urgency_signal}</Text>
                 </View>
               ) : null}
+              {/* Imported — the at-a-glance import signal (imported cars, etc.). */}
+              {item.origin_type === "imported" ? (
+                <View
+                  style={[styles.importedBadge, { backgroundColor: colors.primary }]}
+                >
+                  <Ionicons name="earth" size={11} color="#FFFFFF" />
+                  <Text style={styles.importedText}>{t("home.engines.import")}</Text>
+                </View>
+              ) : null}
               {/* Bookable (furnished/daily rental) — icon-only so it needs no
                   translation and matches the 📅 map pin. */}
               {item.is_bookable ? (
@@ -377,6 +386,19 @@ const styles = StyleSheet.create({
     borderRadius: 4,
     alignItems: "center",
     justifyContent: "center",
+  },
+  importedBadge: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 3,
+    height: 22,
+    paddingHorizontal: 7,
+    borderRadius: 4,
+  },
+  importedText: {
+    color: "#FFFFFF",
+    fontSize: 10,
+    fontFamily: "Inter_600SemiBold",
   },
   urgencyText: {
     color: "#FFFFFF",

@@ -168,6 +168,8 @@ export interface FeedItem {
   best_offer_badge?: string | null;
   /** Industrial sub-type (factory, warehouse, land, production_line, raw_material, machine) used for client-side category grouping. Null for non-industrial listings. */
   industrial_type?: string | null;
+  /** "imported" when the listing is imported (else null) — drives the "مستورد / Imported" card badge on industrial + car listings. */
+  origin_type?: string | null;
   /** Additive. The listing's main section — lets clients adapt per-section UI (e.g. the save glyph) without re-deriving it. */
   category?: FeedItemCategory;
   /** True when the listing status is "active" (publicly visible and promotable). Lets owner-facing surfaces built on FeedItem (e.g. the profile grid) gate the Promote control without fetching ListingDetail. Null when status is unknown. */

@@ -230,6 +230,10 @@ components:
           type: string
           nullable: true
           description: Industrial sub-type (factory, warehouse, land, production_line, raw_material, machine) used for client-side category grouping. Null for non-industrial listings.
+        origin_type:
+          type: string
+          nullable: true
+          description: '"imported" when the listing is imported (else null) — drives the "مستورد / Imported" card badge on industrial + car listings.'
         category:
           type: string
           enum: [car, real_estate, industrial]

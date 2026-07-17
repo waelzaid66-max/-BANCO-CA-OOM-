@@ -435,6 +435,7 @@ export async function searchListings(
       user_role: users.role,
       quality_score: users.qualityScore,
       industrial_type: listingAttributes.industrialType,
+      origin_type: listingAttributes.originType,
       bumped_at: listings.bumpedAt,
       is_request: listings.isRequest,
     })
@@ -838,6 +839,7 @@ export async function enrichListings(
     views?: number | null;
     clicks?: number | null;
     industrial_type?: string | null;
+    origin_type?: string | null;
     // Additive recency/engagement/kind passthrough → typed onto the enriched row
     // so computeScore (saves/bumped) and the BFF transform (is_request) can read
     // them, and feed/search cursors can key off the effective recency timestamp.
@@ -946,6 +948,7 @@ export async function enrichListings(
       coordinates: coordsByListing.get(row.id) ?? null,
       best_offer_badge: offers.best_offer_badge,
       industrial_type: row.industrial_type ?? null,
+      origin_type: row.origin_type ?? null,
       whatsapp_enabled: whatsappByListing.get(row.id) ?? false,
       offer_type: rentalByListing.get(row.id)?.offer_type ?? null,
       rental_term: rentalByListing.get(row.id)?.rental_term ?? null,

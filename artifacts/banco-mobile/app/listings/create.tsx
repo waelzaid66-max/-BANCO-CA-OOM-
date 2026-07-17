@@ -1048,10 +1048,16 @@ export default function CreateListingScreen() {
         payment_options: paymentOptions,
         is_request: isRequest || undefined,
       };
-      // Cars: persist local-vs-imported via the optional logistics block (the
-      // same origin_type dimension the feed/search expose), nullable otherwise.
-      // Seller-only — a buyer request carries no origin.
-      if (!isRequest && category === "car" && carOrigin) {
+      // Cars + industrial/supply: persist local-vs-imported via the optional
+      // logistics block (the same origin_type dimension the feed/search expose),
+      // nullable otherwise. Imported machinery/materials are a first-class supply
+      // signal, so the option is offered on both sections. Seller-only — a buyer
+      // request carries no origin.
+      if (
+        !isRequest &&
+        (category === "car" || category === "industrial") &&
+        carOrigin
+      ) {
         body.logistics = { origin_type: carOrigin };
       }
 
@@ -1663,7 +1669,7 @@ export default function CreateListingScreen() {
               </Pressable>
             </View>
           )}
-          {category === "car" && (
+          {(category === "car" || category === "industrial") && (
             <View>
               <FieldLabel
                 label={t("create.fields.origin")}
