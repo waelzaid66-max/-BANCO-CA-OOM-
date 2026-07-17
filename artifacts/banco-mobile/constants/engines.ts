@@ -70,6 +70,13 @@ const CAR_ENGINES: EngineDef[] = [
   ALL_ENGINE,
   { key: "new", i18nKey: "home.engines.new", params: { condition: "new" } },
   { key: "used", i18nKey: "home.engines.used", params: { condition: "used" } },
+  // Car Import world — the Discover CTA targets this key; without it the CTA
+  // silently fell back to browse-all (no origin filter applied at all).
+  {
+    key: "import",
+    i18nKey: "home.engines.import",
+    params: { origin_type: "imported" },
+  },
   { key: "bank", i18nKey: "home.engines.bank", params: { payment_plan: "bank" } },
   {
     key: "islamic",
