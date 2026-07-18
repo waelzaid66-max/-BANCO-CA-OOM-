@@ -87,8 +87,10 @@ WEB_PLUG_ENABLED=true
 - [x] Health يعيد `plug: on|off` بدون إسقاط المراقبة  
 - [x] CI Website معزول عن `ci.yml` الموبايل  
 - [x] حزمة Staging pack (Phase 7) — Docker flags + prep audit + smoke  
+- [x] Soft-launch pack (Phase 8) — healthz + قالب إنتاج + checklist  
 - [ ] CDN/دومين staging + أسرار Clerk (OPS — أنت)  
 - [ ] قرار تفعيل LIVE/MARKET على staging بعد smoke  
+- [ ] Soft-launch CDN إنتاج محدود (OPS — بعد staging)  
 
 ---
 

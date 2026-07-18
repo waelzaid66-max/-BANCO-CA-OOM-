@@ -39,6 +39,10 @@ const steps = [
     cmd: "node scripts/website-staging-prep-audit.mjs",
   },
   {
+    label: "soft-launch prep audit",
+    cmd: "node scripts/website-soft-launch-prep-audit.mjs",
+  },
+  {
     label: "eslint website",
     cmd: "pnpm run lint:website",
   },

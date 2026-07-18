@@ -44,6 +44,7 @@ const PATHS = [
   { path: "/robots.txt", label: "robots", kind: "robots" },
   { path: "/sitemap.xml", label: "sitemap", kind: "sitemap" },
   { path: "/api/health", label: "health route", kind: "health" },
+  { path: "/api/healthz", label: "healthz alias", kind: "health" },
   { path: "/maintenance", label: "maintenance page", kind: "maintenance" },
   { path: "/en/maintenance", label: "en maintenance page", kind: "maintenance" },
   { path: "/manifest.webmanifest", label: "manifest", kind: "manifest" },

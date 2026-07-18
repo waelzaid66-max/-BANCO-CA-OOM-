@@ -104,10 +104,11 @@ banco-web   →  middleware أو layout يقرأ:
 
 ### المرحلة 3 — إنتاج محدود (soft launch)
 
-- prod CDN مع flags معطّلة
+- prod CDN مع flags معطّلة — pack: [`WEBSITE-SOFT-LAUNCH-CHECKLIST-AR.md`](./WEBSITE-SOFT-LAUNCH-CHECKLIST-AR.md)
 - EN + AR indexed تدريجياً
-- Uptime على `/` و `/api/healthz` منفصلان
+- Uptime على `/` و `/api/health` **أو** `/api/healthz` (نفس الـ payload)
 - **بدون** admin kill switch حتى المرحلة 4
+- كود Phase 8 على `main`؛ النشر الحي ⏳ OPS
 
 ### المرحلة 4 — تحكم تشغيلي
 
@@ -137,9 +138,9 @@ banco-web   →  middleware أو layout يقرأ:
 ## 5. تحديثات الوثائق المطلوبة
 
 - [x] هذا الملف (`WEBSITE-DELIVERY-ROADMAP-AR.md`)
-- [ ] تحديث `WEBSITE-READINESS-GATES.md` G-W0..G-W2 عند sign-off
-- [ ] تحديث `WEBSITE-MASTER-PLAN-AR.md` §9.2: `NEXT_PUBLIC_API_URL` (ليس `API_BASE_URL`)
-- [ ] `audit/website/README.md` — إزالة «لا تنفيذ حتى sign-off»
+- [x] تحديث `WEBSITE-READINESS-GATES.md` G-W9/G-W10 (كود جاهز؛ staging حي OPS)
+- [ ] تحديث `WEBSITE-MASTER-PLAN-AR.md` §9.2: `NEXT_PUBLIC_API_URL` (ليس `API_BASE_URL`) — اختياري
+- [x] `audit/website/README.md` — فهرس Phases 1–8
 
 ---
 

@@ -33,7 +33,7 @@ export WEB_PLUG_ENABLED=false
 | مسار | السلوك |
 |------|--------|
 | `/` وباقي الصفحات | صفحة صيانة (`/maintenance`) |
-| `/api/health` | **200** مع `"plug":"off"` |
+| `/api/health` و `/api/healthz` | **200** مع `"plug":"off"` |
 | موبايل / API / dealer-os | **بدون تغيير** |
 
 تحقق:

@@ -39,7 +39,13 @@ export function webPlugStatus(): "on" | "off" {
 }
 
 export function isWebPlugExemptPath(pathname: string): boolean {
-  if (pathname === "/api/health" || pathname.startsWith("/api/health/")) {
+  // Keep in sync with isWebHealthPath() in web-health.ts (avoid circular import).
+  if (
+    pathname === "/api/health" ||
+    pathname.startsWith("/api/health/") ||
+    pathname === "/api/healthz" ||
+    pathname.startsWith("/api/healthz/")
+  ) {
     return true;
   }
   if (pathname === "/maintenance" || pathname === "/en/maintenance") {

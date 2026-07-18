@@ -28,6 +28,7 @@ on:
       - "scripts/website-responsive-chrome-audit.mjs"
       - "scripts/website-plug-hardening-audit.mjs"
       - "scripts/website-staging-prep-audit.mjs"
+      - "scripts/website-soft-launch-prep-audit.mjs"
       - "scripts/website-rewrite-config-audit.mjs"
       - "scripts/upload-website-preview.mjs"
       - "deploy/aws/docker-compose.banco-web.yml"
@@ -59,6 +60,7 @@ on:
       - "scripts/website-responsive-chrome-audit.mjs"
       - "scripts/website-plug-hardening-audit.mjs"
       - "scripts/website-staging-prep-audit.mjs"
+      - "scripts/website-soft-launch-prep-audit.mjs"
       - "scripts/website-rewrite-config-audit.mjs"
       - "deploy/aws/docker-compose.banco-web.yml"
       - "deploy/aws/env/**"
@@ -103,6 +105,8 @@ jobs:
         run: node scripts/website-plug-hardening-audit.mjs
       - name: Phase 7 staging prep audit
         run: node scripts/website-staging-prep-audit.mjs
+      - name: Phase 8 soft-launch prep audit
+        run: node scripts/website-soft-launch-prep-audit.mjs
       - name: Share rewrite config audit
         run: node scripts/website-rewrite-config-audit.mjs
       - name: ESLint website surfaces

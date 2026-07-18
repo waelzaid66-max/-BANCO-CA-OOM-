@@ -158,7 +158,8 @@ NEXT_PUBLIC_API_BASE_URL=https://banco-ca-oom.replit.app
 
 **Kill-switch (فصل الويب ≤5 دقائق):** `WEB_PLUG_ENABLED=false` ثم إعادة تشغيل `consumer-web` فقط.  
 تفاصيل: [`audit/website/WEBSITE-PLUG-DETACH-5MIN-AR.md`](../audit/website/WEBSITE-PLUG-DETACH-5MIN-AR.md).  
-ترتيب دمج المكدس: [`audit/website/WEBSITE-STACK-MERGE-READINESS-AR.md`](../audit/website/WEBSITE-STACK-MERGE-READINESS-AR.md).
+Soft-launch: [`audit/website/WEBSITE-SOFT-LAUNCH-CHECKLIST-AR.md`](../audit/website/WEBSITE-SOFT-LAUNCH-CHECKLIST-AR.md).  
+مراقبة: `/api/health` أو `/api/healthz` (نفس الـ JSON).
 
 ### تحقق قبل نشر CDN
 
