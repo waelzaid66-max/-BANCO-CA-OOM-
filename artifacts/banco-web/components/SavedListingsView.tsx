@@ -1,7 +1,11 @@
 "use client";
 
 import Link from "next/link";
-import { useGetSavedListings, useGetListing } from "@workspace/api-client-react";
+import {
+  useGetSavedListings,
+  useGetListing,
+  getGetSavedListingsQueryKey,
+} from "@workspace/api-client-react";
 import { usePathname } from "next/navigation";
 import { localeFromPathname, localizedPath } from "../lib/hub-config";
 import { isClerkConfigured, signInPath } from "../lib/clerk-config";
@@ -40,7 +44,10 @@ export function SavedListingsView() {
   const listingCopy = listingUiCopy(locale);
   const clerkOn = isClerkConfigured();
   const { data, isLoading, isError } = useGetSavedListings({
-    query: { enabled: clerkOn },
+    query: {
+      enabled: clerkOn,
+      queryKey: getGetSavedListingsQueryKey(),
+    },
   });
 
   if (!clerkOn) {
