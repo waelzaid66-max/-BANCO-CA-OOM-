@@ -3983,6 +3983,10 @@ paths:
                         type: integer
                       is_islamic_compliant:
                         type: boolean
+                      # P8/M8: declared murabaha/interest rate (0-100). Engine
+                      # input only — public offers never expose it.
+                      profit_rate_pct:
+                        type: number
                 logistics:
                   type: object
                   description: >

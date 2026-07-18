@@ -15,6 +15,9 @@ export interface DraftPlan {
   monthlyPayment: string;
   durationMonths: string;
   isIslamic: boolean;
+  // P8/M8 (additive): declared murabaha/interest rate %. Optional so drafts
+  // saved before the field existed still parse; restore defaults it to "".
+  profitRatePct?: string;
 }
 
 export interface DraftPhone {

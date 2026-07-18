@@ -1196,6 +1196,9 @@ export const CreateListingSchema = z.object({
         monthly_payment: z.number().optional(),
         duration_months: z.number().int().optional(),
         is_islamic_compliant: z.boolean().default(false),
+        // P8/M8: declared murabaha/interest rate (0–100%). Engine-side input
+        // only — public offers never expose it.
+        profit_rate_pct: z.number().min(0).max(100).optional(),
       })
     )
     .optional()

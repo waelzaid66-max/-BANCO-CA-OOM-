@@ -348,7 +348,8 @@ export const CreateListingBody = zod.object({
   "down_payment": zod.number().optional(),
   "monthly_payment": zod.number().optional(),
   "duration_months": zod.number().optional(),
-  "is_islamic_compliant": zod.boolean().optional()
+  "is_islamic_compliant": zod.boolean().optional(),
+  "profit_rate_pct": zod.number().optional()
 })).optional(),
   "logistics": zod.object({
   "delivery_time_days": zod.number().nullish(),

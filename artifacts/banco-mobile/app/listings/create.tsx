@@ -101,6 +101,8 @@ type PlanDraft = {
   monthlyPayment: string;
   durationMonths: string;
   isIslamic: boolean;
+  // P8/M8: declared murabaha/interest rate % (optional; engine-side input).
+  profitRatePct: string;
 };
 
 type PhoneEntry = {
@@ -131,6 +133,7 @@ const emptyPlan = (): PlanDraft => ({
   monthlyPayment: "",
   durationMonths: "",
   isIslamic: false,
+  profitRatePct: "",
 });
 
 // Guided wizard steps. Raw Materials is a 4th seller-facing category that maps
@@ -362,9 +365,13 @@ export default function CreateListingScreen() {
         // account-phone seeding above to do its job on an untouched row).
         if (d.phones.some((p) => p.number.trim())) setPhones(d.phones);
         setPlans(
-          d.plans.filter(
-            (p) => p.mode === "seller_installment" || p.mode === "bank_finance",
-          ) as PlanDraft[],
+          d.plans
+            .filter(
+              (p) => p.mode === "seller_installment" || p.mode === "bank_finance",
+            )
+            // Older drafts predate profitRatePct — default it so the input is
+            // always a controlled string.
+            .map((p) => ({ ...p, profitRatePct: p.profitRatePct ?? "" })) as PlanDraft[],
         );
       } catch {
         // a broken draft must never block creating a listing
@@ -956,12 +963,17 @@ export default function CreateListingScreen() {
         const monthly = digitsToNumber(plan.monthlyPayment);
         const duration = digitsToNumber(plan.durationMonths);
         if (!monthly || !duration) return setError(t("create.errInstallment"));
+        const profitRate = digitsToNumber(plan.profitRatePct);
         built.push({
           mode: plan.mode,
           down_payment: digitsToNumber(plan.downPayment),
           monthly_payment: monthly,
           duration_months: Math.round(duration),
           is_islamic_compliant: plan.isIslamic,
+          // Optional declared rate (0–100) — omitted when blank/invalid.
+          ...(profitRate != null && profitRate >= 0 && profitRate <= 100
+            ? { profit_rate_pct: profitRate }
+            : {}),
         });
       }
       paymentOptions = [{ mode: "cash" }, ...built];
@@ -2579,6 +2591,23 @@ export default function CreateListingScreen() {
             keyboardType="numeric"
             style={inputStyle}
             testID={`create-plan-${i}-duration`}
+          />
+          {/* P8/M8: declared murabaha/interest rate — optional, engine-side
+              input (never shown on public offers). */}
+          <FieldLabel
+            label={t("create.profitRate")}
+            tag={t("create.optional")}
+            colors={colors}
+            rowDir={rowDir}
+          />
+          <TextInput
+            value={plan.profitRatePct}
+            onChangeText={(v) => updatePlan(i, { profitRatePct: v })}
+            placeholder={t("create.profitRatePh")}
+            placeholderTextColor={colors.mutedForeground}
+            keyboardType="numeric"
+            style={inputStyle}
+            testID={`create-plan-${i}-profit-rate`}
           />
         </View>
       ))}

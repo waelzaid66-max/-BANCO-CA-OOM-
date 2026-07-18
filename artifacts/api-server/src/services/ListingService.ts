@@ -195,6 +195,9 @@ export async function createListing(
       monthly_payment?: number;
       duration_months?: number;
       is_islamic_compliant?: boolean;
+      // P8/M8: declared murabaha/interest rate — feeds the financing engine's
+      // amortization; never exposed on public offers (PaymentService strips it).
+      profit_rate_pct?: number;
     }>;
     // Additive (Task #40): optional logistics & delivery, all nullable.
     logistics?: {
@@ -378,6 +381,8 @@ export async function createListing(
           monthlyPayment: p.monthly_payment ? String(p.monthly_payment) : null,
           durationMonths: p.duration_months ?? null,
           isIslamicCompliant: p.is_islamic_compliant ?? false,
+          profitRatePct:
+            p.profit_rate_pct != null ? String(p.profit_rate_pct) : null,
         }))
       );
     }

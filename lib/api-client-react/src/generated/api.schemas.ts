@@ -2732,6 +2732,7 @@ export type CreateListingBodyPaymentOptionsItem = {
   monthly_payment?: number;
   duration_months?: number;
   is_islamic_compliant?: boolean;
+  profit_rate_pct?: number;
 };
 
 export type CreateListingBodyLogisticsOriginType = typeof CreateListingBodyLogisticsOriginType[keyof typeof CreateListingBodyLogisticsOriginType] | null;
