@@ -19,7 +19,8 @@
 | **W5** workspace بائع | ~85% | create/edit/listings/leads/uploads؛ CI PASS؛ E2E staging pending |
 | **W6** B2B عرض | ~25% | `/workspace/b2b` → market؛ RFQ web لاحق |
 | **W8** دمج landing | ~100% | `/directory` في banco-web؛ landing يُحوّل عند `VITE_WEB_URL` |
-| **W9** staging smoke | ~40% | rewrite audit ✅؛ CDN + `/l/:id` حي ⏳ |
+| **W9** staging smoke | ~75% | Phase 7 pack ✅ (Docker/env/prep/smoke)؛ CDN حي ⏳ OPS |
+
 
 ### ضمانات العزل (مُحقَّقة)
 

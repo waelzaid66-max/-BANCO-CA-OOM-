@@ -35,6 +35,10 @@ const steps = [
     cmd: "node scripts/website-plug-hardening-audit.mjs",
   },
   {
+    label: "staging prep audit",
+    cmd: "node scripts/website-staging-prep-audit.mjs",
+  },
+  {
     label: "eslint website",
     cmd: "pnpm run lint:website",
   },

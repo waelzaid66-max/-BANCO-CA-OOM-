@@ -7,11 +7,14 @@
  *
  * Optional:
  *   BANCO_LISTING_SMOKE_ID=uuid  — GET /listing/{id} must return 200 + Product JSON-LD
+ *   BANCO_WEB_EXPECT_PLUG=on|off — require health.plug (default: on)
+ *   BANCO_WEB_SMOKE_MAINTENANCE=1 — also assert /maintenance renders when plugged
  *
  * Exit: 0 pass, 1 fail, 2 missing BANCO_WEB_URL
  */
 
 const BASE = (process.env.BANCO_WEB_URL || process.env.WEB_URL || "").replace(/\/$/, "");
+const EXPECT_PLUG = (process.env.BANCO_WEB_EXPECT_PLUG || "on").trim().toLowerCase();
 
 const PATHS = [
   { path: "/", label: "home", expectJsonLd: "WebSite" },
@@ -41,6 +44,8 @@ const PATHS = [
   { path: "/robots.txt", label: "robots", kind: "robots" },
   { path: "/sitemap.xml", label: "sitemap", kind: "sitemap" },
   { path: "/api/health", label: "health route", kind: "health" },
+  { path: "/maintenance", label: "maintenance page", kind: "maintenance" },
+  { path: "/en/maintenance", label: "en maintenance page", kind: "maintenance" },
   { path: "/manifest.webmanifest", label: "manifest", kind: "manifest" },
 ];
 
@@ -124,6 +129,20 @@ async function checkRoute(item) {
       if (json.plug !== "on" && json.plug !== "off") {
         fail(item.label, `expected plug on|off, got ${JSON.stringify(json.plug)}`);
       }
+      if (EXPECT_PLUG === "on" || EXPECT_PLUG === "off") {
+        if (json.plug !== EXPECT_PLUG) {
+          fail(item.label, `expected plug=${EXPECT_PLUG}, got ${json.plug}`);
+        }
+      }
+    } else if (item.kind === "maintenance") {
+      // Always reachable as a page; when unplugged, / also rewrites here.
+      if (
+        !body.includes('data-banco-journey="maintenance"') &&
+        !body.includes("temporarily offline") &&
+        !body.includes("متوقف مؤقتاً")
+      ) {
+        fail(item.label, "missing maintenance page markers");
+      }
     } else if (item.kind === "manifest") {
       let json;
       try {
@@ -140,7 +159,8 @@ async function checkRoute(item) {
       if (isEn) {
         if (
           !body.includes('data-banco-locale="en"') &&
-          !body.includes("Browse the market") &&
+          !body.includes("One market") &&
+          !body.includes("Start searching") &&
           !body.includes("Search")
         ) {
           fail(item.label, "missing EN route markers");
@@ -148,6 +168,18 @@ async function checkRoute(item) {
       } else if (!body.includes('lang="ar"')) {
         fail(item.label, 'missing lang="ar"');
       }
+
+      // Phase 1 brand-first hero (when plug on and home routes)
+      if (item.path === "/" || item.path === "/en") {
+        if (
+          !body.includes("BANCO") &&
+          !body.includes("بانكو") &&
+          !body.includes('data-banco-brand')
+        ) {
+          fail(item.label, "missing BANCO brand signal on home");
+        }
+      }
+
       if (item.expectJsonLd && !body.includes(item.expectJsonLd)) {
         fail(item.label, `missing JSON-LD ${item.expectJsonLd}`);
       }

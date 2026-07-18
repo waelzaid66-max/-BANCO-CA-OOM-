@@ -12,7 +12,8 @@
 > 9. [`WEBSITE-PLUG-DETACH-5MIN-AR.md`](./WEBSITE-PLUG-DETACH-5MIN-AR.md) — فصل الفيشة في 5 دقائق  
 > 10. [`WEBSITE-STACK-MERGE-READINESS-AR.md`](./WEBSITE-STACK-MERGE-READINESS-AR.md) — جاهزية دمج #11→#16  
 > 11. [`WEBSITE-STAGING-OPS-CHECKLIST-AR.md`](./WEBSITE-STAGING-OPS-CHECKLIST-AR.md) — Staging بعد الدمج  
-> 12. [`WEBSITE-TRANSFER-HANDOFF-AR.md`](./WEBSITE-TRANSFER-HANDOFF-AR.md) — **حزمة نقل وتسليم**
+> 12. [`WEBSITE-TRANSFER-HANDOFF-AR.md`](./WEBSITE-TRANSFER-HANDOFF-AR.md) — حزمة نقل وتسليم  
+> 13. [`WEBSITE-PHASE7-STAGING-PACK-STATUS-AR.md`](./WEBSITE-PHASE7-STAGING-PACK-STATUS-AR.md) — **Phase 7: Staging pack**
 
 **Playbook السابق:** [`WEBSITE-PRE-START-PLAYBOOK-AR.md`](./WEBSITE-PRE-START-PLAYBOOK-AR.md)  
 **Delivery & admin toggle roadmap:** [`WEBSITE-DELIVERY-ROADMAP-AR.md`](./WEBSITE-DELIVERY-ROADMAP-AR.md)
@@ -28,6 +29,8 @@
 | [`WEBSITE-STACK-MERGE-READINESS-AR.md`](./WEBSITE-STACK-MERGE-READINESS-AR.md) | ترتيب دمج PR #11–#16 |
 | [`WEBSITE-STAGING-OPS-CHECKLIST-AR.md`](./WEBSITE-STAGING-OPS-CHECKLIST-AR.md) | نشر staging بعد الدمج |
 | [`WEBSITE-TRANSFER-HANDOFF-AR.md`](./WEBSITE-TRANSFER-HANDOFF-AR.md) | نقل/تشغيل/فصل الويب بعد اكتمال الموجات |
+| [`WEBSITE-PHASE7-STAGING-PACK-STATUS-AR.md`](./WEBSITE-PHASE7-STAGING-PACK-STATUS-AR.md) | Phase 7: Docker/env/smoke جاهز لـ staging CDN |
+
 | [`WEBSITE-PRE-START-PLAYBOOK-AR.md`](./WEBSITE-PRE-START-PLAYBOOK-AR.md) | Ordered ideas, Go gates, efficiency, DoD per wave |
 | [`WEBSITE-READINESS-GATES.md`](./WEBSITE-READINESS-GATES.md) | Sign-off checklists (product, CI, API, GCP, waves) |
 | [`WEBSITE-DELIVERY-ROADMAP-AR.md`](./WEBSITE-DELIVERY-ROADMAP-AR.md) | Staging → mobile trial → prod |
