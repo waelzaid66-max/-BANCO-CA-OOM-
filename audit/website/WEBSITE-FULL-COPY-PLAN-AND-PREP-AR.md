@@ -106,7 +106,8 @@
 ### Phase 3 — Seller workspace parity
 
 **الهدف:** إنشاء/تعديل/إعلاناتي/leads بمستوى عملي (W5 الموجود يُكمَّل لا يُعاد من صفر).  
-**خروج:** رحلة بائع على ويب staging.
+**خروج:** رحلة بائع على ويب staging.  
+**حالة:** تقوية كود + audit CI — انظر [`WEBSITE-PHASE3-SELLER-WORKSPACE-PARITY-STATUS-AR.md`](./WEBSITE-PHASE3-SELLER-WORKSPACE-PARITY-STATUS-AR.md).
 
 ### Phase 4 — Market copy (BANCO Market داخل الويب)
 

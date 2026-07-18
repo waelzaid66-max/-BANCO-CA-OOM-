@@ -2,12 +2,16 @@
 
 import Link from "next/link";
 import {
+  getGetListingQueryKey,
+  getGetMyManagedListingsQueryKey,
+  getGetMyMetricsQueryKey,
   useBumpListing,
   useDeleteListing,
   useGetMyManagedListings,
 } from "@workspace/api-client-react";
 import { useQueryClient } from "@tanstack/react-query";
 import { usePathname } from "next/navigation";
+import { useState } from "react";
 import { localeFromPathname } from "../../lib/hub-config";
 import { workspaceUiCopy } from "../../lib/workspace-ui-copy";
 
@@ -48,23 +52,52 @@ export function ManagedListingsPanel() {
   const copy = workspaceUiCopy(locale);
   const prefix = locale === "en" ? "/en/workspace" : "/workspace";
   const queryClient = useQueryClient();
+  const [actionError, setActionError] = useState<string | null>(null);
+  const [pendingId, setPendingId] = useState<string | null>(null);
 
-  const { data, isLoading, isError } = useGetMyManagedListings({ limit: 50 });
+  const listParams = { limit: 50 };
+  const { data, isLoading, isError, refetch, isFetching } = useGetMyManagedListings(listParams);
   const deleteListing = useDeleteListing();
   const bumpListing = useBumpListing();
 
-  const invalidate = () => {
-    void queryClient.invalidateQueries({ queryKey: ["/api/v1/me/listings/manage"] });
-    void queryClient.invalidateQueries({ queryKey: ["/api/v1/me/metrics"] });
+  const invalidate = (listingId?: string) => {
+    void queryClient.invalidateQueries({
+      queryKey: getGetMyManagedListingsQueryKey(listParams),
+    });
+    void queryClient.invalidateQueries({ queryKey: getGetMyMetricsQueryKey() });
+    if (listingId) {
+      void queryClient.invalidateQueries({ queryKey: getGetListingQueryKey(listingId) });
+    }
   };
 
-  if (isLoading) return <p style={{ color: "var(--banco-muted)" }}>{copy.loading}</p>;
-  if (isError) return <p style={{ color: "var(--banco-primary)" }}>{copy.errorGeneric}</p>;
+  if (isLoading) {
+    return (
+      <div data-banco-journey="workspace-listings">
+        <p style={{ color: "var(--banco-muted)" }}>{copy.loading}</p>
+      </div>
+    );
+  }
+
+  if (isError) {
+    return (
+      <div data-banco-journey="workspace-listings">
+        <p style={{ color: "var(--banco-primary)" }}>{copy.errorGeneric}</p>
+        <button
+          type="button"
+          style={{ ...actionBtn, marginTop: "0.75rem" }}
+          disabled={isFetching}
+          onClick={() => void refetch()}
+        >
+          {copy.retry}
+        </button>
+      </div>
+    );
+  }
 
   const rows = data?.data ?? [];
   if (rows.length === 0) {
     return (
-      <div>
+      <div data-banco-journey="workspace-listings">
         <p style={{ color: "var(--banco-muted)" }}>{copy.listingsEmpty}</p>
         <Link href={`${prefix}/listings/new`} style={{ color: "var(--banco-primary)", fontWeight: 600 }}>
           {copy.listingsNew}
@@ -74,7 +107,10 @@ export function ManagedListingsPanel() {
   }
 
   return (
-    <div style={{ overflowX: "auto" }}>
+    <div style={{ overflowX: "auto" }} data-banco-journey="workspace-listings">
+      {actionError ? (
+        <p style={{ color: "var(--banco-primary)", marginTop: 0 }}>{actionError}</p>
+      ) : null}
       <table style={tableStyle}>
         <thead>
           <tr>
@@ -88,6 +124,7 @@ export function ManagedListingsPanel() {
         <tbody>
           {rows.map((row) => {
             const id = row.id ?? "";
+            const rowBusy = pendingId === id;
             return (
               <tr key={id}>
                 <td style={tdStyle}>
@@ -103,15 +140,27 @@ export function ManagedListingsPanel() {
                 <td style={tdStyle}>
                   {id ? (
                     <>
-                      <Link href={`${prefix}/listings/${id}/edit`} style={{ ...actionBtn, textDecoration: "none", display: "inline-block" }}>
+                      <Link
+                        href={`${prefix}/listings/${id}/edit`}
+                        style={{ ...actionBtn, textDecoration: "none", display: "inline-block" }}
+                      >
                         {copy.listingsEdit}
                       </Link>
                       <button
                         type="button"
                         style={actionBtn}
-                        disabled={bumpListing.isPending}
+                        disabled={rowBusy}
                         onClick={() => {
-                          bumpListing.mutate({ id }, { onSuccess: invalidate });
+                          setActionError(null);
+                          setPendingId(id);
+                          bumpListing.mutate(
+                            { id },
+                            {
+                              onSuccess: () => invalidate(id),
+                              onError: () => setActionError(copy.errorGeneric),
+                              onSettled: () => setPendingId(null),
+                            },
+                          );
                         }}
                       >
                         {copy.listingsBump}
@@ -119,10 +168,19 @@ export function ManagedListingsPanel() {
                       <button
                         type="button"
                         style={actionBtn}
-                        disabled={deleteListing.isPending}
+                        disabled={rowBusy}
                         onClick={() => {
                           if (!window.confirm(copy.confirmDelete)) return;
-                          deleteListing.mutate({ id }, { onSuccess: invalidate });
+                          setActionError(null);
+                          setPendingId(id);
+                          deleteListing.mutate(
+                            { id },
+                            {
+                              onSuccess: () => invalidate(id),
+                              onError: () => setActionError(copy.errorGeneric),
+                              onSettled: () => setPendingId(null),
+                            },
+                          );
                         }}
                       >
                         {copy.listingsDelete}

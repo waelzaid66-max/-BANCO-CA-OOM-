@@ -19,6 +19,10 @@ const steps = [
     cmd: "node scripts/website-journey-parity-audit.mjs",
   },
   {
+    label: "seller workspace parity audit",
+    cmd: "node scripts/website-seller-workspace-parity-audit.mjs",
+  },
+  {
     label: "eslint website",
     cmd: "pnpm run lint:website",
   },
