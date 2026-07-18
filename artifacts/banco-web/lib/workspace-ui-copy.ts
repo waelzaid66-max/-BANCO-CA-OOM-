@@ -56,6 +56,27 @@ export type WorkspaceUiCopy = {
   b2bMarketLinks: string;
   b2bMarketNote: string;
   b2bMarketDisabled: string;
+  marketCopyTitle: string;
+  marketCopyBody: string;
+  marketTabOverview: string;
+  marketTabRfqs: string;
+  marketTabSupply: string;
+  marketStatsActive: string;
+  marketStatsLeadsToday: string;
+  marketStatsViews: string;
+  marketStatsConversion: string;
+  marketTrendsTitle: string;
+  marketTrendsEmpty: string;
+  marketRfqsTitle: string;
+  marketRfqsEmpty: string;
+  marketRfqsOffers: string;
+  marketRfqsDeadline: string;
+  marketSupplyTitle: string;
+  marketSupplyEmpty: string;
+  marketSupplyResponses: string;
+  marketClassicTitle: string;
+  marketClassicNote: string;
+  marketNavWebCopy: string;
   overviewQuickLinks: string;
   overviewSubtitle: string;
   overviewNewHint: string;
@@ -223,6 +244,28 @@ const COPY: Record<SiteLocale, WorkspaceUiCopy> = {
     b2bMarketLinks: "روابط بانكو ماركت",
     b2bMarketNote: "تفتح في نافذة جديدة — نفس منصة Dealer OS للتجار.",
     b2bMarketDisabled: "بانكو ماركت غير مُعرّف على هذه البيئة (NEXT_PUBLIC_MARKET_URL).",
+    marketCopyTitle: "بانكو ماركت (نسخة الويب)",
+    marketCopyBody:
+      "تجربة تاجر داخل الموقع عبر نفس الـ API — دون تعديل Dealer OS الأصلي. يمكنك العودة للمنصة الكلاسيكية في أي وقت.",
+    marketTabOverview: "نظرة عامة",
+    marketTabRfqs: "طلبات RFQ",
+    marketTabSupply: "توريد عالمي",
+    marketStatsActive: "إعلانات نشطة",
+    marketStatsLeadsToday: "تواصل اليوم",
+    marketStatsViews: "مشاهدات",
+    marketStatsConversion: "معدل التحويل",
+    marketTrendsTitle: "مؤشرات السوق",
+    marketTrendsEmpty: "لا تتوفر مؤشرات كافية بعد.",
+    marketRfqsTitle: "طلبات عروض الأسعار المفتوحة",
+    marketRfqsEmpty: "لا توجد طلبات RFQ مفتوحة حالياً.",
+    marketRfqsOffers: "عروض",
+    marketRfqsDeadline: "آخر موعد",
+    marketSupplyTitle: "طلبات توريد / استيراد",
+    marketSupplyEmpty: "لا توجد طلبات توريد مفتوحة حالياً.",
+    marketSupplyResponses: "ردود",
+    marketClassicTitle: "المنصة الكلاسيكية (Dealer OS)",
+    marketClassicNote: "تبقى متاحة عبر رابط منفصل — لا نلمسها من مسار الويب.",
+    marketNavWebCopy: "ماركت الويب",
     overviewQuickLinks: "اختصارات سريعة",
     overviewSubtitle: "انتقل مباشرة إلى أهم مهام البائع من المتصفح.",
     overviewNewHint: "نشر إعلان جديد",
@@ -388,6 +431,28 @@ const COPY: Record<SiteLocale, WorkspaceUiCopy> = {
     b2bMarketLinks: "BANCO Market links",
     b2bMarketNote: "Opens in a new tab — same Dealer OS platform for merchants.",
     b2bMarketDisabled: "BANCO Market is not configured on this environment (NEXT_PUBLIC_MARKET_URL).",
+    marketCopyTitle: "BANCO Market (web copy)",
+    marketCopyBody:
+      "Dealer experience inside the website via the shared API — dealer-os stays untouched. Classic Market remains available as a fallback.",
+    marketTabOverview: "Overview",
+    marketTabRfqs: "RFQs",
+    marketTabSupply: "Global supply",
+    marketStatsActive: "Active listings",
+    marketStatsLeadsToday: "Leads today",
+    marketStatsViews: "Views",
+    marketStatsConversion: "Conversion",
+    marketTrendsTitle: "Market trends",
+    marketTrendsEmpty: "Not enough trend samples yet.",
+    marketRfqsTitle: "Open RFQs",
+    marketRfqsEmpty: "No open RFQs right now.",
+    marketRfqsOffers: "Offers",
+    marketRfqsDeadline: "Deadline",
+    marketSupplyTitle: "Open sourcing requests",
+    marketSupplyEmpty: "No open sourcing requests right now.",
+    marketSupplyResponses: "Responses",
+    marketClassicTitle: "Classic Market (Dealer OS)",
+    marketClassicNote: "Stays available via a separate link — the web track does not modify it.",
+    marketNavWebCopy: "Web Market",
     overviewQuickLinks: "Quick actions",
     overviewSubtitle: "Jump to the seller tasks you use most in the browser.",
     overviewNewHint: "Publish a new listing",

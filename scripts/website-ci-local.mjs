@@ -23,6 +23,10 @@ const steps = [
     cmd: "node scripts/website-seller-workspace-parity-audit.mjs",
   },
   {
+    label: "market copy parity audit",
+    cmd: "node scripts/website-market-copy-parity-audit.mjs",
+  },
+  {
     label: "eslint website",
     cmd: "pnpm run lint:website",
   },
