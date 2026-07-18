@@ -3,7 +3,6 @@
 import Link from "next/link";
 import { useEffect } from "react";
 import { usePathname } from "next/navigation";
-import { bancoBrand } from "@workspace/design-tokens";
 import {
   getAdminUrl,
   getAppStoreUrls,
@@ -13,33 +12,27 @@ import { chromeCopy } from "../lib/chrome-copy";
 import { adminNavItems, browseNavItems, marketNavItems } from "../lib/chrome-nav";
 import { localeFromPathname, localizedPath } from "../lib/hub-config";
 import { writeStoredLocale } from "../lib/locale-preference";
+import { BrandMark } from "./BrandMark";
 import { SiteMainNav } from "./SiteMainNav";
 
 const headerStyle: React.CSSProperties = {
   borderBottom: "1px solid var(--banco-border)",
-  background: "rgba(0,0,0,0.85)",
-  backdropFilter: "blur(8px)",
+  background: "rgba(0,0,0,0.92)",
+  backdropFilter: "blur(10px)",
   position: "sticky",
   top: 0,
   zIndex: 50,
 };
 
 const innerStyle: React.CSSProperties = {
-  maxWidth: 1080,
+  maxWidth: 1120,
   margin: "0 auto",
-  padding: "0.75rem 1.25rem",
+  padding: "0.65rem 1.15rem",
   display: "flex",
   alignItems: "center",
   justifyContent: "space-between",
-  gap: "1rem",
+  gap: "0.85rem",
   flexWrap: "wrap",
-};
-
-const linkStyle: React.CSSProperties = {
-  color: "var(--banco-fg)",
-  textDecoration: "none",
-  fontSize: "0.9rem",
-  fontWeight: 600,
 };
 
 const footerStyle: React.CSSProperties = {
@@ -84,13 +77,7 @@ export function SiteChrome({ children }: { children: React.ReactNode }) {
     <>
       <header style={headerStyle}>
         <div style={innerStyle}>
-          <Link
-            href={copy.homeHref}
-            aria-label={copy.brandAria}
-            style={{ ...linkStyle, color: bancoBrand.red, fontSize: "1.1rem" }}
-          >
-            BANCO
-          </Link>
+          <BrandMark href={copy.homeHref} ariaLabel={copy.brandAria} size="header" />
           <SiteMainNav />
         </div>
       </header>
