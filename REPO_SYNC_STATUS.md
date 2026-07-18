@@ -1,7 +1,7 @@
 # BANCO — حالة مزامنة الريبوهات (نسخة الإنتاج)
 
 **التاريخ:** 2026-07-18  
-**HEAD على `main` (origin):** `381eecd` — `fix(tests): booking notification role contract (#7)`  
+**HEAD على `main` (origin):** `f0c672b` — `fix(tests): booking notification role contract (#7)`  
 **Replit:** يستورد من هذا الريبو (`-BANCO-CA-OOM-`) — بعد الدمج نفِّذ على Replit: `git pull origin main`  
 **aws-virgen `main`:** يحتاج مزامنة مالك (انظر أوامر الإغلاق أدناه)  
 **مرجع موحّد:** `DUAL_REPO_STATUS.md`
@@ -10,7 +10,8 @@
 
 | Run | الحالة |
 |-----|--------|
-| [29661427824](https://github.com/waelzaid66-max/-BANCO-CA-OOM-/actions/runs/29661427824) | ✅ 5/5 (Typecheck، API tests، ESLint، GCP gate، Mobile) — بعد دمج #7 |
+| [29661427824](https://github.com/waelzaid66-max/-BANCO-CA-OOM-/actions/runs/29661427824) | ✅ 5/5 — بعد دمج #7 |
+| [29661594894](https://github.com/waelzaid66-max/-BANCO-CA-OOM-/actions/runs/29661594894) | ✅ 5/5 — بعد دمج #8 (تقوية + sync) |
 
 **Tag:** `v1.0.0-rc.2`  
 **أداة aws-virgen:** `scripts/publish-aws-virgen-rc.sh v1.0.0-rc.2`
