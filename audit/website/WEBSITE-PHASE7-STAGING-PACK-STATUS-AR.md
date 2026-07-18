@@ -19,7 +19,7 @@ Docker/env/smoke جاهزون لـ OPS ليشير دومين staging إلى `con
 |-----|--------|
 | Dockerfile | `NEXT_PUBLIC_WEB_MARKET_COPY` + روابط Market/Admin/App |
 | Compose | يمرّر `WEB_MARKET_COPY` وقت البناء |
-| Env templates | افتراضي staging آمن: LIVE/MAP/MARKET = `false` |
+| Env templates | AWS first-smoke: LIVE/MAP/MARKET=`false` · `banco-web/.env.staging.example`: LIVE=`true` (Phase 2) |
 | Prep audit | `scripts/website-staging-prep-audit.mjs` + `pnpm run ops:website-staging-prep` |
 | Smoke | `/maintenance`، `BANCO_WEB_EXPECT_PLUG`، إشارة براند على الهوم |
 | CI محلي | خطوة staging prep داخل `ops:website-ci` |
