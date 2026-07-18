@@ -30,12 +30,28 @@ test("rentalHost treats is_bookable === true as bookable", () => {
   );
 });
 
-test("booking notifications route hosts to /bookings?role=host", () => {
+// Contract after 72a8e01: server stamps data.role (guest|host); the router
+// opens that side. Legacy rows without role keep the host default. Must NOT
+// regress to a hardcoded role:"host" (that sent guests to an empty host inbox).
+test("booking notifications route by stamped side (guest|host), default host", () => {
   const src = fs.readFileSync(NOTIF_ROUTING, "utf8");
+
   assert.match(
     src,
-    /type\s*===\s*["']booking["'][\s\S]*pathname:\s*["']\/bookings["'][\s\S]*role:\s*["']host["']/,
-    "booking notifications must deep-link to host booking inbox",
+    /type\s*===\s*["']booking["'][\s\S]*pathname:\s*["']\/bookings["']/,
+    "booking notifications must deep-link to /bookings",
+  );
+
+  assert.match(
+    src,
+    /role:\s*d\.role\s*===\s*["']guest["']\s*\?\s*["']guest["']\s*:\s*["']host["']/,
+    "must open guest trips when role=guest, else host inbox (legacy default)",
+  );
+
+  assert.doesNotMatch(
+    src,
+    /params:\s*\{\s*role:\s*["']host["']\s*\}/,
+    'must not hardcode role:"host" (that broke guest booking taps in 72a8e01)',
   );
 });
 
