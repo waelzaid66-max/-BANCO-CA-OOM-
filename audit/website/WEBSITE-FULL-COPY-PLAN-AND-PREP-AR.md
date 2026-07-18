@@ -176,7 +176,7 @@ pnpm --filter @workspace/banco-web run build
 | رحلات | بحث+تفاصيل+تواصل على staging |
 | ماركت كوبي | تاجر يعمل من الويب؛ dealer-os لم يُكسر |
 | هيدرز | متجاوبة وآمنة |
-| فيشة | يمكن إيقاف الويب دون redeploy موبايل/API |
+| فيشة | يمكن إيقاف الويب دون redeploy موبايل/API — ✅ عبر `WEB_PLUG_ENABLED` (دمج المكدس معلّق) |
 
 ---
 
