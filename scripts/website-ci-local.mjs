@@ -31,6 +31,10 @@ const steps = [
     cmd: "node scripts/website-responsive-chrome-audit.mjs",
   },
   {
+    label: "plug hardening audit",
+    cmd: "node scripts/website-plug-hardening-audit.mjs",
+  },
+  {
     label: "eslint website",
     cmd: "pnpm run lint:website",
   },
