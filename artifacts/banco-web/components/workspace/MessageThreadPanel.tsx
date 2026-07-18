@@ -138,14 +138,40 @@ export function MessageThreadPanel({ conversationId }: MessageThreadPanelProps) 
   };
 
   if (messagesQuery.isLoading) {
-    return <p style={{ color: "var(--banco-muted)" }}>{copy.loading}</p>;
+    return (
+      <div data-banco-journey="workspace-message-thread">
+        <p style={{ color: "var(--banco-muted)" }}>{copy.loading}</p>
+      </div>
+    );
   }
   if (messagesQuery.isError) {
-    return <p style={{ color: "var(--banco-primary)" }}>{copy.errorGeneric}</p>;
+    return (
+      <div data-banco-journey="workspace-message-thread">
+        <p style={{ color: "var(--banco-primary)" }}>{copy.errorGeneric}</p>
+        <button
+          type="button"
+          onClick={() => void messagesQuery.refetch()}
+          style={{
+            border: "1px solid var(--banco-border)",
+            borderRadius: 8,
+            background: "transparent",
+            color: "var(--banco-fg)",
+            padding: "0.35rem 0.75rem",
+            cursor: "pointer",
+            fontSize: "0.85rem",
+          }}
+        >
+          {copy.retry}
+        </button>
+      </div>
+    );
   }
 
   return (
-    <div style={{ display: "flex", flexDirection: "column", gap: "0.85rem", minHeight: 420 }}>
+    <div
+      style={{ display: "flex", flexDirection: "column", gap: "0.85rem", minHeight: 420 }}
+      data-banco-journey="workspace-message-thread"
+    >
       <Link
         href={workspaceMessagesPath(locale)}
         style={{ color: "var(--banco-primary)", fontWeight: 600, fontSize: "0.9rem", textDecoration: "none" }}

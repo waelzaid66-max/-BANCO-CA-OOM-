@@ -9,6 +9,7 @@ import {
   useGetListing,
   useUpdateListing,
   getGetMyManagedListingsQueryKey,
+  getGetMyMetricsQueryKey,
   getGetListingQueryKey,
 } from "@workspace/api-client-react";
 import { useQueryClient } from "@tanstack/react-query";
@@ -132,6 +133,16 @@ export function ListingCreateForm({ listingId }: ListingCreateFormProps) {
     return obj;
   };
 
+  const removeMedia = (id: string) => {
+    setMedia((items) => {
+      const target = items.find((it) => it.id === id);
+      if (target?.preview.startsWith("blob:")) {
+        URL.revokeObjectURL(target.preview);
+      }
+      return items.filter((it) => it.id !== id);
+    });
+  };
+
   const onFilesSelected = async (files: FileList | null) => {
     if (!files?.length) return;
     for (const file of Array.from(files)) {
@@ -147,6 +158,7 @@ export function ListingCreateForm({ listingId }: ListingCreateFormProps) {
         setMedia((m) => m.map((it) => (it.id === id ? { ...it, url, status: "done" } : it)));
       } catch {
         setMedia((m) => m.map((it) => (it.id === id ? { ...it, status: "error" } : it)));
+        setFormError(copy.uploadError);
       }
     }
   };
@@ -169,6 +181,15 @@ export function ListingCreateForm({ listingId }: ListingCreateFormProps) {
       return;
     }
 
+    if (media.some((m) => m.status === "uploading")) {
+      setFormError(copy.photosUploading);
+      return;
+    }
+    if (media.some((m) => m.status === "error")) {
+      setFormError(copy.uploadError);
+      return;
+    }
+
     const mediaArr = media
       .filter((m) => m.status === "done" && m.url)
       .map((m, i) => ({ type: "image" as const, url: m.url as string, is_thumbnail: i === 0 }));
@@ -178,9 +199,12 @@ export function ListingCreateForm({ listingId }: ListingCreateFormProps) {
       return;
     }
 
-    const invalidate = () => {
+    const invalidate = (id?: string) => {
       void queryClient.invalidateQueries({ queryKey: getGetMyManagedListingsQueryKey() });
-      void queryClient.invalidateQueries({ queryKey: ["/api/v1/me/metrics"] });
+      void queryClient.invalidateQueries({ queryKey: getGetMyMetricsQueryKey() });
+      if (id) {
+        void queryClient.invalidateQueries({ queryKey: getGetListingQueryKey(id) });
+      }
     };
 
     if (isEdit && listingId) {
@@ -199,7 +223,7 @@ export function ListingCreateForm({ listingId }: ListingCreateFormProps) {
         {
           onSuccess: () => {
             setSuccess(copy.editSubmit);
-            invalidate();
+            invalidate(listingId);
             router.push(`${prefix}/listings`);
           },
           onError: () => setFormError(copy.errorGeneric),
@@ -223,8 +247,8 @@ export function ListingCreateForm({ listingId }: ListingCreateFormProps) {
       {
         onSuccess: (res) => {
           setSuccess(copy.createSuccess);
-          invalidate();
           const newId = res.data?.id;
+          invalidate(newId);
           router.push(
             newId ? localizedPath(`/listing/${newId}`, locale) : `${prefix}/listings`,
           );
@@ -234,10 +258,32 @@ export function ListingCreateForm({ listingId }: ListingCreateFormProps) {
     );
   };
 
-  const pending = createListing.isPending || updateListing.isPending || detailQuery.isLoading;
+  const uploading = media.some((m) => m.status === "uploading");
+  const pending =
+    createListing.isPending || updateListing.isPending || detailQuery.isLoading || uploading;
+
+  if (isEdit && detailQuery.isError) {
+    return (
+      <div data-banco-journey="workspace-edit-listing">
+        <h2 style={{ margin: "0 0 1rem" }}>{copy.editTitle}</h2>
+        <p style={{ color: "var(--banco-primary)" }}>{copy.errorGeneric}</p>
+        <button
+          type="button"
+          style={{ ...submitStyle, background: "transparent", color: "var(--banco-fg)", border: "1px solid var(--banco-border)" }}
+          onClick={() => void detailQuery.refetch()}
+        >
+          {copy.retry}
+        </button>
+        {" · "}
+        <Link href={`${prefix}/listings`} style={{ color: "var(--banco-muted)" }}>
+          {copy.backToWorkspace}
+        </Link>
+      </div>
+    );
+  }
 
   return (
-    <div>
+    <div data-banco-journey={isEdit ? "workspace-edit-listing" : "workspace-create-listing"}>
       <h2 style={{ margin: "0 0 1rem" }}>{isEdit ? copy.editTitle : copy.createTitle}</h2>
 
       {!isEdit ? (
@@ -328,14 +374,36 @@ export function ListingCreateForm({ listingId }: ListingCreateFormProps) {
         <input type="file" accept="image/*" multiple onChange={(e) => void onFilesSelected(e.target.files)} />
         <div style={{ display: "flex", flexWrap: "wrap", gap: "0.5rem", marginTop: "0.5rem" }}>
           {media.map((m) => (
-            <img
-              key={m.id}
-              src={m.preview}
-              alt=""
-              width={96}
-              height={72}
-              style={{ objectFit: "cover", borderRadius: 8, opacity: m.status === "error" ? 0.4 : 1 }}
-            />
+            <div key={m.id} style={{ position: "relative" }}>
+              <img
+                src={m.preview}
+                alt=""
+                width={96}
+                height={72}
+                style={{
+                  objectFit: "cover",
+                  borderRadius: 8,
+                  opacity: m.status === "error" ? 0.4 : m.status === "uploading" ? 0.7 : 1,
+                  display: "block",
+                }}
+              />
+              <button
+                type="button"
+                onClick={() => removeMedia(m.id)}
+                style={{
+                  marginTop: 4,
+                  border: "1px solid var(--banco-border)",
+                  borderRadius: 6,
+                  background: "transparent",
+                  color: "var(--banco-muted)",
+                  fontSize: "0.75rem",
+                  cursor: "pointer",
+                  width: "100%",
+                }}
+              >
+                {copy.mediaRemove}
+              </button>
+            </div>
           ))}
         </div>
       </div>

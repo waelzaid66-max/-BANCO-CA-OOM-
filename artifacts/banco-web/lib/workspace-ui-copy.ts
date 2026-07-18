@@ -39,9 +39,13 @@ export type WorkspaceUiCopy = {
   editSubmit: string;
   leadsTitle: string;
   leadsEmpty: string;
+  leadsEmptyHint: string;
   leadsBuyer: string;
   leadsAction: string;
   leadsDate: string;
+  uploadError: string;
+  mediaRemove: string;
+  photosUploading: string;
   confirmDelete: string;
   loading: string;
   errorGeneric: string;
@@ -202,9 +206,13 @@ const COPY: Record<SiteLocale, WorkspaceUiCopy> = {
     editSubmit: "حفظ التغييرات",
     leadsTitle: "طلبات التواصل",
     leadsEmpty: "لا توجد طلبات تواصل بعد.",
+    leadsEmptyHint: "عندما يتواصل مشترٍ مع إعلاناتك ستظهر هنا. انشر إعلاناً أو فعّل التواصل على الإعلان.",
     leadsBuyer: "المشتري",
     leadsAction: "الإجراء",
     leadsDate: "التاريخ",
+    uploadError: "تعذّر رفع الصورة. أزلها وحاول مرة أخرى.",
+    mediaRemove: "إزالة",
+    photosUploading: "جاري رفع الصور… انتظر قبل الإرسال.",
     confirmDelete: "هل تريد حذف هذا الإعلان؟",
     loading: "جاري التحميل…",
     errorGeneric: "حدث خطأ. حاول مرة أخرى.",
@@ -363,9 +371,13 @@ const COPY: Record<SiteLocale, WorkspaceUiCopy> = {
     editSubmit: "Save changes",
     leadsTitle: "Contact leads",
     leadsEmpty: "No contact leads yet.",
+    leadsEmptyHint: "When a buyer contacts your listings they appear here. Publish a listing or enable contact on it.",
     leadsBuyer: "Buyer",
     leadsAction: "Action",
     leadsDate: "Date",
+    uploadError: "Could not upload image. Remove it and try again.",
+    mediaRemove: "Remove",
+    photosUploading: "Uploading photos… wait before submitting.",
     confirmDelete: "Delete this listing?",
     loading: "Loading…",
     errorGeneric: "Something went wrong. Try again.",

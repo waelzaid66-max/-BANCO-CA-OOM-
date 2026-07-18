@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import type { ReactNode } from "react";
+import { isClerkConfigured, signInPath } from "../../lib/clerk-config";
 import { localeFromPathname } from "../../lib/hub-config";
 import { getMarketUrl } from "../../lib/site-env";
 import { workspaceUiCopy } from "../../lib/workspace-ui-copy";
@@ -41,6 +42,7 @@ export function WorkspaceShell({ children }: WorkspaceShellProps) {
   const copy = workspaceUiCopy(locale);
   const prefix = locale === "en" ? "/en/workspace" : "/workspace";
   const market = getMarketUrl();
+  const clerkOn = isClerkConfigured();
 
   const links = [
     { href: prefix, label: copy.navOverview, exact: true },
@@ -54,8 +56,29 @@ export function WorkspaceShell({ children }: WorkspaceShellProps) {
     { href: `${prefix}/b2b`, label: copy.b2bTitle },
   ];
 
+  if (!clerkOn) {
+    return (
+      <div
+        style={{ maxWidth: 720, margin: "0 auto", padding: "2rem 1.25rem" }}
+        data-banco-journey="workspace"
+        data-banco-auth="off"
+      >
+        <h1 style={{ margin: "0 0 0.75rem", fontSize: "1.35rem" }}>{copy.title}</h1>
+        <p style={{ color: "var(--banco-muted)", lineHeight: 1.7 }}>{copy.authDisabled}</p>
+        <p style={{ marginTop: "0.5rem", color: "var(--banco-muted)", lineHeight: 1.7 }}>
+          {copy.signInRequired}
+        </p>
+        <p style={{ marginTop: "1rem" }}>
+          <Link href={signInPath(locale)} style={{ color: "var(--banco-primary)", fontWeight: 700 }}>
+            {copy.signInCta}
+          </Link>
+        </p>
+      </div>
+    );
+  }
+
   return (
-    <div style={shellStyle}>
+    <div style={shellStyle} data-banco-journey="workspace" data-banco-auth="on">
       <aside aria-label={copy.title}>
         <h1 style={{ margin: "0 0 1rem", fontSize: "1.25rem" }}>{copy.title}</h1>
         <nav style={navStyle}>
