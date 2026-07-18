@@ -41,7 +41,7 @@ Kill-switch **وقت التشغيل** على الويب موجود: `WEB_PLUG_EN
 | 3 | Local CI mirror | ✅ `pnpm run ops:website-ci` |
 | 4 | Docker image | ✅ `ci-website-docker.yml` |
 | 5 | CDN staging deploy | ⏳ بعد دمج المكدس — [`WEBSITE-STAGING-OPS-CHECKLIST-AR.md`](./WEBSITE-STAGING-OPS-CHECKLIST-AR.md) |
-| 6 | Full-copy Phases 1–6 | ✅ كود على PR #11–#16 — [`WEBSITE-STACK-MERGE-READINESS-AR.md`](./WEBSITE-STACK-MERGE-READINESS-AR.md) |
+| 6 | Full-copy Phases 1–6 | ✅ على `main` — [`WEBSITE-TRANSFER-HANDOFF-AR.md`](./WEBSITE-TRANSFER-HANDOFF-AR.md) |
 | 7 | Clerk workspace / journeys | ✅ ضمن Phases 2–3 على المكدس |
 
 **قواعد صارمة للوكيل:**

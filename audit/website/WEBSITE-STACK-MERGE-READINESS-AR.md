@@ -86,5 +86,6 @@ node scripts/website-plug-hardening-audit.mjs
 | Kill-switch وقت التشغيل | ✅ `WEB_PLUG_ENABLED` |
 | وثيقة فصل 5 دقائق | ✅ |
 | SEO audit متوافق مع هيرو Phase 1 | ✅ على القاعدة |
-| دمج إلى `main` | ⏳ بانتظار المالك + CI أخضر |
+| CI Website أخضر على #11→#16 | ✅ (2026-07-18) |
+| دمج إلى `main` | ✅ #11 ثم PR توحيد رأس المكدس (Phases 2–6 + docs) — انظر [`WEBSITE-TRANSFER-HANDOFF-AR.md`](./WEBSITE-TRANSFER-HANDOFF-AR.md) |
 | Staging CDN حي | ⏳ OPS |
