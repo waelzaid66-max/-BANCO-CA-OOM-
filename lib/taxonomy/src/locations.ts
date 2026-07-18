@@ -316,7 +316,90 @@ const SAUDI: LocCountry = {
   ],
 };
 
-export const LOCATIONS: LocCountry[] = [EGYPT, UAE, SAUDI];
+// The five remaining market countries (search/filters already offer all 8 —
+// without matching city groups here, sellers in these markets cannot pick a
+// location, so they can never PUBLISH into a market buyers can browse).
+const KUWAIT: LocCountry = {
+  value: "Kuwait",
+  en: "Kuwait",
+  ar: "الكويت",
+  groups: [
+    { value: "Kuwait City", en: "Kuwait City", ar: "مدينة الكويت", areas: [] },
+    { value: "Hawally", en: "Hawally", ar: "حولي", areas: [] },
+    { value: "Salmiya", en: "Salmiya", ar: "السالمية", areas: [] },
+    { value: "Farwaniya", en: "Farwaniya", ar: "الفروانية", areas: [] },
+    { value: "Ahmadi", en: "Ahmadi", ar: "الأحمدي", areas: [] },
+    { value: "Jahra", en: "Jahra", ar: "الجهراء", areas: [] },
+    { value: "Mubarak Al-Kabeer", en: "Mubarak Al-Kabeer", ar: "مبارك الكبير", areas: [] },
+  ],
+};
+
+const QATAR: LocCountry = {
+  value: "Qatar",
+  en: "Qatar",
+  ar: "قطر",
+  groups: [
+    { value: "Doha", en: "Doha", ar: "الدوحة", areas: [] },
+    { value: "Al Rayyan", en: "Al Rayyan", ar: "الريان", areas: [] },
+    { value: "Lusail", en: "Lusail", ar: "لوسيل", areas: [] },
+    { value: "Al Wakrah", en: "Al Wakrah", ar: "الوكرة", areas: [] },
+    { value: "Al Khor", en: "Al Khor", ar: "الخور", areas: [] },
+    { value: "Umm Salal", en: "Umm Salal", ar: "أم صلال", areas: [] },
+  ],
+};
+
+const JORDAN: LocCountry = {
+  value: "Jordan",
+  en: "Jordan",
+  ar: "الأردن",
+  groups: [
+    { value: "Amman", en: "Amman", ar: "عمّان", areas: [] },
+    { value: "Zarqa", en: "Zarqa", ar: "الزرقاء", areas: [] },
+    { value: "Irbid", en: "Irbid", ar: "إربد", areas: [] },
+    { value: "Aqaba", en: "Aqaba", ar: "العقبة", areas: [] },
+    { value: "Salt", en: "Salt", ar: "السلط", areas: [] },
+    { value: "Madaba", en: "Madaba", ar: "مادبا", areas: [] },
+  ],
+};
+
+const OMAN: LocCountry = {
+  value: "Oman",
+  en: "Oman",
+  ar: "عُمان",
+  groups: [
+    { value: "Muscat", en: "Muscat", ar: "مسقط", areas: [] },
+    { value: "Seeb", en: "Seeb", ar: "السيب", areas: [] },
+    { value: "Salalah", en: "Salalah", ar: "صلالة", areas: [] },
+    { value: "Sohar", en: "Sohar", ar: "صحار", areas: [] },
+    { value: "Nizwa", en: "Nizwa", ar: "نزوى", areas: [] },
+    { value: "Sur", en: "Sur", ar: "صور", areas: [] },
+  ],
+};
+
+const LIBYA: LocCountry = {
+  value: "Libya",
+  en: "Libya",
+  ar: "ليبيا",
+  groups: [
+    { value: "Tripoli", en: "Tripoli", ar: "طرابلس", areas: [] },
+    { value: "Benghazi", en: "Benghazi", ar: "بنغازي", areas: [] },
+    { value: "Misrata", en: "Misrata", ar: "مصراتة", areas: [] },
+    { value: "Zawiya", en: "Zawiya", ar: "الزاوية", areas: [] },
+    { value: "Tobruk", en: "Tobruk", ar: "طبرق", areas: [] },
+    { value: "Sabha", en: "Sabha", ar: "سبها", areas: [] },
+  ],
+};
+
+export const LOCATIONS: LocCountry[] = [
+  EGYPT,
+  UAE,
+  SAUDI,
+  KUWAIT,
+  QATAR,
+  JORDAN,
+  OMAN,
+  LIBYA,
+];
 
 /** Flattened area list for a country, used for the picker's search box. */
 export function flattenAreas(

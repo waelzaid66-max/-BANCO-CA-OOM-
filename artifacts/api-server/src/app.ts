@@ -112,6 +112,13 @@ app.use(express.json({ limit: "100kb" }));
 app.use(express.urlencoded({ extended: true, limit: "100kb" }));
 
 // Liveness/readiness probes must not depend on Clerk secrets or auth context.
+// Deploy probes hit "/" (BUG-003): answer a DB-free 200 here, BEFORE the Clerk
+// middleware and the /api mounts, or boot-time probes flood the logs with 404s
+// and some platforms mark the deploy unhealthy. MUST stay before
+// `app.use("/api", router)` (deployment constraint).
+app.get("/", (_req, res) => {
+  res.status(200).json({ ok: true, service: "banco-api" });
+});
 app.use("/api", healthRouter);
 
 // Resolve publishable key from request host for multi-domain support

@@ -38,6 +38,7 @@ const COUNTRY_ISO: Record<string, string> = {
   Jordan: "JO",
   Lebanon: "LB",
   Iraq: "IQ",
+  Libya: "LY",
 };
 
 interface LocationPickerProps {
