@@ -45,3 +45,47 @@ test("notification routing avoids sheet-only billing paths", () => {
   const src = fs.readFileSync(path.join(APP_ROOT, "lib", "notificationRouting.ts"), "utf8");
   assert.doesNotMatch(src, /openSheet.*billing/i, "billing must be full-page hub");
 });
+
+// Single router for in-app feed + remote push — booking role stamps stay consistent.
+test("in-app and push notification taps share routeForNotification", () => {
+  const feed = fs.readFileSync(path.join(APP_ROOT, "app", "notifications.tsx"), "utf8");
+  const push = fs.readFileSync(
+    path.join(APP_ROOT, "hooks", "usePushNotifications.tsx"),
+    "utf8",
+  );
+  assert.match(
+    feed,
+    /routeForNotificationItem/,
+    "in-app notifications feed must route via shared helper",
+  );
+  assert.match(
+    push,
+    /routeForNotification\s*\(/,
+    "push tap handler must route via shared helper",
+  );
+  assert.match(
+    feed,
+    /from\s+["']@\/lib\/notificationRouting["']/,
+    "feed must import from notificationRouting",
+  );
+  assert.match(
+    push,
+    /from\s+["']@\/lib\/notificationRouting["']/,
+    "push must import from notificationRouting",
+  );
+});
+
+test("bookings screen honors role query param (guest|host)", () => {
+  const src = fs.readFileSync(path.join(APP_ROOT, "app", "bookings.tsx"), "utf8");
+  assert.match(src, /useLocalSearchParams/, "must read role from route params");
+  assert.match(
+    src,
+    /roleParam\s*===\s*["']host["']\s*\?\s*["']host["']\s*:\s*["']guest["']/,
+    "missing/unknown role param defaults to guest trips (intentional)",
+  );
+  assert.match(
+    src,
+    /roleParam\s*===\s*["']host["']\s*\|\|\s*roleParam\s*===\s*["']guest["']/,
+    "must accept explicit guest|host from notification deep-links",
+  );
+});
