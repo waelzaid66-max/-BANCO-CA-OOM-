@@ -1117,6 +1117,7 @@ export const FinancingRequestCategory = {
 export interface FinancingRequest {
   lead_id?: string;
   status?: FinancingRequestStatus;
+  branch_id?: string | null;
   listing_id?: string;
   listing_title?: string;
   category?: FinancingRequestCategory;

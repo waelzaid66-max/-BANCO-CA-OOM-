@@ -3195,6 +3195,7 @@ export const GetFinancingRequestsResponse = zod.object({
   "data": zod.array(zod.object({
   "lead_id": zod.string().optional(),
   "status": zod.enum(['new', 'forwarded', 'contacted', 'closed', 'rejected']).optional(),
+  "branch_id": zod.string().nullish(),
   "listing_id": zod.string().optional(),
   "listing_title": zod.string().optional(),
   "category": zod.enum(['car', 'real_estate', 'industrial']).optional(),
@@ -3255,6 +3256,7 @@ export const UpdateFinancingRequestResponse = zod.object({
   "data": zod.object({
   "lead_id": zod.string().optional(),
   "status": zod.enum(['new', 'forwarded', 'contacted', 'closed', 'rejected']).optional(),
+  "branch_id": zod.string().nullish(),
   "listing_id": zod.string().optional(),
   "listing_title": zod.string().optional(),
   "category": zod.enum(['car', 'real_estate', 'industrial']).optional(),
@@ -3494,6 +3496,7 @@ export const GetInstitutionInboxResponse = zod.object({
   "items": zod.array(zod.object({
   "lead_id": zod.string().optional(),
   "status": zod.enum(['new', 'forwarded', 'contacted', 'closed', 'rejected']).optional(),
+  "branch_id": zod.string().nullish(),
   "listing_id": zod.string().optional(),
   "listing_title": zod.string().optional(),
   "category": zod.enum(['car', 'real_estate', 'industrial']).optional(),
@@ -3541,6 +3544,7 @@ export const UpdateInstitutionRequestResponse = zod.object({
   "data": zod.object({
   "lead_id": zod.string().optional(),
   "status": zod.enum(['new', 'forwarded', 'contacted', 'closed', 'rejected']).optional(),
+  "branch_id": zod.string().nullish(),
   "listing_id": zod.string().optional(),
   "listing_title": zod.string().optional(),
   "category": zod.enum(['car', 'real_estate', 'industrial']).optional(),

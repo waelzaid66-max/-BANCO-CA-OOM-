@@ -1534,6 +1534,9 @@ components:
         status:
           type: string
           enum: [new, forwarded, contacted, closed, rejected]
+        branch_id:
+          type: string
+          nullable: true
         listing_id:
           type: string
         listing_title:

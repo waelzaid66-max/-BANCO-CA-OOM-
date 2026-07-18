@@ -21,6 +21,7 @@ type ListingCategory = "car" | "real_estate" | "industrial";
 export interface FinancingRequestRow {
   lead_id: string;
   status: FinancingStatus;
+  branch_id: string | null;
   listing_id: string;
   listing_title: string;
   category: ListingCategory;
@@ -93,6 +94,7 @@ const rowSelection = {
   providerName: bankFinanceField<string>("provider_name"),
   intermediaryId: financingRequests.intermediaryId,
   intermediaryName: financingIntermediaries.name,
+  branchId: financingRequests.branchId,
   notes: financingRequests.notes,
   assignedAt: financingRequests.assignedAt,
   createdAt: leadHistory.createdAt,
@@ -114,6 +116,7 @@ type RawRow = {
   providerName: string | null;
   intermediaryId: string | null;
   intermediaryName: string | null;
+  branchId: string | null;
   notes: string | null;
   assignedAt: Date | null;
   createdAt: Date | null;
@@ -197,6 +200,7 @@ function mapRow(r: RawRow): FinancingRequestRow {
     provider_name: r.providerName,
     intermediary_id: r.intermediaryId,
     intermediary_name: r.intermediaryName,
+    branch_id: r.branchId,
     notes: r.notes,
     assigned_at: r.assignedAt ? r.assignedAt.toISOString() : null,
     created_at: r.createdAt ? r.createdAt.toISOString() : null,

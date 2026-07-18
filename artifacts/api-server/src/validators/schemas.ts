@@ -1994,6 +1994,8 @@ export const FinancingRequestSchema = z
     // CRM mutates against (the sidecar row is created lazily).
     lead_id: z.string(),
     status: financingStatusEnum,
+    // Additive: the branch this request is routed to (bank-side routing).
+    branch_id: z.string().nullable().optional(),
     listing_id: z.string(),
     listing_title: z.string(),
     category: z.enum(["car", "real_estate", "industrial"]),
