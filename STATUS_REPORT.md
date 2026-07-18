@@ -1,8 +1,8 @@
 # BANCO Store — Completion & Status Report
 
-_Last updated: 2026-07-08 — Production readiness phases 02–20 closed; product fixes through `92a33e0`; `main` HEAD `31a4bfe` (sync docs). See `REPO_SYNC_STATUS.md`._
+_Last updated: 2026-07-18 — Booking notification role contract merged (`#7` → `381eecd`); core CI on `main` **5/5 green**. See `REPO_SYNC_STATUS.md`._
 
-> **Release line:** `main` (see `git log -1`) — **23 mobile regression tests** via confidence script; phases index: `audit/production-readiness/README.md`. Staging smoke still **OPS** (secrets).
+> **Release line:** `main` @ `381eecd` — Replit publish source is this GitHub repo (`-BANCO-CA-OOM-`). Pull `main` for the safe full-stack copy (API · mobile · admin · dealer · landing). **`banco-web` remains CI-isolated** (path-filtered `ci-website.yml`; no `.replit-artifact`). Staging smoke still **OPS** (secrets).
 
 This is the live status of the BANCO Store monorepo (Banco Mobile · Banco Admin · Banco Market/dealer-os · API Server · shared libs). It records what is **done and verified**, the **architecture**, and the **honest remaining items** with the reason each is or isn't locally verifiable.
 
