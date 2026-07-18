@@ -137,6 +137,23 @@ async function checkRoute(item) {
       if (item.expectJsonLd && !body.includes(item.expectJsonLd)) {
         fail(item.label, `missing JSON-LD ${item.expectJsonLd}`);
       }
+
+      // Phase 2 journey markers (search + saved shells)
+      if (item.path === "/search" || item.path === "/en/search") {
+        if (!body.includes('data-banco-journey="search"')) {
+          fail(item.label, 'missing data-banco-journey="search"');
+        }
+      }
+      if (item.path === "/saved" || item.path === "/en/saved") {
+        if (
+          res.status >= 200 &&
+          res.status < 300 &&
+          !body.includes('data-banco-journey="saved"') &&
+          !body.includes("sign-in")
+        ) {
+          fail(item.label, "saved page missing journey marker or sign-in gate");
+        }
+      }
     }
 
     if (failed === before) {
@@ -162,6 +179,12 @@ async function checkListing(id) {
     const html = await res.text();
     if (!html.includes("Product")) {
       fail(label, "missing Product JSON-LD");
+    }
+    if (!html.includes('data-banco-journey="listing"')) {
+      fail(label, 'missing data-banco-journey="listing"');
+    }
+    if (!html.includes('data-banco-journey="contact"') && !html.includes("bancooom://")) {
+      fail(label, "missing contact journey or app deep-link fallback");
     }
     if (failed === before) {
       pass(label, res.status);

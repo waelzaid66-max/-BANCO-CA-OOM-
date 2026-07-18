@@ -93,13 +93,15 @@
 **الهدف:** الصفحة الأولى + كروم + لوجو + ألوان = نفس إحساس التطبيق/البراند.  
 **مسموح:** `banco-web/components/Site*`, tokens, assets تحت `banco-web` فقط.  
 **ممنوع:** أي ملف موبايل.  
-**خروج:** لقطات قبل/بعد · checklist هوية · boundaries PASS.
+**خروج:** لقطات قبل/بعد · checklist هوية · boundaries PASS.  
+**حالة:** تنفيذ على PR — انظر [`WEBSITE-PHASE1-VISUAL-PARITY-STATUS-AR.md`](./WEBSITE-PHASE1-VISUAL-PARITY-STATUS-AR.md).
 
 ### Phase 2 — Journey parity (رحلات المستهلك)
 
 **الهدف:** بحث · تفاصيل · حفظ · تواصل تعمل على staging بنفس عقد الـ API.  
 **Flags:** تفعيل LIVE بحذر على staging فقط.  
-**خروج:** smoke staging · parity search-contract بدون تعديل موبايل.
+**خروج:** smoke staging · parity search-contract بدون تعديل موبايل.  
+**حالة:** تقوية كود + audit CI — انظر [`WEBSITE-PHASE2-JOURNEY-PARITY-STATUS-AR.md`](./WEBSITE-PHASE2-JOURNEY-PARITY-STATUS-AR.md). staging CDN smoke معلّق OPS.
 
 ### Phase 3 — Seller workspace parity
 

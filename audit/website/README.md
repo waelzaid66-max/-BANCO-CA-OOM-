@@ -3,7 +3,8 @@
 > **2026-07-18 — مسار النسخة الكاملة:**  
 > 1. [`WEBSITE-NO-TOUCH-CHARTER-AR.md`](./WEBSITE-NO-TOUCH-CHARTER-AR.md) — ضمان عدم المساس بخط الإنتاج  
 > 2. [`WEBSITE-FULL-COPY-PLAN-AND-PREP-AR.md`](./WEBSITE-FULL-COPY-PLAN-AND-PREP-AR.md) — الخطة + التحضير  
-> 3. [`WEBSITE-PHASE1-VISUAL-PARITY-STATUS-AR.md`](./WEBSITE-PHASE1-VISUAL-PARITY-STATUS-AR.md) — **Phase 1 جاري:** لوجو + هيرو brand-first
+> 3. [`WEBSITE-PHASE1-VISUAL-PARITY-STATUS-AR.md`](./WEBSITE-PHASE1-VISUAL-PARITY-STATUS-AR.md) — Phase 1: لوجو + هيرو brand-first  
+> 4. [`WEBSITE-PHASE2-JOURNEY-PARITY-STATUS-AR.md`](./WEBSITE-PHASE2-JOURNEY-PARITY-STATUS-AR.md) — **Phase 2 جاري:** بحث/حفظ/تواصل
 
 **Playbook السابق:** [`WEBSITE-PRE-START-PLAYBOOK-AR.md`](./WEBSITE-PRE-START-PLAYBOOK-AR.md)  
 **Delivery & admin toggle roadmap:** [`WEBSITE-DELIVERY-ROADMAP-AR.md`](./WEBSITE-DELIVERY-ROADMAP-AR.md)
