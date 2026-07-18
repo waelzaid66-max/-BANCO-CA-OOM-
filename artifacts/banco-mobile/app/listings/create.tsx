@@ -68,7 +68,12 @@ import {
   apiCategoryForUi,
   requiredSpecKeysFor,
   type UiListingCategory,
+  MARKET_COUNTRIES,
+  DEFAULT_MARKET_COUNTRY,
+  currencyForMarket,
+  EXTRA_CURRENCIES,
 } from "@/constants/listingCreateTaxonomy";
+import { loadPreferredMarketCountry } from "@/lib/marketPreference";
 import { buildPreviewFeedItem } from "@/constants/listingPreview";
 import {
   DEFAULT_COUNTRY,
@@ -207,6 +212,21 @@ export default function CreateListingScreen() {
   const { request: requestParam } = useLocalSearchParams<{ request?: string }>();
   const startAsRequest = requestParam === "1";
   const [isRequest, setIsRequest] = useState(startAsRequest);
+
+  // Multi-market: the listing's market country (stamped into
+  // specs.market_country — the dimension search/map/feed filter on) and its
+  // pricing currency (specs.currency — drives every price label). Smart
+  // default: the user's saved market preference; manual: the chip rows below.
+  const [marketCountry, setMarketCountry] = useState(DEFAULT_MARKET_COUNTRY);
+  const marketTouched = useRef(false);
+  const [currencyOverride, setCurrencyOverride] = useState<string | null>(null);
+  const listingCurrency = currencyOverride ?? currencyForMarket(marketCountry);
+  useEffect(() => {
+    void loadPreferredMarketCountry().then((iso) => {
+      // Don't clobber an explicit choice the seller already made this session.
+      if (!marketTouched.current) setMarketCountry(iso);
+    });
+  }, []);
 
   const [phones, setPhones] = useState<PhoneEntry[]>([
     { country: DEFAULT_COUNTRY.iso, number: "" },
@@ -1055,6 +1075,14 @@ export default function CreateListingScreen() {
         payment_options: paymentOptions,
         is_request: isRequest || undefined,
       };
+      // Multi-market stamp: market_country scopes the listing to its market for
+      // every browse surface (search/map/feed all filter it); currency drives
+      // every price label. A buyer request is market-scoped too but carries no
+      // price, so no currency.
+      specsClean.market_country = marketCountry;
+      if (!isRequest) {
+        specsClean.currency = listingCurrency;
+      }
       // Cars + industrial/supply: persist local-vs-imported via the optional
       // logistics block (the same origin_type dimension the feed/search expose),
       // nullable otherwise. Imported machinery/materials are a first-class supply
@@ -1676,6 +1704,94 @@ export default function CreateListingScreen() {
               </Pressable>
             </View>
           )}
+          {/* Multi-market: which country this listing sells in (scopes every
+              browse surface) + its pricing currency. Smart default = saved
+              market preference → market currency; both manually overridable. */}
+          <View>
+            <FieldLabel
+              label={t("create.fields.marketCountry")}
+              colors={colors}
+              rowDir={rowDir}
+            />
+            <View style={[styles.optionRow, { flexDirection: rowDir, flexWrap: "wrap" }]}>
+              {MARKET_COUNTRIES.map((m) => {
+                const active = marketCountry === m.value;
+                return (
+                  <Pressable
+                    key={m.value}
+                    onPress={() => {
+                      Haptics.selectionAsync();
+                      marketTouched.current = true;
+                      setMarketCountry(m.value);
+                    }}
+                    style={[
+                      styles.optionChip,
+                      {
+                        backgroundColor: active ? colors.primary : colors.card,
+                        borderColor: active ? colors.primary : colors.border,
+                        borderRadius: colors.radius,
+                      },
+                    ]}
+                    testID={`create-market-${m.value}`}
+                  >
+                    <AppText
+                      style={[
+                        styles.optionChipText,
+                        { color: active ? colors.primaryForeground : colors.foreground },
+                      ]}
+                    >
+                      {isRTL ? m.ar : m.en}
+                    </AppText>
+                  </Pressable>
+                );
+              })}
+            </View>
+          </View>
+
+          {!isRequest ? (
+            <View>
+              <FieldLabel
+                label={t("create.fields.currency")}
+                colors={colors}
+                rowDir={rowDir}
+              />
+              <View style={[styles.optionRow, { flexDirection: rowDir, flexWrap: "wrap" }]}>
+                {[currencyForMarket(marketCountry), ...EXTRA_CURRENCIES].map((code) => {
+                  const active = listingCurrency === code;
+                  return (
+                    <Pressable
+                      key={code}
+                      onPress={() => {
+                        Haptics.selectionAsync();
+                        setCurrencyOverride(
+                          code === currencyForMarket(marketCountry) ? null : code,
+                        );
+                      }}
+                      style={[
+                        styles.optionChip,
+                        {
+                          backgroundColor: active ? colors.primary : colors.card,
+                          borderColor: active ? colors.primary : colors.border,
+                          borderRadius: colors.radius,
+                        },
+                      ]}
+                      testID={`create-currency-${code}`}
+                    >
+                      <AppText
+                        style={[
+                          styles.optionChipText,
+                          { color: active ? colors.primaryForeground : colors.foreground },
+                        ]}
+                      >
+                        {code}
+                      </AppText>
+                    </Pressable>
+                  );
+                })}
+              </View>
+            </View>
+          ) : null}
+
           {(category === "car" || category === "industrial") && (
             <View>
               <FieldLabel

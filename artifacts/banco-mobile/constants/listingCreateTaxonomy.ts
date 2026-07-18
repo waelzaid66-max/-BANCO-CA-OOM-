@@ -196,6 +196,28 @@ export const MARKET_COUNTRIES: {
 
 export const DEFAULT_MARKET_COUNTRY = "EG";
 
+/**
+ * Each market's pricing currency + the two cross-border currencies importers
+ * and B2B suppliers actually quote in. Create defaults the listing currency
+ * from the selected market (smart) and lets the seller override (manual).
+ */
+export const CURRENCY_BY_MARKET: Record<string, string> = {
+  EG: "EGP",
+  SA: "SAR",
+  AE: "AED",
+  KW: "KWD",
+  QA: "QAR",
+  JO: "JOD",
+  OM: "OMR",
+  LY: "LYD",
+};
+
+export const EXTRA_CURRENCIES = ["USD", "EUR"] as const;
+
+export function currencyForMarket(country: string | null | undefined): string {
+  return CURRENCY_BY_MARKET[(country ?? "").toUpperCase()] ?? "EGP";
+}
+
 /** The rental-term catalogue rows available in a given market country. */
 export function rentalTermsForCountry(
   country: string = DEFAULT_MARKET_COUNTRY,

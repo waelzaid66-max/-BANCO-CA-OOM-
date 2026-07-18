@@ -162,6 +162,7 @@ export async function getFeed(options: {
   maxYear?: number;
   industry?: string;
   originType?: string;
+  marketCountry?: string;
   hasInstallment?: boolean;
   // Buyer request/wanted filter (undefined → both sales and requests).
   isRequest?: boolean;
@@ -201,6 +202,7 @@ export async function getFeed(options: {
       max_year: options.maxYear,
       industry: options.industry,
       origin_type: options.originType,
+      market_country: options.marketCountry,
       has_installment: options.hasInstallment,
     })
   );
@@ -240,6 +242,7 @@ export async function getFeed(options: {
       // Origin (local / imported) — drives the "مستورد / Imported" card badge on
       // industrial + car listings, the key B2B / import-journey signal.
       origin_type: listingAttributes.originType,
+      currency: sql<string | null>`${listingAttributes.specs}->>'currency'`,
       bumped_at: listings.bumpedAt,
       saves_count: listings.savesCount,
       is_request: listings.isRequest,

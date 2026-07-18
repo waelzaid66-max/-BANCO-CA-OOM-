@@ -858,6 +858,15 @@ const engineFilterFields = {
     ])
     .optional(),
   origin_type: z.enum(["local", "imported"]).optional(),
+  // Market country (ISO-3166 alpha-2, e.g. EG/SA/AE/KW/QA/JO/OM/LY). Filters
+  // specs.market_country with rows missing the key treated as EG (contract
+  // rule) — the country chips in every surface flow through this.
+  market_country: z
+    .string()
+    .trim()
+    .regex(/^[A-Za-z]{2}$/)
+    .transform((s) => s.toUpperCase())
+    .optional(),
 } as const;
 
 // Result ordering for the search results screen. `recommended` (default) and

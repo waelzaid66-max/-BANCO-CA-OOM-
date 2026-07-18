@@ -642,11 +642,22 @@ export async function getListingDetail(listingId: string, viewerClerkId?: string
         }
       : null;
 
+  // Detail-side money label — mirrors BffService.formatMoney: the listing's
+  // specs.currency (multi-market) with an EGP fallback for legacy rows and
+  // anything outside the supported set, so a malformed spec never renders.
+  const SUPPORTED_CURRENCIES = new Set([
+    "EGP", "SAR", "AED", "KWD", "QAR", "JOD", "OMR", "LYD", "USD", "EUR",
+  ]);
+  const rawCurrency = String((specs as Record<string, unknown>)?.currency ?? "")
+    .trim()
+    .toUpperCase();
+  const listingCurrency = SUPPORTED_CURRENCIES.has(rawCurrency) ? rawCurrency : "EGP";
   function formatEGP(v: string) {
     const n = Number(v);
-    if (n >= 1_000_000) return `${(n / 1_000_000).toFixed(2).replace(/\.00$/, "")}M EGP`;
-    if (n >= 1_000) return `${Math.round(n / 1_000).toLocaleString()}K EGP`;
-    return `${n.toLocaleString()} EGP`;
+    if (n >= 1_000_000)
+      return `${(n / 1_000_000).toFixed(2).replace(/\.00$/, "")}M ${listingCurrency}`;
+    if (n >= 1_000) return `${Math.round(n / 1_000).toLocaleString()}K ${listingCurrency}`;
+    return `${n.toLocaleString()} ${listingCurrency}`;
   }
 
   return {

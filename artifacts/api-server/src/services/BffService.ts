@@ -38,6 +38,9 @@ interface RawListingRow {
   // badge on industrial + car listings. Optional so row builders that don't
   // select it degrade gracefully (no badge) instead of failing to compile.
   origin_type?: string | null;
+  // Additive: pricing currency from specs.currency (multi-market). Optional —
+  // builders that don't select it fall back to EGP, never garbage.
+  currency?: string | null;
 }
 
 /**
@@ -53,11 +56,39 @@ function rentPeriodSuffix(row: RawListingRow): string {
   return " /شهر";
 }
 
-function formatEGP(value: string | number): string {
+/**
+ * Currencies a listing may be priced in: the 8 market countries' currencies
+ * plus USD/EUR (importers and B2B suppliers quote in both). Anything else
+ * falls back to EGP so a malformed spec can never render garbage.
+ */
+const SUPPORTED_CURRENCIES = new Set([
+  "EGP",
+  "SAR",
+  "AED",
+  "KWD",
+  "QAR",
+  "JOD",
+  "OMR",
+  "LYD",
+  "USD",
+  "EUR",
+]);
+
+function normalizeCurrency(raw: string | null | undefined): string {
+  const code = (raw ?? "").trim().toUpperCase();
+  return SUPPORTED_CURRENCIES.has(code) ? code : "EGP";
+}
+
+/**
+ * Compact money label ("1.2M SAR", "450K EGP") — one consistent shape across
+ * every currency so multi-market cards never crowd or misalign.
+ */
+function formatMoney(value: string | number, currency?: string | null): string {
   const n = Number(value);
-  if (n >= 1_000_000) return `${(n / 1_000_000).toFixed(2).replace(/\.00$/, "")}M EGP`;
-  if (n >= 1_000) return `${Math.round(n / 1_000).toLocaleString("en-EG")}K EGP`;
-  return `${n.toLocaleString("en-EG")} EGP`;
+  const code = normalizeCurrency(currency);
+  if (n >= 1_000_000) return `${(n / 1_000_000).toFixed(2).replace(/\.00$/, "")}M ${code}`;
+  if (n >= 1_000) return `${Math.round(n / 1_000).toLocaleString("en-EG")}K ${code}`;
+  return `${n.toLocaleString("en-EG")} ${code}`;
 }
 
 function buildUrgencySignal(views: number, clicks: number): string | null {
@@ -108,7 +139,7 @@ export function transformToFeedItem(row: RawListingRow): FeedItem | null {
     // surface an honest "price requested" label instead of "0 EGP".
     price_display: row.is_request
       ? "طلب سعر / Price requested"
-      : formatEGP(row.base_price_cash) + rentPeriodSuffix(row),
+      : formatMoney(row.base_price_cash, row.currency) + rentPeriodSuffix(row),
     installment_badge: row.payment.badge,
     title: row.title,
     location: row.location,

@@ -188,8 +188,20 @@ export function buildAttributeConditions(f: {
   max_year?: number;
   industry?: string;
   origin_type?: string;
+  market_country?: string;
 }): SQL[] {
   const conditions: SQL[] = [];
+
+  // Market country — the per-contract rule: listings carry specs.market_country
+  // and rows WITHOUT the key are Egyptian inventory (the launch market), so the
+  // EG filter must include legacy rows via the COALESCE fallback. This one
+  // condition makes the country chips in every surface REAL (search + map +
+  // facets all flow through this builder).
+  if (f.market_country) {
+    conditions.push(
+      sql`COALESCE(${listingAttributes.specs}->>'market_country', 'EG') = ${f.market_country}`
+    );
+  }
 
   // condition / property_type / finishing live in dedicated enum columns, but a
   // minority of rows only carry them inside `specs` JSON — COALESCE keeps the
@@ -436,6 +448,7 @@ export async function searchListings(
       quality_score: users.qualityScore,
       industrial_type: listingAttributes.industrialType,
       origin_type: listingAttributes.originType,
+      currency: sql<string | null>`${listingAttributes.specs}->>'currency'`,
       bumped_at: listings.bumpedAt,
       is_request: listings.isRequest,
     })
@@ -840,6 +853,7 @@ export async function enrichListings(
     clicks?: number | null;
     industrial_type?: string | null;
     origin_type?: string | null;
+    currency?: string | null;
     // Additive recency/engagement/kind passthrough → typed onto the enriched row
     // so computeScore (saves/bumped) and the BFF transform (is_request) can read
     // them, and feed/search cursors can key off the effective recency timestamp.
@@ -949,6 +963,7 @@ export async function enrichListings(
       best_offer_badge: offers.best_offer_badge,
       industrial_type: row.industrial_type ?? null,
       origin_type: row.origin_type ?? null,
+      currency: row.currency ?? null,
       whatsapp_enabled: whatsappByListing.get(row.id) ?? false,
       offer_type: rentalByListing.get(row.id)?.offer_type ?? null,
       rental_term: rentalByListing.get(row.id)?.rental_term ?? null,
