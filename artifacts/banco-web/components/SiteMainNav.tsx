@@ -2,20 +2,8 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { chromeCopy } from "../lib/chrome-copy";
-import {
-  adminNavItems,
-  browseNavItems,
-  marketNavItems,
-} from "../lib/chrome-nav";
 import { localeFromPathname } from "../lib/hub-config";
-import { isWebMarketCopyEnabled } from "../lib/market-copy-config";
-import {
-  getAdminUrl,
-  getAppStoreUrls,
-  getMarketUrl,
-} from "../lib/site-env";
-import { workspaceUiCopy } from "../lib/workspace-ui-copy";
+import { buildSiteNavModel } from "../lib/site-nav-model";
 import { SiteNavDropdown } from "./SiteNavDropdown";
 import { SiteAuthControls } from "./SiteAuthControls";
 import { LocaleSwitcher } from "./LocaleSwitcher";
@@ -44,41 +32,15 @@ const dividerStyle: React.CSSProperties = {
 export function SiteMainNav() {
   const pathname = usePathname() ?? "/";
   const locale = localeFromPathname(pathname);
-  const copy = chromeCopy(locale);
-  const marketBase = getMarketUrl();
-  const adminBase = getAdminUrl();
-  const stores = getAppStoreUrls();
-
-  const browse = browseNavItems(locale);
-
-  const appItems = [
-    stores.android ? { href: stores.android, label: copy.appAndroid, external: true as const } : null,
-    stores.ios ? { href: stores.ios, label: copy.appIos, external: true as const } : null,
-  ].filter(Boolean) as { href: string; label: string; external: true }[];
-
-  const webMarketCopy = isWebMarketCopyEnabled();
-  const webMarketHref = locale === "en" ? "/en/workspace/b2b" : "/workspace/b2b";
-  const marketItems = [
-    ...(webMarketCopy
-      ? [
-          {
-            href: webMarketHref,
-            label: workspaceUiCopy(locale).marketNavWebCopy,
-            external: false as const,
-          },
-        ]
-      : []),
-    ...(marketBase
-      ? marketNavItems(marketBase, locale).map((item) => ({ ...item, external: true as const }))
-      : []),
-  ];
-
-  const managementItems = adminBase
-    ? adminNavItems(adminBase, locale).map((item) => ({ ...item, external: true as const }))
-    : [];
+  const { copy, browse, appItems, marketItems, managementItems } = buildSiteNavModel(locale);
 
   return (
-    <nav style={navStyle} aria-label={copy.navAria}>
+    <nav
+      className="banco-desktop-nav"
+      style={navStyle}
+      aria-label={copy.navAria}
+      data-banco-chrome="desktop-nav"
+    >
       {browse.map((item) => {
         const active = pathname === item.href || pathname.startsWith(`${item.href}/`);
         return (

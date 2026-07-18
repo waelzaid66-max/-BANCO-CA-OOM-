@@ -127,10 +127,11 @@ mustInclude(
 );
 
 mustInclude(
-  `${WEB}/components/SiteMainNav.tsx`,
+  `${WEB}/lib/site-nav-model.ts`,
   ["isWebMarketCopyEnabled", "marketNavWebCopy", "/workspace/b2b"],
   "main nav web market entry",
 );
+
 
 mustInclude(
   `${WEB}/.env.example`,

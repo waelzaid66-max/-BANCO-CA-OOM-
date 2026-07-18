@@ -9,21 +9,6 @@ import { isWebMarketCopyEnabled } from "../../lib/market-copy-config";
 import { getMarketUrl } from "../../lib/site-env";
 import { workspaceUiCopy } from "../../lib/workspace-ui-copy";
 
-const shellStyle: React.CSSProperties = {
-  maxWidth: 1080,
-  margin: "0 auto",
-  padding: "2rem 1.25rem",
-  display: "grid",
-  gridTemplateColumns: "minmax(180px, 220px) 1fr",
-  gap: "1.5rem",
-};
-
-const navStyle: React.CSSProperties = {
-  display: "flex",
-  flexDirection: "column",
-  gap: "0.35rem",
-};
-
 const navLinkStyle: React.CSSProperties = {
   color: "var(--banco-fg)",
   textDecoration: "none",
@@ -31,6 +16,7 @@ const navLinkStyle: React.CSSProperties = {
   borderRadius: 8,
   fontSize: "0.9rem",
   fontWeight: 600,
+  whiteSpace: "nowrap",
 };
 
 type WorkspaceShellProps = {
@@ -83,13 +69,19 @@ export function WorkspaceShell({ children }: WorkspaceShellProps) {
   }
 
   return (
-    <div style={shellStyle} data-banco-journey="workspace" data-banco-auth="on">
-      <aside aria-label={copy.title}>
-        <h1 style={{ margin: "0 0 1rem", fontSize: "1.25rem" }}>{copy.title}</h1>
-        <nav style={navStyle}>
+    <div
+      className="banco-workspace-shell"
+      data-banco-journey="workspace"
+      data-banco-auth="on"
+      data-banco-chrome="workspace-shell"
+    >
+      <aside className="banco-workspace-shell__aside" aria-label={copy.title}>
+        <h1 className="banco-workspace-shell__title">{copy.title}</h1>
+        <nav className="banco-workspace-shell__nav">
           {links.map((link) => {
-            const active =
-              link.exact ? pathname === link.href : pathname.startsWith(link.href);
+            const active = link.exact
+              ? pathname === link.href
+              : pathname === link.href || pathname.startsWith(`${link.href}/`);
             return (
               <Link
                 key={link.href}
@@ -99,6 +91,7 @@ export function WorkspaceShell({ children }: WorkspaceShellProps) {
                   background: active ? "rgba(232,0,45,0.12)" : "transparent",
                   color: active ? "var(--banco-primary)" : "var(--banco-fg)",
                 }}
+                aria-current={active ? "page" : undefined}
               >
                 {link.label}
               </Link>
@@ -111,7 +104,7 @@ export function WorkspaceShell({ children }: WorkspaceShellProps) {
           ) : null}
         </nav>
       </aside>
-      <section>{children}</section>
+      <section className="banco-workspace-shell__main">{children}</section>
     </div>
   );
 }

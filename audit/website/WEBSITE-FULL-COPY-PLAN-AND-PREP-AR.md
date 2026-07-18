@@ -119,7 +119,8 @@
 ### Phase 5 — Headers / responsive chrome
 
 **الهدف:** هيدرز ويب آمنة (موبايل متصفح / تابلت / ديسكتوب) بدون كسر SEO.  
-**خروج:** لا تداخل مع محتوى؛ a11y أساسي؛ اختبار عرض متعددة.
+**خروج:** لا تداخل مع محتوى؛ a11y أساسي؛ اختبار عرض متعددة.  
+**حالة:** هيدر sticky + درج موبايل + workspace عمود واحد — انظر [`WEBSITE-PHASE5-RESPONSIVE-CHROME-STATUS-AR.md`](./WEBSITE-PHASE5-RESPONSIVE-CHROME-STATUS-AR.md).
 
 ### Phase 6 — Plug hardening
 
