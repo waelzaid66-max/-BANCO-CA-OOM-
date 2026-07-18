@@ -118,6 +118,12 @@ async function checkRoute(item) {
       if (json.status !== "ok") {
         fail(item.label, `unexpected payload: ${body.slice(0, 120)}`);
       }
+      if (json.surface !== "banco-web") {
+        fail(item.label, `expected surface banco-web, got ${json.surface}`);
+      }
+      if (json.plug !== "on" && json.plug !== "off") {
+        fail(item.label, `expected plug on|off, got ${JSON.stringify(json.plug)}`);
+      }
     } else if (item.kind === "manifest") {
       let json;
       try {

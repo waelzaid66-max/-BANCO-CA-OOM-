@@ -12,6 +12,7 @@ import { chromeCopy } from "../lib/chrome-copy";
 import { adminNavItems, browseNavItems, marketNavItems } from "../lib/chrome-nav";
 import { localeFromPathname, localizedPath } from "../lib/hub-config";
 import { writeStoredLocale } from "../lib/locale-preference";
+import { isWebPlugEnabled } from "../lib/web-plug-config";
 import { BrandMark } from "./BrandMark";
 import { SiteMainNav } from "./SiteMainNav";
 import { SiteMobileNav } from "./SiteMobileNav";
@@ -54,6 +55,9 @@ export function SiteChrome({ children }: { children: React.ReactNode }) {
 
   const isDirectoryHub =
     pathname === "/directory" || pathname === "/en/directory";
+  const isMaintenance =
+    pathname === "/maintenance" || pathname === "/en/maintenance";
+  const plugOn = isWebPlugEnabled();
 
   useEffect(() => {
     if (locale === "ar" && !pathname.startsWith("/listing/")) {
@@ -65,7 +69,8 @@ export function SiteChrome({ children }: { children: React.ReactNode }) {
     setMenuOpen(false);
   }, [pathname]);
 
-  if (isDirectoryHub) {
+  // Directory hub + maintenance (plug off) render without site chrome.
+  if (isDirectoryHub || isMaintenance || !plugOn) {
     return <div id="main-content">{children}</div>;
   }
 

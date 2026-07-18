@@ -125,7 +125,8 @@
 ### Phase 6 — Plug hardening
 
 **الهدف:** kill-switch / flag إيقاف موقع · مراقبة منفصلة · توثيق فصل CDN.  
-**خروج:** وثيقة «كيف تفصل الفيشة في 5 دقائق».
+**خروج:** وثيقة «كيف تفصل الفيشة في 5 دقائق».  
+**حالة:** `WEB_PLUG_ENABLED` + صيانة + health — انظر [`WEBSITE-PHASE6-PLUG-HARDENING-STATUS-AR.md`](./WEBSITE-PHASE6-PLUG-HARDENING-STATUS-AR.md) و [`WEBSITE-PLUG-DETACH-5MIN-AR.md`](./WEBSITE-PLUG-DETACH-5MIN-AR.md).
 
 ---
 
