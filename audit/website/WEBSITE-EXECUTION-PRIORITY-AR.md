@@ -27,7 +27,8 @@
 | 1 | Banco Market artifact | `/dealer-os/` |
 | 2 | Admin Control artifact | `/admin-os/` |
 
-لا kill switch للويب من الأدمن (W6) — لم يُنفَّذ.
+Kill-switch **وقت التشغيل** على الويب موجود: `WEB_PLUG_ENABLED` (Phase 6) — انظر [`WEBSITE-PLUG-DETACH-5MIN-AR.md`](./WEBSITE-PLUG-DETACH-5MIN-AR.md).  
+تحكم أدمن عبر API (`consumer_web_enabled`) **ما زال مستقبلياً** ولا يُنفَّذ من مسار الويب وحده.
 
 ---
 
@@ -39,8 +40,9 @@
 | 2 | W3 map/facets UI (flags off) | ✅ كود؛ MAP/LIVE على staging لاحقاً |
 | 3 | Local CI mirror | ✅ `pnpm run ops:website-ci` |
 | 4 | Docker image | ✅ `ci-website-docker.yml` |
-| 5 | CDN staging deploy | ⏳ بعد API FRESH (اختياري parallel) |
-| 6 | W4/W5 Clerk workspace | ❌ لم يبدأ |
+| 5 | CDN staging deploy | ⏳ بعد دمج المكدس — [`WEBSITE-STAGING-OPS-CHECKLIST-AR.md`](./WEBSITE-STAGING-OPS-CHECKLIST-AR.md) |
+| 6 | Full-copy Phases 1–6 | ✅ كود على PR #11–#16 — [`WEBSITE-STACK-MERGE-READINESS-AR.md`](./WEBSITE-STACK-MERGE-READINESS-AR.md) |
+| 7 | Clerk workspace / journeys | ✅ ضمن Phases 2–3 على المكدس |
 
 **قواعد صارمة للوكيل:**
 
