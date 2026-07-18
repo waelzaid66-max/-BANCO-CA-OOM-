@@ -381,6 +381,18 @@ components:
         phone:
           type: string
           nullable: true
+        # Additive (Profiles 2.0): seller-published marketing links — public by
+        # design; the phone stays behind the contact-token flow.
+        social_links:
+          type: array
+          items:
+            type: object
+            required: [platform, value]
+            properties:
+              platform:
+                type: string
+              value:
+                type: string
 
     ListingDetail:
       type: object
@@ -446,6 +458,8 @@ components:
             clicks:
               type: integer
         is_saved:
+          type: boolean
+        is_request:
           type: boolean
         coordinates:
           $ref: "#/components/schemas/Coordinates"

@@ -45,13 +45,20 @@ import { useToast } from "@/hooks/use-toast";
 import { useLang } from "@/context/LanguageContext";
 
 type Audience = NonNullable<AdminPlanUpdate["audience"]>;
-const AUDIENCES: Audience[] = ["individual", "dealer", "company", "enterprise"];
+const AUDIENCES: Audience[] = [
+  "individual",
+  "dealer",
+  "company",
+  "enterprise",
+  "financial_institution",
+];
 // i18n keys — resolved through t() at render.
 const AUDIENCE_KEY: Record<Audience, string> = {
   individual: "plansPage.audIndividual",
   dealer: "plansPage.audDealer",
   company: "plansPage.audCompany",
   enterprise: "plansPage.audEnterprise",
+  financial_institution: "plansPage.audFinancial",
 };
 
 // Numeric coercion — inputs are strings; money/weights default to 0, while

@@ -10,7 +10,12 @@ import { eq, asc } from "drizzle-orm";
  * present as numbers on the wire.
  */
 
-type Audience = "individual" | "dealer" | "company" | "enterprise";
+type Audience =
+  | "individual"
+  | "dealer"
+  | "company"
+  | "enterprise"
+  | "financial_institution";
 
 export interface PlanDTO {
   id: string;

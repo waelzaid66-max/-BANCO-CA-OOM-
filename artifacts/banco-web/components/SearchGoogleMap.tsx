@@ -38,11 +38,10 @@ function ClusterMarkers({
   return (
     <>
       {clusters.map((cluster, index) => {
-        const label =
-          cluster.count === 1
-            ? cluster.price_display?.trim() ||
-              (cluster.is_bookable ? "Bookable" : "1")
-            : String(cluster.count);
+        // The STRICT cluster contract carries lat/lng/count/listing_id only —
+        // price/bookable signals ride the page items, not this endpoint. A
+        // single-listing pin therefore shows "1" and opens the listing on tap.
+        const label = String(cluster.count);
         const listingId = cluster.listing_id;
         return (
           <Marker

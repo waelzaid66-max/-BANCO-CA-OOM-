@@ -5,6 +5,7 @@ import {
   listingMedia,
   paymentOptions,
   users,
+  userSocialLinks,
   interactions,
   locations,
 } from "@workspace/db/schema";
@@ -547,6 +548,7 @@ export async function getListingDetail(listingId: string, viewerClerkId?: string
       location: listings.location,
       status: listings.status,
       created_at: listings.createdAt,
+      is_request: listings.isRequest,
       user_id: listings.userId,
       seller_clerk_id: users.clerkId,
       seller_name: users.name,
@@ -579,18 +581,27 @@ export async function getListingDetail(listingId: string, viewerClerkId?: string
 
   const isOwner = viewerClerkId && viewerClerkId === listing.seller_clerk_id;
 
-  const [mediaRows, paymentRows, attrRows, linkedListings, contactToken] = await Promise.all([
-    db.select().from(listingMedia).where(eq(listingMedia.listingId, listingId)),
-    db.select().from(paymentOptions).where(eq(paymentOptions.listingId, listingId)),
-    db.select().from(listingAttributes).where(eq(listingAttributes.listingId, listingId)).limit(1),
-    getLinksForListing(listingId),
-    // Mint a single-use contact token for non-owner authenticated viewers.
-    // The token must be presented to POST /leads/contact, ensuring every phone
-    // reveal is preceded by a server-observed listing view.
-    viewerClerkId && !isOwner
-      ? mintContactToken(viewerClerkId, listingId)
-      : Promise.resolve(null),
-  ]);
+  const [mediaRows, paymentRows, attrRows, linkedListings, contactToken, sellerSocialRows] =
+    await Promise.all([
+      db.select().from(listingMedia).where(eq(listingMedia.listingId, listingId)),
+      db.select().from(paymentOptions).where(eq(paymentOptions.listingId, listingId)),
+      db.select().from(listingAttributes).where(eq(listingAttributes.listingId, listingId)).limit(1),
+      getLinksForListing(listingId),
+      // Mint a single-use contact token for non-owner authenticated viewers.
+      // The token must be presented to POST /leads/contact, ensuring every phone
+      // reveal is preceded by a server-observed listing view.
+      viewerClerkId && !isOwner
+        ? mintContactToken(viewerClerkId, listingId)
+        : Promise.resolve(null),
+      // Seller-published marketing links (Profiles 2.0) — public by design;
+      // phone stays behind the contact-token flow, these do not bypass it.
+      listing.user_id
+        ? db
+            .select({ platform: userSocialLinks.platform, value: userSocialLinks.value })
+            .from(userSocialLinks)
+            .where(eq(userSocialLinks.userId, listing.user_id))
+        : Promise.resolve([] as { platform: string; value: string }[]),
+    ]);
 
   const payment = normalizePaymentOptions(paymentRows);
   // Additive (Task #32): rich financing offers + best offer, and display
@@ -652,6 +663,9 @@ export async function getListingDetail(listingId: string, viewerClerkId?: string
     location: listing.location,
     status: listing.status,
     created_at: listing.created_at?.toISOString() ?? new Date().toISOString(),
+    // Additive: buyer "wanted" flag so detail surfaces can badge requests the
+    // same way feed cards already do.
+    is_request: listing.is_request ?? false,
     media: mediaRows.map((m) => ({
       id: m.id,
       type: m.type,
@@ -669,6 +683,11 @@ export async function getListingDetail(listingId: string, viewerClerkId?: string
       name: listing.seller_name ?? "Unknown",
       role: listing.seller_role ?? "individual",
       is_verified: listing.is_verified ?? false,
+      // Additive: seller-published social/marketing links (empty when none).
+      social_links: sellerSocialRows.map((r) => ({
+        platform: String(r.platform),
+        value: r.value,
+      })),
     },
     interactions: {
       views: listing.views ?? 0,

@@ -328,6 +328,11 @@ export const ListingDetailSchema = z
         is_verified: z.boolean(),
         // phone intentionally omitted — only obtainable via POST /leads/contact
         // to ensure every phone reveal is a server-observed billable contact event.
+        // Additive (Profiles 2.0): seller-published marketing links. Public by
+        // design; never a contact-token bypass (phone still gated above).
+        social_links: z
+          .array(z.object({ platform: z.string(), value: z.string() }).strict())
+          .optional(),
       })
       .strict(),
     interactions: z
@@ -337,6 +342,8 @@ export const ListingDetailSchema = z
       })
       .strict(),
     is_saved: z.boolean(),
+    // Additive: buyer "wanted" flag mirrored from the feed contract.
+    is_request: z.boolean().optional(),
     // Additive (Task #32): display coordinates + rich financing offers. The
     // existing `payment` block above is left byte-identical for back-compat.
     coordinates: CoordinatesSchema.nullable(),
@@ -1083,7 +1090,13 @@ export type FacetCounts = z.infer<typeof FacetCountsSchema>;
 
 /* ── Admin plan management (control keys) ──────────────── */
 const planMoney = z.number().min(0).max(100_000_000);
-const planAudience = z.enum(["individual", "dealer", "company", "enterprise"]);
+const planAudience = z.enum([
+  "individual",
+  "dealer",
+  "company",
+  "enterprise",
+  "financial_institution",
+]);
 
 // All-optional patch (snake_case wire shape). Only provided keys are changed.
 export const PlanUpdateSchema = z
@@ -1466,7 +1479,13 @@ export const PlanSchema = z
     slug: z.string(),
     name: z.string(),
     name_ar: z.string().nullable(),
-    audience: z.enum(["individual", "dealer", "company", "enterprise"]),
+    audience: z.enum([
+      "individual",
+      "dealer",
+      "company",
+      "enterprise",
+      "financial_institution",
+    ]),
     is_baseline: z.boolean(),
     monthly_price: z.string(),
     listing_quota: z.number().nullable(),

@@ -37,31 +37,13 @@ const mutedStyle: React.CSSProperties = {
 
 const CLUSTER_CACHE_MAX = 24;
 
+// Preview-only data, kept in lockstep with the STRICT server MapClusterSchema
+// (lat/lng/count/listing_id — nothing else; bookable/price signals ride the
+// page items, not the cluster endpoint).
 const mockClusters: MapCluster[] = [
-  {
-    lat: 30.05,
-    lng: 31.25,
-    count: 12,
-    listing_id: null,
-    is_bookable: null,
-    price_display: null,
-  },
-  {
-    lat: 30.02,
-    lng: 31.35,
-    count: 1,
-    listing_id: "preview-1",
-    is_bookable: false,
-    price_display: "1,250,000 EGP",
-  },
-  {
-    lat: 30.08,
-    lng: 31.2,
-    count: 3,
-    listing_id: null,
-    is_bookable: null,
-    price_display: null,
-  },
+  { lat: 30.05, lng: 31.25, count: 12, listing_id: null },
+  { lat: 30.02, lng: 31.35, count: 1, listing_id: "preview-1" },
+  { lat: 30.08, lng: 31.2, count: 3, listing_id: null },
 ];
 
 function SearchMapPanelDisabled() {

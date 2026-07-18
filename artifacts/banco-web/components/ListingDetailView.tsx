@@ -157,18 +157,12 @@ export function ListingDetailView({
           >
             {copy.sellerAbout}
           </p>
-          {listing.seller.display_title ? (
-            <p style={{ margin: "0 0 0.25rem", fontWeight: 600, fontSize: "1rem" }}>
-              {listing.seller.display_title}
-            </p>
-          ) : null}
+          {/* display_title/bio are NOT in the seller contract today (bio lives
+              in client-side auth metadata, never served by the API). When a
+              DB-backed seller bio ships, render it here — until then showing
+              nothing is the honest state, not a placeholder. */}
           <p style={{ margin: 0, fontSize: "0.95rem" }}>{listing.seller.name}</p>
           <ListingSellerRatingBar sellerId={listing.seller.id} />
-          {listing.seller.bio ? (
-            <p style={{ ...mutedStyle, margin: "0.65rem 0 0", fontSize: "0.9rem" }}>
-              {listing.seller.bio}
-            </p>
-          ) : null}
           {listing.seller.social_links && listing.seller.social_links.length > 0 ? (
             <ul
               style={{

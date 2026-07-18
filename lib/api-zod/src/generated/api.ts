@@ -419,13 +419,18 @@ export const GetListingResponse = zod.object({
   "name": zod.string(),
   "role": zod.string(),
   "is_verified": zod.boolean(),
-  "phone": zod.string().nullish()
+  "phone": zod.string().nullish(),
+  "social_links": zod.array(zod.object({
+  "platform": zod.string(),
+  "value": zod.string()
+})).optional()
 }),
   "interactions": zod.object({
   "views": zod.number().optional(),
   "clicks": zod.number().optional()
 }),
   "is_saved": zod.boolean(),
+  "is_request": zod.boolean().optional(),
   "coordinates": zod.object({
   "lat": zod.number(),
   "lng": zod.number()

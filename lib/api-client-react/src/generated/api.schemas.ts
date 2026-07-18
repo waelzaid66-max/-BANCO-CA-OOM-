@@ -258,12 +258,18 @@ export interface PaymentSummary {
   badge?: string | null;
 }
 
+export type SellerSocialLinksItem = {
+  platform: string;
+  value: string;
+};
+
 export interface Seller {
   id: string;
   name: string;
   role: string;
   is_verified: boolean;
   phone?: string | null;
+  social_links?: SellerSocialLinksItem[];
 }
 
 export type ListingDetailCategory = typeof ListingDetailCategory[keyof typeof ListingDetailCategory];
@@ -382,6 +388,7 @@ export interface ListingDetail {
   seller: Seller;
   interactions: ListingDetailInteractions;
   is_saved: boolean;
+  is_request?: boolean;
   coordinates?: Coordinates | null;
   offers?: Offer[];
   best_offer?: Offer | null;
