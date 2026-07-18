@@ -1,10 +1,16 @@
 # Website planning — index
 
-**Start here (Arabic):** [`WEBSITE-PRE-START-PLAYBOOK-AR.md`](./WEBSITE-PRE-START-PLAYBOOK-AR.md)  
+> **2026-07-18 — مسار النسخة الكاملة (ملزم قبل أي كود):**  
+> 1. [`WEBSITE-NO-TOUCH-CHARTER-AR.md`](./WEBSITE-NO-TOUCH-CHARTER-AR.md) — ضمان عدم المساس بخط الإنتاج  
+> 2. [`WEBSITE-FULL-COPY-PLAN-AND-PREP-AR.md`](./WEBSITE-FULL-COPY-PLAN-AND-PREP-AR.md) — الخطة + حزمة التحضير (بانتظار موافقة المالك)
+
+**Playbook السابق:** [`WEBSITE-PRE-START-PLAYBOOK-AR.md`](./WEBSITE-PRE-START-PLAYBOOK-AR.md)  
 **Delivery & admin toggle roadmap:** [`WEBSITE-DELIVERY-ROADMAP-AR.md`](./WEBSITE-DELIVERY-ROADMAP-AR.md)
 
 | Document | Purpose |
 |----------|---------|
+| [`WEBSITE-NO-TOUCH-CHARTER-AR.md`](./WEBSITE-NO-TOUCH-CHARTER-AR.md) | **Freeze:** blacklist/whitelist — لا لمس موبايل/API/ماركت/أدمن |
+| [`WEBSITE-FULL-COPY-PLAN-AND-PREP-AR.md`](./WEBSITE-FULL-COPY-PLAN-AND-PREP-AR.md) | نسخة كاملة → ماركت كوبي → هيدرز → فيشة |
 | [`WEBSITE-PRE-START-PLAYBOOK-AR.md`](./WEBSITE-PRE-START-PLAYBOOK-AR.md) | Ordered ideas, Go gates, efficiency, DoD per wave |
 | [`WEBSITE-READINESS-GATES.md`](./WEBSITE-READINESS-GATES.md) | Sign-off checklists (product, CI, API, GCP, waves) |
 | [`WEBSITE-DELIVERY-ROADMAP-AR.md`](./WEBSITE-DELIVERY-ROADMAP-AR.md) | Staging → mobile trial → prod |
