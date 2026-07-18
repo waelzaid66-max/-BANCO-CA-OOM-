@@ -1132,8 +1132,8 @@ export const notificationTypeEnum = pgEnum("notification_type", [
   // the mobile client deep-links to the correct B2B surface on tap.
   "investment",
   "global_supply",
-  // Additive: a new short-stay booking request on the host's furnished/daily
-  // listing (the hotel model). Deep-links to the bookings inbox (host view).
+  // Additive: short-stay booking lifecycle on furnished/daily listings (hotel
+  // model). Deep-links to /bookings; data.role selects host inbox vs guest trips.
   "booking",
   // Billing / wallet lifecycle (Wave B3): settlement, failure, subscription expiry.
   "payment_success",

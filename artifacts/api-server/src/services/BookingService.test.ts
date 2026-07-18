@@ -197,6 +197,8 @@ describe("BookingService — furnished/daily hotel model", () => {
     // so poll briefly for the host's row rather than racing a single tick.
     const note = await pollBookingNotification(owner.id, b.id);
     expect(note).toBeTruthy();
+    // Contract with mobile routeForNotification: create → host inbox side.
+    expect((note!.data as { role?: string }).role).toBe("host");
   });
 
   it("lifecycle notifications: confirm notifies the guest; cancel notifies the host", async () => {
@@ -212,10 +214,29 @@ describe("BookingService — furnished/daily hotel model", () => {
     const guestNote = await pollBookingNotification(guest.id, b.id);
     expect(guestNote).toBeTruthy();
     expect(guestNote!.title).toContain("Booking confirmed");
+    // Host confirm → guest trips side (not host inbox).
+    expect((guestNote!.data as { role?: string }).role).toBe("guest");
 
     await updateBookingStatus(guest.clerk, b.id, "cancel");
     const hostNote = await pollBookingNotification(owner.id, b.id, "Booking cancelled");
     expect(hostNote).toBeTruthy();
+    // Guest cancel → host inbox side.
+    expect((hostNote!.data as { role?: string }).role).toBe("host");
+  });
+
+  it("reject notifies the guest with role=guest (opens trips, not host inbox)", async () => {
+    const owner = await seedUser();
+    const guest = await seedUser();
+    const lid = await seedListing(owner.id, "furnished_daily");
+    const b = await createBooking(guest.clerk, lid, {
+      check_in: "2030-10-01",
+      check_out: "2030-10-03",
+    });
+
+    await updateBookingStatus(owner.clerk, b.id, "reject");
+    const guestNote = await pollBookingNotification(guest.id, b.id, "Booking declined");
+    expect(guestNote).toBeTruthy();
+    expect((guestNote!.data as { role?: string }).role).toBe("guest");
   });
 
   it("enforces role separation on transitions (guest can't confirm, host can't cancel)", async () => {
