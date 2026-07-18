@@ -7,7 +7,7 @@ import {
   FeedItem,
   SearchListingsCategory,
 } from "@workspace/api-client-react";
-import { router, useNavigation } from "expo-router";
+import { router, useNavigation, type Href } from "expo-router";
 import { usePreventRemove } from "@react-navigation/native";
 import * as Haptics from "expo-haptics";
 import React, {
@@ -726,6 +726,56 @@ export function SectionSearchApp({
             <Feather name="refresh-cw" size={16} color="#FFFFFF" />
             <AppText style={[styles.emptyCtaText, { color: "#FFFFFF" }]}>
               {t("search.discover.section.reset")}
+            </AppText>
+          </Pressable>
+        ) : null}
+        {/* Demand bridges — an empty result must never dead-end. Every section
+            offers "post what you're looking for" (buyer request); the supply
+            sections additionally bridge into the B2B RFQ flow (Alibaba model:
+            unmet demand becomes a quote request to suppliers). */}
+        <Pressable
+          onPress={() => {
+            playSound("tap");
+            router.push("/listings/create?request=1" as Href);
+          }}
+          style={[
+            styles.emptyCta,
+            {
+              backgroundColor: colors.card,
+              borderColor: accent,
+              borderWidth: 1,
+              borderRadius: colors.radius,
+            },
+          ]}
+          testID="section-empty-post-request"
+        >
+          <Feather name="edit-2" size={16} color={accent} />
+          <AppText style={[styles.emptyCtaText, { color: accent }]}>
+            {t("search.emptyPostRequest")}
+          </AppText>
+        </Pressable>
+        {activeGroup ? (
+          <Pressable
+            onPress={() => {
+              playSound("tap");
+              router.push("/rfq/create" as Href);
+            }}
+            style={[
+              styles.emptyCta,
+              {
+                backgroundColor: colors.card,
+                borderColor: colors.border,
+                borderWidth: 1,
+                borderRadius: colors.radius,
+              },
+            ]}
+            testID="section-empty-rfq"
+          >
+            <Feather name="briefcase" size={16} color={colors.foreground} />
+            <AppText
+              style={[styles.emptyCtaText, { color: colors.foreground }]}
+            >
+              {t("search.emptyRfq")}
             </AppText>
           </Pressable>
         ) : null}

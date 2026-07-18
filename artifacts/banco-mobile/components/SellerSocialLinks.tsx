@@ -6,9 +6,14 @@ import { AppText } from "@/components/AppText";
 import { useI18n } from "@/context/LanguageContext";
 import { useColors } from "@/hooks/useColors";
 import { socialIconName, socialOpenUrl } from "@/lib/socialLinks";
-import type { SocialLink } from "@workspace/api-client-react";
 
-export function SellerSocialLinks({ links }: { links: SocialLink[] }) {
+// Structural prop: works for both the /me SocialLink shape (enum platform) and
+// the listing-detail seller's open { platform, value } items.
+export function SellerSocialLinks({
+  links,
+}: {
+  links: { platform: string; value: string }[];
+}) {
   const colors = useColors();
   const { t, isRTL } = useI18n();
   const visible = links.filter((l) => l.value?.trim());

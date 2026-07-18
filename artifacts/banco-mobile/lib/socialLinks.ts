@@ -1,6 +1,5 @@
 import type { ComponentProps } from "react";
 import type { Ionicons } from "@/components/icons";
-import type { SocialLink } from "@workspace/api-client-react";
 
 export function socialIconName(
   platform: string,
@@ -20,7 +19,10 @@ export function socialIconName(
   }
 }
 
-export function socialOpenUrl(link: SocialLink): string {
+// Structural param: accepts both the /me SocialLink (enum platform) and the
+// listing-detail seller link (open string platform) — the logic only needs the
+// two fields and copes with any platform value.
+export function socialOpenUrl(link: { platform: string; value: string }): string {
   const value = link.value?.trim() ?? "";
   if (!value) return "";
   if (link.platform === "whatsapp") {

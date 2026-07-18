@@ -14,7 +14,7 @@ import {
 import * as Haptics from "expo-haptics";
 import { Image } from "expo-image";
 import * as ImagePicker from "expo-image-picker";
-import { router } from "expo-router";
+import { router, useLocalSearchParams } from "expo-router";
 import React, { useEffect, useMemo, useRef, useState } from "react";
 import {
   ActivityIndicator,
@@ -201,7 +201,12 @@ export default function CreateListingScreen() {
   // price becomes optional, payment plans are hidden, and a description is
   // required. Mirrors the server contract (base_price_cash optional + the
   // bilingual "طلب سعر / Price requested" line).
-  const [isRequest, setIsRequest] = useState(false);
+  // Deep links may open the form directly in request mode (?request=1 — the
+  // empty-search "post what you're looking for" bridge); that explicit intent
+  // outranks whatever a stale draft says.
+  const { request: requestParam } = useLocalSearchParams<{ request?: string }>();
+  const startAsRequest = requestParam === "1";
+  const [isRequest, setIsRequest] = useState(startAsRequest);
 
   const [phones, setPhones] = useState<PhoneEntry[]>([
     { country: DEFAULT_COUNTRY.iso, number: "" },
@@ -321,7 +326,9 @@ export default function CreateListingScreen() {
         setLocation(d.location);
         setLocationValue(d.locationValue);
         setCashPrice(d.cashPrice);
-        setIsRequest(d.isRequest);
+        // A ?request=1 deep link is explicit user intent — the draft must not
+        // silently flip the form back to sale mode.
+        if (!startAsRequest) setIsRequest(d.isRequest);
         setWhatsappEnabled(d.whatsappEnabled);
         setSpecs(d.specs);
         setCustomSpecs(d.customSpecs);
