@@ -13,6 +13,8 @@
     "lint:website": "eslint artifacts/banco-web artifacts/landing --max-warnings 0",
     "lint:report": "eslint scripts artifacts/api-server/src lib/db/src",
     "ops:website-ci": "node scripts/website-ci-local.mjs",
+    "ops:website-staging-prep": "node scripts/website-staging-prep-audit.mjs",
+    "ops:website-staging-smoke": "node scripts/website-staging-smoke.mjs",
     "confidence": "node scripts/production-confidence-check.mjs"
   },
   "private": true,

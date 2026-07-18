@@ -40,8 +40,10 @@ Kill-switch **وقت التشغيل** على الويب موجود: `WEB_PLUG_EN
 | 2 | W3 map/facets UI (flags off) | ✅ كود؛ MAP/LIVE على staging لاحقاً |
 | 3 | Local CI mirror | ✅ `pnpm run ops:website-ci` |
 | 4 | Docker image | ✅ `ci-website-docker.yml` |
-| 5 | CDN staging deploy | ⏳ بعد دمج المكدس — [`WEBSITE-STAGING-OPS-CHECKLIST-AR.md`](./WEBSITE-STAGING-OPS-CHECKLIST-AR.md) |
+| 5 | CDN staging deploy | ⏳ OPS — pack جاهز: [`WEBSITE-PHASE7-STAGING-PACK-STATUS-AR.md`](./WEBSITE-PHASE7-STAGING-PACK-STATUS-AR.md) |
 | 6 | Full-copy Phases 1–6 | ✅ على `main` — [`WEBSITE-TRANSFER-HANDOFF-AR.md`](./WEBSITE-TRANSFER-HANDOFF-AR.md) |
+| 7 | Staging pack (Docker/env/smoke) | ✅ Phase 7 — `pnpm run ops:website-staging-prep` |
+
 | 7 | Clerk workspace / journeys | ✅ ضمن Phases 2–3 على المكدس |
 
 **قواعد صارمة للوكيل:**

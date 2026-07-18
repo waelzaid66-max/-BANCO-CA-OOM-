@@ -1,13 +1,27 @@
 # قائمة تحقق Staging — banco-web (بعد دمج المكدس)
 
 **متى:** بعد دمج Phases 1–6 إلى `main` (أو نشر من رأس المكدس).  
-**عزل:** خدمة `consumer-web` فقط — لا توقّف API ولا EAS.
+**عزل:** خدمة `consumer-web` فقط — لا توقّف API ولا EAS.  
+**Phase 7:** [`WEBSITE-PHASE7-STAGING-PACK-STATUS-AR.md`](./WEBSITE-PHASE7-STAGING-PACK-STATUS-AR.md)
+
+---
+
+## 0. Prep ثابت (قبل البناء)
+
+```bash
+pnpm run ops:website-staging-prep
+# أو: node scripts/website-staging-prep-audit.mjs
+```
 
 ---
 
 ## 1. بناء ونشر
 
 ```bash
+cp deploy/aws/env/.env.banco-web.staging.example \
+   deploy/aws/env/.env.banco-web.staging.local
+# عبّئ SITE_URL / API_URL / Clerk — أبقِ LIVE/MAP/MARKET=false لأول smoke
+
 # صورة معزولة
 docker compose -f deploy/aws/docker-compose.banco-web.yml \
   --env-file deploy/aws/env/.env.banco-web.staging.local \
@@ -38,7 +52,8 @@ docker compose -f deploy/aws/docker-compose.banco-web.yml \
 
 ```bash
 BANCO_WEB_URL=https://staging-web.example.com \
-  node scripts/website-staging-smoke.mjs
+  BANCO_WEB_EXPECT_PLUG=on \
+  pnpm run ops:website-staging-smoke
 
 # صحة الفيشة
 curl -sS "$BANCO_WEB_URL/api/health"

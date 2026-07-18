@@ -86,6 +86,7 @@ WEB_PLUG_ENABLED=true
 - [x] Kill-switch وقت التشغيل + صفحة صيانة  
 - [x] Health يعيد `plug: on|off` بدون إسقاط المراقبة  
 - [x] CI Website معزول عن `ci.yml` الموبايل  
+- [x] حزمة Staging pack (Phase 7) — Docker flags + prep audit + smoke  
 - [ ] CDN/دومين staging + أسرار Clerk (OPS — أنت)  
 - [ ] قرار تفعيل LIVE/MARKET على staging بعد smoke  
 
