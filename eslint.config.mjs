@@ -9,6 +9,8 @@ export default tseslint.config(
       "**/dist/**",
       "**/.expo/**",
       "**/build/**",
+      "**/.next/**",
+      "**/next-env.d.ts",
       "lib/api-client-react/**",
       "lib/api-zod/**",
     ],

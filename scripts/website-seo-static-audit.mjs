@@ -20,11 +20,12 @@ const APP_DIR = path.join(WEB_ROOT, ".next", "server", "app");
 
 /** route → expected fragments in prerendered HTML */
 const HUB_PAGES = [
-  { file: "index.html", label: "home", mustContain: ["BANCO"], lang: "ar", dir: "rtl" },
+  { file: "index.html", label: "home", mustContain: ["BANCO", "سوق واحد"], lang: "ar", dir: "rtl" },
   { file: "cars.html", label: "cars hub", mustContain: ["سيارات", "CollectionPage", "BreadcrumbList"], lang: "ar", dir: "rtl" },
   { file: "real-estate.html", label: "real-estate hub", mustContain: ["عقارات", "BreadcrumbList"], lang: "ar", dir: "rtl" },
   { file: "industrial.html", label: "industrial hub", mustContain: ["صناعي", "BreadcrumbList"], lang: "ar", dir: "rtl" },
-  { file: "en.html", label: "en home", mustContain: ["Browse the market", "BANCO"], lang: "en", dir: "ltr" },
+  // Phase 1 brand-first hero copy (replaces legacy "Browse the market")
+  { file: "en.html", label: "en home", mustContain: ["One market", "BANCO", "Start searching"], lang: "en", dir: "ltr" },
   { file: path.join("en", "cars.html"), label: "en cars hub", mustContain: ["Cars", "BreadcrumbList"], lang: "en", dir: "ltr" },
   { file: path.join("en", "real-estate.html"), label: "en real-estate hub", mustContain: ["Real Estate", "BreadcrumbList"], lang: "en", dir: "ltr" },
   { file: path.join("en", "industrial.html"), label: "en industrial hub", mustContain: ["Industrial", "BreadcrumbList"], lang: "en", dir: "ltr" },
