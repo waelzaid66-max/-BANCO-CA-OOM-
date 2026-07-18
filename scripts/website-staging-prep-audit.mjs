@@ -85,9 +85,9 @@ mustInclude(
   [
     "NEXT_PUBLIC_WEB_MARKET_COPY",
     "WEB_PLUG_ENABLED",
-    "NEXT_PUBLIC_WEB_SEARCH_LIVE=false",
+    "NEXT_PUBLIC_WEB_SEARCH_LIVE=true",
   ],
-  "banco-web staging env template safe defaults",
+  "banco-web staging env (journey LIVE + plug documented)",
 );
 
 mustInclude(
