@@ -21,10 +21,10 @@ import { isEmailChannelEnabled, sendLeadNotificationEmail } from "./EmailService
 import { schedulePaymentSuccess } from "./BillingNotificationService";
 
 const LEAD_ACTION_LABEL: Record<TrackLeadInput["actionType"], string> = {
-  whatsapp: "WhatsApp",
-  call: "Call",
-  chat: "Chat",
-  finance_request: "Finance request",
+  whatsapp: "واتساب · WhatsApp",
+  call: "اتصال · Call",
+  chat: "محادثة · Chat",
+  finance_request: "طلب تمويل · Finance request",
 };
 
 interface TrackLeadInput {
@@ -299,8 +299,8 @@ export async function contactLead(input: ContactLeadInput): Promise<{ phone: str
     void createNotification({
       userId: sellerId,
       type: "lead",
-      title: "New lead",
-      body: `${LEAD_ACTION_LABEL[input.actionType]} interest on "${listing.title}"`,
+      title: "عميل مهتم جديد · New lead",
+      body: `اهتمام (${LEAD_ACTION_LABEL[input.actionType]}) بإعلان «${listing.title}» · New interest on your listing`,
       data: { listing_id: input.listingId, lead_id: billing.leadId },
     });
   });
@@ -534,8 +534,8 @@ export async function processLead(input: TrackLeadInput): Promise<void> {
     await createNotification({
       userId: sellerId,
       type: "lead",
-      title: "New lead",
-      body: `${LEAD_ACTION_LABEL[input.actionType]} interest on "${listing.title}"`,
+      title: "عميل مهتم جديد · New lead",
+      body: `اهتمام (${LEAD_ACTION_LABEL[input.actionType]}) بإعلان «${listing.title}» · New interest on your listing`,
       data: { listing_id: input.listingId, lead_id: billing.leadId },
     });
 

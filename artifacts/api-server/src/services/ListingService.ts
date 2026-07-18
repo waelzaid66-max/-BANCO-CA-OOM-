@@ -12,7 +12,7 @@ import { eq, and, desc, asc, sql, count } from "drizzle-orm";
 import { normalizePaymentOptions, computeOffers } from "./PaymentService";
 import { normalizeListing, detectDuplicate, computeTrustScore, validateMedia } from "./NormalizationService";
 import { checkListingRate, auditListingFlag } from "./AbuseService";
-import { notifyNewMatch, notifyPriceDrop } from "./AlertService";
+import { notifyNewMatch, notifyPriceDrop, notifyFollowersOfNewListing } from "./AlertService";
 import { recomputeDealerQuality } from "./QualityService";
 import { trackCandidateAttributes } from "./CandidateAttributeService";
 import { recordPriceObservation } from "./MarketInsightsService";
@@ -446,6 +446,17 @@ export async function createListing(
     title: normalized.title,
     sellerId: user.id,
   });
+
+  // Best-effort: tell the seller's followers about the new inventory. Buyer
+  // "wanted" requests are skipped — followers subscribe to what a company
+  // SELLS, not to its purchasing needs.
+  if (!input.is_request) {
+    void notifyFollowersOfNewListing({
+      id: created.id,
+      title: normalized.title,
+      sellerId: user.id,
+    });
+  }
 
   return created;
 }

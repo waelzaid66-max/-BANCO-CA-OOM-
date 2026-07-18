@@ -167,8 +167,8 @@ export async function createBooking(
     void createNotification({
       userId: row.ownerId as string,
       type: "booking",
-      title: "New booking request",
-      body: `${nights} night${nights === 1 ? "" : "s"} · ${checkIn} → ${checkOut} for "${row.title}"`,
+      title: "طلب حجز جديد · New booking request",
+      body: `${nights} ${nights === 1 ? "ليلة · night" : "ليالٍ · nights"} · ${checkIn} → ${checkOut} · «${row.title}»`,
       // role tells the client which SIDE of the bookings inbox to open — this
       // "new request" ping goes to the HOST.
       data: { listing_id: listingId, booking_id: b.id, role: "host" },
@@ -317,15 +317,18 @@ export async function updateBookingStatus(
   if (recipientId) {
     const notify = isHostAction
       ? {
-          title: action === "confirm" ? "Booking confirmed" : "Booking declined",
+          title:
+            action === "confirm"
+              ? "تم تأكيد الحجز · Booking confirmed"
+              : "تم رفض الحجز · Booking declined",
           body:
             action === "confirm"
-              ? `Your stay ${updated.checkIn} → ${updated.checkOut} at "${row.listingTitle}" is confirmed`
-              : `Your request for "${row.listingTitle}" was declined — the dates are free to rebook elsewhere`,
+              ? `إقامتك ${updated.checkIn} → ${updated.checkOut} في «${row.listingTitle}» مؤكدة · Your stay is confirmed`
+              : `عذراً، رُفض طلبك لـ «${row.listingTitle}» — التواريخ متاحة للحجز في مكان آخر · Your request was declined`,
         }
       : {
-          title: "Booking cancelled",
-          body: `The guest cancelled ${updated.checkIn} → ${updated.checkOut} for "${row.listingTitle}" — those dates are open again`,
+          title: "أُلغي الحجز · Booking cancelled",
+          body: `ألغى الضيف ${updated.checkIn} → ${updated.checkOut} لـ «${row.listingTitle}» — التواريخ متاحة من جديد · The guest cancelled — those dates are open again`,
         };
     setImmediate(() => {
       void createNotification({

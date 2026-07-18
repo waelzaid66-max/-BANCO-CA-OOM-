@@ -436,8 +436,8 @@ export async function submitInterest(
   void createNotification({
     userId: inv.ownerId,
     type: "investment",
-    title: "New investment interest",
-    body: `Someone is interested in "${inv.title}"`,
+    title: "اهتمام استثماري جديد · New investment interest",
+    body: `هناك مهتم بفرصة «${inv.title}» · Someone is interested in your opportunity`,
     data: { investment_id: investmentId, kind: input.kind },
   });
 

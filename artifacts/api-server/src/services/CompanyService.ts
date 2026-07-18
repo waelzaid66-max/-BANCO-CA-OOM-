@@ -525,8 +525,8 @@ export async function followCompany(
     void createNotification({
       userId: companyUserId,
       type: "system",
-      title: "New follower",
-      body: "A buyer started following your company",
+      title: "متابع جديد · New follower",
+      body: "بدأ مشترٍ متابعة حسابك · A buyer started following your company",
       data: { follower_id: followerId },
     });
   }

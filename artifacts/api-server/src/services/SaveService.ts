@@ -2,6 +2,34 @@ import { db } from "@workspace/db";
 import { savedListings, users, listings } from "@workspace/db/schema";
 import { eq, and, sql } from "drizzle-orm";
 
+import { createNotification } from "./NotificationService";
+
+/**
+ * B-reaction → owner ping: a genuine NEW save notifies the listing owner
+ * (bilingual, deep-links to the listing). Fired AFTER the toggle transaction
+ * commits, fully best-effort — the save itself never waits on or fails with it.
+ * Unsaves and self-saves stay silent.
+ */
+async function notifyOwnerOfSave(saverId: string, listingId: string): Promise<void> {
+  try {
+    const [listing] = await db
+      .select({ ownerId: listings.userId, title: listings.title })
+      .from(listings)
+      .where(eq(listings.id, listingId))
+      .limit(1);
+    if (!listing?.ownerId || listing.ownerId === saverId) return;
+    await createNotification({
+      userId: listing.ownerId,
+      type: "system",
+      title: "إعجاب جديد بإعلانك · New like on your listing",
+      body: `شخص حفظ «${listing.title}» · Someone saved "${listing.title}"`,
+      data: { listing_id: listingId },
+    });
+  } catch (err) {
+    console.error("[Save notify]", err);
+  }
+}
+
 export async function saveOrUnsaveListing(clerkId: string, listingId: string): Promise<{ saved: boolean }> {
   const [user] = await db
     .select({ id: users.id })
@@ -15,7 +43,10 @@ export async function saveOrUnsaveListing(clerkId: string, listingId: string): P
   // transaction so the denormalized counter never drifts from saved_listings.
   // The counter feeds a modest, log-scaled ranking signal only — it does NOT
   // bump recency, so popularity can lift a listing but never fake "just posted".
-  return db.transaction(async (tx) => {
+  // Set only when THIS call genuinely inserted the save row (not on a lost
+  // race) — gates the owner ping so it fires once per real save, post-commit.
+  let genuinelyInserted = false;
+  const result = await db.transaction(async (tx) => {
     const [existing] = await tx
       .select({ userId: savedListings.userId })
       .from(savedListings)
@@ -51,6 +82,7 @@ export async function saveOrUnsaveListing(clerkId: string, listingId: string): P
       })
       .returning({ userId: savedListings.userId });
     if (inserted.length > 0) {
+      genuinelyInserted = true;
       await tx
         .update(listings)
         .set({ savesCount: sql`${listings.savesCount} + 1` })
@@ -58,6 +90,14 @@ export async function saveOrUnsaveListing(clerkId: string, listingId: string): P
     }
     return { saved: true };
   });
+
+  if (genuinelyInserted) {
+    setImmediate(() => {
+      void notifyOwnerOfSave(user.id, listingId);
+    });
+  }
+
+  return result;
 }
 
 export async function getUserSaves(clerkId: string): Promise<string[]> {

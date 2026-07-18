@@ -76,7 +76,8 @@ async function pollBookingNotification(
       (r) =>
         r.type === "booking" &&
         (r.data as { booking_id?: string })?.booking_id === bookingId &&
-        (!title || r.title === title),
+        // Substring match: titles are bilingual ("AR · EN"), tests pin the EN half.
+        (!title || r.title.includes(title)),
     );
     if (hit) return hit;
   }
@@ -210,7 +211,7 @@ describe("BookingService — furnished/daily hotel model", () => {
     await updateBookingStatus(owner.clerk, b.id, "confirm");
     const guestNote = await pollBookingNotification(guest.id, b.id);
     expect(guestNote).toBeTruthy();
-    expect(guestNote!.title).toBe("Booking confirmed");
+    expect(guestNote!.title).toContain("Booking confirmed");
 
     await updateBookingStatus(guest.clerk, b.id, "cancel");
     const hostNote = await pollBookingNotification(owner.id, b.id, "Booking cancelled");

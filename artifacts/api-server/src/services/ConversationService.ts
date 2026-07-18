@@ -463,7 +463,7 @@ export async function sendMessage(
   await createNotification({
     userId: recipientId,
     type: "message",
-    title: sender?.name ?? "New message",
+    title: sender?.name ?? "رسالة جديدة · New message",
     body: preview.length > 80 ? `${preview.slice(0, 79)}…` : preview,
     data: { conversation_id: conversationId, listing_id: conv.listingId },
   });

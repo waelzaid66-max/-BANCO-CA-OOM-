@@ -79,19 +79,26 @@ class ResendTransport implements EmailTransport {
     private readonly from: string,
   ) {}
   async send(msg: EmailMessage): Promise<void> {
+    // BUG-001: the body MUST be a Buffer, not a string. Node's undici coerces a
+    // string body via the ByteString algorithm and THROWS on any char > U+00FF —
+    // every Arabic subject/body silently killed the send. A UTF-8 Buffer (plus
+    // an explicit charset) transmits Arabic content byte-for-byte.
     const res = await fetch("https://api.resend.com/emails", {
       method: "POST",
       headers: {
         Authorization: `Bearer ${this.apiKey}`,
-        "Content-Type": "application/json",
+        "Content-Type": "application/json; charset=utf-8",
       },
-      body: JSON.stringify({
-        from: this.from,
-        to: msg.to,
-        subject: msg.subject,
-        html: msg.html,
-        text: msg.text,
-      }),
+      body: Buffer.from(
+        JSON.stringify({
+          from: this.from,
+          to: msg.to,
+          subject: msg.subject,
+          html: msg.html,
+          text: msg.text,
+        }),
+        "utf8",
+      ),
     });
     if (!res.ok) {
       const detail = await res.text().catch(() => "");

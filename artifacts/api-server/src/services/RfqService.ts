@@ -331,8 +331,8 @@ export async function submitOffer(
   void createNotification({
     userId: rfq.buyerId,
     type: "rfq",
-    title: "New RFQ offer",
-    body: `You received a new offer on "${rfq.title}"`,
+    title: "عرض جديد على طلبك · New RFQ offer",
+    body: `وصلك عرض جديد على «${rfq.title}» · You received a new offer`,
     data: { rfq_id: rfqId, offer_id: offer.id },
   });
 
@@ -390,8 +390,8 @@ export async function acceptOffer(
   void createNotification({
     userId: offer.supplierId,
     type: "rfq",
-    title: "Offer accepted",
-    body: `Your offer on "${rfq.title}" was accepted`,
+    title: "قُبل عرضك · Offer accepted",
+    body: `قُبل عرضك على «${rfq.title}» · Your offer was accepted`,
     data: { rfq_id: rfqId, offer_id: offerId },
   });
 

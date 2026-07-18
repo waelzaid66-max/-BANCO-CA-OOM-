@@ -1,5 +1,5 @@
 import { db } from "@workspace/db";
-import { savedSearches } from "@workspace/db/schema";
+import { savedSearches, companyFollows, users } from "@workspace/db/schema";
 import { and, eq, ne, or, isNull, lte, gte } from "drizzle-orm";
 import { createNotification } from "./NotificationService";
 import { getSaverUserIds } from "./SaveService";
@@ -57,8 +57,8 @@ export async function notifyNewMatch(listing: {
       await createNotification({
         userId: search.userId,
         type: "new_match",
-        title: "New match for your saved search",
-        body: `A new listing matches "${search.name}"`,
+        title: "نتيجة جديدة لبحثك المحفوظ · New match for your saved search",
+        body: `إعلان جديد يطابق «${search.name}» · A new listing matches "${search.name}"`,
         data: { listing_id: listing.id, saved_search_id: search.id },
       });
 
@@ -90,8 +90,8 @@ export async function notifyPriceDrop(listing: {
       await createNotification({
         userId,
         type: "price_drop",
-        title: "Price drop on a saved listing",
-        body: `"${listing.title}" dropped in price`,
+        title: "انخفض سعر إعلان محفوظ · Price drop on a saved listing",
+        body: `انخفض سعر «${listing.title}» · "${listing.title}" dropped in price`,
         data: {
           listing_id: listing.id,
           old_price: listing.oldPrice,
@@ -101,5 +101,50 @@ export async function notifyPriceDrop(listing: {
     }
   } catch (err) {
     console.error("[Alert price_drop]", err);
+  }
+}
+
+/**
+ * Notify everyone following a company when it publishes a NEW listing — closes
+ * the follow loop (following was previously write-only: the company heard about
+ * followers, followers never heard from the company). Rides the existing
+ * "new_match" type (no enum change) so per-category mute + the listing
+ * deep-link work unchanged. Best-effort; never alerts the seller; no-op when
+ * the seller has no followers. Callers skip buyer-requests — a "wanted" post
+ * is not inventory.
+ */
+export async function notifyFollowersOfNewListing(listing: {
+  id: string;
+  title: string;
+  sellerId: string;
+}): Promise<void> {
+  try {
+    const followers = await db
+      .select({ followerId: companyFollows.followerId })
+      .from(companyFollows)
+      .where(eq(companyFollows.companyUserId, listing.sellerId));
+    if (followers.length === 0) return;
+
+    const [seller] = await db
+      .select({ name: users.name })
+      .from(users)
+      .where(eq(users.id, listing.sellerId))
+      .limit(1);
+    const sellerName = seller?.name ?? "";
+
+    for (const f of followers) {
+      if (f.followerId === listing.sellerId) continue;
+      await createNotification({
+        userId: f.followerId,
+        type: "new_match",
+        title: sellerName
+          ? `${sellerName} أضاف إعلاناً جديداً · ${sellerName} posted a new listing`
+          : "إعلان جديد من حساب تتابعه · New listing from a company you follow",
+        body: `«${listing.title}»`,
+        data: { listing_id: listing.id, company_user_id: listing.sellerId },
+      });
+    }
+  } catch (err) {
+    console.error("[Alert followers]", err);
   }
 }

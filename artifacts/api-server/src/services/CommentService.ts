@@ -148,7 +148,9 @@ export async function createComment(
     await createNotification({
       userId: recipientId,
       type: "comment",
-      title: parent ? `${authorName} replied` : `${authorName} asked a question`,
+      title: parent
+        ? `${authorName} ردّ عليك · replied`
+        : `${authorName} سأل عن إعلانك · asked a question`,
       body: preview,
       data: { listing_id: listingId, comment_id: row.id, parent_id: parentId ?? null },
     });
