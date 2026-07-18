@@ -5,6 +5,7 @@ import { usePathname } from "next/navigation";
 import type { ReactNode } from "react";
 import { isClerkConfigured, signInPath } from "../../lib/clerk-config";
 import { localeFromPathname } from "../../lib/hub-config";
+import { isWebMarketCopyEnabled } from "../../lib/market-copy-config";
 import { getMarketUrl } from "../../lib/site-env";
 import { workspaceUiCopy } from "../../lib/workspace-ui-copy";
 
@@ -43,6 +44,7 @@ export function WorkspaceShell({ children }: WorkspaceShellProps) {
   const prefix = locale === "en" ? "/en/workspace" : "/workspace";
   const market = getMarketUrl();
   const clerkOn = isClerkConfigured();
+  const marketCopyOn = isWebMarketCopyEnabled();
 
   const links = [
     { href: prefix, label: copy.navOverview, exact: true },
@@ -53,7 +55,10 @@ export function WorkspaceShell({ children }: WorkspaceShellProps) {
     { href: `${prefix}/bookings`, label: copy.navBookings },
     { href: `${prefix}/analytics`, label: copy.navAnalytics },
     { href: `${prefix}/wallet`, label: copy.navWallet },
-    { href: `${prefix}/b2b`, label: copy.b2bTitle },
+    {
+      href: `${prefix}/b2b`,
+      label: marketCopyOn ? copy.marketNavWebCopy : copy.b2bTitle,
+    },
   ];
 
   if (!clerkOn) {

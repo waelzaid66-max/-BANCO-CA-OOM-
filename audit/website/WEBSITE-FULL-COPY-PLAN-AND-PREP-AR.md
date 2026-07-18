@@ -113,7 +113,8 @@
 
 **الهدف:** كوبي تجربة ماركت للتاجر داخل `banco-web` (مسارات `/market` أو `/workspace/b2b` موسّعة).  
 **قاعدة:** `dealer-os` الأصلي **يبقى**؛ لا ننقل ملفاً منه — نعيد بناء/نسخ تجربة عبر API المشتركة.  
-**خروج:** تاجر ينجز مهامه من الويب؛ dealer-os artifact كما هو للـ Replit/AWS.
+**خروج:** تاجر ينجز مهامه من الويب؛ dealer-os artifact كما هو للـ Replit/AWS.  
+**حالة:** MVP قراءة (overview/RFQs/supply) + flag — انظر [`WEBSITE-PHASE4-MARKET-COPY-STATUS-AR.md`](./WEBSITE-PHASE4-MARKET-COPY-STATUS-AR.md).
 
 ### Phase 5 — Headers / responsive chrome
 

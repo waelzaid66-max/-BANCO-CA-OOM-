@@ -5,7 +5,8 @@
 > 2. [`WEBSITE-FULL-COPY-PLAN-AND-PREP-AR.md`](./WEBSITE-FULL-COPY-PLAN-AND-PREP-AR.md) — الخطة + التحضير  
 > 3. [`WEBSITE-PHASE1-VISUAL-PARITY-STATUS-AR.md`](./WEBSITE-PHASE1-VISUAL-PARITY-STATUS-AR.md) — Phase 1: لوجو + هيرو brand-first  
 > 4. [`WEBSITE-PHASE2-JOURNEY-PARITY-STATUS-AR.md`](./WEBSITE-PHASE2-JOURNEY-PARITY-STATUS-AR.md) — Phase 2: بحث/حفظ/تواصل  
-> 5. [`WEBSITE-PHASE3-SELLER-WORKSPACE-PARITY-STATUS-AR.md`](./WEBSITE-PHASE3-SELLER-WORKSPACE-PARITY-STATUS-AR.md) — **Phase 3 جاري:** مساحة عمل البائع
+> 5. [`WEBSITE-PHASE3-SELLER-WORKSPACE-PARITY-STATUS-AR.md`](./WEBSITE-PHASE3-SELLER-WORKSPACE-PARITY-STATUS-AR.md) — Phase 3: مساحة عمل البائع  
+> 6. [`WEBSITE-PHASE4-MARKET-COPY-STATUS-AR.md`](./WEBSITE-PHASE4-MARKET-COPY-STATUS-AR.md) — **Phase 4 جاري:** كوبي ماركت داخل الويب
 
 **Playbook السابق:** [`WEBSITE-PRE-START-PLAYBOOK-AR.md`](./WEBSITE-PRE-START-PLAYBOOK-AR.md)  
 **Delivery & admin toggle roadmap:** [`WEBSITE-DELIVERY-ROADMAP-AR.md`](./WEBSITE-DELIVERY-ROADMAP-AR.md)
@@ -14,6 +15,7 @@
 |----------|---------|
 | [`WEBSITE-NO-TOUCH-CHARTER-AR.md`](./WEBSITE-NO-TOUCH-CHARTER-AR.md) | **Freeze:** blacklist/whitelist — لا لمس موبايل/API/ماركت/أدمن |
 | [`WEBSITE-FULL-COPY-PLAN-AND-PREP-AR.md`](./WEBSITE-FULL-COPY-PLAN-AND-PREP-AR.md) | نسخة كاملة → ماركت كوبي → هيدرز → فيشة |
+| [`WEBSITE-PHASE4-MARKET-COPY-STATUS-AR.md`](./WEBSITE-PHASE4-MARKET-COPY-STATUS-AR.md) | Phase 4: Market copy داخل `/workspace/b2b` |
 | [`WEBSITE-PRE-START-PLAYBOOK-AR.md`](./WEBSITE-PRE-START-PLAYBOOK-AR.md) | Ordered ideas, Go gates, efficiency, DoD per wave |
 | [`WEBSITE-READINESS-GATES.md`](./WEBSITE-READINESS-GATES.md) | Sign-off checklists (product, CI, API, GCP, waves) |
 | [`WEBSITE-DELIVERY-ROADMAP-AR.md`](./WEBSITE-DELIVERY-ROADMAP-AR.md) | Staging → mobile trial → prod |

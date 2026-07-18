@@ -4,7 +4,7 @@ import { WorkspaceB2bPanel } from "../../../components/workspace/WorkspaceB2bPan
 export default function WorkspaceB2bPage() {
   return (
     <WorkspaceShell>
-      <WorkspaceB2bPanel />
+      <WorkspaceB2bPanel tab="overview" />
     </WorkspaceShell>
   );
 }

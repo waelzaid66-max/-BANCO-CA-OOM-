@@ -24,6 +24,7 @@ on:
       - "scripts/verify-website-boundaries.mjs"
       - "scripts/website-journey-parity-audit.mjs"
       - "scripts/website-seller-workspace-parity-audit.mjs"
+      - "scripts/website-market-copy-parity-audit.mjs"
       - "scripts/website-rewrite-config-audit.mjs"
       - "scripts/upload-website-preview.mjs"
       - ".github/workflows/ci-website.yml"
@@ -48,6 +49,7 @@ on:
       - "scripts/verify-website-boundaries.mjs"
       - "scripts/website-journey-parity-audit.mjs"
       - "scripts/website-seller-workspace-parity-audit.mjs"
+      - "scripts/website-market-copy-parity-audit.mjs"
       - "scripts/website-rewrite-config-audit.mjs"
       - "scripts/upload-website-preview.mjs"
       - ".github/workflows/ci-website.yml"
@@ -81,6 +83,8 @@ jobs:
         run: node scripts/website-journey-parity-audit.mjs
       - name: Phase 3 seller workspace parity audit
         run: node scripts/website-seller-workspace-parity-audit.mjs
+      - name: Phase 4 Market copy parity audit
+        run: node scripts/website-market-copy-parity-audit.mjs
       - name: Share rewrite config audit
         run: node scripts/website-rewrite-config-audit.mjs
       - name: ESLint website surfaces

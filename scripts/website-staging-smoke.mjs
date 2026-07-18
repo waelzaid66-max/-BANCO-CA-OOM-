@@ -31,7 +31,12 @@ const PATHS = [
   { path: "/workspace/listings", label: "workspace listings protected", kind: "protected" },
   { path: "/workspace/listings/new", label: "workspace create listing protected", kind: "protected" },
   { path: "/workspace/leads", label: "workspace leads protected", kind: "protected" },
+  { path: "/workspace/b2b", label: "workspace b2b / market copy protected", kind: "protected" },
+  { path: "/workspace/b2b/rfqs", label: "workspace market rfqs protected", kind: "protected" },
+  { path: "/workspace/b2b/supply", label: "workspace market supply protected", kind: "protected" },
   { path: "/en/workspace", label: "en workspace protected", kind: "protected" },
+  { path: "/en/workspace/b2b", label: "en workspace b2b protected", kind: "protected" },
+
   { path: "/saved", label: "saved protected", kind: "protected" },
   { path: "/robots.txt", label: "robots", kind: "robots" },
   { path: "/sitemap.xml", label: "sitemap", kind: "sitemap" },
