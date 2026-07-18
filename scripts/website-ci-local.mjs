@@ -15,6 +15,10 @@ const steps = [
     cmd: "node scripts/verify-website-boundaries.mjs",
   },
   {
+    label: "journey parity audit",
+    cmd: "node scripts/website-journey-parity-audit.mjs",
+  },
+  {
     label: "eslint website",
     cmd: "pnpm run lint:website",
   },

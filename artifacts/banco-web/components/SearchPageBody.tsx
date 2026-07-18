@@ -123,6 +123,8 @@ const COPY = {
     disabledBody: "البحث معطّل مؤقتاً. استخدم مراكز التصفح أدناه.",
     hubsTitle: "مراكز التصفح",
     intro: "ابحث في السيارات والعقارات والصناعة — نفس عقد البحث المشترك مع تطبيق الجوال.",
+    mapFlagOff:
+      "عرض الخريطة متاح عند تفعيل NEXT_PUBLIC_WEB_SEARCH_MAP=true على بيئة staging.",
     hubs: [
       { href: "/cars", label: "سيارات" },
       { href: "/real-estate", label: "عقارات" },
@@ -134,6 +136,8 @@ const COPY = {
     disabledBody: "Search is temporarily disabled. Use the browse hubs below.",
     hubsTitle: "Browse hubs",
     intro: "Search cars, real estate, and industrial listings — same contract as the mobile app.",
+    mapFlagOff:
+      "Map view is available when NEXT_PUBLIC_WEB_SEARCH_MAP=true on staging.",
     hubs: [
       { href: "/en/cars", label: "Cars" },
       { href: "/en/real-estate", label: "Real Estate" },
@@ -169,7 +173,7 @@ export function SearchPageBody({
 
   if (!searchEnabled) {
     return (
-      <main style={pageStyle}>
+      <main style={pageStyle} data-banco-journey="search" data-banco-search="disabled">
         <h1 style={{ marginTop: 0 }}>{copy.disabledTitle}</h1>
         <p style={mutedStyle}>{copy.disabledBody}</p>
         <section style={boxStyle}>
@@ -187,13 +191,23 @@ export function SearchPageBody({
   }
 
   return (
-    <main style={pageStyle}>
+    <main
+      style={pageStyle}
+      data-banco-journey="search"
+      data-banco-search={liveSearchEnabled ? "live" : "preview"}
+      data-banco-map={mapSearchEnabled ? "on" : "off"}
+    >
       <h1 style={{ marginTop: 0 }}>{pageHeading}</h1>
       <p style={mutedStyle}>{copy.intro}</p>
 
       <SearchQueryProvider>
         <SearchControls liveEnabled={liveSearchEnabled} />
         {mapSearchEnabled ? <SearchViewToggle view={view} /> : null}
+        {!mapSearchEnabled && mapExpanded ? (
+          <p style={{ ...mutedStyle, marginTop: "0.75rem" }} role="status">
+            {copy.mapFlagOff}
+          </p>
+        ) : null}
 
         <SearchLiveResults
           enabled={liveSearchEnabled}

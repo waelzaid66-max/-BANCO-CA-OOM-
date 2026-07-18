@@ -4,9 +4,11 @@ import {
   useGetListing,
   useToggleSaveListing,
   getGetListingQueryKey,
+  getGetSavedListingsQueryKey,
 } from "@workspace/api-client-react";
 import { SignedIn, SignedOut, SignInButton } from "@clerk/nextjs";
 import { useQueryClient } from "@tanstack/react-query";
+import { useState } from "react";
 import { isClerkConfigured } from "../lib/clerk-config";
 import { listingUiCopy } from "../lib/listing-ui-copy";
 import { useSearchLocale } from "../lib/use-search-locale";
@@ -34,6 +36,7 @@ export function ListingSaveButton({
   const locale = useSearchLocale();
   const copy = listingUiCopy(locale);
   const queryClient = useQueryClient();
+  const [saveError, setSaveError] = useState<string | null>(null);
   const { data, isLoading } = useGetListing(listingId, {
     query: { enabled: isClerkConfigured(), queryKey: getGetListingQueryKey(listingId) },
   });
@@ -44,19 +47,26 @@ export function ListingSaveButton({
   const saved = data?.data?.is_saved ?? initialSaved;
   const pending = toggle.isPending || isLoading;
 
+  const refreshSaveState = () => {
+    void queryClient.invalidateQueries({ queryKey: getGetListingQueryKey(listingId) });
+    void queryClient.invalidateQueries({ queryKey: getGetSavedListingsQueryKey() });
+  };
+
   const onToggle = () => {
+    setSaveError(null);
     toggle.mutate(
       { data: { listing_id: listingId } },
       {
         onSuccess: () => {
-          void queryClient.invalidateQueries({ queryKey: [`/api/v1/listings/${listingId}`] });
+          refreshSaveState();
         },
+        onError: () => setSaveError(copy.savedError),
       },
     );
   };
 
   return (
-    <>
+    <div data-banco-journey="save">
       <SignedIn>
         <button
           type="button"
@@ -67,6 +77,11 @@ export function ListingSaveButton({
         >
           {saved ? copy.savedRemove : copy.savedAdd}
         </button>
+        {saveError ? (
+          <p style={{ margin: "0.4rem 0 0", color: "var(--banco-primary)", fontSize: "0.85rem" }}>
+            {saveError}
+          </p>
+        ) : null}
       </SignedIn>
       <SignedOut>
         <SignInButton mode="modal">
@@ -75,6 +90,6 @@ export function ListingSaveButton({
           </button>
         </SignInButton>
       </SignedOut>
-    </>
+    </div>
   );
 }

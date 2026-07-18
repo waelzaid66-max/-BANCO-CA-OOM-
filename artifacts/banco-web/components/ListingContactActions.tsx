@@ -9,6 +9,7 @@ import {
   getGetListingQueryKey,
 } from "@workspace/api-client-react";
 import { SignedIn, SignedOut } from "@clerk/nextjs";
+import { useQueryClient } from "@tanstack/react-query";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
@@ -52,11 +53,12 @@ export function ListingContactActions({ listing }: ListingContactActionsProps) {
   const locale = useSearchLocale();
   const copy = listingUiCopy(locale);
   const router = useRouter();
+  const queryClient = useQueryClient();
   const appLink = getAppListingDeepLink(listing.id);
   const showWhatsApp = listing.whatsapp_enabled === true;
   const clerkOn = isClerkConfigured();
 
-  const { data: authedListing } = useGetListing(listing.id, {
+  const { data: authedListing, refetch: refetchListing } = useGetListing(listing.id, {
     query: { enabled: clerkOn, queryKey: getGetListingQueryKey(listing.id) },
   });
   const contactToken = authedListing?.data?.contact_token ?? listing.contact_token ?? null;
@@ -66,9 +68,16 @@ export function ListingContactActions({ listing }: ListingContactActionsProps) {
   const [contactError, setContactError] = useState<string | null>(null);
   const [openingChat, setOpeningChat] = useState(false);
 
+  /** contact_token is single-use — refresh listing after each lead so the next action works. */
+  const refreshContactToken = () => {
+    void queryClient.invalidateQueries({ queryKey: getGetListingQueryKey(listing.id) });
+    void refetchListing();
+  };
+
   const runContact = (action: ContactLeadBodyActionType) => {
     if (!contactToken) {
       setContactError(copy.contactWebHint);
+      void refetchListing();
       return;
     }
     setContactError(null);
@@ -82,6 +91,7 @@ export function ListingContactActions({ listing }: ListingContactActionsProps) {
       },
       {
         onSuccess: (res) => {
+          refreshContactToken();
           const phone = res.data?.phone;
           if (phone) {
             setPhoneReveal(phone);
@@ -92,7 +102,10 @@ export function ListingContactActions({ listing }: ListingContactActionsProps) {
             }
           }
         },
-        onError: () => setContactError(copy.contactError),
+        onError: () => {
+          setContactError(copy.contactError);
+          refreshContactToken();
+        },
       },
     );
   };
@@ -103,13 +116,20 @@ export function ListingContactActions({ listing }: ListingContactActionsProps) {
     setOpeningChat(true);
 
     if (contactToken) {
-      contactLead.mutate({
-        data: {
-          listing_id: listing.id,
-          action_type: ContactLeadBodyActionType.chat,
-          contact_token: contactToken,
+      contactLead.mutate(
+        {
+          data: {
+            listing_id: listing.id,
+            action_type: ContactLeadBodyActionType.chat,
+            contact_token: contactToken,
+          },
         },
-      });
+        {
+          onSettled: () => {
+            refreshContactToken();
+          },
+        },
+      );
     }
 
     createConversation.mutate(
@@ -130,7 +150,11 @@ export function ListingContactActions({ listing }: ListingContactActionsProps) {
   };
 
   return (
-    <section style={{ marginTop: "1.25rem" }} aria-label={copy.contactTitle}>
+    <section
+      style={{ marginTop: "1.25rem" }}
+      aria-label={copy.contactTitle}
+      data-banco-journey="contact"
+    >
       <p
         style={{
           margin: "0 0 0.35rem",
