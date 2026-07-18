@@ -1194,9 +1194,15 @@ export interface InstitutionMembership {
   branch_id?: string | null;
 }
 
+export type InstitutionInboxBranchesItem = {
+  id: string;
+  name: string;
+};
+
 export interface InstitutionInbox {
   membership: InstitutionMembership;
   items: FinancingRequest[];
+  branches?: InstitutionInboxBranchesItem[];
   cursor?: string | null;
   has_next: boolean;
 }

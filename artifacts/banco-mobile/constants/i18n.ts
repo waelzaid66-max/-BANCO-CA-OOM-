@@ -1404,6 +1404,7 @@ const en = {
       inboxClose: "Close request",
       inboxBuyer: "Buyer",
       inboxDown: "Down:",
+      inboxBranch: "Branch:",
       inboxMonthly: "Monthly:",
       inboxMonths: "mo",
       inboxRole: {
@@ -3328,6 +3329,7 @@ const ar: typeof en = {
       inboxClose: "إقفال الطلب",
       inboxBuyer: "المشتري",
       inboxDown: "مقدم:",
+      inboxBranch: "الفرع:",
       inboxMonthly: "شهري:",
       inboxMonths: "شهر",
       inboxRole: {

@@ -114,6 +114,28 @@ function InstitutionInboxSection() {
   if (!isSignedIn || inbox.isLoading || inbox.isError || !data) return null;
 
   const { membership, items } = data;
+  // Branch routing: the inbox response carries the institution's branches so
+  // owner/manager can assign a forwarded request to a branch inline. Agents
+  // see the assigned branch read-only (their scope is enforced server-side).
+  const branchList = data.branches ?? [];
+  const canRoute = membership.role === "owner" || membership.role === "manager";
+  const branchNameOf = (id: string | null | undefined) =>
+    branchList.find((b) => b.id === id)?.name ?? null;
+
+  const assignBranch = (leadId: string, branchId: string | null) => {
+    setPendingLead(leadId);
+    updateRequest(
+      { leadId, data: { branch_id: branchId } },
+      {
+        onSettled: () => {
+          setPendingLead(null);
+          queryClient.invalidateQueries({
+            queryKey: getGetInstitutionInboxQueryKey({ limit: 30 }),
+          });
+        },
+      },
+    );
+  };
 
   const statusLabel = (s: FinancingRequest["status"]) =>
     t(`business.banks.inboxStatus.${s}`);
@@ -208,6 +230,54 @@ function InstitutionInboxSection() {
                   </AppText>
                 </View>
               )}
+
+              {/* Branch routing — owner/manager pick the branch inline; an
+                  agent sees where the request is assigned. Hidden entirely
+                  when the institution has no branches configured. */}
+              {branchList.length > 0 &&
+              r.status !== "closed" &&
+              r.status !== "rejected" ? (
+                canRoute ? (
+                  <View style={[styles.inboxBranchRow, { flexDirection: rowDir }]}>
+                    <Feather name="git-branch" size={13} color={colors.mutedForeground} />
+                    {branchList.map((b) => {
+                      const active = r.branch_id === b.id;
+                      return (
+                        <Pressable
+                          key={b.id}
+                          disabled={busy}
+                          onPress={() => assignBranch(leadId, active ? null : b.id)}
+                          style={[
+                            styles.inboxBranchChip,
+                            {
+                              backgroundColor: active ? BLUE : colors.card,
+                              borderColor: active ? BLUE : colors.border,
+                            },
+                          ]}
+                          testID={`banks-branch-${leadId}-${b.id}`}
+                        >
+                          <AppText
+                            style={[
+                              styles.inboxBranchText,
+                              { color: active ? "#FFFFFF" : colors.foreground },
+                            ]}
+                            numberOfLines={1}
+                          >
+                            {b.name}
+                          </AppText>
+                        </Pressable>
+                      );
+                    })}
+                  </View>
+                ) : branchNameOf(r.branch_id) ? (
+                  <View style={[styles.inboxRow, { flexDirection: rowDir }]}>
+                    <Feather name="git-branch" size={13} color={colors.mutedForeground} />
+                    <AppText style={[styles.inboxMeta, { color: colors.mutedForeground }]}>
+                      {t("business.banks.inboxBranch")} {branchNameOf(r.branch_id)}
+                    </AppText>
+                  </View>
+                ) : null
+              ) : null}
 
               {r.status !== "closed" && r.status !== "rejected" && (
                 <View style={[styles.inboxActions, { flexDirection: rowDir }]}>
@@ -634,6 +704,15 @@ const styles = StyleSheet.create({
   inboxRow: { alignItems: "center", gap: 6 },
   inboxMeta: { fontSize: 12.5, fontFamily: "Inter_400Regular", flexShrink: 1 },
   inboxActions: { gap: 8, marginTop: 3 },
+  inboxBranchRow: { alignItems: "center", gap: 6, flexWrap: "wrap", marginTop: 2 },
+  inboxBranchChip: {
+    paddingHorizontal: 10,
+    paddingVertical: 4,
+    borderRadius: 999,
+    borderWidth: 1,
+    maxWidth: 150,
+  },
+  inboxBranchText: { fontSize: 11.5, fontFamily: "Inter_600SemiBold" },
   inboxBtn: {
     paddingHorizontal: 16,
     height: 36,

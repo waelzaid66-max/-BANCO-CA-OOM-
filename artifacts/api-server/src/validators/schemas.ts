@@ -2013,6 +2013,11 @@ export const InstitutionInboxSchema = z
   .object({
     membership: InstitutionMembershipSchema,
     items: z.array(FinancingRequestSchema),
+    // Additive: the institution's branches so the bank-side branch-routing
+    // picker needs no admin endpoint. Empty when none are configured.
+    branches: z
+      .array(z.object({ id: z.string(), name: z.string() }).strict())
+      .optional(),
     cursor: z.string().nullable(),
     has_next: z.boolean(),
   })

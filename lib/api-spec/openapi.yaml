@@ -1681,6 +1681,18 @@ components:
           type: array
           items:
             $ref: "#/components/schemas/FinancingRequest"
+        # Additive: the institution's branches for the bank-side routing picker
+        # (scoped by membership — no admin endpoint needed on the bank side).
+        branches:
+          type: array
+          items:
+            type: object
+            required: [id, name]
+            properties:
+              id:
+                type: string
+              name:
+                type: string
         cursor:
           type: string
           nullable: true

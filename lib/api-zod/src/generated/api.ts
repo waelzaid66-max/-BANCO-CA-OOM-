@@ -3511,6 +3511,10 @@ export const GetInstitutionInboxResponse = zod.object({
   "created_at": zod.string().nullish(),
   "updated_at": zod.string().nullish()
 })),
+  "branches": zod.array(zod.object({
+  "id": zod.string(),
+  "name": zod.string()
+})).optional(),
   "cursor": zod.string().nullish(),
   "has_next": zod.boolean()
 }).optional(),

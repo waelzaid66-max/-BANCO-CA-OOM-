@@ -593,6 +593,7 @@ export async function listInstitutionRequests(params: {
 }): Promise<{
   membership: InstitutionMembership;
   items: FinancingRequestRow[];
+  branches: { id: string; name: string }[];
   cursor?: string;
   has_next: boolean;
 }> {
@@ -602,6 +603,15 @@ export async function listInstitutionRequests(params: {
       code: "FORBIDDEN",
     });
   }
+
+  // The institution's branches ride the inbox response so the bank side needs
+  // no admin-only endpoint to render its branch-routing picker. Names only —
+  // scoped to the caller's own institution by the membership gate above.
+  const branchRows = await db
+    .select({ id: financingBranches.id, name: financingBranches.name })
+    .from(financingBranches)
+    .where(eq(financingBranches.intermediaryId, membership.intermediary_id))
+    .orderBy(asc(financingBranches.name));
 
   const conditions: SQL[] = [
     eq(leadHistory.actionType, "finance_request"),
@@ -631,6 +641,7 @@ export async function listInstitutionRequests(params: {
   return {
     membership,
     items: page.map(mapRow),
+    branches: branchRows,
     cursor: has_next && last?.createdAt ? last.createdAt.toISOString() : undefined,
     has_next,
   };

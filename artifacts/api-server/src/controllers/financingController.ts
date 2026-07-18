@@ -174,6 +174,7 @@ export async function institutionInboxHandler(req: Request, res: Response) {
         validateResponse(InstitutionInboxSchema, {
           membership: result.membership,
           items: result.items,
+          branches: result.branches,
           cursor: result.cursor ?? null,
           has_next: result.has_next,
         }),
