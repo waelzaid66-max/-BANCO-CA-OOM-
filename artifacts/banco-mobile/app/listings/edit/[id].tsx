@@ -22,6 +22,11 @@ import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { AppText } from "@/components/AppText";
 import { KeyboardAwareScrollViewCompat } from "@/components/KeyboardAwareScrollViewCompat";
 import { LocationPicker } from "@/components/LocationPicker";
+import {
+  MARKET_COUNTRIES,
+  currencyForMarket,
+  EXTRA_CURRENCIES,
+} from "@/constants/listingCreateTaxonomy";
 import { useI18n } from "@/context/LanguageContext";
 import { useSession } from "@/context/SessionContext";
 import { useColors } from "@/hooks/useColors";
@@ -57,6 +62,11 @@ export default function EditListingScreen() {
   const [locationValue, setLocationValue] = useState<string | null>(null);
   const [locationPickerOpen, setLocationPickerOpen] = useState(false);
   const [price, setPrice] = useState("");
+  // Manual multi-market editing (user requirement): the listing's market and
+  // pricing currency stay editable after publish. Server-side the specs patch
+  // MERGES, so sending only these two keys never touches other specs.
+  const [marketCountry, setMarketCountry] = useState("EG");
+  const [currency, setCurrency] = useState("EGP");
   const [hydrated, setHydrated] = useState(false);
 
   useEffect(() => {
@@ -68,6 +78,17 @@ export default function EditListingScreen() {
     if (typeof listing.price_cash === "number") {
       setPrice(String(Math.round(listing.price_cash)));
     }
+    const sp = (listing.specs ?? {}) as Record<string, unknown>;
+    const mkt =
+      typeof sp.market_country === "string" && /^[A-Za-z]{2}$/.test(sp.market_country)
+        ? sp.market_country.toUpperCase()
+        : "EG";
+    setMarketCountry(mkt);
+    setCurrency(
+      typeof sp.currency === "string" && sp.currency.trim()
+        ? sp.currency.trim().toUpperCase()
+        : currencyForMarket(mkt),
+    );
     setHydrated(true);
   }, [listing, hydrated]);
 
@@ -101,6 +122,8 @@ export default function EditListingScreen() {
         description: description.trim() || undefined,
         location: locationValue ?? location.trim(),
         base_price_cash,
+        // Merged server-side — only these two keys change, other specs stay.
+        specs: { market_country: marketCountry, currency },
       },
     });
   };
@@ -219,6 +242,83 @@ export default function EditListingScreen() {
               placeholderTextColor={colors.mutedForeground}
             />
           </Field>
+
+          {/* Manual multi-market editing: market + pricing currency stay
+              editable after publish (specs patch merges server-side). */}
+          <Field label={t("create.fields.marketCountry")} colors={colors} isRTL={isRTL}>
+            <View style={[styles.chipRow, { flexDirection: rowDir }]}>
+              {MARKET_COUNTRIES.map((m) => {
+                const active = marketCountry === m.value;
+                return (
+                  <Pressable
+                    key={m.value}
+                    onPress={() => {
+                      Haptics.selectionAsync();
+                      setMarketCountry(m.value);
+                      // Follow the market's currency unless the seller already
+                      // picked a cross-border one (USD/EUR stay as chosen).
+                      if (!EXTRA_CURRENCIES.includes(currency as (typeof EXTRA_CURRENCIES)[number])) {
+                        setCurrency(currencyForMarket(m.value));
+                      }
+                    }}
+                    style={[
+                      styles.chip,
+                      {
+                        backgroundColor: active ? colors.primary : colors.card,
+                        borderColor: active ? colors.primary : colors.border,
+                        borderRadius: colors.radius,
+                      },
+                    ]}
+                    testID={`edit-market-${m.value}`}
+                  >
+                    <AppText
+                      style={[
+                        styles.chipText,
+                        { color: active ? colors.primaryForeground : colors.foreground },
+                      ]}
+                    >
+                      {isRTL ? m.ar : m.en}
+                    </AppText>
+                  </Pressable>
+                );
+              })}
+            </View>
+          </Field>
+
+          <Field label={t("create.fields.currency")} colors={colors} isRTL={isRTL}>
+            <View style={[styles.chipRow, { flexDirection: rowDir }]}>
+              {[currencyForMarket(marketCountry), ...EXTRA_CURRENCIES].map((code) => {
+                const active = currency === code;
+                return (
+                  <Pressable
+                    key={code}
+                    onPress={() => {
+                      Haptics.selectionAsync();
+                      setCurrency(code);
+                    }}
+                    style={[
+                      styles.chip,
+                      {
+                        backgroundColor: active ? colors.primary : colors.card,
+                        borderColor: active ? colors.primary : colors.border,
+                        borderRadius: colors.radius,
+                      },
+                    ]}
+                    testID={`edit-currency-${code}`}
+                  >
+                    <AppText
+                      style={[
+                        styles.chipText,
+                        { color: active ? colors.primaryForeground : colors.foreground },
+                      ]}
+                    >
+                      {code}
+                    </AppText>
+                  </Pressable>
+                );
+              })}
+            </View>
+          </Field>
         </KeyboardAwareScrollViewCompat>
       )}
 
@@ -263,6 +363,13 @@ function Field({
 
 const styles = StyleSheet.create({
   container: { flex: 1 },
+  chipRow: { flexWrap: "wrap", gap: 8 },
+  chip: {
+    paddingHorizontal: 12,
+    paddingVertical: 7,
+    borderWidth: 1,
+  },
+  chipText: { fontSize: 13, fontFamily: "Inter_600SemiBold" },
   header: {
     alignItems: "center",
     justifyContent: "space-between",
