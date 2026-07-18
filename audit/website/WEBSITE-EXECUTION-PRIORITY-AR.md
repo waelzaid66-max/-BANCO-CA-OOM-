@@ -43,6 +43,8 @@ Kill-switch **وقت التشغيل** على الويب موجود: `WEB_PLUG_EN
 | 5 | CDN staging deploy | ⏳ OPS — pack جاهز: [`WEBSITE-PHASE7-STAGING-PACK-STATUS-AR.md`](./WEBSITE-PHASE7-STAGING-PACK-STATUS-AR.md) |
 | 6 | Full-copy Phases 1–6 | ✅ على `main` — [`WEBSITE-TRANSFER-HANDOFF-AR.md`](./WEBSITE-TRANSFER-HANDOFF-AR.md) |
 | 7 | Staging pack (Docker/env/smoke) | ✅ Phase 7 — `pnpm run ops:website-staging-prep` |
+| 8 | Soft-launch pack | ✅ Phase 8 — `pnpm run ops:website-soft-launch-prep` · CDN ⏳ OPS |
+
 
 | 7 | Clerk workspace / journeys | ✅ ضمن Phases 2–3 على المكدس |
 

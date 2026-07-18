@@ -60,6 +60,7 @@ mustInclude(
     "X-Banco-Web-Plug",
     "Retry-After",
     "/api/health",
+    "isWebHealthPath",
     "CLERK_PUBLISHABLE_KEY",
     "/workspace",
   ],
@@ -68,8 +69,20 @@ mustInclude(
 
 mustInclude(
   `${WEB}/app/api/health/route.ts`,
-  ["plug", "webPlugStatus", 'surface: "banco-web"'],
+  ["buildWebHealthPayload"],
   "health reports plug status",
+);
+
+mustInclude(
+  `${WEB}/app/api/healthz/route.ts`,
+  ["GET", "../health/route"],
+  "healthz aliases health",
+);
+
+mustInclude(
+  `${WEB}/lib/web-health.ts`,
+  ["buildWebHealthPayload", "plug", 'surface: "banco-web"'],
+  "shared health payload includes plug",
 );
 
 mustInclude(

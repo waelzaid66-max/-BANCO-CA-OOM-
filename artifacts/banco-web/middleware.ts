@@ -1,6 +1,7 @@
 import { clerkMiddleware, createRouteMatcher } from "@clerk/nextjs/server";
 import { NextResponse } from "next/server";
 import type { NextFetchEvent, NextRequest } from "next/server";
+import { isWebHealthPath } from "./lib/web-health";
 import {
   isWebPlugEnabled,
   isWebPlugExemptPath,
@@ -23,7 +24,7 @@ const clerkGuard = clerkMiddleware(async (auth, req) => {
 /**
  * Phase 6 plug gate — runs before Clerk.
  * When WEB_PLUG_ENABLED=false, public traffic is rewritten to /maintenance.
- * /api/health stays up so container/CDN probes still succeed.
+ * /api/health and /api/healthz stay up so container/CDN probes still succeed.
  */
 function plugGate(req: NextRequest): NextResponse | null {
   const pathname = req.nextUrl.pathname;
@@ -38,7 +39,7 @@ function plugGate(req: NextRequest): NextResponse | null {
   }
 
   // Plug OFF
-  if (pathname === "/api/health" || pathname.startsWith("/api/health/")) {
+  if (isWebHealthPath(pathname)) {
     const res = NextResponse.next();
     res.headers.set("X-Banco-Web-Plug", "off");
     return res;

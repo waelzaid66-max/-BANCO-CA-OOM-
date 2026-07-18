@@ -165,9 +165,17 @@
 ### G-W9 (staging smoke — لا يمس الموبايل)
 
 - [x] `website-rewrite-config-audit.mjs` يتحقق من `/l/:id` + `/api/*` في `next.config.ts` (2026-07-11)
-- [ ] `BANCO_WEB_URL` + `BANCO_LISTING_SMOKE_ID` — smoke `/l/:id` على staging
+- [x] Phase 7 staging pack — Docker flags + `ops:website-staging-prep` (2026-07-18)
+- [ ] `BANCO_WEB_URL` + `BANCO_LISTING_SMOKE_ID` — smoke `/l/:id` على staging (OPS)
 - [ ] E2E staging: create listing → يظهر في search + mobile (نفس G-W5)
-- [ ] نشر banco-web CDN staging مع flags آمنة (`WEB_SEARCH_LIVE=false` أولاً)
+- [ ] نشر banco-web CDN staging مع flags آمنة (`WEB_SEARCH_LIVE=false` أولاً) (OPS)
+
+### G-W10 (soft-launch pack — كود)
+
+- [x] `/api/healthz` alias + plug exempt (Phase 8)
+- [x] `deploy/aws/env/.env.banco-web.production.example` — LIVE/MAP/MARKET off
+- [x] `ops:website-soft-launch-prep` + [`WEBSITE-SOFT-LAUNCH-CHECKLIST-AR.md`](./WEBSITE-SOFT-LAUNCH-CHECKLIST-AR.md)
+- [ ] نشر CDN إنتاج محدود + uptime على health/healthz (OPS)
 
 ---
 
