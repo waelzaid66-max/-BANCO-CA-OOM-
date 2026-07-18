@@ -27,6 +27,10 @@ const steps = [
     cmd: "node scripts/website-market-copy-parity-audit.mjs",
   },
   {
+    label: "responsive chrome audit",
+    cmd: "node scripts/website-responsive-chrome-audit.mjs",
+  },
+  {
     label: "eslint website",
     cmd: "pnpm run lint:website",
   },
