@@ -96,7 +96,7 @@ pnpm --filter @workspace/dealer-os run dev
 - [ ] صلاحيات admin (Clerk role / allowlist حسب إعدادكم)
 - [ ] moderation / listings panels تتصل بـ API
 
-**ملاحظة:** kill switch للموقع (W6) **لم يُنفَّذ** — الأدمن لا يوقف الويب بعد.
+**ملاحظة (محدّث 2026-07-18):** kill-switch **وقت التشغيل** للموقع مُنفَّذ عبر `WEB_PLUG_ENABLED` على `banco-web` (Phase 6) — انظر `audit/website/WEBSITE-PLUG-DETACH-5MIN-AR.md`. تحكم الأدمن عبر API (`consumer_web_enabled`) ما زال مستقبلياً.
 
 ---
 
@@ -151,8 +151,14 @@ node scripts/generate-aws-virgen-sync-manifest.mjs --tag v1.1.4-production-2026-
 NEXT_PUBLIC_SEARCH_ENABLED=true
 NEXT_PUBLIC_WEB_SEARCH_LIVE=false
 NEXT_PUBLIC_WEB_SEARCH_MAP=false
+NEXT_PUBLIC_WEB_MARKET_COPY=false
+WEB_PLUG_ENABLED=true
 NEXT_PUBLIC_API_BASE_URL=https://banco-ca-oom.replit.app
 ```
+
+**Kill-switch (فصل الويب ≤5 دقائق):** `WEB_PLUG_ENABLED=false` ثم إعادة تشغيل `consumer-web` فقط.  
+تفاصيل: [`audit/website/WEBSITE-PLUG-DETACH-5MIN-AR.md`](../audit/website/WEBSITE-PLUG-DETACH-5MIN-AR.md).  
+ترتيب دمج المكدس: [`audit/website/WEBSITE-STACK-MERGE-READINESS-AR.md`](../audit/website/WEBSITE-STACK-MERGE-READINESS-AR.md).
 
 ### تحقق قبل نشر CDN
 
@@ -163,12 +169,15 @@ pnpm run lint:website
 pnpm --filter @workspace/banco-web run build
 node scripts/website-seo-static-audit.mjs
 node scripts/website-bundle-budget.mjs
+node scripts/website-plug-hardening-audit.mjs
 ```
 
 ### Docker (اختياري)
 
 ```bash
 docker build -f deploy/aws/Dockerfile.banco-web -t banco-web:local .
+# أو compose:
+# docker compose -f deploy/aws/docker-compose.banco-web.yml up -d
 ```
 
 ---

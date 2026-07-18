@@ -122,6 +122,7 @@ export function MessagesInboxPanel() {
   const copy = workspaceUiCopy(locale);
   const queryClient = useQueryClient();
   const [confirmId, setConfirmId] = useState<string | null>(null);
+  const [deleteError, setDeleteError] = useState<string | null>(null);
 
   const query = useListConversations({
     query: {
@@ -134,11 +135,13 @@ export function MessagesInboxPanel() {
   const deleteMut = useDeleteConversation();
 
   const handleDelete = (id: string) => {
+    setDeleteError(null);
     setConfirmId(id);
   };
 
   const confirmDelete = () => {
     if (!confirmId) return;
+    setDeleteError(null);
     deleteMut.mutate(
       { id: confirmId },
       {
@@ -146,7 +149,7 @@ export function MessagesInboxPanel() {
           void queryClient.invalidateQueries({ queryKey: getListConversationsQueryKey() });
           setConfirmId(null);
         },
-        onError: () => setConfirmId(null),
+        onError: () => setDeleteError(copy.errorGeneric),
       },
     );
   };
@@ -154,11 +157,18 @@ export function MessagesInboxPanel() {
   const totalUnread = (query.data?.data ?? []).reduce((sum, c) => sum + (c.unread ?? 0), 0);
 
   if (query.isLoading) {
-    return <p style={{ color: "var(--banco-muted)" }}>{copy.loading}</p>;
+    return (
+      <div data-banco-journey="workspace-messages">
+        <p style={{ color: "var(--banco-muted)" }}>{copy.loading}</p>
+      </div>
+    );
   }
   if (query.isError) {
     return (
-      <div style={{ textAlign: "center", padding: "1.5rem 0" }}>
+      <div
+        style={{ textAlign: "center", padding: "1.5rem 0" }}
+        data-banco-journey="workspace-messages"
+      >
         <p style={{ fontWeight: 600, margin: "0 0 0.35rem" }}>{copy.messagesErrorTitle}</p>
         <button
           type="button"
@@ -182,7 +192,7 @@ export function MessagesInboxPanel() {
   const items = query.data?.data ?? [];
   if (items.length === 0) {
     return (
-      <div>
+      <div data-banco-journey="workspace-messages">
         <h2 style={{ margin: 0, fontSize: "1.05rem" }}>{copy.messagesTitle}</h2>
         <p style={{ color: "var(--banco-muted)", lineHeight: 1.7, marginTop: "0.75rem" }}>{copy.messagesEmpty}</p>
         <p style={{ color: "var(--banco-muted)", fontSize: "0.88rem", lineHeight: 1.6 }}>{copy.messagesEmptyHint}</p>
@@ -191,7 +201,13 @@ export function MessagesInboxPanel() {
   }
 
   return (
-    <div style={{ display: "flex", flexDirection: "column", gap: "0.65rem" }}>
+    <div
+      style={{ display: "flex", flexDirection: "column", gap: "0.65rem" }}
+      data-banco-journey="workspace-messages"
+    >
+      {deleteError ? (
+        <p style={{ color: "var(--banco-primary)", margin: 0 }}>{deleteError}</p>
+      ) : null}
       <div style={{ display: "flex", alignItems: "center", gap: "0.5rem" }}>
         <h2 style={{ margin: 0, fontSize: "1.05rem" }}>{copy.messagesTitle}</h2>
         {totalUnread > 0 ? (

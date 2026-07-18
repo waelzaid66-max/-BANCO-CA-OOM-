@@ -3,24 +3,11 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import type { ReactNode } from "react";
+import { isClerkConfigured, signInPath } from "../../lib/clerk-config";
 import { localeFromPathname } from "../../lib/hub-config";
+import { isWebMarketCopyEnabled } from "../../lib/market-copy-config";
 import { getMarketUrl } from "../../lib/site-env";
 import { workspaceUiCopy } from "../../lib/workspace-ui-copy";
-
-const shellStyle: React.CSSProperties = {
-  maxWidth: 1080,
-  margin: "0 auto",
-  padding: "2rem 1.25rem",
-  display: "grid",
-  gridTemplateColumns: "minmax(180px, 220px) 1fr",
-  gap: "1.5rem",
-};
-
-const navStyle: React.CSSProperties = {
-  display: "flex",
-  flexDirection: "column",
-  gap: "0.35rem",
-};
 
 const navLinkStyle: React.CSSProperties = {
   color: "var(--banco-fg)",
@@ -29,6 +16,7 @@ const navLinkStyle: React.CSSProperties = {
   borderRadius: 8,
   fontSize: "0.9rem",
   fontWeight: 600,
+  whiteSpace: "nowrap",
 };
 
 type WorkspaceShellProps = {
@@ -41,6 +29,8 @@ export function WorkspaceShell({ children }: WorkspaceShellProps) {
   const copy = workspaceUiCopy(locale);
   const prefix = locale === "en" ? "/en/workspace" : "/workspace";
   const market = getMarketUrl();
+  const clerkOn = isClerkConfigured();
+  const marketCopyOn = isWebMarketCopyEnabled();
 
   const links = [
     { href: prefix, label: copy.navOverview, exact: true },
@@ -51,17 +41,47 @@ export function WorkspaceShell({ children }: WorkspaceShellProps) {
     { href: `${prefix}/bookings`, label: copy.navBookings },
     { href: `${prefix}/analytics`, label: copy.navAnalytics },
     { href: `${prefix}/wallet`, label: copy.navWallet },
-    { href: `${prefix}/b2b`, label: copy.b2bTitle },
+    {
+      href: `${prefix}/b2b`,
+      label: marketCopyOn ? copy.marketNavWebCopy : copy.b2bTitle,
+    },
   ];
 
+  if (!clerkOn) {
+    return (
+      <div
+        style={{ maxWidth: 720, margin: "0 auto", padding: "2rem 1.25rem" }}
+        data-banco-journey="workspace"
+        data-banco-auth="off"
+      >
+        <h1 style={{ margin: "0 0 0.75rem", fontSize: "1.35rem" }}>{copy.title}</h1>
+        <p style={{ color: "var(--banco-muted)", lineHeight: 1.7 }}>{copy.authDisabled}</p>
+        <p style={{ marginTop: "0.5rem", color: "var(--banco-muted)", lineHeight: 1.7 }}>
+          {copy.signInRequired}
+        </p>
+        <p style={{ marginTop: "1rem" }}>
+          <Link href={signInPath(locale)} style={{ color: "var(--banco-primary)", fontWeight: 700 }}>
+            {copy.signInCta}
+          </Link>
+        </p>
+      </div>
+    );
+  }
+
   return (
-    <div style={shellStyle}>
-      <aside aria-label={copy.title}>
-        <h1 style={{ margin: "0 0 1rem", fontSize: "1.25rem" }}>{copy.title}</h1>
-        <nav style={navStyle}>
+    <div
+      className="banco-workspace-shell"
+      data-banco-journey="workspace"
+      data-banco-auth="on"
+      data-banco-chrome="workspace-shell"
+    >
+      <aside className="banco-workspace-shell__aside" aria-label={copy.title}>
+        <h1 className="banco-workspace-shell__title">{copy.title}</h1>
+        <nav className="banco-workspace-shell__nav">
           {links.map((link) => {
-            const active =
-              link.exact ? pathname === link.href : pathname.startsWith(link.href);
+            const active = link.exact
+              ? pathname === link.href
+              : pathname === link.href || pathname.startsWith(`${link.href}/`);
             return (
               <Link
                 key={link.href}
@@ -71,6 +91,7 @@ export function WorkspaceShell({ children }: WorkspaceShellProps) {
                   background: active ? "rgba(232,0,45,0.12)" : "transparent",
                   color: active ? "var(--banco-primary)" : "var(--banco-fg)",
                 }}
+                aria-current={active ? "page" : undefined}
               >
                 {link.label}
               </Link>
@@ -83,7 +104,7 @@ export function WorkspaceShell({ children }: WorkspaceShellProps) {
           ) : null}
         </nav>
       </aside>
-      <section>{children}</section>
+      <section className="banco-workspace-shell__main">{children}</section>
     </div>
   );
 }

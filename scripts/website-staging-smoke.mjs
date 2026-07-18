@@ -28,7 +28,15 @@ const PATHS = [
   { path: "/sign-in", label: "sign-in ar" },
   { path: "/en/sign-in", label: "sign-in en" },
   { path: "/workspace", label: "workspace protected", kind: "protected" },
+  { path: "/workspace/listings", label: "workspace listings protected", kind: "protected" },
+  { path: "/workspace/listings/new", label: "workspace create listing protected", kind: "protected" },
+  { path: "/workspace/leads", label: "workspace leads protected", kind: "protected" },
+  { path: "/workspace/b2b", label: "workspace b2b / market copy protected", kind: "protected" },
+  { path: "/workspace/b2b/rfqs", label: "workspace market rfqs protected", kind: "protected" },
+  { path: "/workspace/b2b/supply", label: "workspace market supply protected", kind: "protected" },
   { path: "/en/workspace", label: "en workspace protected", kind: "protected" },
+  { path: "/en/workspace/b2b", label: "en workspace b2b protected", kind: "protected" },
+
   { path: "/saved", label: "saved protected", kind: "protected" },
   { path: "/robots.txt", label: "robots", kind: "robots" },
   { path: "/sitemap.xml", label: "sitemap", kind: "sitemap" },
@@ -110,6 +118,12 @@ async function checkRoute(item) {
       if (json.status !== "ok") {
         fail(item.label, `unexpected payload: ${body.slice(0, 120)}`);
       }
+      if (json.surface !== "banco-web") {
+        fail(item.label, `expected surface banco-web, got ${json.surface}`);
+      }
+      if (json.plug !== "on" && json.plug !== "off") {
+        fail(item.label, `expected plug on|off, got ${JSON.stringify(json.plug)}`);
+      }
     } else if (item.kind === "manifest") {
       let json;
       try {
@@ -137,6 +151,23 @@ async function checkRoute(item) {
       if (item.expectJsonLd && !body.includes(item.expectJsonLd)) {
         fail(item.label, `missing JSON-LD ${item.expectJsonLd}`);
       }
+
+      // Phase 2 journey markers (search + saved shells)
+      if (item.path === "/search" || item.path === "/en/search") {
+        if (!body.includes('data-banco-journey="search"')) {
+          fail(item.label, 'missing data-banco-journey="search"');
+        }
+      }
+      if (item.path === "/saved" || item.path === "/en/saved") {
+        if (
+          res.status >= 200 &&
+          res.status < 300 &&
+          !body.includes('data-banco-journey="saved"') &&
+          !body.includes("sign-in")
+        ) {
+          fail(item.label, "saved page missing journey marker or sign-in gate");
+        }
+      }
     }
 
     if (failed === before) {
@@ -162,6 +193,12 @@ async function checkListing(id) {
     const html = await res.text();
     if (!html.includes("Product")) {
       fail(label, "missing Product JSON-LD");
+    }
+    if (!html.includes('data-banco-journey="listing"')) {
+      fail(label, 'missing data-banco-journey="listing"');
+    }
+    if (!html.includes('data-banco-journey="contact"') && !html.includes("bancooom://")) {
+      fail(label, "missing contact journey or app deep-link fallback");
     }
     if (failed === before) {
       pass(label, res.status);

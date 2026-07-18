@@ -15,7 +15,10 @@ export function ListingPageShell({
   breadcrumbItems,
 }: ListingPageShellProps) {
   return (
-    <main style={{ maxWidth: 960, margin: "0 auto", padding: "2rem 1.25rem" }}>
+    <main
+      style={{ maxWidth: 960, margin: "0 auto", padding: "2rem 1.25rem" }}
+      data-banco-journey="listing"
+    >
       <JsonLd data={listingProductJsonLd(listing)} />
       <JsonLd data={breadcrumbJsonLd(breadcrumbItems)} />
       <ListingDetailView listing={listing} similarItems={similarItems} />

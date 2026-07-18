@@ -22,19 +22,43 @@ export function WorkspaceMetricsCards() {
   const pathname = usePathname() ?? "/workspace";
   const locale = localeFromPathname(pathname);
   const copy = workspaceUiCopy(locale);
-  const { data, isLoading, isError } = useGetMyMetrics();
+  const { data, isLoading, isError, refetch, isFetching } = useGetMyMetrics();
 
   if (isLoading) {
-    return <p style={{ color: "var(--banco-muted)" }}>{copy.loading}</p>;
+    return (
+      <div data-banco-journey="workspace-metrics">
+        <p style={{ color: "var(--banco-muted)" }}>{copy.loading}</p>
+      </div>
+    );
   }
   if (isError || !data?.data) {
-    return <p style={{ color: "var(--banco-primary)" }}>{copy.errorGeneric}</p>;
+    return (
+      <div data-banco-journey="workspace-metrics">
+        <p style={{ color: "var(--banco-primary)" }}>{copy.errorGeneric}</p>
+        <button
+          type="button"
+          disabled={isFetching}
+          onClick={() => void refetch()}
+          style={{
+            border: "1px solid var(--banco-border)",
+            borderRadius: 8,
+            background: "transparent",
+            color: "var(--banco-fg)",
+            padding: "0.35rem 0.75rem",
+            cursor: "pointer",
+            fontSize: "0.85rem",
+          }}
+        >
+          {copy.retry}
+        </button>
+      </div>
+    );
   }
 
   const stats = data.data;
 
   return (
-    <div style={cardGrid}>
+    <div style={cardGrid} data-banco-journey="workspace-metrics">
       <div style={cardStyle}>
         <p style={{ margin: 0, color: "var(--banco-muted)", fontSize: "0.85rem" }}>
           {copy.metricsActive}

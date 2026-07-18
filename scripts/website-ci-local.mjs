@@ -15,6 +15,26 @@ const steps = [
     cmd: "node scripts/verify-website-boundaries.mjs",
   },
   {
+    label: "journey parity audit",
+    cmd: "node scripts/website-journey-parity-audit.mjs",
+  },
+  {
+    label: "seller workspace parity audit",
+    cmd: "node scripts/website-seller-workspace-parity-audit.mjs",
+  },
+  {
+    label: "market copy parity audit",
+    cmd: "node scripts/website-market-copy-parity-audit.mjs",
+  },
+  {
+    label: "responsive chrome audit",
+    cmd: "node scripts/website-responsive-chrome-audit.mjs",
+  },
+  {
+    label: "plug hardening audit",
+    cmd: "node scripts/website-plug-hardening-audit.mjs",
+  },
+  {
     label: "eslint website",
     cmd: "pnpm run lint:website",
   },

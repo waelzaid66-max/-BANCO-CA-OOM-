@@ -27,6 +27,7 @@ export type ListingUiCopy = {
   metadataFallback: string;
   savedAdd: string;
   savedRemove: string;
+  savedError: string;
   contactSignIn: string;
   contactWebHint: string;
   contactError: string;
@@ -113,6 +114,7 @@ const COPY: Record<SiteLocale, ListingUiCopy> = {
     metadataFallback: "إعلان",
     savedAdd: "حفظ الإعلان",
     savedRemove: "إزالة من المحفوظات",
+    savedError: "تعذّر تحديث المحفوظات. حاول مرة أخرى.",
     contactSignIn: "سجّل الدخول للتواصل",
     contactWebHint: "بعد تسجيل الدخول يمكنك الاتصال أو مراسلة البائع من المتصفح.",
     contactError: "تعذّر إتمام التواصل. حاول مرة أخرى.",
@@ -197,6 +199,7 @@ const COPY: Record<SiteLocale, ListingUiCopy> = {
     metadataFallback: "Listing",
     savedAdd: "Save listing",
     savedRemove: "Remove from saved",
+    savedError: "Could not update saved listings. Try again.",
     contactSignIn: "Sign in to contact",
     contactWebHint: "After sign-in you can call or message the seller from the browser.",
     contactError: "Could not complete contact. Try again.",

@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useEffect } from "react";
+import { useCallback, useEffect, useId, useState } from "react";
 import { usePathname } from "next/navigation";
 import {
   getAdminUrl,
@@ -12,28 +12,11 @@ import { chromeCopy } from "../lib/chrome-copy";
 import { adminNavItems, browseNavItems, marketNavItems } from "../lib/chrome-nav";
 import { localeFromPathname, localizedPath } from "../lib/hub-config";
 import { writeStoredLocale } from "../lib/locale-preference";
+import { isWebPlugEnabled } from "../lib/web-plug-config";
 import { BrandMark } from "./BrandMark";
 import { SiteMainNav } from "./SiteMainNav";
-
-const headerStyle: React.CSSProperties = {
-  borderBottom: "1px solid var(--banco-border)",
-  background: "rgba(0,0,0,0.92)",
-  backdropFilter: "blur(10px)",
-  position: "sticky",
-  top: 0,
-  zIndex: 50,
-};
-
-const innerStyle: React.CSSProperties = {
-  maxWidth: 1120,
-  margin: "0 auto",
-  padding: "0.65rem 1.15rem",
-  display: "flex",
-  alignItems: "center",
-  justifyContent: "space-between",
-  gap: "0.85rem",
-  flexWrap: "wrap",
-};
+import { SiteMobileNav } from "./SiteMobileNav";
+import { LocaleSwitcher } from "./LocaleSwitcher";
 
 const footerStyle: React.CSSProperties = {
   borderTop: "1px solid var(--banco-border)",
@@ -51,6 +34,11 @@ const footerGridStyle: React.CSSProperties = {
   gap: "1rem",
 };
 
+const MENU_LABELS = {
+  ar: { open: "القائمة", close: "إغلاق القائمة", menu: "قائمة التنقل" },
+  en: { open: "Menu", close: "Close menu", menu: "Navigation menu" },
+} as const;
+
 export function SiteChrome({ children }: { children: React.ReactNode }) {
   const pathname = usePathname() ?? "/";
   const locale = localeFromPathname(pathname);
@@ -59,9 +47,17 @@ export function SiteChrome({ children }: { children: React.ReactNode }) {
   const admin = getAdminUrl();
   const stores = getAppStoreUrls();
   const browse = browseNavItems(locale);
+  const menuCopy = MENU_LABELS[locale];
+  const panelId = useId();
+  const [menuOpen, setMenuOpen] = useState(false);
+
+  const closeMenu = useCallback(() => setMenuOpen(false), []);
 
   const isDirectoryHub =
     pathname === "/directory" || pathname === "/en/directory";
+  const isMaintenance =
+    pathname === "/maintenance" || pathname === "/en/maintenance";
+  const plugOn = isWebPlugEnabled();
 
   useEffect(() => {
     if (locale === "ar" && !pathname.startsWith("/listing/")) {
@@ -69,20 +65,60 @@ export function SiteChrome({ children }: { children: React.ReactNode }) {
     }
   }, [locale, pathname]);
 
-  if (isDirectoryHub) {
+  useEffect(() => {
+    setMenuOpen(false);
+  }, [pathname]);
+
+  // Directory hub + maintenance (plug off) render without site chrome.
+  if (isDirectoryHub || isMaintenance || !plugOn) {
     return <div id="main-content">{children}</div>;
   }
 
   return (
     <>
-      <header style={headerStyle}>
-        <div style={innerStyle}>
+      <header className="banco-site-header" data-banco-chrome="header">
+        <div className="banco-header-inner">
           <BrandMark href={copy.homeHref} ariaLabel={copy.brandAria} size="header" />
+
           <SiteMainNav />
+
+          <div className="banco-header-tools">
+            <span className="banco-header-tools__locale">
+              <LocaleSwitcher />
+            </span>
+            <button
+              type="button"
+              className="banco-menu-toggle"
+              aria-expanded={menuOpen}
+              aria-controls={panelId}
+              aria-label={menuOpen ? menuCopy.close : menuCopy.open}
+              data-banco-chrome="menu-toggle"
+              onClick={() => setMenuOpen((v) => !v)}
+            >
+              <span aria-hidden className="banco-menu-toggle__icon">
+                {menuOpen ? "✕" : "☰"}
+              </span>
+              <span className="banco-menu-toggle__text">
+                {menuOpen ? menuCopy.close : menuCopy.open}
+              </span>
+            </button>
+          </div>
         </div>
+
+        <SiteMobileNav
+          open={menuOpen}
+          onClose={closeMenu}
+          menuLabel={menuCopy.menu}
+          closeLabel={menuCopy.close}
+          panelId={panelId}
+        />
       </header>
-      <div id="main-content">{children}</div>
-      <footer style={footerStyle}>
+
+      <div id="main-content" tabIndex={-1}>
+        {children}
+      </div>
+
+      <footer style={footerStyle} data-banco-chrome="footer">
         <div style={footerGridStyle}>
           <div>
             <strong style={{ color: "var(--banco-fg)" }}>{copy.browse}</strong>

@@ -1,7 +1,7 @@
 # خطة النسخة الكاملة للموقع + حزمة التحضير
 
 **التاريخ:** 2026-07-18  
-**الحالة:** تخطيط وتحضير فقط — **لا تنفيذ UI/كود منتج حتى موافقة المالك على هذا الملف**  
+**الحالة:** Phases 0–6 **منفّذة ومدموجة** — التشغيل الحي (CDN/أسرار) يبقى OPS  
 **الميثاق الملزم:** [`WEBSITE-NO-TOUCH-CHARTER-AR.md`](./WEBSITE-NO-TOUCH-CHARTER-AR.md)  
 **ريبو:** نفس المونوريبو (`-BANCO-CA-OOM-`) — سطح `artifacts/banco-web` فقط  
 
@@ -81,46 +81,52 @@
 
 > لا تبدأ موجة قبل إغلاق بوابة الموجة السابقة. كل موجة = PRs ويب-only.
 
-### Phase 0 — Freeze & Prep ✅ (هذه الحزمة)
+### Phase 0 — Freeze & Prep ✅
 
 - [x] ميثاق عدم المساس  
 - [x] خطة + جرد  
 - [x] قائمة بيضاء/سوداء  
-- [ ] موافقة مالك على هذا الملف  
+- [x] موافقة تنفيذ عبر مسار الموجات (PR #11–#17)  
 
 ### Phase 1 — Visual parity (النسخة الشكلية)
 
 **الهدف:** الصفحة الأولى + كروم + لوجو + ألوان = نفس إحساس التطبيق/البراند.  
 **مسموح:** `banco-web/components/Site*`, tokens, assets تحت `banco-web` فقط.  
 **ممنوع:** أي ملف موبايل.  
-**خروج:** لقطات قبل/بعد · checklist هوية · boundaries PASS.
+**خروج:** لقطات قبل/بعد · checklist هوية · boundaries PASS.  
+**حالة:** تنفيذ على PR — انظر [`WEBSITE-PHASE1-VISUAL-PARITY-STATUS-AR.md`](./WEBSITE-PHASE1-VISUAL-PARITY-STATUS-AR.md).
 
 ### Phase 2 — Journey parity (رحلات المستهلك)
 
 **الهدف:** بحث · تفاصيل · حفظ · تواصل تعمل على staging بنفس عقد الـ API.  
 **Flags:** تفعيل LIVE بحذر على staging فقط.  
-**خروج:** smoke staging · parity search-contract بدون تعديل موبايل.
+**خروج:** smoke staging · parity search-contract بدون تعديل موبايل.  
+**حالة:** تقوية كود + audit CI — انظر [`WEBSITE-PHASE2-JOURNEY-PARITY-STATUS-AR.md`](./WEBSITE-PHASE2-JOURNEY-PARITY-STATUS-AR.md). staging CDN smoke معلّق OPS.
 
 ### Phase 3 — Seller workspace parity
 
 **الهدف:** إنشاء/تعديل/إعلاناتي/leads بمستوى عملي (W5 الموجود يُكمَّل لا يُعاد من صفر).  
-**خروج:** رحلة بائع على ويب staging.
+**خروج:** رحلة بائع على ويب staging.  
+**حالة:** تقوية كود + audit CI — انظر [`WEBSITE-PHASE3-SELLER-WORKSPACE-PARITY-STATUS-AR.md`](./WEBSITE-PHASE3-SELLER-WORKSPACE-PARITY-STATUS-AR.md).
 
 ### Phase 4 — Market copy (BANCO Market داخل الويب)
 
 **الهدف:** كوبي تجربة ماركت للتاجر داخل `banco-web` (مسارات `/market` أو `/workspace/b2b` موسّعة).  
 **قاعدة:** `dealer-os` الأصلي **يبقى**؛ لا ننقل ملفاً منه — نعيد بناء/نسخ تجربة عبر API المشتركة.  
-**خروج:** تاجر ينجز مهامه من الويب؛ dealer-os artifact كما هو للـ Replit/AWS.
+**خروج:** تاجر ينجز مهامه من الويب؛ dealer-os artifact كما هو للـ Replit/AWS.  
+**حالة:** MVP قراءة (overview/RFQs/supply) + flag — انظر [`WEBSITE-PHASE4-MARKET-COPY-STATUS-AR.md`](./WEBSITE-PHASE4-MARKET-COPY-STATUS-AR.md).
 
 ### Phase 5 — Headers / responsive chrome
 
 **الهدف:** هيدرز ويب آمنة (موبايل متصفح / تابلت / ديسكتوب) بدون كسر SEO.  
-**خروج:** لا تداخل مع محتوى؛ a11y أساسي؛ اختبار عرض متعددة.
+**خروج:** لا تداخل مع محتوى؛ a11y أساسي؛ اختبار عرض متعددة.  
+**حالة:** هيدر sticky + درج موبايل + workspace عمود واحد — انظر [`WEBSITE-PHASE5-RESPONSIVE-CHROME-STATUS-AR.md`](./WEBSITE-PHASE5-RESPONSIVE-CHROME-STATUS-AR.md).
 
 ### Phase 6 — Plug hardening
 
 **الهدف:** kill-switch / flag إيقاف موقع · مراقبة منفصلة · توثيق فصل CDN.  
-**خروج:** وثيقة «كيف تفصل الفيشة في 5 دقائق».
+**خروج:** وثيقة «كيف تفصل الفيشة في 5 دقائق».  
+**حالة:** `WEB_PLUG_ENABLED` + صيانة + health — انظر [`WEBSITE-PHASE6-PLUG-HARDENING-STATUS-AR.md`](./WEBSITE-PHASE6-PLUG-HARDENING-STATUS-AR.md) و [`WEBSITE-PLUG-DETACH-5MIN-AR.md`](./WEBSITE-PLUG-DETACH-5MIN-AR.md).
 
 ---
 
@@ -170,7 +176,7 @@ pnpm --filter @workspace/banco-web run build
 | رحلات | بحث+تفاصيل+تواصل على staging |
 | ماركت كوبي | تاجر يعمل من الويب؛ dealer-os لم يُكسر |
 | هيدرز | متجاوبة وآمنة |
-| فيشة | يمكن إيقاف الويب دون redeploy موبايل/API |
+| فيشة | يمكن إيقاف الويب دون redeploy موبايل/API — ✅ عبر `WEB_PLUG_ENABLED` على `main` |
 
 ---
 
