@@ -311,11 +311,96 @@ async function main(): Promise<void> {
     },
   ];
 
+  // Gulf-market inventory: every draft is stamped with its market
+  // (specs.market_country) and priced in its OWN currency (specs.currency) so
+  // the country chips + multi-currency labels demo against REAL rows. Locations
+  // use the taxonomy city values; outside the seeded EG locations table they
+  // resolve to locationId null (never blocks — save-all-specs), which is the
+  // honest state until those cities are learned.
+  const gulfDrafts: Draft[] = [
+    {
+      title: "تويوتا لاند كروزر GXR 2023 - الرياض",
+      description:
+        "لاند كروزر GXR موديل 2023، بحالة الوكالة، ممشى 22 ألف كم، صيانة دورية بالوكيل، دفع رباعي.",
+      category: "car",
+      base_price_cash: 285000,
+      location: "Riyadh",
+      specs: {
+        market_country: "SA",
+        currency: "SAR",
+        year: 2023,
+        mileage: 22000,
+        condition: "used",
+        fuel_type: "petrol",
+        transmission: "automatic",
+      },
+      media: [{ type: "image", url: img("1594502184342-2e12f877aa73"), is_thumbnail: true }],
+      payment_options: [{ mode: "cash" }],
+    },
+    {
+      title: "شقة غرفتين للإيجار السنوي - دبي مارينا",
+      description:
+        "شقة غرفتين وصالة في دبي مارينا، إطلالة على المرسى، قريبة من المترو، عقد سنوي، غير مفروشة.",
+      category: "real_estate",
+      base_price_cash: 95000,
+      location: "Dubai",
+      specs: {
+        market_country: "AE",
+        currency: "AED",
+        offer_type: "rent",
+        rental_term: "annual_contract",
+        property_type: "apartment",
+        rooms: 2,
+        area: 110,
+        furnished: false,
+      },
+      media: [{ type: "image", url: img("1512453979798-5ea266f8880c"), is_thumbnail: true }],
+      payment_options: [{ mode: "cash" }],
+    },
+    {
+      title: "رافعة شوكية تويوتا 3 طن - مدينة الكويت",
+      description:
+        "رافعة شوكية تويوتا ديزل حمولة 3 طن، عدد ساعات قليل، صيانة منتظمة، جاهزة للعمل فوراً.",
+      category: "industrial",
+      base_price_cash: 4500,
+      location: "Kuwait City",
+      specs: {
+        market_country: "KW",
+        currency: "KWD",
+        industrial_type: "machine",
+        industry: "engineering",
+        capacity: "3 طن",
+        condition: "used",
+      },
+      media: [{ type: "image", url: img("1581092160562-40aa08e78837"), is_thumbnail: true }],
+      payment_options: [{ mode: "cash" }],
+    },
+    {
+      title: "فيلا دورين للبيع - جدة",
+      description:
+        "فيلا دورين وملحق في جدة، مساحة 420 م²، 6 غرف، مجلسين، مدخلين سيارة، قريبة من الخدمات.",
+      category: "real_estate",
+      base_price_cash: 1850000,
+      location: "Jeddah",
+      specs: {
+        market_country: "SA",
+        currency: "SAR",
+        offer_type: "sale",
+        property_type: "villa",
+        rooms: 6,
+        area: 420,
+      },
+      media: [{ type: "image", url: img("1613490493576-7fde63acd811"), is_thumbnail: true }],
+      payment_options: [{ mode: "cash" }],
+    },
+  ];
+
   const a = await seedGroup("sale", "demo-banco-seller", "بانكو ديمو", "dealer", saleDrafts);
   const b = await seedGroup("request", "demo-banco-buyer", "بانكو ديمو (طلبات)", "individual", requestDrafts);
   const c = await seedGroup("rental", "demo-banco-host", "بانكو ديمو (إيجار)", "individual", rentalDrafts);
   const d = await seedGroup("imported", "demo-banco-importer", "بانكو ديمو (استيراد)", "dealer", importedCarDrafts);
-  const missing = a.missing + b.missing + c.missing + d.missing;
+  const g = await seedGroup("gulf", "demo-banco-gulf", "بانكو ديمو (الخليج)", "dealer", gulfDrafts);
+  const missing = a.missing + b.missing + c.missing + d.missing + g.missing;
   if (missing > 0) {
     // Honesty: never exit 0 with demo data missing.
     throw new Error(`${missing} demo listing(s) still missing — see FAILED lines above.`);
