@@ -1,8 +1,4 @@
-import type { ExpoConfig } from "expo/config";
-
-import appJson from "./app.json";
-
-const expo = appJson.expo as ExpoConfig;
+import type { ConfigContext, ExpoConfig } from "expo/config";
 
 /**
  * Deep-link / universal-link origin for expo-router static rendering.
@@ -57,11 +53,14 @@ function withRouterOrigin(plugins: ExpoConfig["plugins"]): ExpoConfig["plugins"]
   });
 }
 
-export default (): ExpoConfig => ({
-  ...expo,
-  plugins: withRouterOrigin(expo.plugins),
+// Canonical dynamic-config pattern: `config` IS the parsed app.json, so the
+// static store config (bundle ids, permissions, icons) stays the single source
+// of truth and this file only layers the env-driven link/origin bits on top.
+export default ({ config }: ConfigContext): ExpoConfig => ({
+  ...(config as ExpoConfig),
+  plugins: withRouterOrigin(config.plugins),
   ios: {
-    ...expo.ios,
+    ...config.ios,
     ...(webHost
       ? {
           associatedDomains: [
@@ -72,7 +71,7 @@ export default (): ExpoConfig => ({
       : {}),
   },
   android: {
-    ...expo.android,
+    ...config.android,
     ...(webHost
       ? {
           intentFilters: [

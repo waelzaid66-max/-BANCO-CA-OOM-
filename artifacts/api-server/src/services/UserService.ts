@@ -15,6 +15,11 @@ export async function getOrCreateUser(clerkId: string, data?: { name?: string; e
 
   if (existing) return existing;
 
+  // First-touch upsert: the mobile app can fire several authenticated calls in
+  // parallel on first open, so two inserts may race. ON CONFLICT keeps the
+  // loser from throwing a unique-violation (users.clerk_id is unique) — it
+  // simply re-reads the winner's row. Only the genuine winner sends the
+  // welcome email, so the race can't double-send either.
   const [created] = await db
     .insert(users)
     .values({
@@ -24,7 +29,17 @@ export async function getOrCreateUser(clerkId: string, data?: { name?: string; e
       role: "individual",
       isVerified: false,
     })
+    .onConflictDoNothing({ target: users.clerkId })
     .returning();
+
+  if (!created) {
+    const [row] = await db
+      .select()
+      .from(users)
+      .where(eq(users.clerkId, clerkId))
+      .limit(1);
+    return row;
+  }
 
   // First touch — professional welcome. Strictly fire-and-forget: an email
   // provider hiccup must never slow down or fail account creation.

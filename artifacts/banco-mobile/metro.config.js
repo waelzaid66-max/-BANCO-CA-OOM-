@@ -12,7 +12,10 @@ const config = getDefaultConfig(projectRoot);
 // Expo/react-navigation. Hierarchical lookup stays ENABLED so package-local
 // and .pnpm nested installs still resolve (required on Windows when the root
 // node_modules tree is incomplete after a partial clean).
-config.watchFolders = [monorepoRoot];
+// APPEND the monorepo root to Expo's default watchFolders instead of replacing
+// them — replacement drops entries the SDK relies on (expo-doctor flags it and
+// virtual modules/HMR can miss updates in EAS builds).
+config.watchFolders = [...(config.watchFolders ?? []), monorepoRoot];
 config.resolver.nodeModulesPaths = [
   path.resolve(projectRoot, "node_modules"),
   path.resolve(monorepoRoot, "node_modules"),

@@ -84,9 +84,14 @@ async function obtainExpoPushToken(): Promise<string | null> {
   if (!Device.isDevice) return null;
 
   if (Platform.OS === "android") {
+    // HIGH importance = heads-up banner + sound — the standard for
+    // messaging-style pings (new message / lead / booking). DEFAULT played the
+    // sound but never peeked, so users routinely missed time-sensitive alerts.
     await Notifications.setNotificationChannelAsync("default", {
       name: "Default",
-      importance: Notifications.AndroidImportance.DEFAULT,
+      importance: Notifications.AndroidImportance.HIGH,
+      sound: "default",
+      vibrationPattern: [0, 250, 250, 250],
     });
   }
 
