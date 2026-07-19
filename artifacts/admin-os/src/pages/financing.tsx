@@ -487,10 +487,16 @@ function InstitutionOpsDialog({
   const [seatBranchId, setSeatBranchId] = useState<string>(UNASSIGNED);
 
   const branchesQuery = useGetFinancingBranches(id, {
-    query: { enabled: open && !!id },
+    query: {
+      queryKey: getGetFinancingBranchesQueryKey(id),
+      enabled: open && !!id,
+    },
   });
   const seatsQuery = useGetFinancingSeats(id, {
-    query: { enabled: open && !!id },
+    query: {
+      queryKey: getGetFinancingSeatsQueryKey(id),
+      enabled: open && !!id,
+    },
   });
   const createBranch = useCreateFinancingBranch();
   const createSeat = useCreateFinancingSeat();
