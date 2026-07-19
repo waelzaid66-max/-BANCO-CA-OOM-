@@ -9,6 +9,7 @@ on:
     paths:
       - "artifacts/landing/**"
       - "artifacts/banco-web/**"
+      - "artifacts/banco-website/**"
       - "lib/design-tokens/**"
       - "lib/search-contract/**"
       - "lib/api-client-react/**"
@@ -41,6 +42,7 @@ on:
     paths:
       - "artifacts/landing/**"
       - "artifacts/banco-web/**"
+      - "artifacts/banco-website/**"
       - "lib/design-tokens/**"
       - "lib/search-contract/**"
       - "lib/api-client-react/**"
@@ -117,14 +119,16 @@ jobs:
           && pnpm --filter @workspace/search-contract run typecheck
           && pnpm --filter @workspace/landing run typecheck
           && pnpm --filter @workspace/banco-web run typecheck
+          && pnpm --filter @workspace/banco-website run typecheck
       - name: Test search-contract
         run: pnpm --filter @workspace/search-contract run test
       - name: Mobile lib smoke (search-contract parity)
         run: pnpm --filter @workspace/banco-mobile run test:lib
-      - name: Build landing + banco-web
+      - name: Build landing + banco-web + banco-website
         run: >-
           pnpm --filter @workspace/landing run build
           && pnpm --filter @workspace/banco-web run build
+          && pnpm --filter @workspace/banco-website run build
       - name: SEO static audit (hub pages)
         run: node scripts/website-seo-static-audit.mjs
       - name: Bundle budget (banco-web chunks)
