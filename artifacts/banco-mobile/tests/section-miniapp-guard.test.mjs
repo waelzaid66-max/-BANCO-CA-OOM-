@@ -7,7 +7,7 @@
 //   4. Stack screens for section/* remain registered in app/_layout.tsx
 //
 // Run: pnpm --filter @workspace/banco-mobile run test:section-guard
-// Expectation: 46/46 PASS (rose Stay hero + black-void flexGrow + country label
+// Expectation: 46/46 PASS (owner-approved black Stay header + black-void flexGrow + country label
 // + section header icon hits stay inside / padding 12 + hard category locks
 // + no fake web topPad 67 anywhere under banco-mobile
 // + Banks FI finish: intent=fi from profile, Join gated on membership
@@ -249,8 +249,8 @@ test("BookingStaysApp mounts owner-approved black StaysHomeHeader (BOOM STAY)", 
   const booking = fs.readFileSync(BOOKING_APP, "utf8");
   assert.match(
     booking,
-    /StaysHomeHeader/,
-    "BookingStaysApp must mount the owner-approved black StaysHomeHeader",
+    /<StaysHomeHeader\b/,
+    "BookingStaysApp must mount (JSX-render, not just import) the owner-approved black StaysHomeHeader",
   );
   assert.doesNotMatch(
     booking,
