@@ -109,6 +109,11 @@ interface FilterSheetProps {
    * Used by rental-locked pages where installment is irrelevant.
    */
   hidePaymentType?: boolean;
+  /**
+   * Optional restrict of RE property-type chips (Stay passes studio/apartment/
+   * villa/chalet only — never land/commercial in a stays browse).
+   */
+  propertyTypeOptions?: string[];
 }
 
 /**
@@ -140,6 +145,7 @@ export function FilterSheet({
   onClearAll,
   lockCategory = false,
   hidePaymentType = false,
+  propertyTypeOptions,
 }: FilterSheetProps) {
   const colors = useColors();
   const { t, isRTL } = useI18n();
@@ -147,6 +153,10 @@ export function FilterSheet({
 
   const rowDir = isRTL ? "row-reverse" : "row";
   const textAlign = isRTL ? "right" : "left";
+  const propertyTypeDefs =
+    propertyTypeOptions && propertyTypeOptions.length > 0
+      ? PROPERTY_TYPES.filter((p) => propertyTypeOptions.includes(p.value))
+      : PROPERTY_TYPES;
 
   // Price / year are drafts: re-synced from the committed criteria each time the
   // sheet opens, then applied together on the Apply button.
@@ -425,8 +435,9 @@ export function FilterSheet({
               </>
             )}
 
-            {/* RE property type — syncs with type strip via propertyType */}
-            {isRealEstate && (
+            {/* RE / Stay property type — syncs with type strip via propertyType.
+                Stay passes propertyTypeOptions so land/commercial never appear. */}
+            {isRealEstate && propertyTypeDefs.length > 0 && (
               <>
                 <SectionLabel
                   text={t("create.fields.propertyType")}
@@ -434,10 +445,10 @@ export function FilterSheet({
                   colors={colors}
                 />
                 <ToggleChipRow
-                  options={PROPERTY_TYPES.map((p) => p.value)}
+                  options={propertyTypeDefs.map((p) => p.value)}
                   selected={criteria.propertyType}
                   labelFor={(v) => {
-                    const def = PROPERTY_TYPES.find((p) => p.value === v);
+                    const def = propertyTypeDefs.find((p) => p.value === v);
                     return def ? (isRTL ? def.ar : def.en) : v;
                   }}
                   onToggle={(v) => onUpdate({ propertyType: v })}

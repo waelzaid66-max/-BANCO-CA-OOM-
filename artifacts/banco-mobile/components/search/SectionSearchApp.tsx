@@ -764,6 +764,9 @@ export function SectionSearchApp({
     setBrandValue(null);
     setSuggestions([]);
     setShowSuggestions(false);
+    setSearchOpen(false);
+    setShowFilters(false);
+    setMapMode(false);
     const baseline =
       baselineRef.current ?? buildSeed(criteria.marketCountry);
     commit(baseline);
@@ -875,24 +878,28 @@ export function SectionSearchApp({
     });
   };
 
-  // ── Exit confirmation — intercepts header back, hardware back & swipe ───────
-  usePreventRemove(isDirty, ({ data }) => {
-    Alert.alert(
-      t("search.discover.section.exitTitle"),
-      t("search.discover.section.exitMessage"),
-      [
-        { text: t("search.discover.section.exitCancel"), style: "cancel" },
-        {
-          text: t("search.discover.section.exitConfirm"),
-          style: "destructive",
-          onPress: () => navigation.dispatch(data.action),
-        },
-      ],
-    );
+  // Auto-reset filters on exit (header / hardware / swipe) — same Stay contract.
+  // No confirm dialog: leaving a browse mini-app clears chrome for next entry.
+  const exitingRef = useRef(false);
+  const resetAndLeave = useCallback(
+    (leave: () => void) => {
+      exitingRef.current = true;
+      clearAllFilters();
+      leave();
+    },
+    [clearAllFilters],
+  );
+
+  usePreventRemove(isDirty && !exitingRef.current, ({ data }) => {
+    resetAndLeave(() => navigation.dispatch(data.action));
   });
 
   const goBack = () => {
     playSound("tap");
+    if (isDirty) {
+      resetAndLeave(() => router.back());
+      return;
+    }
     router.back();
   };
 

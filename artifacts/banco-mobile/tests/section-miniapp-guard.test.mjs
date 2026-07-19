@@ -7,14 +7,15 @@
 //   4. Stack screens for section/* remain registered in app/_layout.tsx
 //
 // Run: pnpm --filter @workspace/banco-mobile run test:section-guard
-// Expectation: 38/38 PASS (rose Stay hero + black-void flexGrow + country label
+// Expectation: 39/39 PASS (rose Stay hero + black-void flexGrow + country label
 // + section header icon hits stay inside / padding 12 + hard category locks
 // + no fake web topPad 67 anywhere under banco-mobile
 // + Banks FI finish: intent=fi from profile, Join gated on membership
 // + Stay market matrix under type strip + no engine-chip facet-load flash
 // + RE offer/type/market strips + FilterSheet refinements wiring
 // + Car brand/origin strips + Discover ENTER + car?engine=import
-// + Materials material/origin/market strips + FilterSheet showMaterial wired).
+// + Materials material/origin/market strips + FilterSheet showMaterial wired
+// + Stay auto-reset on back + rental strip + map latch + scoped property types).
 
 import test from "node:test";
 import assert from "node:assert/strict";
@@ -293,6 +294,56 @@ test("Stay keeps country/currency in matrix under type strip (not in-strip globe
   );
 });
 
+test("Stay auto-resets filters on back; rental strip + map latch wired", () => {
+  const booking = fs.readFileSync(BOOKING_APP, "utf8");
+  const filter = fs.readFileSync(FILTER_SHEET, "utf8");
+  assert.match(
+    booking,
+    /resetAndLeave|exitingRef/,
+    "Stay must auto-reset filters on exit (no confirm-only path)",
+  );
+  assert.doesNotMatch(
+    booking,
+    /exitTitle|exitMessage|exitConfirm/,
+    "Stay must not prompt confirm-on-dirty exit (Owner: auto reset on back)",
+  );
+  assert.match(
+    booking,
+    /testID="stays-rental-strip"/,
+    "Stay must expose rental-term strip under market matrix",
+  );
+  assert.match(
+    booking,
+    /selectRentalTerm|rentalTermsForSearch/,
+    "Stay rental strip must drive criteria.rentalTerm",
+  );
+  assert.match(
+    booking,
+    /wantMap|mapParam === "1"/,
+    "Stay must latch ?map=1 deep-link like RE",
+  );
+  assert.match(
+    booking,
+    /focus=booking/,
+    "Stay card/map open must land listing with focus=booking",
+  );
+  assert.match(
+    booking,
+    /propertyTypeOptions=\{STAY_TYPE_OPTIONS\}/,
+    "Stay FilterSheet must scope property types to stay units",
+  );
+  assert.match(
+    filter,
+    /propertyTypeOptions/,
+    "FilterSheet must accept propertyTypeOptions for Stay scoping",
+  );
+  assert.match(
+    booking,
+    /testID="stays-type-strip"/,
+    "Stay type strip must be identifiable for visual audit",
+  );
+});
+
 test("SectionSearchApp keeps engine chips during facet load (no reload flash)", () => {
   const section = fs.readFileSync(SECTION_APP, "utf8");
   // showEngineChips / showIndustrialChips must not gate on facetsLoading —
@@ -532,14 +583,18 @@ test("Booking empty state offers demand bridge (no dead-end)", () => {
   );
 });
 
-test("Booking filter badge counts rentalTerm (FilterSheet-only filter)", () => {
+test("Booking filter badge counts rentalTerm + propertyType (honest chrome)", () => {
   const booking = fs.readFileSync(BOOKING_APP, "utf8");
-  // activeFilterCount array must include !!criteria.rentalTerm — term moved off
-  // header tabs into FilterSheet; omitting it lies about active filters.
+  // Strip + FilterSheet share rentalTerm / propertyType — badge must count both.
   assert.match(
     booking,
     /activeFilterCount\s*=\s*\[[\s\S]*?!!criteria\.rentalTerm/,
     "activeFilterCount must include rentalTerm",
+  );
+  assert.match(
+    booking,
+    /activeFilterCount\s*=\s*\[[\s\S]*?!!criteria\.propertyType/,
+    "activeFilterCount must include propertyType",
   );
 });
 

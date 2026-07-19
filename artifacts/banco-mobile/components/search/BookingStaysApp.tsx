@@ -8,7 +8,7 @@ import {
   FeedItem,
   SearchListingsCategory,
 } from "@workspace/api-client-react";
-import { router, useNavigation, type Href } from "expo-router";
+import { router, useLocalSearchParams, useNavigation, type Href } from "expo-router";
 import { usePreventRemove } from "@react-navigation/native";
 import * as Haptics from "expo-haptics";
 import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
@@ -56,7 +56,10 @@ import {
 } from "@/lib/searchParams";
 import { requestNearMeCoords, DEFAULT_NEAR_RADIUS_KM } from "@/lib/nearMe";
 import { MarketCountryPicker } from "@/components/MarketCountryPicker";
-import { sanitizeRentalTermForMarket } from "@/lib/searchTaxonomy";
+import {
+  rentalTermsForSearch,
+  sanitizeRentalTermForMarket,
+} from "@/lib/searchTaxonomy";
 
 const ALL_TAB = "__all__";
 const BANCO_LOGO = require("../../assets/images/banco-logo.png");
@@ -65,9 +68,11 @@ const BOOM_LOGO = require("../../assets/images/boom-logo.png");
 
 // The stays type tabs (per the approved header mock): Stays (all) · Studio ·
 // Apartment · Villa · Chalet. Labels come from the canonical PROPERTY_TYPES
-// taxonomy so the tab wording always matches create/search. Rental TERM moved
-// to the FilterSheet (rentalTerm chips) — type is the primary segmentation.
+// taxonomy so the tab wording always matches create/search. Rental TERM is a
+// secondary strip under the market matrix (also in FilterSheet) — both drive
+// the same criteria.rentalTerm axis.
 const STAY_TYPE_VALUES = ["studio", "apartment", "villa", "chalet"] as const;
+const STAY_TYPE_OPTIONS = [...STAY_TYPE_VALUES];
 
 /** Deterministic, key-sorted serialization used for baseline-delta dirty checks
  *  (mirrors SectionSearchApp — a freshly-landed page is never falsely dirty). */
@@ -202,8 +207,13 @@ export function BookingStaysApp() {
     };
   }, [applyPatch, retry, items.length, phase, criteria.marketCountry]);
 
-  // ── Map view ──
+  // ── Map view (?map=1 deep-link latch, same MOB-07 contract as RE) ──
+  const params = useLocalSearchParams<{ map?: string | string[] }>();
+  const mapParam = Array.isArray(params.map) ? params.map[0] : params.map;
   const [mapMode, setMapMode] = useState(false);
+  const [wantMap, setWantMap] = useState(
+    () => mapParam === "1" || mapParam === "true",
+  );
   const [marketPickerOpen, setMarketPickerOpen] = useState(false);
   const mappableItems = useMemo(
     () =>
@@ -221,11 +231,25 @@ export function BookingStaysApp() {
     if (!inResultsView && mapMode) setMapMode(false);
   }, [inResultsView, mapMode]);
 
+  useEffect(() => {
+    if (!wantMap) return;
+    // Stay map can open once results exist — server clusters fill gaps even
+    // when the loaded page has few pins (do not hard-require hasPagePins).
+    if (inResultsView) {
+      setMapMode(true);
+      setWantMap(false);
+    } else if (viewState === "empty" || viewState === "error") {
+      setWantMap(false);
+    }
+  }, [wantMap, inResultsView, viewState]);
+
   const mapSectionKey = mapAnchorKey(criteria);
   const prevMapSectionKey = useRef(mapSectionKey);
   useEffect(() => {
     if (prevMapSectionKey.current === mapSectionKey) return;
     prevMapSectionKey.current = mapSectionKey;
+    // Keep map open across filter tweaks only when user is already in map;
+    // section-key change from market/type still drops to list for clarity.
     setMapMode(false);
   }, [mapSectionKey]);
 
@@ -313,13 +337,13 @@ export function BookingStaysApp() {
   const handleCardPress = useCallback(
     (item: FeedItem) => {
       cacheFeedItem(item);
-      router.push(`/listing/${item.id}`);
+      router.push(`/listing/${item.id}?focus=booking` as Href);
     },
     [cacheFeedItem],
   );
 
-  // Type tabs: Stays(all) / studio / apartment / villa / chalet. The rental
-  // TERM (daily/new-law/annual) is a FilterSheet chip now, not the tab axis.
+  // Type tabs: Stays(all) / studio / apartment / villa / chalet.
+  // Rental TERM (daily/new-law/annual) = secondary strip + FilterSheet (same axis).
   const activeStayType = criteria.propertyType ?? ALL_TAB;
   const selectStayType = (value: string) => {
     playSound("tap");
@@ -329,6 +353,23 @@ export function BookingStaysApp() {
     } else {
       update({ propertyType: value, engineKey: "rent" });
     }
+  };
+
+  const selectRentalTerm = (term: string) => {
+    playSound("tap");
+    Haptics.selectionAsync();
+    update({
+      rentalTerm: criteria.rentalTerm === term ? null : term,
+      engineKey: "rent",
+    });
+  };
+
+  const selectListingModeWanted = () => {
+    playSound("tap");
+    Haptics.selectionAsync();
+    update({
+      listingMode: criteria.listingMode === "buy" ? "all" : "buy",
+    });
   };
 
   const selectMarketCountry = (code: string) => {
@@ -363,17 +404,22 @@ export function BookingStaysApp() {
     setDraftQuery("");
     setSuggestions([]);
     setShowSuggestions(false);
+    setSearchOpen(false);
+    setShowFilters(false);
+    setMapMode(false);
     const baseline = baselineRef.current ?? buildSeed(criteria.marketCountry);
     commit(baseline);
   }, [buildSeed, commit, criteria.marketCountry]);
 
-  // Filter badge: type tabs are separate chrome. Rental TERM lives only in
-  // FilterSheet — must count so the badge stays honest. Payment omitted.
+  // Honest badge: every Stay chrome/sheet axis that narrows results.
   const activeFilterCount = [
+    !!criteria.propertyType,
     !!criteria.minPrice || !!criteria.maxPrice,
     !!criteria.location,
     criteria.nearMeEnabled,
     !!criteria.rentalTerm,
+    criteria.listingMode !== "all",
+    criteria.sort !== "recommended",
     criteria.marketCountry !==
       (baselineRef.current?.marketCountry ?? DEFAULT_MARKET_COUNTRY),
   ].filter(Boolean).length;
@@ -406,25 +452,32 @@ export function BookingStaysApp() {
     });
   };
 
-  usePreventRemove(isDirty, ({ data }) => {
-    Alert.alert(
-      t("search.discover.section.exitTitle"),
-      t("search.discover.section.exitMessage"),
-      [
-        { text: t("search.discover.section.exitCancel"), style: "cancel" },
-        {
-          text: t("search.discover.section.exitConfirm"),
-          style: "destructive",
-          onPress: () => navigation.dispatch(data.action),
-        },
-      ],
-    );
+  // Owner order: filters auto-reset on back — no confirm dialog. Hardware
+  // back / swipe / header all hit the same path via usePreventRemove + goBack.
+  const exitingRef = useRef(false);
+  const resetAndLeave = useCallback(
+    (leave: () => void) => {
+      exitingRef.current = true;
+      clearAllFilters();
+      leave();
+    },
+    [clearAllFilters],
+  );
+
+  usePreventRemove(isDirty && !exitingRef.current, ({ data }) => {
+    resetAndLeave(() => navigation.dispatch(data.action));
   });
 
   const goBack = () => {
     playSound("tap");
+    if (isDirty) {
+      resetAndLeave(() => router.back());
+      return;
+    }
     router.back();
   };
+
+  const rentalTerms = rentalTermsForSearch(criteria.marketCountry);
 
   const rowDir = isRTL ? "row-reverse" : "row";
   const textAlign = isRTL ? "right" : "left";
@@ -732,14 +785,14 @@ export function BookingStaysApp() {
         </View>
       )}
 
-      {/* Controls: stay-type tabs only — country/currency live in the matrix
-          below so the type strip stays short and section-shaped. */}
+      {/* Controls: stay-type tabs + Wanted — country/currency in matrix below. */}
       <ScrollView
         horizontal
         showsHorizontalScrollIndicator={false}
         // Critical: horizontal ScrollView must NOT flex-grow (black-void class).
         style={styles.hScroll}
         contentContainerStyle={[styles.controlsRow, { flexDirection: rowDir }]}
+        testID="stays-type-strip"
       >
         {[{ value: ALL_TAB, label: t("search.discover.section.staysAll") }]
           .concat(
@@ -774,6 +827,33 @@ export function BookingStaysApp() {
               </Pressable>
             );
           })}
+        <Pressable
+          onPress={selectListingModeWanted}
+          style={[
+            styles.termTab,
+            {
+              backgroundColor:
+                criteria.listingMode === "buy" ? STAYS_ACCENT : colors.card,
+              borderColor:
+                criteria.listingMode === "buy" ? STAYS_ACCENT : colors.border,
+            },
+          ]}
+          testID="stays-listing-mode-buy"
+        >
+          <AppText
+            style={[
+              styles.termTabText,
+              {
+                color:
+                  criteria.listingMode === "buy"
+                    ? "#FFFFFF"
+                    : colors.foreground,
+              },
+            ]}
+          >
+            {t("search.listingModeBuy")}
+          </AppText>
+        </Pressable>
       </ScrollView>
 
       {/* Launch-market matrix under the type strip — compact flag · country ·
@@ -859,6 +939,46 @@ export function BookingStaysApp() {
         </Pressable>
       </ScrollView>
 
+      {/* Rental-term strip — market-honest regimes (daily / new-law / …).
+          Same criteria.rentalTerm as FilterSheet — one axis, two surfaces. */}
+      {rentalTerms.length > 0 ? (
+        <ScrollView
+          horizontal
+          showsHorizontalScrollIndicator={false}
+          style={styles.hScroll}
+          contentContainerStyle={[styles.rentalChrome, { flexDirection: rowDir }]}
+          testID="stays-rental-strip"
+        >
+          {rentalTerms.map((r) => {
+            const active = criteria.rentalTerm === r.value;
+            return (
+              <Pressable
+                key={r.value}
+                onPress={() => selectRentalTerm(r.value)}
+                style={[
+                  styles.rentalChip,
+                  {
+                    backgroundColor: active ? STAYS_ACCENT : colors.secondary,
+                  },
+                ]}
+                testID={`stays-rental-${r.value}`}
+              >
+                <AppText
+                  style={[
+                    styles.rentalChipText,
+                    {
+                      color: active ? "#FFFFFF" : colors.mutedForeground,
+                    },
+                  ]}
+                >
+                  {isRTL ? r.ar : r.en}
+                </AppText>
+              </Pressable>
+            );
+          })}
+        </ScrollView>
+      ) : null}
+
       {viewState === "results" && items.length > 0 ? (
         <AppText
           style={[styles.resultsCount, { color: colors.mutedForeground, textAlign }]}
@@ -888,13 +1008,19 @@ export function BookingStaysApp() {
           if (partial.marketCountry) {
             void savePreferredMarketCountry(partial.marketCountry);
           }
-          update(partial);
+          // Stay hard-lock: never accept sale engines / foreign categories.
+          update({
+            ...partial,
+            category: "real_estate",
+            engineKey: "rent",
+          });
         }}
         onOpenLocationPicker={() => setLocationPickerOpen(true)}
         onClearLocation={() => update({ location: "" })}
         onToggleNearMe={() => void toggleNearMe()}
         onClearAll={clearAllFilters}
         hidePaymentType
+        propertyTypeOptions={STAY_TYPE_OPTIONS}
       />
 
       <View style={styles.resultsArea}>
@@ -1118,7 +1244,23 @@ const styles = StyleSheet.create({
     gap: 6,
     paddingHorizontal: 12,
     paddingTop: 6,
+    paddingBottom: 2,
+  },
+  rentalChrome: {
+    alignItems: "center",
+    gap: 8,
+    paddingHorizontal: 12,
+    paddingTop: 4,
     paddingBottom: 4,
+  },
+  rentalChip: {
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    borderRadius: 16,
+  },
+  rentalChipText: {
+    fontSize: 12.5,
+    fontFamily: "Inter_500Medium",
   },
   matrixCell: {
     alignItems: "center",

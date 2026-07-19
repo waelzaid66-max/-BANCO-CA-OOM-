@@ -91,6 +91,9 @@ Deep-link: `/section/car?engine=import` · `/section/real-estate?map=1`
    - [ ] Discover «استيراد سيارات» يفتح car مع engine=import
    - [ ] Discover مواد/توريدات → ميني-آب كامل: خامة + أصل + مصفوفة دول
    - [ ] FilterSheet مواد: خامة ظاهرة · مصانع بلا أصل (لا تسريب)
+   - [ ] Stay: أنواع + مصفوفة دول + شريط أنظمة إيجار · فلتر الباج يحدّث
+   - [ ] Stay: باك بعد فلتر → رجوع بلا ديالوج · دخول تاني نظيف
+   - [ ] Stay: `/section/booking?map=1` يفتح خريطة · كارت → `?focus=booking`
 
 ---
 
