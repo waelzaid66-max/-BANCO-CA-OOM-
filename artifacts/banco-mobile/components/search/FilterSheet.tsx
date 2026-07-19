@@ -28,6 +28,7 @@ import { brandLabel, type CarBrand } from "@/constants/cars";
 import { engineByKey, type EngineDef } from "@/constants/engines";
 import {
   INDUSTRY_TYPES,
+  MATERIAL_TYPES,
   PROPERTY_TYPES,
 } from "@/constants/listingCreateTaxonomy";
 import { useI18n } from "@/context/LanguageContext";
@@ -635,33 +636,76 @@ export function FilterSheet({
               </>
             )}
 
-            {/* Industry + origin (industrial sections) */}
-            {isIndustrial && (
+            {/* Industry (facilities / machine / production_line) + material +
+                origin (materials only). Flags already computed — do not collapse
+                to raw isIndustrial or origin leaks into factories and material
+                chips stay dead (prior wipe). */}
+            {(showIndustry || showOrigin || showMaterial) && (
               <>
-                <SectionLabel text={t("create.fields.industry")} align={textAlign} colors={colors} />
-                <ToggleChipRow
-                  options={INDUSTRY_TYPES.map((i) => i.value as SearchListingsIndustry)}
-                  selected={criteria.industry}
-                  labelFor={(v) => {
-                    const def = INDUSTRY_TYPES.find((i) => i.value === v);
-                    return def ? (isRTL ? def.ar : def.en) : v;
-                  }}
-                  onToggle={(v) => onUpdate({ industry: v })}
-                  rowDir={rowDir}
-                  colors={colors}
-                  testPrefix="filter-industry"
-                />
+                {showIndustry ? (
+                  <>
+                    <SectionLabel
+                      text={t("create.fields.industry")}
+                      align={textAlign}
+                      colors={colors}
+                    />
+                    <ToggleChipRow
+                      options={INDUSTRY_TYPES.map(
+                        (i) => i.value as SearchListingsIndustry,
+                      )}
+                      selected={criteria.industry}
+                      labelFor={(v) => {
+                        const def = INDUSTRY_TYPES.find((i) => i.value === v);
+                        return def ? (isRTL ? def.ar : def.en) : v;
+                      }}
+                      onToggle={(v) => onUpdate({ industry: v })}
+                      rowDir={rowDir}
+                      colors={colors}
+                      testPrefix="filter-industry"
+                    />
+                  </>
+                ) : null}
 
-                <SectionLabel text={t("create.fields.origin")} align={textAlign} colors={colors} />
-                <ToggleChipRow
-                  options={ORIGINS}
-                  selected={criteria.originType}
-                  labelFor={(v) => t(`create.opts.${v}`)}
-                  onToggle={(v) => onUpdate({ originType: v })}
-                  rowDir={rowDir}
-                  colors={colors}
-                  testPrefix="filter-origin"
-                />
+                {showMaterial ? (
+                  <>
+                    <SectionLabel
+                      text={t("create.fields.material")}
+                      align={textAlign}
+                      colors={colors}
+                    />
+                    <ToggleChipRow
+                      options={MATERIAL_TYPES.map((m) => m.value)}
+                      selected={criteria.material}
+                      labelFor={(v) => {
+                        const def = MATERIAL_TYPES.find((m) => m.value === v);
+                        return def ? (isRTL ? def.ar : def.en) : v;
+                      }}
+                      onToggle={(v) => onUpdate({ material: v })}
+                      rowDir={rowDir}
+                      colors={colors}
+                      testPrefix="filter-material"
+                    />
+                  </>
+                ) : null}
+
+                {showOrigin ? (
+                  <>
+                    <SectionLabel
+                      text={t("create.fields.origin")}
+                      align={textAlign}
+                      colors={colors}
+                    />
+                    <ToggleChipRow
+                      options={ORIGINS}
+                      selected={criteria.originType}
+                      labelFor={(v) => t(`create.opts.${v}`)}
+                      onToggle={(v) => onUpdate({ originType: v })}
+                      rowDir={rowDir}
+                      colors={colors}
+                      testPrefix="filter-origin"
+                    />
+                  </>
+                ) : null}
               </>
             )}
 

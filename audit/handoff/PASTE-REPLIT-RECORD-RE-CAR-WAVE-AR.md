@@ -1,4 +1,4 @@
-# Replit — تسجيل فقط (لا تنفيذ) · موجة عقارات + سيارات
+# Replit — تسجيل فقط (لا تنفيذ) · موجة عقارات + سيارات + توريدات
 
 **الدور:** اقرأ وافهم وسجّل في قناتكم / ملاحظات التشغيل.  
 **ممنوع الآن:** كود · redesign · Expo rebuild إلا بعد أمر Owner صريح «نفّذ».  
@@ -15,6 +15,7 @@
 | دول + فلاتر داخل الشرايط بايظة | دولة في نفس شريط العرض؛ FilterSheet يعيد عرض أنواع كـ engines | نفس + `FilterSheet.tsx` |
 | استيراد سيارات ما يفتحش عالم الاستيراد | CTA كان `push(/section/car)` بلا `?engine=import` | `SearchDiscover.tsx` |
 | Stay/Car طبقات ناقصة | Car بلا شريط ماركات/أصل؛ RE بلا مصفوفة سوق تحت الأنواع | `SectionSearchApp.tsx` |
+| توريدات ناقصة جوه الميني-آب | `showMaterial` ميت · خامة فقط في الورقة الممسوحة · بلا شريط خامة/مصفوفة | `FilterSheet.tsx` + `SectionSearchApp.tsx` |
 
 **العقد الصحيح (ثابت):**
 - Discover = بوابات صورة 2×2 → `router.push(SECTION_ROUTE…)` **ENTER**
@@ -62,6 +63,15 @@ C5 Origin strip: الكل / محلي / مستورد
 C6 results · FilterSheet brands/fuel/year…
 ```
 
+**توريدات / مواد (`/section/materials`):**
+```
+C3 Primary: sort · معروض/مطلوب · industrial types (مواد خام / آلات…)
+C4 Material strip: الكل + حديد/ألومنيوم/… → criteria.material
+C5 Origin strip: الكل / محلي / مستورد
+C6 Market matrix: دول + عملات
+C7 results · FilterSheet: industry (لما آلة) · material · origin (بدون تسريب أصل للمصانع)
+```
+
 Deep-link: `/section/car?engine=import` · `/section/real-estate?map=1`
 
 ---
@@ -79,13 +89,15 @@ Deep-link: `/section/car?engine=import` · `/section/real-estate?map=1`
    - [ ] FilterSheet عقارات: نوع عقار + مطلوب متزامنين مع الشرايط
    - [ ] سيارات: شريط ماركات + أصل ظاهرين
    - [ ] Discover «استيراد سيارات» يفتح car مع engine=import
+   - [ ] Discover مواد/توريدات → ميني-آب كامل: خامة + أصل + مصفوفة دول
+   - [ ] FilterSheet مواد: خامة ظاهرة · مصانع بلا أصل (لا تسريب)
 
 ---
 
 ## 5) مشاكل ما زالت خارج هذه الموجة (سجّلها · لا تحلّها)
 
 - شوتات G0/G1 Replit على main بعد دمج #41
-- Factories / Materials توسيع طبقات بنفس النمط (لم تُطلب في هذه الدفعة)
+- Factories توسيع شريط صناعة (industry) بنفس نمط المواد — خفيف لاحقاً
 - Banks / FI AuthZ (PR #40 جانبي — قرار Owner)
 - Website
 
@@ -93,6 +105,6 @@ Deep-link: `/section/car?engine=import` · `/section/real-estate?map=1`
 
 ## 6) جملة تسجيل للقناة
 
-> Cursor أرسل موجة RE+Car على `cursor/section-g2-finish-4322` / PR #41: دخول القسم من صورة Discover فقط · عقارات = شرايط عرض/أنواع + مصفوفة دول مربوطة بـ FilterSheet · سيارات = شريط ماركات+أصل + `?engine=import`. Replit: **تسجيل وفهم فقط** — لا تنفيذ كود حتى أمر Owner.
+> Cursor أرسل موجة RE+Car+Materials على `cursor/section-g2-finish-4322` / PR #41: دخول القسم من صورة Discover فقط · عقارات = شرايط عرض/أنواع + مصفوفة دول · سيارات = ماركات+أصل + `?engine=import` · توريدات = شريط خامة+أصل+مصفوفة سوق + FilterSheet showMaterial حي. Replit: **تسجيل وفهم فقط** — لا تنفيذ كود حتى أمر Owner.
 
 — Cursor · Record-only brief · No Replit execute

@@ -7,13 +7,14 @@
 //   4. Stack screens for section/* remain registered in app/_layout.tsx
 //
 // Run: pnpm --filter @workspace/banco-mobile run test:section-guard
-// Expectation: 37/37 PASS (rose Stay hero + black-void flexGrow + country label
+// Expectation: 38/38 PASS (rose Stay hero + black-void flexGrow + country label
 // + section header icon hits stay inside / padding 12 + hard category locks
 // + no fake web topPad 67 anywhere under banco-mobile
 // + Banks FI finish: intent=fi from profile, Join gated on membership
 // + Stay market matrix under type strip + no engine-chip facet-load flash
 // + RE offer/type/market strips + FilterSheet refinements wiring
-// + Car brand/origin strips + Discover ENTER + car?engine=import).
+// + Car brand/origin strips + Discover ENTER + car?engine=import
+// + Materials material/origin/market strips + FilterSheet showMaterial wired).
 
 import test from "node:test";
 import assert from "node:assert/strict";
@@ -37,6 +38,12 @@ const BOOKING_APP = path.join(
   "components",
   "search",
   "BookingStaysApp.tsx",
+);
+const FILTER_SHEET = path.join(
+  APP_ROOT,
+  "components",
+  "search",
+  "FilterSheet.tsx",
 );
 const BANKS = path.join(APP_ROOT, "app", "business", "banks.tsx");
 const PROFILE = path.join(APP_ROOT, "app", "(tabs)", "profile.tsx");
@@ -376,6 +383,51 @@ test("Car section expands brand + origin strips; import deep-links engine", () =
     discover,
     /router\.push\(SECTION_ROUTE\[cat\]\)/,
     "Discover section cards must ENTER SECTION_ROUTE (not melt strips)",
+  );
+});
+
+test("Materials (toridat) restores material strip + origin + market matrix", () => {
+  const section = fs.readFileSync(SECTION_APP, "utf8");
+  const filter = fs.readFileSync(FILTER_SHEET, "utf8");
+  assert.match(
+    section,
+    /testID="materials-material-strip"/,
+    "Materials must expose commodity material strip",
+  );
+  assert.match(
+    section,
+    /testID="materials-origin-strip"/,
+    "Materials must expose origin strip (local/imported)",
+  );
+  assert.match(
+    section,
+    /testID="materials-market-matrix"/,
+    "Materials must expose market matrix under origin (Stay/RE pattern)",
+  );
+  assert.match(
+    section,
+    /showMaterialChrome|selectMaterial/,
+    "Materials material strip must drive criteria.material",
+  );
+  assert.match(
+    filter,
+    /showMaterial[\s\S]*filter-material|filter-material[\s\S]*showMaterial/,
+    "FilterSheet must wire showMaterial to material chips (not dead flag)",
+  );
+  assert.match(
+    filter,
+    /MATERIAL_TYPES/,
+    "FilterSheet must import MATERIAL_TYPES for commodity chips",
+  );
+  assert.match(
+    filter,
+    /showIndustry \|\| showOrigin \|\| showMaterial/,
+    "FilterSheet industrial block must gate by showIndustry/Origin/Material",
+  );
+  assert.doesNotMatch(
+    filter,
+    /\{isIndustrial && \(/,
+    "FilterSheet must not collapse industrial filters to raw isIndustrial",
   );
 });
 

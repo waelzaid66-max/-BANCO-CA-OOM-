@@ -58,6 +58,7 @@ import {
   CURRENCY_BY_MARKET,
   DEFAULT_MARKET_COUNTRY,
   MARKET_COUNTRIES,
+  MATERIAL_TYPES,
   PROPERTY_TYPES,
 } from "@/constants/listingCreateTaxonomy";
 import { PHONE_COUNTRIES } from "@/constants/countryCodes";
@@ -698,6 +699,11 @@ export function SectionSearchApp({
     update({ propertyType: value });
   };
 
+  /** Materials commodity strip — steel/resin/… via criteria.material. */
+  const selectMaterial = (value: string) => {
+    update({ material: criteria.material === value ? null : value });
+  };
+
   const selectRentalTerm = (term: string) => {
     const next = criteria.rentalTerm === term ? null : term;
     update({
@@ -768,7 +774,14 @@ export function SectionSearchApp({
     criteria.originType === "local" || criteria.originType === "imported"
       ? criteria.originType
       : "all";
-  const showOriginChrome = criteria.category === "materials";
+  const isMaterialsSection = criteria.category === "materials";
+  const showOriginChrome = isMaterialsSection;
+  // Commodity material strip: materials + (all | raw_material) — same gate as
+  // FilterSheet showMaterial. Machine/production_line clear material upstream.
+  const showMaterialChrome =
+    isMaterialsSection &&
+    (criteria.industrialType === "all" ||
+      criteria.industrialType === "raw_material");
   const showCarOriginChrome = criteria.category === "car" && !lockedEngine;
   const showCarBrandStrip = criteria.category === "car" && !lockedEngine;
   const showRentalTerms =
@@ -788,7 +801,10 @@ export function SectionSearchApp({
   // keep it for cars; RE uses offer engines + type strip (+ FilterSheet for مطلوب).
   const showListingMode = !lockedEngine && !isRealEstateSection;
   const showReTypeStrip = isRealEstateSection && reTypeTabs.length > 0;
+  // Market matrix under secondary strips (Stay/RE pattern) — RE + materials
+  // (toridat). Globe button stays on car/facilities primary strip only.
   const showReMarketMatrix = isRealEstateSection;
+  const showMaterialsMarketMatrix = isMaterialsSection;
 
   // ── Section-scoped "dirty" filter count (excludes the locked baseline) ──────
   const rentEngineActive =
@@ -1193,8 +1209,8 @@ export function SectionSearchApp({
         </View>
       )}
 
-      {/* ── Primary chip strip: globe (non-RE) · sort · mode/engines.
-          RE countries live in the market matrix under the type strip (Stay pattern). ── */}
+      {/* ── Primary chip strip: globe (car/facilities) · sort · mode/engines.
+          RE + materials countries live in the market matrix under secondary strips. ── */}
       <ScrollView
         horizontal
         showsHorizontalScrollIndicator={false}
@@ -1204,7 +1220,7 @@ export function SectionSearchApp({
         style={styles.hScroll}
         contentContainerStyle={[styles.chipStrip, { flexDirection: rowDir }]}
       >
-        {!isRealEstateSection ? (
+        {!isRealEstateSection && !isMaterialsSection ? (
           <MarketCountryButton
             selected={criteria.marketCountry}
             onPress={() => {
@@ -1555,9 +1571,82 @@ export function SectionSearchApp({
         </View>
       ) : null}
 
+      {/* ── Materials commodity strip (حديد / ألومنيوم / …) ── */}
+      {showMaterialChrome ? (
+        <ScrollView
+          horizontal
+          showsHorizontalScrollIndicator={false}
+          style={styles.hScroll}
+          contentContainerStyle={[styles.reTypeStrip, { flexDirection: rowDir }]}
+          testID="materials-material-strip"
+        >
+          <Pressable
+            onPress={() => {
+              playSound("tap");
+              Haptics.selectionAsync();
+              update({ material: null });
+            }}
+            style={[
+              styles.stripChip,
+              {
+                backgroundColor: !criteria.material ? accent : colors.card,
+                borderWidth: 1,
+                borderColor: !criteria.material ? accent : colors.border,
+              },
+            ]}
+            testID="materials-material-all"
+          >
+            <AppText
+              style={[
+                styles.stripChipText,
+                {
+                  color: !criteria.material ? "#FFFFFF" : colors.foreground,
+                },
+              ]}
+            >
+              {t("home.engines.all")}
+            </AppText>
+          </Pressable>
+          {MATERIAL_TYPES.map((m) => {
+            const active = criteria.material === m.value;
+            return (
+              <Pressable
+                key={m.value}
+                onPress={() => {
+                  playSound("tap");
+                  Haptics.selectionAsync();
+                  selectMaterial(m.value);
+                }}
+                style={[
+                  styles.stripChip,
+                  {
+                    backgroundColor: active ? accent : colors.card,
+                    borderWidth: 1,
+                    borderColor: active ? accent : colors.border,
+                  },
+                ]}
+                testID={`materials-material-${m.value}`}
+              >
+                <AppText
+                  style={[
+                    styles.stripChipText,
+                    { color: active ? "#FFFFFF" : colors.foreground },
+                  ]}
+                >
+                  {isRTL ? m.ar : m.en}
+                </AppText>
+              </Pressable>
+            );
+          })}
+        </ScrollView>
+      ) : null}
+
       {/* ── Origin chips (materials only) ── */}
       {showOriginChrome ? (
-        <View style={[styles.chipRow, { flexDirection: rowDir }]}>
+        <View
+          style={[styles.chipRow, { flexDirection: rowDir }]}
+          testID="materials-origin-strip"
+        >
           {(["all", "local", "imported"] as const).map((o) => {
             const active = originKey === o;
             return (
@@ -1586,6 +1675,76 @@ export function SectionSearchApp({
             );
           })}
         </View>
+      ) : null}
+
+      {/* ── Materials market matrix (countries + currencies) under origin ── */}
+      {showMaterialsMarketMatrix ? (
+        <ScrollView
+          horizontal
+          showsHorizontalScrollIndicator={false}
+          style={styles.hScroll}
+          contentContainerStyle={[styles.reMarketMatrix, { flexDirection: rowDir }]}
+          testID="materials-market-matrix"
+        >
+          {MARKET_COUNTRIES.map((m) => {
+            const active = criteria.marketCountry === m.value;
+            const currency = CURRENCY_BY_MARKET[m.value] ?? "";
+            const flag = PHONE_COUNTRIES.find((c) => c.iso === m.value)?.flag;
+            return (
+              <Pressable
+                key={m.value}
+                onPress={() => {
+                  playSound("tap");
+                  Haptics.selectionAsync();
+                  selectMarketCountry(m.value);
+                }}
+                style={[
+                  styles.reMatrixCell,
+                  {
+                    flexDirection: rowDir,
+                    backgroundColor: active
+                      ? "rgba(122,18,38,0.10)"
+                      : colors.card,
+                    borderColor: active ? accent : colors.border,
+                  },
+                ]}
+                testID={`materials-market-${m.value}`}
+                accessibilityLabel={`${isRTL ? m.ar : m.en} ${currency}`}
+              >
+                {flag ? (
+                  <AppText style={styles.reMatrixFlag}>{flag}</AppText>
+                ) : (
+                  <Feather name="globe" size={12} color={colors.mutedForeground} />
+                )}
+                <AppText
+                  style={[styles.reMatrixCountry, { color: colors.foreground }]}
+                  numberOfLines={1}
+                >
+                  {isRTL ? m.ar : m.en}
+                </AppText>
+                <AppText
+                  style={[styles.reMatrixCurrency, { color: colors.mutedForeground }]}
+                >
+                  {currency}
+                </AppText>
+              </Pressable>
+            );
+          })}
+          <Pressable
+            onPress={() => {
+              playSound("tap");
+              setMarketPickerOpen(true);
+            }}
+            style={[
+              styles.reMatrixMore,
+              { backgroundColor: colors.secondary, borderColor: colors.border },
+            ]}
+            testID="materials-market-more"
+            accessibilityLabel={t("search.marketCountryTitle")}
+          >
+            <Feather name="more-horizontal" size={14} color={colors.mutedForeground} />
+          </Pressable>
+        </ScrollView>
       ) : null}
 
       {/* ── Rental term chips (RE rent / Booking) ── */}
