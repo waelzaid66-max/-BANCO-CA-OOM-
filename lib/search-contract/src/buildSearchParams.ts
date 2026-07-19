@@ -75,6 +75,13 @@ export function buildSearchParams(
   const engine = engineByKey(c.category, c.engineKey);
   if (engine) Object.assign(sp, engine.params);
 
+  // Explicit property-type selection (RE / Stay type strips). Assigned AFTER
+  // engine params so a user's explicit choice wins over an engine preset.
+  // Mirrors mobile `artifacts/banco-mobile/lib/searchParams.ts` (Claude M-1).
+  if (isRealEstate(c) && c.propertyType) {
+    sp.property_type = c.propertyType;
+  }
+
   if (c.sort !== "recommended") sp.sort = c.sort;
 
   const minNum = Number(c.minPrice);
