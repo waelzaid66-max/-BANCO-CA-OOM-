@@ -93,7 +93,9 @@ export function StaysHomeHeader({
 }: StaysHomeHeaderProps) {
   const insets = useSafeAreaInsets();
   const { t, isRTL } = useI18n();
-  const topPad = Platform.OS === "web" ? 67 : insets.top;
+  // Owner rule: never invent a fake 67px web pad (it destroyed headers before).
+  // Same sanctioned pattern as Search/Section/billing/analytics headers.
+  const topPad = Math.max(insets.top, Platform.OS === "web" ? 12 : 0);
   const rowDir = isRTL ? "row-reverse" : "row";
   const textAlign = isRTL ? "right" : "left";
 

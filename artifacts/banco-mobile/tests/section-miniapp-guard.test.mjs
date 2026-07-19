@@ -242,22 +242,15 @@ test("Discover portals never call host update({ category })", () => {
 
 const ICONS = path.join(APP_ROOT, "components", "icons.tsx");
 
-test("BookingStaysApp restores rose hero (not black StaysHomeHeader shell)", () => {
+test("BookingStaysApp mounts owner-approved black StaysHomeHeader (BOOM STAY)", () => {
+  // Owner decision 2026-07-19 (final, supersedes the rose-hero lock): the
+  // premium black StaysHomeHeader (Bands A-D) is the approved Stay design,
+  // built at the owner's direct request and merged on main @ 47cc4e5.
   const booking = fs.readFileSync(BOOKING_APP, "utf8");
   assert.match(
     booking,
-    /SectionBackdrop/,
-    "BookingStaysApp must mount the rose SectionBackdrop hero from main",
-  );
-  assert.match(
-    booking,
-    /styles\.hero/,
-    "BookingStaysApp must render the rose hero shell",
-  );
-  assert.doesNotMatch(
-    booking,
     /StaysHomeHeader/,
-    "must not remount the black StaysHomeHeader that replaced the working Stay UI",
+    "BookingStaysApp must mount the owner-approved black StaysHomeHeader",
   );
   assert.doesNotMatch(
     booking,
