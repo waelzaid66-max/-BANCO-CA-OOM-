@@ -7,12 +7,13 @@
 //   4. Stack screens for section/* remain registered in app/_layout.tsx
 //
 // Run: pnpm --filter @workspace/banco-mobile run test:section-guard
-// Expectation: 36/36 PASS (rose Stay hero + black-void flexGrow + country label
+// Expectation: 37/37 PASS (rose Stay hero + black-void flexGrow + country label
 // + section header icon hits stay inside / padding 12 + hard category locks
 // + no fake web topPad 67 anywhere under banco-mobile
 // + Banks FI finish: intent=fi from profile, Join gated on membership
 // + Stay market matrix under type strip + no engine-chip facet-load flash
-// + RE offer strip + type strip, no listingMode For-sale clash).
+// + RE offer/type/market strips + FilterSheet refinements wiring
+// + Car brand/origin strips + Discover ENTER + car?engine=import).
 
 import test from "node:test";
 import assert from "node:assert/strict";
@@ -65,7 +66,12 @@ test("SearchDiscover keeps SECTION_ROUTE for every catalogue section", () => {
 test("Discover section press pushes SECTION_ROUTE (not shared Search criteria)", () => {
   const src = fs.readFileSync(DISCOVER, "utf8");
   assert.match(src, /router\.push\(SECTION_ROUTE\[cat\]\)/);
-  assert.match(src, /router\.push\(SECTION_ROUTE\.car\)/);
+  // Car import CTA may append ?engine=import via template string.
+  assert.match(
+    src,
+    /SECTION_ROUTE\.car/,
+    "Discover must still reference SECTION_ROUTE.car for Cars ENTER",
+  );
 });
 
 test("Discover→Search melt bridge is gone (no prop, no host helper)", () => {
@@ -313,8 +319,18 @@ test("Real-estate section uses offer strip + type strip (no listingMode clash)",
   );
   assert.match(
     section,
+    /testID="re-market-matrix"/,
+    "RE must expose market matrix under type strip",
+  );
+  assert.match(
+    section,
     /isReOfferEngine|stripEngineList/,
     "RE primary chips must be offer-axis only (تمليك/إيجار)",
+  );
+  assert.match(
+    section,
+    /isReSheetEngine|filterSheetEngines/,
+    "RE FilterSheet engines must be refinements-only (not offer/type)",
   );
   assert.match(
     section,
@@ -330,6 +346,36 @@ test("Real-estate section uses offer strip + type strip (no listingMode clash)",
     section,
     /propertyType:\s*null/,
     "CLEAR_SECTION_ATTRS / clear path must reset propertyType",
+  );
+});
+
+test("Car section expands brand + origin strips; import deep-links engine", () => {
+  const section = fs.readFileSync(SECTION_APP, "utf8");
+  const discover = fs.readFileSync(DISCOVER, "utf8");
+  assert.match(
+    section,
+    /testID="car-brand-strip"/,
+    "Car must expose secondary brand strip",
+  );
+  assert.match(
+    section,
+    /testID="car-origin-strip"/,
+    "Car must expose origin strip (local/imported)",
+  );
+  assert.match(
+    section,
+    /engineParam|enginesForCategory/,
+    "Section must seed ?engine= deep-link on mount",
+  );
+  assert.match(
+    discover,
+    /SECTION_ROUTE\.car.*engine=import|engine=import.*SECTION_ROUTE\.car/,
+    "Discover car-import CTA must ENTER car with engine=import",
+  );
+  assert.match(
+    discover,
+    /router\.push\(SECTION_ROUTE\[cat\]\)/,
+    "Discover section cards must ENTER SECTION_ROUTE (not melt strips)",
   );
 });
 

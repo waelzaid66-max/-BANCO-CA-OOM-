@@ -47,17 +47,29 @@ import {
   visibleEngines,
   visibleIndustrialTypes,
 } from "@/lib/facets";
-import { POPULAR_BRANDS, brandQuery, type CarBrand } from "@/constants/cars";
+import {
+  POPULAR_BRANDS,
+  brandLabel,
+  brandQuery,
+  type CarBrand,
+} from "@/constants/cars";
 import { labelForValue } from "@/constants/locations";
 import {
+  CURRENCY_BY_MARKET,
   DEFAULT_MARKET_COUNTRY,
+  MARKET_COUNTRIES,
   PROPERTY_TYPES,
 } from "@/constants/listingCreateTaxonomy";
+import { PHONE_COUNTRIES } from "@/constants/countryCodes";
 import {
   loadPreferredMarketCountry,
   savePreferredMarketCountry,
 } from "@/lib/marketPreference";
-import { engineByKey, type EngineDef } from "@/constants/engines";
+import {
+  engineByKey,
+  enginesForCategory,
+  type EngineDef,
+} from "@/constants/engines";
 import { useI18n } from "@/context/LanguageContext";
 import { useSession } from "@/context/SessionContext";
 import { useSound } from "@/context/SoundContext";
@@ -84,16 +96,21 @@ const QUICK_BRANDS: CarBrand[] = POPULAR_BRANDS;
 const CLEAR_ATTRS = CLEAR_SECTION_ATTRS;
 
 /** RE primary type strip — Stay-parallel axis via criteria.propertyType.
- *  Kept short so the section reads as strips, not a square filter grid. */
+ *  Core + commercial types; facet-gated extras appear when inventory exists. */
 const RE_TYPE_PRIMARY = [
   "apartment",
   "villa",
   "land",
   "studio",
   "chalet",
+  "townhouse",
+  "duplex",
+  "penthouse",
   "office",
   "shop",
-  "townhouse",
+  "warehouse",
+  "hotel",
+  "commercial_land",
 ] as const;
 
 const RE_TYPE_ALL = "__all__";
@@ -103,6 +120,13 @@ const RE_TYPE_ALL = "__all__";
 function isReOfferEngine(engine: EngineDef): boolean {
   if (engine.key === "all") return true;
   return engine.params.offer_type === "sale" || engine.params.offer_type === "rent";
+}
+
+/** FilterSheet refinements only — never offer/type (those live on strips). */
+function isReSheetEngine(engine: EngineDef): boolean {
+  if (engine.key === "all") return true;
+  if (engine.params.offer_type || engine.params.property_type) return false;
+  return true;
 }
 
 /**
@@ -255,13 +279,34 @@ export function SectionSearchApp({
   // defaults". This is what makes a freshly-entered page never prompt on exit.
   const baselineRef = useRef<SearchCriteria | null>(null);
 
+  // Route intents: ?map=1 (MOB-07) · ?engine=import (Discover car-import CTA).
+  // Must be read before seed so the first commit carries the deep-link engine.
+  const params = useLocalSearchParams<{
+    map?: string | string[];
+    engine?: string | string[];
+  }>();
+  const mapParam = Array.isArray(params.map) ? params.map[0] : params.map;
+  const engineParam = Array.isArray(params.engine)
+    ? params.engine[0]
+    : params.engine;
+
   // Seed the engine once on mount → entering the page immediately loads this
   // section's results with no category chooser in sight.
   const seeded = useRef(false);
   useEffect(() => {
     if (seeded.current) return;
     seeded.current = true;
-    const seed = buildSeed(criteria.marketCountry);
+    const allowed = enginesForCategory(category);
+    const deepEngine =
+      !lockedEngine &&
+      engineParam &&
+      allowed?.some((e) => e.key === engineParam)
+        ? engineParam
+        : null;
+    const seed: SearchCriteria = {
+      ...buildSeed(criteria.marketCountry),
+      ...(deepEngine ? { engineKey: deepEngine } : {}),
+    };
     baselineRef.current = seed;
     commit(seed);
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -296,10 +341,8 @@ export function SectionSearchApp({
   }, [applyPatch, retry, items.length, phase, criteria.marketCountry]);
 
   // ── Map view ──────────────────────────────────────────────────────────────
-  const params = useLocalSearchParams<{ map?: string | string[] }>();
   // Expo Router may deliver query values as string | string[] — normalize so
   // ?map=1 always latches (MOB-07 must not silently no-op on web/native).
-  const mapParam = Array.isArray(params.map) ? params.map[0] : params.map;
   const [mapMode, setMapMode] = useState(false);
   // Discover "Explore on map" pushes /section/real-estate?map=1 — latch until
   // mappable results arrive (or the browse resolves empty/error).
@@ -357,11 +400,11 @@ export function SectionSearchApp({
     if (!isRealEstateSection) return engineList;
     return engineList.filter(isReOfferEngine);
   }, [engineList, isRealEstateSection]);
-  /** FilterSheet may still show refinements (furnished/compound/…) but never
-   *  the property-type engines — those live on the type strip. */
+  /** FilterSheet = refinements only (furnished/compound/payment…). Offer +
+   *  property type live on dedicated strips so sheet never fights the chrome. */
   const filterSheetEngines = useMemo(() => {
     if (!isRealEstateSection) return engineList;
-    return engineList.filter((e) => !e.params.property_type);
+    return engineList.filter(isReSheetEngine);
   }, [engineList, isRealEstateSection]);
   /** RE strip 2: property types (composes with offer via propertyType). */
   const reTypeTabs = useMemo(() => {
@@ -374,6 +417,13 @@ export function SectionSearchApp({
       return (counts[ty] ?? 0) > 0;
     });
   }, [isRealEstateSection, scopedFacets]);
+  /** When a sheet refinement owns engineKey, offer strip still highlights all. */
+  const activeOfferKey = useMemo(() => {
+    if (!isRealEstateSection) return criteria.engineKey;
+    const eng = engineByKey(criteria.category, criteria.engineKey);
+    if (!eng || isReOfferEngine(eng)) return criteria.engineKey;
+    return "all";
+  }, [isRealEstateSection, criteria.category, criteria.engineKey]);
   const activeGroup = industrialGroupForCategory(criteria.category);
   const visibleIndTypes = useMemo(
     () =>
@@ -588,6 +638,14 @@ export function SectionSearchApp({
       patch.rentalTerm =
         engine?.params.offer_type === "rent" ? criteria.rentalTerm : null;
     }
+    // Mirror Search-host: fuel/transmission engines also set attribute fields
+    // so FilterSheet toggles stay in sync with the strip.
+    if (criteria.category === "car") {
+      if (engine?.params.fuel_type) patch.fuelType = engine.params.fuel_type;
+      if (engine?.params.transmission) {
+        patch.transmission = engine.params.transmission;
+      }
+    }
     if (engine?.params.origin_type) {
       patch.originType = engine.params.origin_type;
     } else if (criteria.category === "car" && criteria.originType) {
@@ -614,8 +672,19 @@ export function SectionSearchApp({
     update(patch);
   };
 
-  const selectOrigin = (o: "all" | "local" | "imported") =>
+  const selectOrigin = (o: "all" | "local" | "imported") => {
+    if (criteria.category === "car") {
+      // Keep origin strip and import engine on one axis (no dual conflict).
+      const patch: Partial<SearchCriteria> = {
+        originType: o === "all" ? null : o,
+      };
+      if (o === "imported") patch.engineKey = "import";
+      else if (criteria.engineKey === "import") patch.engineKey = "all";
+      update(patch);
+      return;
+    }
     update({ originType: o === "all" ? null : o });
+  };
 
   const selectListingMode = (mode: "all" | "sale" | "buy") =>
     update({ listingMode: mode });
@@ -700,10 +769,13 @@ export function SectionSearchApp({
       ? criteria.originType
       : "all";
   const showOriginChrome = criteria.category === "materials";
+  const showCarOriginChrome = criteria.category === "car" && !lockedEngine;
+  const showCarBrandStrip = criteria.category === "car" && !lockedEngine;
   const showRentalTerms =
     criteria.category === "real_estate" &&
-    engineByKey(criteria.category, criteria.engineKey)?.params.offer_type ===
-      "rent";
+    (activeOfferKey === "rent" ||
+      engineByKey(criteria.category, criteria.engineKey)?.params.offer_type ===
+        "rent");
   // Keep engine chips visible during facet load — visibleEngines already
   // fails open when scopedFacets are undefined. Hiding on facetsLoading made
   // every section entry flash an empty strip then repaint.
@@ -716,6 +788,7 @@ export function SectionSearchApp({
   // keep it for cars; RE uses offer engines + type strip (+ FilterSheet for مطلوب).
   const showListingMode = !lockedEngine && !isRealEstateSection;
   const showReTypeStrip = isRealEstateSection && reTypeTabs.length > 0;
+  const showReMarketMatrix = isRealEstateSection;
 
   // ── Section-scoped "dirty" filter count (excludes the locked baseline) ──────
   const rentEngineActive =
@@ -1120,8 +1193,8 @@ export function SectionSearchApp({
         </View>
       )}
 
-      {/* ── Unified chip strip: 🌐 globe FIRST, then mode + engine chips in one
-          horizontal ScrollView — easy horizontal selection, no separate rows. ── */}
+      {/* ── Primary chip strip: globe (non-RE) · sort · mode/engines.
+          RE countries live in the market matrix under the type strip (Stay pattern). ── */}
       <ScrollView
         horizontal
         showsHorizontalScrollIndicator={false}
@@ -1131,13 +1204,15 @@ export function SectionSearchApp({
         style={styles.hScroll}
         contentContainerStyle={[styles.chipStrip, { flexDirection: rowDir }]}
       >
-        <MarketCountryButton
-          selected={criteria.marketCountry}
-          onPress={() => {
-            playSound("tap");
-            setMarketPickerOpen(true);
-          }}
-        />
+        {!isRealEstateSection ? (
+          <MarketCountryButton
+            selected={criteria.marketCountry}
+            onPress={() => {
+              playSound("tap");
+              setMarketPickerOpen(true);
+            }}
+          />
+        ) : null}
         {/* Quick sort — a small in-strip filter present in every section (was a
             4th header icon that crowded the title). Cycles recommended → newest
             → price low→high → high→low. Isolated: plain criteria state, never
@@ -1175,7 +1250,7 @@ export function SectionSearchApp({
             color={criteria.sort !== "recommended" ? "#FFFFFF" : colors.mutedForeground}
           />
         </Pressable>
-        {(showListingMode || showEngineChips || showIndustrialChips) ? (
+        {(showListingMode || showEngineChips || showIndustrialChips || isRealEstateSection) ? (
           <View style={[styles.chipStripDivider, { backgroundColor: colors.border }]} />
         ) : null}
         {showListingMode ? (["all", "sale", "buy"] as const).map((mode) => {
@@ -1194,7 +1269,7 @@ export function SectionSearchApp({
           );
         }) : null}
         {showEngineChips ? stripEngineList.map((e) => {
-          const active = criteria.engineKey === e.key;
+          const active = activeOfferKey === e.key;
           return (
             <Pressable
               key={e.key}
@@ -1315,6 +1390,169 @@ export function SectionSearchApp({
               );
             })}
         </ScrollView>
+      ) : null}
+
+      {/* ── RE market matrix (countries + currencies) under type strip ── */}
+      {showReMarketMatrix ? (
+        <ScrollView
+          horizontal
+          showsHorizontalScrollIndicator={false}
+          style={styles.hScroll}
+          contentContainerStyle={[styles.reMarketMatrix, { flexDirection: rowDir }]}
+          testID="re-market-matrix"
+        >
+          {MARKET_COUNTRIES.map((m) => {
+            const active = criteria.marketCountry === m.value;
+            const currency = CURRENCY_BY_MARKET[m.value] ?? "";
+            const flag = PHONE_COUNTRIES.find((c) => c.iso === m.value)?.flag;
+            return (
+              <Pressable
+                key={m.value}
+                onPress={() => {
+                  playSound("tap");
+                  Haptics.selectionAsync();
+                  selectMarketCountry(m.value);
+                }}
+                style={[
+                  styles.reMatrixCell,
+                  {
+                    flexDirection: rowDir,
+                    backgroundColor: active
+                      ? "rgba(122,18,38,0.10)"
+                      : colors.card,
+                    borderColor: active ? accent : colors.border,
+                  },
+                ]}
+                testID={`re-market-${m.value}`}
+                accessibilityLabel={`${isRTL ? m.ar : m.en} ${currency}`}
+              >
+                {flag ? (
+                  <AppText style={styles.reMatrixFlag}>{flag}</AppText>
+                ) : (
+                  <Feather name="globe" size={12} color={colors.mutedForeground} />
+                )}
+                <AppText
+                  style={[styles.reMatrixCountry, { color: colors.foreground }]}
+                  numberOfLines={1}
+                >
+                  {isRTL ? m.ar : m.en}
+                </AppText>
+                <AppText
+                  style={[styles.reMatrixCurrency, { color: colors.mutedForeground }]}
+                >
+                  {currency}
+                </AppText>
+              </Pressable>
+            );
+          })}
+          <Pressable
+            onPress={() => {
+              playSound("tap");
+              setMarketPickerOpen(true);
+            }}
+            style={[
+              styles.reMatrixMore,
+              { backgroundColor: colors.secondary, borderColor: colors.border },
+            ]}
+            testID="re-market-more"
+            accessibilityLabel={t("search.marketCountryTitle")}
+          >
+            <Feather name="more-horizontal" size={14} color={colors.mutedForeground} />
+          </Pressable>
+        </ScrollView>
+      ) : null}
+
+      {/* ── Car brand strip (layer expansion — Stay/RE secondary-strip pattern) ── */}
+      {showCarBrandStrip ? (
+        <ScrollView
+          horizontal
+          showsHorizontalScrollIndicator={false}
+          style={styles.hScroll}
+          contentContainerStyle={[styles.reTypeStrip, { flexDirection: rowDir }]}
+          testID="car-brand-strip"
+        >
+          <Pressable
+            onPress={() => {
+              playSound("tap");
+              setCarPickerOpen(true);
+            }}
+            style={[
+              styles.stripChip,
+              {
+                backgroundColor: colors.secondary,
+                flexDirection: rowDir,
+                alignItems: "center",
+                gap: 4,
+              },
+            ]}
+            testID="car-brand-all"
+          >
+            <Feather name="grid" size={13} color={colors.foreground} />
+            <AppText style={[styles.stripChipText, { color: colors.foreground }]}>
+              {t("search.allBrands")}
+            </AppText>
+          </Pressable>
+          {QUICK_BRANDS.map((b) => {
+            const active = brandValue === b.value;
+            return (
+              <Pressable
+                key={b.value}
+                onPress={() => {
+                  playSound("tap");
+                  Haptics.selectionAsync();
+                  browseBrandChip(b);
+                }}
+                style={[
+                  styles.stripChip,
+                  { backgroundColor: active ? accent : colors.secondary },
+                ]}
+                testID={`car-brand-${b.value}`}
+              >
+                <AppText
+                  style={[
+                    styles.stripChipText,
+                    { color: active ? "#FFFFFF" : colors.mutedForeground },
+                  ]}
+                >
+                  {brandLabel(b, isRTL)}
+                </AppText>
+              </Pressable>
+            );
+          })}
+        </ScrollView>
+      ) : null}
+
+      {/* ── Car origin strip (local / imported) ── */}
+      {showCarOriginChrome ? (
+        <View style={[styles.chipRow, { flexDirection: rowDir }]} testID="car-origin-strip">
+          {(["all", "local", "imported"] as const).map((o) => {
+            const active = originKey === o;
+            return (
+              <Pressable
+                key={o}
+                onPress={() => {
+                  playSound("tap");
+                  Haptics.selectionAsync();
+                  selectOrigin(o);
+                }}
+                style={[
+                  styles.chip,
+                  { backgroundColor: active ? accent : colors.secondary },
+                ]}
+                testID={`car-origin-${o}`}
+              >
+                <AppText
+                  style={[
+                    styles.chipText,
+                    { color: active ? "#FFFFFF" : colors.mutedForeground },
+                  ]}
+                >
+                  {o === "all" ? t("home.engines.all") : t(`create.opts.${o}`)}
+                </AppText>
+              </Pressable>
+            );
+          })}
+        </View>
       ) : null}
 
       {/* ── Origin chips (materials only) ── */}
@@ -1693,6 +1931,41 @@ const styles = StyleSheet.create({
     paddingHorizontal: 12,
     paddingTop: 8,
     paddingBottom: 2,
+  },
+  reMarketMatrix: {
+    alignItems: "center",
+    gap: 6,
+    paddingHorizontal: 12,
+    paddingTop: 6,
+    paddingBottom: 4,
+  },
+  reMatrixCell: {
+    alignItems: "center",
+    gap: 5,
+    paddingHorizontal: 9,
+    paddingVertical: 5,
+    borderRadius: 10,
+    borderWidth: 1,
+    maxWidth: 148,
+  },
+  reMatrixFlag: { fontSize: 13, lineHeight: 16 },
+  reMatrixCountry: {
+    fontSize: 11.5,
+    fontFamily: "Inter_600SemiBold",
+    flexShrink: 1,
+  },
+  reMatrixCurrency: {
+    fontSize: 10.5,
+    fontFamily: "Inter_500Medium",
+    letterSpacing: 0.3,
+  },
+  reMatrixMore: {
+    width: 32,
+    height: 28,
+    borderRadius: 10,
+    borderWidth: 1,
+    alignItems: "center",
+    justifyContent: "center",
   },
   resultsCount: { fontSize: 12.5, paddingHorizontal: 16, paddingTop: 8 },
   suggestions: {

@@ -33,28 +33,12 @@ W3 أُغلق بدمج #40 (اعتماد Claude + أمر Owner «اتفضل»). 
 
 | ID | البند | موجة | حالة |
 |----|-------|------|------|
-| OPEN-10 / F-ORD-05 | Profile→FI بدون `intent=fi` | #39 | ✅ merged |
-| F-UX-02 | Join فوق أعضاء FI | #39 | ✅ merged |
-| Honesty | productsHint على الهب | #39 | ✅ merged |
-| OPEN-03 / F-SEC-01 | AuthZ وكيل PATCH | **#40** | ✅ **MERGED** |
-| OPEN-05 / R2 | state machine | **#40** | ✅ **MERGED** |
-| F-SEC-05 / 03 / 07 | isActive · owner FI · docs merge | **#40** | ✅ **MERGED** |
-| Ads-first | لا directory عام · صدق Verify | **#40** | ✅ **MERGED** |
+| W3 / #40 | AuthZ · state machine · docs · isActive · ads-first | **#40** | ✅ **MERGED** `628e7a0` |
 | Guard | قفل المسارات | **#41 G2** | ✅ 42/42 |
 | **G2** | فينش أقسام: Stay/RE/Car/Materials · RTL · sort | **#41** | ▶️ |
 | OPEN-02 | دليل شركاء حي | بلا Start «ج» | ⏸ |
 | Stay أسود #23 | ضد MUST-KEEP وردي | مرفوض | ❌ |
-| OPEN-01 | تأكيد Replit على `main ≥ 628e7a0` ثم بعد #41 | موازٍ | ▶️ |
-
----
-
-## ملفات موجة الأقسام (#41)
-
-- `artifacts/banco-mobile/components/search/SectionSearchApp.tsx`
-- `artifacts/banco-mobile/components/search/BookingStaysApp.tsx`
-- `artifacts/banco-mobile/components/StayCard.tsx` · `SmartAssetCard.tsx`
-- `artifacts/banco-mobile/tests/section-miniapp-guard.test.mjs`
-- `audit/handoff/CURSOR-BATCH-FULL-REPORT-AR.md` + تقارير Claude
+| OPEN-01 | Replit على `main ≥ 628e7a0` ثم بعد #41 | موازٍ | ▶️ |
 
 ---
 
@@ -62,6 +46,5 @@ W3 أُغلق بدمج #40 (اعتماد Claude + أمر Owner «اتفضل»). 
 
 ```bash
 node --test artifacts/banco-mobile/tests/section-miniapp-guard.test.mjs
-# Expect: 42/42
 git rev-parse --short HEAD
 ```

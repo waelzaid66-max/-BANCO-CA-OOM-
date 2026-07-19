@@ -26,7 +26,10 @@ import {
 } from "@/components/CategoryTabs";
 import { brandLabel, type CarBrand } from "@/constants/cars";
 import { engineByKey, type EngineDef } from "@/constants/engines";
-import { INDUSTRY_TYPES } from "@/constants/listingCreateTaxonomy";
+import {
+  INDUSTRY_TYPES,
+  PROPERTY_TYPES,
+} from "@/constants/listingCreateTaxonomy";
 import { useI18n } from "@/context/LanguageContext";
 import { useColors } from "@/hooks/useColors";
 import {
@@ -152,14 +155,18 @@ export function FilterSheet({
   const [maxYear, setMaxYear] = useState(criteria.maxYear);
 
   useEffect(() => {
-    if (visible) {
-      setMinPrice(criteria.minPrice);
-      setMaxPrice(criteria.maxPrice);
-      setMinYear(criteria.minYear);
-      setMaxYear(criteria.maxYear);
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [visible]);
+    if (!visible) return;
+    setMinPrice(criteria.minPrice);
+    setMaxPrice(criteria.maxPrice);
+    setMinYear(criteria.minYear);
+    setMaxYear(criteria.maxYear);
+  }, [
+    visible,
+    criteria.minPrice,
+    criteria.maxPrice,
+    criteria.minYear,
+    criteria.maxYear,
+  ]);
 
   const apply = () => {
     onUpdate({ minPrice, maxPrice, minYear, maxYear });
@@ -173,8 +180,12 @@ export function FilterSheet({
   // Per-section content correctness: rental systems are rent-only — offering
   // them while the تمليك (sale) chip is active would be contradictory noise.
   const selectedEngine = engineByKey(criteria.category, criteria.engineKey);
+  // Rent terms when offer axis is rent. Callers may pass refinement engines in
+  // the sheet; strip still owns sale/rent via engineKey when it is an offer.
   const showRentalTerms =
-    isRealEstate && selectedEngine?.params.offer_type === "rent";
+    isRealEstate &&
+    (selectedEngine?.params.offer_type === "rent" ||
+      criteria.engineKey === "rent");
   // Industry = manufacturing sector. Never on raw_material (commodity is
   // `material` at create). Hide for materials+all too so the group browse
   // doesn't ask a factory-sector question over steel/resin listings.
@@ -392,10 +403,17 @@ export function FilterSheet({
             </>
             )}
 
-            {/* Type (facet-gated engine chips) */}
+            {/* Type / refinements (facet-gated). RE passes refinements only —
+                offer + propertyType live on section strips. */}
             {showEngines && (
               <>
-                <SectionLabel text={t("search.type")} align={textAlign} colors={colors} />
+                <SectionLabel
+                  text={
+                    isRealEstate ? t("search.filters") : t("search.type")
+                  }
+                  align={textAlign}
+                  colors={colors}
+                />
                 <View style={styles.engineWrap}>
                   <EngineChips
                     engines={engines}
@@ -403,6 +421,67 @@ export function FilterSheet({
                     onChange={onSelectEngine}
                   />
                 </View>
+              </>
+            )}
+
+            {/* RE property type — syncs with type strip via propertyType */}
+            {isRealEstate && (
+              <>
+                <SectionLabel
+                  text={t("create.fields.propertyType")}
+                  align={textAlign}
+                  colors={colors}
+                />
+                <ToggleChipRow
+                  options={PROPERTY_TYPES.map((p) => p.value)}
+                  selected={criteria.propertyType}
+                  labelFor={(v) => {
+                    const def = PROPERTY_TYPES.find((p) => p.value === v);
+                    return def ? (isRTL ? def.ar : def.en) : v;
+                  }}
+                  onToggle={(v) => onUpdate({ propertyType: v })}
+                  rowDir={rowDir}
+                  colors={colors}
+                  testPrefix="filter-property-type"
+                />
+                <SectionLabel
+                  text={t("search.listingModeBuy")}
+                  align={textAlign}
+                  colors={colors}
+                />
+                <Pressable
+                  onPress={() =>
+                    onUpdate({
+                      listingMode:
+                        criteria.listingMode === "buy" ? "all" : "buy",
+                    })
+                  }
+                  style={[
+                    styles.chip,
+                    {
+                      alignSelf: isRTL ? "flex-end" : "flex-start",
+                      backgroundColor:
+                        criteria.listingMode === "buy"
+                          ? colors.primary
+                          : colors.secondary,
+                    },
+                  ]}
+                  testID="filter-listing-mode-buy"
+                >
+                  <AppText
+                    style={[
+                      styles.chipText,
+                      {
+                        color:
+                          criteria.listingMode === "buy"
+                            ? colors.primaryForeground
+                            : colors.mutedForeground,
+                      },
+                    ]}
+                  >
+                    {t("search.listingModeBuy")}
+                  </AppText>
+                </Pressable>
               </>
             )}
 

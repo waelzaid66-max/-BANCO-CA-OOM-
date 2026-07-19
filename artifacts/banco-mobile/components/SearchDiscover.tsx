@@ -109,7 +109,8 @@ export function SearchDiscover({
   );
 
   const handleSectionPress = (cat: Category) => {
-    // Dedicated section mini-app — never melt into shared Search criteria.
+    // ENTER dedicated section mini-app — never show engine strips on Discover
+    // and never melt into shared Search criteria (Owner screenshot regression).
     router.push(SECTION_ROUTE[cat]);
   };
 
@@ -316,10 +317,12 @@ export function SearchDiscover({
         </Pressable>
       )}
 
-      {/* Car import — opens the Cars section mini-app (never melts into the
-          shared Search tab). Engine chips live inside SectionSearchApp. */}
+      {/* Car import — ENTER Cars mini-app with import engine seeded (never melts
+          into shared Search). Strips/filters live inside SectionSearchApp. */}
       <Pressable
-        onPress={() => router.push(SECTION_ROUTE.car)}
+        onPress={() =>
+          router.push(`${SECTION_ROUTE.car}?engine=import` as Href)
+        }
         style={styles.hubCtaWrap}
         testID="discover-car-import"
       >
