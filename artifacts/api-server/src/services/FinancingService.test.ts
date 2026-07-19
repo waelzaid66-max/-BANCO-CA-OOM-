@@ -5,9 +5,19 @@ import {
   listIntermediaries,
   updateIntermediary,
   updateFinancingRequest,
+  createBranch,
+  createSeat,
+  updateInstitutionRequest,
 } from "./FinancingService";
 import { db, createUser, deleteUsers, uniq, randomUUID } from "../__tests__/helpers";
-import { listings, leadHistory, financingRequests, financingIntermediaries } from "@workspace/db/schema";
+import {
+  listings,
+  leadHistory,
+  financingRequests,
+  financingIntermediaries,
+  financingBranches,
+  financingSeats,
+} from "@workspace/db/schema";
 
 /**
  * FinancingService is the untested bank-financing CRM: the intermediary directory
@@ -19,6 +29,8 @@ const uids: string[] = [];
 const leadIds: string[] = [];
 const listingIds: string[] = [];
 const imIds: string[] = [];
+const branchIds: string[] = [];
+const seatIds: string[] = [];
 
 async function financeLead(): Promise<string> {
   const seller = await createUser();
@@ -46,10 +58,16 @@ async function financeLead(): Promise<string> {
 }
 
 afterAll(async () => {
+  if (seatIds.length) {
+    await db.delete(financingSeats).where(inArray(financingSeats.id, seatIds));
+  }
   if (leadIds.length) {
     await db.delete(financingRequests).where(inArray(financingRequests.leadId, leadIds));
     // leadHistory.sellerId → users has no cascade, so remove leads before users.
     await db.delete(leadHistory).where(inArray(leadHistory.id, leadIds));
+  }
+  if (branchIds.length) {
+    await db.delete(financingBranches).where(inArray(financingBranches.id, branchIds));
   }
   for (const id of listingIds) await db.delete(listings).where(eq(listings.id, id));
   for (const id of imIds) await db.delete(financingIntermediaries).where(eq(financingIntermediaries.id, id));
@@ -126,5 +144,158 @@ describe("FinancingService — finance-request pipeline", () => {
     await expect(
       updateFinancingRequest({ leadId, intermediaryId: randomUUID(), adminUserId: admin }),
     ).rejects.toThrow(/not found/i);
+  });
+});
+
+describe("FinancingService — institution AuthZ + status machine (F-SEC-01 / R2)", () => {
+  async function setupInstitutionWithBranches() {
+    const admin = await createUser();
+    uids.push(admin);
+    const agentA = await createUser();
+    uids.push(agentA);
+    const agentB = await createUser();
+    uids.push(agentB);
+    const owner = await createUser();
+    uids.push(owner);
+
+    const im = await createIntermediary({ name: uniq("FI Bank"), adminUserId: admin });
+    imIds.push(im.id);
+    await updateIntermediary({ id: im.id, ownerUserId: owner, adminUserId: admin });
+
+    const branchA = await createBranch({
+      intermediaryId: im.id,
+      name: "Branch A",
+      adminUserId: admin,
+    });
+    branchIds.push(branchA.id);
+    const branchB = await createBranch({
+      intermediaryId: im.id,
+      name: "Branch B",
+      adminUserId: admin,
+    });
+    branchIds.push(branchB.id);
+
+    const seatA = await createSeat({
+      intermediaryId: im.id,
+      userId: agentA,
+      branchId: branchA.id,
+      role: "agent",
+      adminUserId: admin,
+    });
+    seatIds.push(seatA.id);
+    const seatB = await createSeat({
+      intermediaryId: im.id,
+      userId: agentB,
+      branchId: branchB.id,
+      role: "agent",
+      adminUserId: admin,
+    });
+    seatIds.push(seatB.id);
+
+    return { admin, agentA, agentB, owner, im, branchA, branchB };
+  }
+
+  it("denies a branch agent PATCH on another branch's request (NOT_FOUND)", async () => {
+    const { admin, agentA, im, branchB } = await setupInstitutionWithBranches();
+    const leadId = await financeLead();
+
+    await updateFinancingRequest({
+      leadId,
+      status: "forwarded",
+      intermediaryId: im.id,
+      adminUserId: admin,
+    });
+    // Route to branch B — agent A must not see/mutate it.
+    await db
+      .update(financingRequests)
+      .set({ branchId: branchB.id, updatedAt: new Date() })
+      .where(eq(financingRequests.leadId, leadId));
+
+    await expect(
+      updateInstitutionRequest({
+        dbUserId: agentA,
+        leadId,
+        status: "contacted",
+      }),
+    ).rejects.toMatchObject({ code: "NOT_FOUND" });
+  });
+
+  it("allows a branch agent to advance status on own-branch and unrouted requests", async () => {
+    const { admin, agentA, im, branchA } = await setupInstitutionWithBranches();
+
+    const ownLead = await financeLead();
+    await updateFinancingRequest({
+      leadId: ownLead,
+      status: "forwarded",
+      intermediaryId: im.id,
+      adminUserId: admin,
+    });
+    await db
+      .update(financingRequests)
+      .set({ branchId: branchA.id, updatedAt: new Date() })
+      .where(eq(financingRequests.leadId, ownLead));
+
+    const contacted = await updateInstitutionRequest({
+      dbUserId: agentA,
+      leadId: ownLead,
+      status: "contacted",
+    });
+    expect(contacted.status).toBe("contacted");
+
+    const unroutedLead = await financeLead();
+    await updateFinancingRequest({
+      leadId: unroutedLead,
+      status: "forwarded",
+      intermediaryId: im.id,
+      adminUserId: admin,
+    });
+
+    const unroutedContacted = await updateInstitutionRequest({
+      dbUserId: agentA,
+      leadId: unroutedLead,
+      status: "contacted",
+    });
+    expect(unroutedContacted.status).toBe("contacted");
+  });
+
+  it("enforces forwarded → contacted → closed and rejects illegal jumps", async () => {
+    const { admin, owner, im } = await setupInstitutionWithBranches();
+    const leadId = await financeLead();
+    await updateFinancingRequest({
+      leadId,
+      status: "forwarded",
+      intermediaryId: im.id,
+      adminUserId: admin,
+    });
+
+    await expect(
+      updateInstitutionRequest({ dbUserId: owner, leadId, status: "closed" }),
+    ).rejects.toMatchObject({ code: "INVALID_DATA" });
+
+    const contacted = await updateInstitutionRequest({
+      dbUserId: owner,
+      leadId,
+      status: "contacted",
+    });
+    expect(contacted.status).toBe("contacted");
+
+    const closed = await updateInstitutionRequest({
+      dbUserId: owner,
+      leadId,
+      status: "closed",
+    });
+    expect(closed.status).toBe("closed");
+
+    await expect(
+      updateInstitutionRequest({ dbUserId: owner, leadId, status: "contacted" }),
+    ).rejects.toMatchObject({ code: "INVALID_DATA" });
+
+    // Idempotent same-status is allowed.
+    const again = await updateInstitutionRequest({
+      dbUserId: owner,
+      leadId,
+      status: "closed",
+    });
+    expect(again.status).toBe("closed");
   });
 });

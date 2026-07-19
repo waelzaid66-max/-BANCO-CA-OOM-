@@ -1487,7 +1487,7 @@ const en = {
     successBody: "Your dealer storefront is live. Start posting listings now.",
     fiSuccessTitle: "Financial institution submitted",
     fiSuccessBody:
-      "Your bank / financier profile is under review. After verification, BANCO will link your inbox so forwarded financing requests reach your team.",
+      "Your bank / financier profile is under review. Inbox access opens only after a BANCO admin links your institution account — verification alone does not open the inbox.",
     fiGoBanks: "Open Banks & Financiers hub",
     startListing: "Post your first listing",
     goToProfile: "Back to profile",
@@ -3428,7 +3428,7 @@ const ar: typeof en = {
     successBody: "معرضك دلوقتي شغّال. ابدأ ضيف إعلاناتك.",
     fiSuccessTitle: "تم إرسال طلب المؤسسة المالية",
     fiSuccessBody:
-      "حساب البنك / الممول قيد المراجعة. بعد التوثيق، بانكو هيربط صندوق الوارد عشان طلبات التمويل المحوّلة توصل لفريقك.",
+      "حساب البنك / الممول قيد المراجعة. صندوق الوارد يفتح فقط بعد ما أدمن بانكو يربط حساب مؤسستك — التوثيق لوحده مش بيفتح الصندوق.",
     fiGoBanks: "افتح قسم البنوك والممولين",
     startListing: "أضف أول إعلان",
     goToProfile: "رجوع لحسابي",

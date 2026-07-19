@@ -75,7 +75,7 @@
 |----|-------|-------|-----|--------|
 | OPEN-01 | تأكيد بصري Replit على tip | F Ops | عالية للثقة | S056/S057 + أقسام |
 | OPEN-02 | Banks دليل شركاء حي | D | منتج | قرار D1 Owner — بلا Start لا كود |
-| OPEN-03 | FI AuthZ وكيل PATCH (F-SEC-01) | D أمان | Critical | W3 = Claude فقط بعد Start |
+| OPEN-03 | FI AuthZ وكيل PATCH (F-SEC-01) | D أمان | Critical | Owner «كمل» → Cursor على `cursor/fi-authz-agent-patch-4322` (R1+R2) |
 | OPEN-04 | Verify لا يربط inbox تلقائياً | D ترتيب | عالية تشغيل | F-ORD-01 |
 | OPEN-05 | لا state machine لحالات الطلب | D أمان | عالية | W3 |
 | OPEN-06 | باقة/اشتراك FI | D | متوسطة | مؤجّل |
@@ -229,7 +229,7 @@ Stay **ليس** SectionSearchApp بجلد مختلف.
 | **G2** | تشطيب بصري متبقٍ (إن وُجد بعد الشوت) | pad/زر/void **ميلي** على سطح مسمّى فقط | لا | بروتوكول mm + موافقة |
 | **G3** | Banks — قرار D1 | brochure أعمق (ب) **أو** دليل حي (ج) | لا | اختيار Owner صريح |
 | **G4** | FI حلقة تشغيل | Verify→link / Profile FI / Join فوق الأعضاء | لا | بعد G3 أو موازٍ محدود |
-| **G5** | W3 أمان | AuthZ وكيل + state machine + حماية docs | لا | Start → Claude |
+| **G5** | W3 أمان | AuthZ وكيل + state machine (+ docs لاحقاً) | جزئي | Owner «كمل» → Cursor R1+R2؛ باقي docs/Verify→link بلا Start |
 | **G6** | مؤجّلات منتج | باقة FI · نقل آمن · Host hub · Legal AR | لا | قرار لاحق |
 
 **ممنوع:** القفز لـ G5/G6 قبل G0–G1.  

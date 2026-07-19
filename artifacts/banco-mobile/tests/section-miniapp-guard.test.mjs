@@ -540,6 +540,22 @@ test("Banks productsHint honesty keys exist in en+ar", () => {
   assert.match(src, /fiMode:\s*"مؤسسة مالية"/);
 });
 
+test("fiSuccessBody does not claim verify auto-links inbox (en+ar)", () => {
+  const src = fs.readFileSync(I18N, "utf8");
+  assert.match(
+    src,
+    /fiSuccessBody:\s*[\s\S]*?verification alone does not open the inbox/i,
+  );
+  assert.match(
+    src,
+    /fiSuccessBody:\s*[\s\S]*?التوثيق لوحده مش بيفتح الصندوق/,
+  );
+  assert.doesNotMatch(
+    src,
+    /fiSuccessBody:\s*[\s\S]*?After verification, BANCO will link your inbox/,
+  );
+});
+
 test("Banks stays outside SECTION_ROUTE (dedicated business world)", () => {
   const discover = fs.readFileSync(DISCOVER, "utf8");
   assert.match(discover, /router\.push\("\/business\/banks"/);
