@@ -12,13 +12,12 @@
 | حقل | قيمة |
 |-----|------|
 | Branch | `cursor/discover-enter-fix-4322` |
-| **Tip (أفضل نسخة كاملة حالياً)** | `8b3660a3f2dac1a6f6b0352220f024afb3862024` |
-| Short | **`8b3660a`** (يشمل قناة حية + كود `53b47b0`) |
+| **أمر النسخة** | `git reset --hard origin/cursor/discover-enter-fix-4322` ثم اطبع `git rev-parse HEAD` |
 | Code floor (سلف إلزامي) | `6b3c1d1c7ef5dda545f92dd0425de60d83529fc4` |
 | حارس | **17/17 PASS** |
 | PR | https://github.com/waelzaid66-max/-BANCO-CA-OOM-/pull/37 |
 
-بعد كل `git fetch` جديد: إن تحرك tip الفرع للأمام على نفس الـ branch و`merge-base --is-ancestor 6b3c1d1… HEAD` = 0 → اركب **أحدث tip**، لا تبقوا على SHA قديم.
+**قاعدة tip:** بعد `fetch`+`reset --hard` اركب ما يطبعه `git rev-parse HEAD` — لا تثبتوا SHA قديم من رسالة سابقة. إن `CODE_FLOOR` ليس سلفاً → توقفوا.
 
 ---
 
