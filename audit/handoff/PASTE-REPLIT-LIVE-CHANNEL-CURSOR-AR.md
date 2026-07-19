@@ -59,7 +59,7 @@ rg -n "Array\.isArray\(\s*params\.map\s*\)" artifacts/banco-mobile/components/se
 
 cd artifacts/banco-mobile
 node --test tests/section-miniapp-guard.test.mjs
-# المتوقع: 17/17 pass
+# المتوقع: 21/21 pass
 
 # نظّف الضجيج ثم شغّل
 npx expo start --clear
@@ -146,7 +146,7 @@ npx expo start --clear
    BEFORE_SHA: …
    AFTER_SHA: …
    FILES: …
-   GUARD: 17/17 PASS|FAIL
+   GUARD: 21/21 PASS|FAIL
    BUG: …
    ```
 
@@ -162,7 +162,7 @@ npx expo start --clear
 SYNC_SHA: …
 SHORT: …
 CODE_FLOOR: 6b3c1d1 ANCESTOR_OK=yes|no
-GUARD: 17/17 PASS|FAIL
+GUARD: 21/21 PASS|FAIL
 EXPO: OK|FAIL
 COPILOT: IGNORED
 

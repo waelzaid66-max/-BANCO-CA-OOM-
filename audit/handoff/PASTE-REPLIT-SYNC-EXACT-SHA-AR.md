@@ -76,7 +76,7 @@ rg -n '"key":\s*Key' artifacts/banco-mobile/components/icons.tsx
 rg -n '"business":\s*Building2' artifacts/banco-mobile/components/icons.tsx
 
 cd artifacts/banco-mobile && node --test tests/section-miniapp-guard.test.mjs
-# المتوقع: 17/17 pass
+# المتوقع: 21/21 pass
 ```
 
 ---
@@ -105,7 +105,7 @@ npx expo start --clear
 SYNC_SHA: <خرج git rev-parse HEAD بعد reset>
 SHORT: <قصير>
 CODE_FLOOR: 6b3c1d1 ANCESTOR_OK
-GUARD: 17/17 PASS|FAIL
+GUARD: 21/21 PASS|FAIL
 EXPO: OK|FAIL
 COPILOT: IGNORED (UNTRUSTED)
 

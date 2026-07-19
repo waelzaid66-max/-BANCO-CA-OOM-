@@ -3,7 +3,7 @@
 **فرع:** `cursor/discover-enter-fix-4322`  
 **وقت المسح:** 2026-07-19  
 **القاعدة:** Copilot = UNTRUSTED · أدلة فقط  
-**حارس بعد الإصلاحات:** **17/17 PASS** (`section-miniapp-guard.test.mjs`)
+**حارس بعد الإصلاحات:** **21/21 PASS** (`section-miniapp-guard.test.mjs`)
 
 ---
 
