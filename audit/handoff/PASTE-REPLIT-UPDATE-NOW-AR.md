@@ -16,7 +16,8 @@ EXECUTE:
 4) Print SYNC_SHA + run section-miniapp-guard (report 26/26 or paste failure)
 5) npx expo start --clear
 6) CRITICAL SHOTS: Discover · Cars · Real-estate · Factories · Stay
-   MUST prove: NO black void · country button shows NAME · header not crushed · map pill not giant
+   MUST prove: Discover shows 2x2 PHOTO section CARDS (not ENTER rows)
+   + NO black void · country button shows NAME · header not crushed · map pill not giant
 7) Paste Metro errors / remaining breaks — NEVER hide FAIL
 8) Comment on PR #37 with ## REPLIT → CURSOR (RUNTIME ONLY — NO CODE)
 9) STOP. Wait for Cursor tip if anything still fails.

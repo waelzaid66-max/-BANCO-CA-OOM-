@@ -123,9 +123,19 @@ test("Search catalogue chrome is gated off Discover (MOB-05)", () => {
   );
 });
 
-test("Discover section portals are ENTER rows (not a melt filter grid)", () => {
+test("Discover keeps photo section cards that push SECTION_ROUTE (no melt)", () => {
   const src = fs.readFileSync(DISCOVER, "utf8");
-  assert.match(src, /sectionPortal|sectionList/);
+  // Restored owner design: 2×2 cinematic section cards (not ENTER strip rows).
+  assert.match(
+    src,
+    /sectionGrid|sectionCard/,
+    "SearchDiscover must render the photo section card grid",
+  );
+  assert.doesNotMatch(
+    src,
+    /sectionPortal|sectionList/,
+    "must not keep the ENTER-row redesign that replaced the cards",
+  );
   // JSX usage only — comments/imports from CategoryTabs (CategoryIcon) are fine.
   assert.doesNotMatch(
     src,

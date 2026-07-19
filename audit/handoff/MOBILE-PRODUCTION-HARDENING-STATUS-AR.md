@@ -29,6 +29,7 @@
 | pad ويب 67 ملغى + هيدر مستعاد | ✅ |
 | زر خريطة مضغوط | ✅ |
 | أوديت شوتات المالك | `VISUAL-REGRESSION-AUDIT-FROM-OWNER-SHOTS-AR.md` |
+| استرجاع كروت Discover 2×2 من main | ✅ (`AGENT-DAMAGE-AND-DISCOVER-RESTORE-AR.md`) |
 | Map CTA = real_estate فقط | ✅ |
 | suggestion textAlign RTL (3 أسطح) | ✅ |
 | Stay header مضغوط (لا pad 67) | ✅ |

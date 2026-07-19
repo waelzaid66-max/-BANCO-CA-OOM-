@@ -98,9 +98,8 @@ export function SearchDiscover({
   const { data: trendingRes } = useGetTrending();
   const trending = trendingRes?.data ?? [];
 
-  // Honest gate for "Explore on map": CTA always enters /section/real-estate?map=1
-  // (MOB-07), so only advertise it when trending proves coordinate-bearing
-  // *real_estate* inventory — not cars/industrial with coords that would mislead.
+  // Honest gate: CTA enters /section/real-estate?map=1 (MOB-07). Only show when
+  // trending proves coordinate-bearing *real_estate* inventory.
   const mapAvailable = trending.some(
     (i) =>
       i.category === "real_estate" &&
@@ -110,8 +109,7 @@ export function SearchDiscover({
   );
 
   const handleSectionPress = (cat: Category) => {
-    // Always enter the dedicated section mini-app — never melt into shared
-    // Search CategoryTabs / EngineChips on this Discover surface.
+    // Dedicated section mini-app — never melt into shared Search criteria.
     router.push(SECTION_ROUTE[cat]);
   };
 
@@ -130,61 +128,78 @@ export function SearchDiscover({
       showsVerticalScrollIndicator={false}
       keyboardShouldPersistTaps="handled"
     >
-      {/* Section portals — full-width ENTER rows (not a 2×2 filter grid).
-          Tapping pushes /section/* mini-apps; chips live inside those apps. */}
+      {/* Image-style section cards */}
       <SectionHeader label={t("search.discover.sections")} />
-      <View style={styles.sectionList}>
+      <View style={styles.sectionGrid}>
         {SECTIONS.map((cat) => (
           <Pressable
             key={cat}
             onPress={() => handleSectionPress(cat)}
-            style={styles.sectionPortalWrap}
+            style={styles.sectionCardWrap}
             testID={`section-card-${cat}`}
-            accessibilityRole="button"
-            accessibilityHint={t("search.discover.section.enterSection")}
           >
-            <LinearGradient
-              colors={SECTION_GRADIENT[cat]}
-              start={{ x: 0, y: 0 }}
-              end={{ x: 1, y: 1 }}
-              style={[styles.sectionPortal, { flexDirection: rowDir }]}
+            <View
+              style={[
+                styles.sectionCard,
+                { backgroundColor: SECTION_GRADIENT[cat][1] },
+              ]}
             >
-              <View style={styles.sectionThumbWrap}>
+              <Image
+                source={SECTION_PHOTO[cat]}
+                style={styles.sectionPhoto}
+                contentFit="cover"
+                transition={220}
+              />
+              {/* Cinematic scrim: keeps the photo legible and lends a premium,
+                  editorial depth (light at the top, deep at the base). */}
+              <LinearGradient
+                colors={[
+                  "rgba(12,4,5,0.10)",
+                  "rgba(12,4,5,0.46)",
+                  "rgba(12,4,5,0.88)",
+                ]}
+                locations={[0, 0.55, 1]}
+                start={{ x: 0, y: 0 }}
+                end={{ x: 0, y: 1 }}
+                style={styles.sectionScrim}
+              />
+              <View pointerEvents="none" style={styles.sectionWatermarkWrap}>
                 <Image
-                  source={SECTION_PHOTO[cat]}
-                  style={styles.sectionThumb}
-                  contentFit="cover"
-                  transition={200}
-                />
-                <LinearGradient
-                  colors={["rgba(12,4,5,0.05)", "rgba(12,4,5,0.55)"]}
-                  start={{ x: 0, y: 0 }}
-                  end={{ x: 0, y: 1 }}
-                  style={styles.sectionThumbScrim}
+                  source={BANCO_WATERMARK}
+                  style={styles.sectionWatermark}
+                  contentFit="contain"
+                  tintColor="#FFFFFF"
                 />
               </View>
-              <View style={styles.sectionPortalBody}>
+              <View style={styles.sectionBadge}>
+                <CategoryIcon category={cat} color="#FFFFFF" />
+              </View>
+              <View
+                style={[
+                  styles.sectionLabelRow,
+                  isRTL && { flexDirection: "row-reverse" },
+                ]}
+              >
                 <View
                   style={[
-                    styles.sectionPortalTitleRow,
-                    { flexDirection: rowDir },
+                    styles.sectionAccent,
+                    { backgroundColor: colors.primary },
                   ]}
-                >
-                  <CategoryIcon category={cat} color="#FFFFFF" size={16} />
-                  <AppText style={[styles.sectionPortalTitle, { textAlign }]}>
-                    {t(`home.categories.${cat}`)}
-                  </AppText>
-                </View>
-                <AppText style={[styles.sectionPortalEnter, { textAlign }]}>
-                  {t("search.discover.section.enterSection")}
+                />
+                <AppText style={[styles.sectionLabel, { textAlign }]}>
+                  {t(`home.categories.${cat}`)}
                 </AppText>
               </View>
               <Feather
                 name={isRTL ? "chevron-left" : "chevron-right"}
-                size={20}
-                color="rgba(255,255,255,0.9)"
+                size={16}
+                color="rgba(255,255,255,0.92)"
+                style={[
+                  styles.sectionChevron,
+                  isRTL ? { left: 12 } : { right: 12 },
+                ]}
               />
-            </LinearGradient>
+            </View>
           </Pressable>
         ))}
       </View>
@@ -476,59 +491,31 @@ export function SearchDiscover({
 
 const styles = StyleSheet.create({
   container: { flex: 1 },
-  // Clear floating tab bar + PostAssetFab so hubs never sit under chrome.
   content: { paddingBottom: 200 },
-  sectionList: {
+  sectionGrid: {
+    flexDirection: "row",
+    flexWrap: "wrap",
     paddingHorizontal: 16,
-    gap: 10,
-  },
-  sectionPortalWrap: {
-    width: "100%",
-  },
-  sectionPortal: {
-    alignItems: "center",
     gap: 12,
-    minHeight: 78,
-    borderRadius: 16,
+  },
+  sectionCardWrap: {
+    width: "47%",
+    flexGrow: 1,
+  },
+  sectionCard: {
+    height: 118,
+    borderRadius: 20,
     overflow: "hidden",
-    paddingVertical: 10,
-    paddingHorizontal: 12,
+    padding: 14,
+    justifyContent: "space-between",
     borderWidth: 1,
     borderColor: "rgba(255,255,255,0.10)",
-  },
-  sectionThumbWrap: {
-    width: 64,
-    height: 64,
-    borderRadius: 14,
-    overflow: "hidden",
-    backgroundColor: "rgba(0,0,0,0.35)",
-  },
-  sectionThumb: {
-    ...StyleSheet.absoluteFillObject,
-  },
-  sectionThumbScrim: {
-    ...StyleSheet.absoluteFillObject,
-  },
-  sectionPortalBody: {
-    flex: 1,
-    justifyContent: "center",
-    gap: 3,
-  },
-  sectionPortalTitleRow: {
-    alignItems: "center",
-    gap: 8,
-  },
-  sectionPortalTitle: {
-    flexShrink: 1,
-    fontSize: 16,
-    fontFamily: "Inter_700Bold",
-    color: "#FFFFFF",
-    letterSpacing: 0.15,
-  },
-  sectionPortalEnter: {
-    fontSize: 12,
-    fontFamily: "Inter_500Medium",
-    color: "rgba(255,255,255,0.72)",
+    // Premium depth: each card reads as a framed, elevated tile.
+    shadowColor: "#000000",
+    shadowOpacity: 0.28,
+    shadowRadius: 10,
+    shadowOffset: { width: 0, height: 6 },
+    elevation: 5,
   },
   sectionPhoto: {
     ...StyleSheet.absoluteFillObject,
@@ -547,9 +534,9 @@ const styles = StyleSheet.create({
     opacity: 0.1,
   },
   sectionBadge: {
-    width: 32,
-    height: 32,
-    borderRadius: 10,
+    width: 36,
+    height: 36,
+    borderRadius: 12,
     backgroundColor: "rgba(255,255,255,0.18)",
     borderWidth: 1,
     borderColor: "rgba(255,255,255,0.28)",
@@ -576,9 +563,13 @@ const styles = StyleSheet.create({
     textShadowOffset: { width: 0, height: 1 },
     textShadowRadius: 6,
   },
+  sectionChevron: {
+    position: "absolute",
+    top: 14,
+  },
   mapCtaWrap: {
     marginHorizontal: 16,
-    marginTop: 14,
+    marginTop: 18,
   },
   mapCta: {
     borderRadius: 18,
@@ -619,21 +610,21 @@ const styles = StyleSheet.create({
   },
   bookingCardWrap: {
     marginHorizontal: 16,
-    marginTop: 10,
+    marginTop: 12,
   },
   bookingCard: {
-    height: 112,
-    borderRadius: 18,
+    height: 150,
+    borderRadius: 20,
     overflow: "hidden",
-    padding: 12,
+    padding: 14,
     justifyContent: "space-between",
     borderWidth: 1,
     borderColor: "rgba(255,255,255,0.10)",
     shadowColor: "#000000",
-    shadowOpacity: 0.22,
-    shadowRadius: 8,
-    shadowOffset: { width: 0, height: 4 },
-    elevation: 4,
+    shadowOpacity: 0.28,
+    shadowRadius: 10,
+    shadowOffset: { width: 0, height: 6 },
+    elevation: 5,
   },
   bookingTopRow: {
     alignItems: "center",
@@ -665,11 +656,11 @@ const styles = StyleSheet.create({
     opacity: 0.08,
   },
   sectionTitle: {
-    fontSize: 15,
+    fontSize: 16,
     fontFamily: "Inter_600SemiBold",
     marginHorizontal: 16,
-    marginTop: 12,
-    marginBottom: 8,
+    marginTop: 22,
+    marginBottom: 12,
   },
   chipRow: {
     gap: 8,
