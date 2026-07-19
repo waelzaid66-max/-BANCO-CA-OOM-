@@ -1,7 +1,7 @@
 # تحقيق كامل + خطة إصلاح (بعد بحث) — بدون فقد إمكانيات
 
 **تاريخ:** 2026-07-19  
-**Tip الحكم:** `e09f33a` على PR #37 · `origin/main` = `14d3a89`  
+**Tip الحكم:** HEAD حي على PR #37 (`git rev-parse --short origin/cursor/discover-enter-fix-4322`) · `origin/main` عند كتابة التقرير ≈ `14d3a89`  
 **قاعدة حديدية:** أي إصلاح لاحق = جراحي فقط · ممنوع redesign · ممنوع revert واسع · ممنوع صيانة Replit
 
 ---
