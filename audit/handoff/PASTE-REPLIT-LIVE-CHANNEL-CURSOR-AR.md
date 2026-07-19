@@ -1,9 +1,10 @@
-# قناة حية — Replit ↔ Cursor على الريبو (إلزامي)
+# قناة حية — Replit (تشغيل) ↔ Cursor (إنتاج)
 
-**من:** Cursor · قائد الجودة التقنية  
-**إلى:** Replit Agent على نفس الريبو (تتواصلون الآن)  
-**قناة الرد الوحيدة:** تعليقات [PR #37](https://github.com/waelzaid66-max/-BANCO-CA-OOM-/pull/37) + ملفات تحت `audit/handoff/`  
-**Copilot:** UNTRUSTED — تجاهلوه تماماً
+**أدوار:** `ROLES-CURSOR-VS-REPLIT-AR.md` · **ذهبي:** `GOLDEN-PATH-REPLIT-CURSOR-AR.md`  
+**Cursor** = تسليم برودكشن (كود/مراجعة/تيست).  
+**Replit** = سحب · تشغيل · شوت · لوج · ما تراه العين — **ممنوع تعديل كود**.  
+**قناة الرد:** تعليقات [PR #37](https://github.com/waelzaid66-max/-BANCO-CA-OOM-/pull/37)  
+**Copilot:** UNTRUSTED
 
 ---
 
@@ -22,15 +23,13 @@
 
 ---
 
-## 1) قواعد حديدية (تشديد أقصى)
+## 1) قواعد حديدية
 
-1. **لا تخفِ شيئاً** — كل شاشة مكسورة / باج / انحراف بصري / خطأ لوج = تُبلَّغ حرفياً.  
-2. **لا تجميل كاذب** — ممنوع تعديل كود فقط لإخفاء العيب في الشوت.  
-3. **NO-WIPE** — ممنوع حذف ميزات/مسارات/أقسام.  
-4. **Website معزول** — ممنوع لمس `artifacts/banco-website`.  
-5. **W3 FI محظور** — لا تبدأوا أمان FI.  
-6. **إصلاح مسموح فقط** لعيوب مرئية/تشغيلية واضحة على الموبايل (جراحي، ملف محدود) + تبليغ Cursor فوراً على PR.  
-7. **أي إصلاح بدون تعليق PR + SHA قبل/بعد = مرفوض.**
+1. **لا تخفِ شيئاً** — كل عيب مرئي/لوج = تبليغ حرفياً.  
+2. **ممنوع تعديل أي كود** — لا commit · لا push · لا «إصلاح سريع».  
+3. **لا تجميل الشوت** — صوّروا العطل كما هو.  
+4. **Website / W3 / NO-WIPE** — لا تلمسوا.  
+5. **أنتم لا تعرفون الدومين** — لا تقرروا منتجاً؛ صفوا ما ترونه لـ Cursor.
 
 ---
 
@@ -125,65 +124,39 @@ npx expo start --clear
 
 ---
 
-## 5) مرحلة D — شاشة مكسورة / باج / ديفو (أصلح + بلّغ)
+## 5) مرحلة D — عيب مرئي (بلّغ فقط — Cursor يصلح)
 
-إذا رأيت عيباً حقيقياً:
-
-1. **صفّه أولاً** في PR: شاشة · خطوات · متوقع · حاصل · شوت.  
-2. **أصلح جراحياً** فقط داخل `artifacts/banco-mobile` (أو حارس اختبار إن لزم).  
-3. **ممنوع:** website · مسح ميزات · تغييرات FI/W3 · «تنظيف عام».  
-4. بعد الإصلاح:
-   ```bash
-   git status
-   git diff --stat
-   cd artifacts/banco-mobile && node --test tests/section-miniapp-guard.test.mjs
-   git add -A && git commit -m "fix(mobile/replit): <وصف دقيق>"
-   git push origin cursor/discover-enter-fix-4322
-   ```
-5. علّق على PR:
-   ```
-   ## REPLIT FIX
-   BEFORE_SHA: …
-   AFTER_SHA: …
-   FILES: …
-   GUARD: 21/21 PASS|FAIL
-   BUG: …
-   ```
-
-إن لم تقدروا على إصلاح آمن → **لا تخفوا**؛ اتركوا `BLOCKED` + الدليل لـ Cursor.
+1. شاشة · خطوات · متوقع · حاصل · شوت  
+2. أسطر اللوج الحمراء إن وُجدت  
+3. **توقّف — ممنوع تعديل الكود / commit / push**  
+4. Cursor يصلح ويختبر ويدفع tip جديد؛ أنتم تعيدون السحب والشوت فقط
 
 ---
 
-## 6) قالب الرد النهائي لـ Cursor (انسخوه)
+## 6) قالب الرد (انسخوه)
 
 ```text
-## REPLIT → CURSOR FULL REPORT
+## REPLIT → CURSOR (RUNTIME ONLY — NO CODE)
 
 SYNC_SHA: …
-SHORT: …
-CODE_FLOOR: 6b3c1d1 ANCESTOR_OK=yes|no
 GUARD: 21/21 PASS|FAIL
 EXPO: OK|FAIL
-COPILOT: IGNORED
 
 ### P01…P13
-P01: PASS|FAIL — note
+P01: PASS|FAIL + شوت
 …
-P13: PASS|FAIL — note
+P13: PASS|FAIL + شوت
 
-### RUNTIME FORENSICS
-LOGS: (ملخص + لصق الأخطاء)
-CONNECTIONS: API=… Clerk=… failed_requests=…
-SPEED: discover=…s section=…s stays=…s map=…s
-NOISE: count=… top=…
-
-### FIXES PUSHED (إن وُجدت)
-- sha / files / bug
-
-### OPEN BUGS NOT FIXED
+### WHAT I SAW BROKEN (description only — no fixes)
 - …
 
-### ASK CURSOR
+### RUNTIME FORENSICS
+LOGS: …
+CONNECTIONS: …
+SPEED: …
+NOISE: …
+
+### ASK CURSOR (commands/clarity only)
 - …
 ```
 
@@ -191,8 +164,8 @@ NOISE: count=… top=…
 
 ## 7) ماذا يفعل Cursor بعد تقريركم
 
-- يراجع كل FAIL/ERROR حرفياً.  
-- يكمل صيانة على نفس الفرع أو فرع لاحق.  
-- لا يدمج #37 إلى `main` قبل تقرير أخضر أو قائمة عيوب صريحة مقبولة من المالك.
+- يمتلك الإصلاح والحراس والتيست والدفع.  
+- يعيد نشر tip؛ Replit يعيد التشغيل والشوت فقط.  
+- دمج #37 بعد أدلة ميدانية + موافقة المالك.
 
-— Cursor · Live channel · origin tip after hard reset · zero concealment
+— Cursor owns production · Replit runtime proof only

@@ -1,20 +1,23 @@
-# المسار الذهبي الوحيد — Replit ↔ Cursor (World-Class)
+# المسار الذهبي — تشغيل Replit فقط (Cursor يملك الإنتاج)
 
-**اقرأ هذا الملف فقط.** باقي ملفات handoff مراجع؛ هذا مصدر الحقيقة التشغيلي.
+**اقرأ أيضاً:** `audit/handoff/ROLES-CURSOR-VS-REPLIT-AR.md`  
+**قرار المالك:** Replit منفّذ (جمع · تشغيل · نشر معاينة · شوتات · تحقيقات مرئية).  
+**Cursor** مسؤول تسليم البرودكشن: كود · مراجعة · تيست · دقة عالمية.
 
 | | |
 |--|--|
-| PR | https://github.com/waelzaid66-max/-BANCO-CA-OOM-/pull/37 |
+| PR للرد | https://github.com/waelzaid66-max/-BANCO-CA-OOM-/pull/37 |
 | Branch | `cursor/discover-enter-fix-4322` |
 | أمر النسخة | `git reset --hard origin/cursor/discover-enter-fix-4322` |
-| Code floor | `6b3c1d1` يجب أن يكون سلفاً لـ `HEAD` |
-| Copilot | **UNTRUSTED — تجاهل** |
-| Website | لا تلمس `artifacts/banco-website` |
-| W3 FI | محظور |
+| Code floor | `6b3c1d1` سلف إلزامي لـ `HEAD` |
+| Copilot | UNTRUSTED |
+| **تعديل كود من Replit** | **ممنوع منعاً باتاً** |
 
 ---
 
-## 1) تركيب (30 ثانية)
+## ما يفعله Replit فقط
+
+### 1) سحب النسخة التي جهّزها Cursor
 
 ```bash
 set -euo pipefail
@@ -23,59 +26,75 @@ git fetch origin
 git checkout cursor/discover-enter-fix-4322
 git reset --hard origin/cursor/discover-enter-fix-4322
 echo "SYNC_SHA=$(git rev-parse HEAD)"
+git log -1 --oneline
 git merge-base --is-ancestor 6b3c1d1c7ef5dda545f92dd0425de60d83529fc4 HEAD
+```
+
+### 2) تشغيل الحارس (قراءة نتيجة — لا تعديل اختبارات)
+
+```bash
 cd artifacts/banco-mobile
-node --test tests/section-miniapp-guard.test.mjs   # المتوقع: 21/21 PASS
+node --test tests/section-miniapp-guard.test.mjs
+# الصق: PASS count (المتوقع 21/21) أو الفشل حرفياً
+```
+
+### 3) تشغيل Expo ونشر المعاينة
+
+```bash
 npx expo start --clear
 ```
 
-علّق على PR: `## REPLIT SYNC` + خرج الأوامر.
+### 4) شوتات P01…P13 + ما تراه العين
+
+جدول P في `PASTE-REPLIT-LIVE-CHANNEL-CURSOR-AR.md`.  
+كل شاشة مكسورة = FAIL + شوت + وصف ما تراه — **بدون محاولة إصلاح**.
+
+### 5) تحقيقات تشغيل (ما تلاحظه فقط)
+
+- لصق 80–120 سطر Metro بعد reload  
+- هل التطبيق فتح؟ هل API يبدو ميتاً؟  
+- بطء واضح؟ تقطيع؟ شاشة بيضاء؟  
+- ضجيج تحذيرات متكرر (انسخ نص التحذير)
+
+### 6) رد على PR #37 ثم توقّف
+
+```text
+## REPLIT → CURSOR (RUNTIME ONLY — NO CODE)
+
+SYNC_SHA: …
+GUARD: 21/21 PASS|FAIL (+ لصق الفشل إن وُجد)
+EXPO: OK|FAIL
+
+P01…P13: PASS/FAIL + شوتات
+ما رأيته مكسوراً (وصف فقط — لا إصلاح):
+…
+
+LOGS (أخطاء حمراء حرفياً):
+…
+SPEED / NOISE (ملاحظات عين):
+…
+ASK CURSOR: (لا شيء إلا إن احتجتم أمر تشغيل أوضح)
+```
 
 ---
 
-## 2) إثبات P01–P13 (بلا إخفاء)
+## ممنوع على Replit
 
-انظر جدول P في `PASTE-REPLIT-LIVE-CHANNEL-CURSOR-AR.md`.  
-كل FAIL = شوت + وصف. ممنوع تجميل الشوت.
+- `git commit` / `git push` لأي كود تطبيقي  
+- تعديل ملفات تحت `artifacts/` أو `lib/` أو `.github/`  
+- «إصلاح سريع» أو فهم الدومين أو قرارات منتج  
+- لمس website / W3 FI / حذف ميزات  
+- الاعتماد على Copilot  
 
-`testID` مفيدة:
-- `stays-header` · `stays-back`
-- `legal-terms-link` · `legal-privacy-link`
-- `post-{id}-video` · `post-{id}-featured`
-- `section-card-{car|real_estate|…}`
-
----
-
-## 3) Forensics إلزامي
-
-- Metro: 80–120 سطر بعد reload  
-- Connections: API base / Clerk / failed requests  
-- Speed: Discover / section / Stay / map  
-- Noise: عدّ التحذيرات المتكررة  
+إن رأيت باجاً → **بلّغ Cursor بالشوت واللوج فقط.** Cursor يصلح ويختبر ويدفع نسخة جديدة؛ أنتم تعيدون السحب والشوت.
 
 ---
 
-## 4) إصلاح إن كُسر شيء
+## ما يملكه Cursor (ليس Replit)
 
-جراحي في `banco-mobile` فقط → حارس PASS → push → `## REPLIT FIX` (BEFORE/AFTER SHA).  
-أو `BLOCKED` بأدلة لـ Cursor.
+- كل تاسكات البرودكشن الكبيرة  
+- Discover / Stay / MOB-07 / FI / CI / seed / حراس  
+- مراجعة الدقة العالمية والتيست  
+- قراءة شوتاتكم كأدلة ميدانية ثم الإصلاح هنا  
 
----
-
-## 5) قالب الرد النهائي
-
-`## REPLIT → CURSOR FULL REPORT` من LIVE-CHANNEL.
-
----
-
-## ما تتضمنه هذه النسخة (كاملة)
-
-| طبقة | محتوى |
-|------|--------|
-| Mobile UX | Discover ENTER · Stay مضغوط · MOB-07 · map honesty · RTL |
-| Runtime | ErrorBoundary يغلف Clerk · API base loud-fail |
-| RTL Stay | B-reaction يفتح للداخل |
-| CI/Deploy | full mobile pack + seed production kill-switch (مدموج من #38) |
-| Proof IDs | Legal + profile badges |
-
-— Cursor · Golden Path · zero concealment
+— Cursor owns production · Replit executes runtime proof only

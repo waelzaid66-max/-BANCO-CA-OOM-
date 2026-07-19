@@ -29,6 +29,7 @@
 | CI/seed gates مدموجة من #38 | ✅ |
 | Copilot | ❌ UNTRUSTED |
 | مسار ذهبي Replit | `GOLDEN-PATH-REPLIT-CURSOR-AR.md` |
+| أدوار | Cursor=إنتاج · Replit=تشغيل/شوت فقط (`ROLES-CURSOR-VS-REPLIT-AR.md`) |
 
 ## أُغلق سابقاً على main
 
