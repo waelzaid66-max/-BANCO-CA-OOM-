@@ -24,13 +24,13 @@
 
 **مالك:** Owner يسحب · Cursor يوجّه ويوثّق.
 
-### W1 — فصل الأقسام (وقاية الذوبان)
+### W1 — فصل الأقسام (وقاية الذوبان) — ✅ على main
 | هدف | قبول |
 |-----|------|
-| لا جسر Discover→Criteria Search عبر `onBrowseSection` | PR **#32** مدمج + حارس `test:section-guard` أخضر على main |
-| Discover → `SECTION_ROUTE` فقط | كما #25 + حماية CI |
+| لا جسر Discover→Criteria Search عبر `onBrowseSection` | ✅ مدمج `#32` → `3e82f7a` ضمن `main@58ddddc` + حارس `test:section-guard` |
+| Discover → `SECTION_ROUTE` فقط | ✅ #25 + حماية CI |
 
-**مالك كود:** Cursor · **مراجعة متوازية:** Copilot (بدل TASK-002 الناقص).
+**التالي:** Replit يسحب ويُثبت بالشوتات · Copilot يوثّق مراجعة post-merge إن لزم.
 
 ### W2 — FI تشغيلي (#28)
 | هدف | قبول |
