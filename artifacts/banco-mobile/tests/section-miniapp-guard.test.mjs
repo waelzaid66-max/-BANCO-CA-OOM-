@@ -7,7 +7,7 @@
 //   4. Stack screens for section/* remain registered in app/_layout.tsx
 //
 // Run: pnpm --filter @workspace/banco-mobile run test:section-guard
-// Expectation: 24/24 PASS (includes Booking honesty + RTL empty CTAs).
+// Expectation: 26/26 PASS (includes black-void flexGrow + country label).
 
 import test from "node:test";
 import assert from "node:assert/strict";
@@ -365,4 +365,39 @@ test("Section + Stays empty CTAs set flexDirection from rowDir (RTL)", () => {
     /emptyCta[\s\S]{0,80}flexDirection:\s*rowDir/,
     "BookingStaysApp empty CTAs must honor rowDir",
   );
+});
+
+test("Section horizontal chip ScrollViews use flexGrow:0 (no black void)", () => {
+  const section = fs.readFileSync(SECTION_APP, "utf8");
+  assert.match(
+    section,
+    /hScroll:\s*\{\s*flexGrow:\s*0/,
+    "hScroll style must pin flexGrow:0",
+  );
+  assert.match(
+    section,
+    /style=\{styles\.hScroll\}/,
+    "chip/rental ScrollViews must apply hScroll",
+  );
+  assert.doesNotMatch(
+    section,
+    /Platform\.OS\s*===\s*["']web["']\s*\?\s*67/,
+    "must not restore fake web topPad 67",
+  );
+});
+
+const MARKET_PICKER = path.join(
+  APP_ROOT,
+  "components",
+  "MarketCountryPicker.tsx",
+);
+
+test("MarketCountryButton shows country label (not flag-only)", () => {
+  const src = fs.readFileSync(MARKET_PICKER, "utf8");
+  assert.match(
+    src,
+    /styles\.triggerLabel/,
+    "MarketCountryButton must render triggerLabel",
+  );
+  assert.match(src, /\{label\}/, "must display country label text");
 });

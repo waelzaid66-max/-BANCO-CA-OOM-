@@ -644,7 +644,7 @@ export function BookingStaysApp() {
 
         {inResultsView ? (
           <View
-            style={[styles.mapToggleWrap, { bottom: insets.bottom + 100 }]}
+            style={[styles.mapToggleWrap, { bottom: insets.bottom + 88 }]}
             pointerEvents="box-none"
           >
             <Pressable
@@ -659,7 +659,7 @@ export function BookingStaysApp() {
               ]}
               testID="stays-map-toggle"
             >
-              <Feather name={mapMode ? "list" : "map"} size={19} color="#FFFFFF" />
+              <Feather name={mapMode ? "list" : "map"} size={16} color="#FFFFFF" />
               <AppText style={[styles.mapToggleText, { color: "#FFFFFF" }]}>
                 {mapMode
                   ? t("search.discover.section.staysList")
@@ -736,19 +736,17 @@ const styles = StyleSheet.create({
   mapToggleWrap: { position: "absolute", left: 0, right: 0, alignItems: "center" },
   mapToggle: {
     alignItems: "center",
-    gap: 9,
-    paddingHorizontal: 26,
-    paddingVertical: 14,
+    gap: 7,
+    paddingHorizontal: 18,
+    paddingVertical: 10,
     borderRadius: 999,
-    borderWidth: 1.5,
-    borderColor: "rgba(255,255,255,0.9)",
     shadowColor: "#000000",
-    shadowOpacity: 0.3,
-    shadowRadius: 12,
-    shadowOffset: { width: 0, height: 5 },
-    elevation: 10,
+    shadowOpacity: 0.2,
+    shadowRadius: 8,
+    shadowOffset: { width: 0, height: 3 },
+    elevation: 6,
   },
-  mapToggleText: { fontSize: 15.5, fontFamily: "Inter_700Bold", letterSpacing: 0.2 },
+  mapToggleText: { fontSize: 14, fontFamily: "Inter_700Bold" },
   emptyState: {
     flex: 1,
     alignItems: "center",

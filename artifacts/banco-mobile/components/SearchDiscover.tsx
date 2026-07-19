@@ -476,7 +476,8 @@ export function SearchDiscover({
 
 const styles = StyleSheet.create({
   container: { flex: 1 },
-  content: { paddingBottom: 120 },
+  // Clear floating tab bar + PostAssetFab so hubs never sit under chrome.
+  content: { paddingBottom: 200 },
   sectionList: {
     paddingHorizontal: 16,
     gap: 10,

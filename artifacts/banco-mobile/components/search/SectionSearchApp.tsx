@@ -141,7 +141,9 @@ export function SectionSearchApp({
     cacheFeedItem,
     recordQuery,
   } = useSession();
-  const topPad = Platform.OS === "web" ? 67 : insets.top;
+  // Never invent a 67px web pad — that crushed/pushed section chrome on Replit
+  // web and made headers look "destroyed". Use real safe-area insets only.
+  const topPad = Math.max(insets.top, Platform.OS === "web" ? 12 : 0);
 
   const accent = sectionAccent(category);
 
@@ -817,7 +819,7 @@ export function SectionSearchApp({
         style={[
           styles.header,
           {
-            paddingTop: topPad + 6,
+            paddingTop: topPad + 10,
             backgroundColor: colors.background,
             borderBottomColor: colors.border,
             flexDirection: rowDir,
@@ -995,6 +997,10 @@ export function SectionSearchApp({
       <ScrollView
         horizontal
         showsHorizontalScrollIndicator={false}
+        // Critical: horizontal ScrollView must NOT flex-grow. Without this, RN
+        // lets the strip eat the column and crushes results into a black void
+        // with one card pinned at the bottom (owner screenshot regression).
+        style={styles.hScroll}
         contentContainerStyle={[styles.chipStrip, { flexDirection: rowDir }]}
       >
         <MarketCountryButton
@@ -1132,6 +1138,7 @@ export function SectionSearchApp({
         <ScrollView
           horizontal
           showsHorizontalScrollIndicator={false}
+          style={styles.hScroll}
           contentContainerStyle={[styles.rentalChrome, { flexDirection: rowDir }]}
         >
           {rentalTerms.map((r) => {
@@ -1245,7 +1252,7 @@ export function SectionSearchApp({
 
         {showMapChrome ? (
           <View
-            style={[styles.mapToggleWrap, { bottom: insets.bottom + 100 }]}
+            style={[styles.mapToggleWrap, { bottom: insets.bottom + 88 }]}
             pointerEvents="box-none"
           >
             <Pressable
@@ -1265,7 +1272,7 @@ export function SectionSearchApp({
             >
               <Feather
                 name={mapMode ? "list" : "map"}
-                size={19}
+                size={16}
                 color={colors.background}
               />
               <AppText
@@ -1330,13 +1337,13 @@ const styles = StyleSheet.create({
   resultsArea: { flex: 1 },
   header: {
     paddingHorizontal: 12,
-    paddingBottom: 8,
+    paddingBottom: 10,
     borderBottomWidth: 1,
     alignItems: "center",
     gap: 6,
   },
   backBtn: {
-    padding: 6,
+    padding: 8,
   },
   headerTitleWrap: {
     flex: 1,
@@ -1347,21 +1354,24 @@ const styles = StyleSheet.create({
     gap: 8,
   },
   headerIcon: {
-    width: 24,
-    height: 24,
-    borderRadius: 7,
+    width: 26,
+    height: 26,
+    borderRadius: 8,
     alignItems: "center",
     justifyContent: "center",
   },
   headerTitle: {
     flex: 1,
-    fontSize: 16,
+    fontSize: 18,
     fontFamily: "Inter_700Bold",
   },
   headerSub: {
-    fontSize: 11,
+    fontSize: 12,
     fontFamily: "Inter_400Regular",
-    marginTop: 1,
+    marginTop: 2,
+  },
+  hScroll: {
+    flexGrow: 0,
   },
   searchBar: {
     alignItems: "center",
@@ -1475,19 +1485,17 @@ const styles = StyleSheet.create({
   },
   mapToggle: {
     alignItems: "center",
-    gap: 9,
-    paddingVertical: 14,
-    paddingHorizontal: 26,
+    gap: 7,
+    paddingVertical: 10,
+    paddingHorizontal: 18,
     borderRadius: 999,
-    borderWidth: 1.5,
-    borderColor: "rgba(255,255,255,0.9)",
-    elevation: 10,
+    elevation: 6,
     shadowColor: "#000000",
-    shadowOpacity: 0.3,
-    shadowRadius: 12,
-    shadowOffset: { width: 0, height: 5 },
+    shadowOpacity: 0.2,
+    shadowRadius: 8,
+    shadowOffset: { width: 0, height: 3 },
   },
-  mapToggleText: { fontSize: 15.5, fontWeight: "700", letterSpacing: 0.2 },
+  mapToggleText: { fontSize: 14, fontWeight: "700" },
   applyBtn: {
     marginTop: 14,
     paddingVertical: 12,

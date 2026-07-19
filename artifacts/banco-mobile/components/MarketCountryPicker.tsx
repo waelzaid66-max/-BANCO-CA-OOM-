@@ -255,15 +255,19 @@ export function MarketCountryButton({
       testID="search-market-country-btn"
       accessibilityLabel={t("search.marketCountryTitle")}
     >
-      {/* Compact by design: flag + chevron only. The full horizontal country
-          selection lives inside the FilterSheet's market row now, so this strip
-          trigger stays small and balanced instead of eating the chrome. The
-          accessibilityLabel keeps it readable to screen readers. */}
+      {/* Flag + short country label + chevron — owner visual contract. Do not
+          strip the label again (compact flag-only looked "destroyed"). */}
       {opt?.flag ? (
         <AppText style={styles.triggerFlag}>{opt.flag}</AppText>
       ) : (
         <Feather name="globe" size={16} color={colors.foreground} />
       )}
+      <AppText
+        style={[styles.triggerLabel, { color: colors.foreground }]}
+        numberOfLines={1}
+      >
+        {label}
+      </AppText>
       <Feather name="chevron-down" size={14} color={colors.mutedForeground} />
     </Pressable>
   );

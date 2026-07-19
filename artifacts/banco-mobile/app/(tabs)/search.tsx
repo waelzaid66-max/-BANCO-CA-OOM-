@@ -199,7 +199,8 @@ export default function SearchScreen() {
     recordQuery,
   } = useSession();
   const { requireAuth } = useAuthGate();
-  const topPad = Platform.OS === "web" ? 67 : insets.top;
+  // Match section mini-apps: real safe-area only — never a fake 67px web pad.
+  const topPad = Math.max(insets.top, Platform.OS === "web" ? 12 : 0);
 
   const params = useLocalSearchParams<{
     q?: string;
@@ -870,6 +871,7 @@ export default function SearchScreen() {
               <ScrollView
                 horizontal
                 showsHorizontalScrollIndicator={false}
+                style={styles.hScroll}
                 contentContainerStyle={[
                   styles.originRow,
                   { flexDirection: rowDir },
@@ -913,6 +915,7 @@ export default function SearchScreen() {
               <ScrollView
                 horizontal
                 showsHorizontalScrollIndicator={false}
+                style={styles.hScroll}
                 contentContainerStyle={[
                   styles.originRow,
                   { flexDirection: rowDir },
@@ -1176,6 +1179,9 @@ const styles = StyleSheet.create({
   originChipText: {
     fontSize: 13,
     fontFamily: "Inter_500Medium",
+  },
+  hScroll: {
+    flexGrow: 0,
   },
   header: {
     paddingHorizontal: 16,
