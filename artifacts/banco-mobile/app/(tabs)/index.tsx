@@ -766,7 +766,8 @@ export default function FeedScreen() {
     [sessionId]
   );
 
-  const topPad = Platform.OS === "web" ? 67 : insets.top;
+  // Same safe-area contract as Search/Section — fake web 67 crushed chrome.
+  const topPad = Math.max(insets.top, Platform.OS === "web" ? 12 : 0);
 
   const showRails = category === "all";
   const hasRails =

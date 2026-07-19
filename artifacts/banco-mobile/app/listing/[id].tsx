@@ -778,7 +778,8 @@ export default function ListingDetailScreen() {
   };
 
   const saved = isSaved(id ?? "");
-  const topOffset = (Platform.OS === "web" ? 67 : insets.top) + 8;
+  // Same safe-area contract as Search/Section — fake web 67 crushed chrome.
+  const topOffset = Math.max(insets.top, Platform.OS === "web" ? 12 : 0) + 8;
   const hasSeller = !!listing?.seller?.id;
   // WhatsApp contact is opt-in per listing: only surface the WhatsApp CTA and
   // RFQ contact chip when the seller enabled it at creation time.

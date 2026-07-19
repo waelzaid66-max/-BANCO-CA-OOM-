@@ -7,8 +7,9 @@
 //   4. Stack screens for section/* remain registered in app/_layout.tsx
 //
 // Run: pnpm --filter @workspace/banco-mobile run test:section-guard
-// Expectation: 28/28 PASS (rose Stay hero + black-void flexGrow + country label
-// + section header icon hits stay inside / padding 12 + hard category locks).
+// Expectation: 29/29 PASS (rose Stay hero + black-void flexGrow + country label
+// + section header icon hits stay inside / padding 12 + hard category locks
+// + no fake web topPad 67 anywhere under banco-mobile).
 
 import test from "node:test";
 import assert from "node:assert/strict";
