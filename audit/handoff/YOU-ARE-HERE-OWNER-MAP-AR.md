@@ -2,15 +2,14 @@
 
 ## جملة واحدة
 
-**تنفيذ حي على حقائق:** قفل أقسام ضد melt · هيدر أزرار جوه · **صفر topPad=67** · حارس 29/29 — بلا redesign.
+كل قسم = **ميني-آب كامل المميزات** · دراسة عميقة قبل أي حرف · بنية تحتية بلا conflict · شكل بلا انحراف.
 
 ## اقرأ بالترتيب
 
-1. **`ARCHITECTURE-LAYERS-PER-MINIAPP-AR.md`** ← طبقات كل قسم/مربع (افهم قبل أي حرف)  
-2. `SURGICAL-MINIAPP-MAINTENANCE-PLAN-AR.md` ← وحدات الصيانة  
-3. `SCREEN-MM-INSPECT-AND-FIX-PROTOCOL-AR.md` ← ميلي  
-4. `INVESTIGATION-AND-REPAIR-PLAN-AR.md` ← MUST-KEEP  
-5. PR **#37** · **لا كود جديد بدون موافقة طبقة مسمّاة**
+1. **`MINIAPP-PER-SECTION-DEEP-STUDY-AR.md`** ← الدراسة الكاملة (أهداف·تحتية·كل قسم·خطة S0–S4)  
+2. `ARCHITECTURE-LAYERS-PER-MINIAPP-AR.md` ← طبقات الواجهة  
+3. `SURGICAL-MINIAPP-MAINTENANCE-PLAN-AR.md` ← وحدات  
+4. PR **#37** · **لا كود بدون موافقة قسم/جزء مسمّى**
 
 ## السلم
 
