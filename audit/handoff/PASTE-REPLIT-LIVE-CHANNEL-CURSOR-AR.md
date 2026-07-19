@@ -12,8 +12,8 @@
 | حقل | قيمة |
 |-----|------|
 | Branch | `cursor/discover-enter-fix-4322` |
-| **Tip (أفضل نسخة كاملة حالياً)** | `53b47b085da83e719bf3e7957e6b5147d4a1f907` |
-| Short | **`53b47b0`** |
+| **Tip (أفضل نسخة كاملة حالياً)** | `8b3660a3f2dac1a6f6b0352220f024afb3862024` |
+| Short | **`8b3660a`** (يشمل قناة حية + كود `53b47b0`) |
 | Code floor (سلف إلزامي) | `6b3c1d1c7ef5dda545f92dd0425de60d83529fc4` |
 | حارس | **17/17 PASS** |
 | PR | https://github.com/waelzaid66-max/-BANCO-CA-OOM-/pull/37 |
@@ -195,4 +195,4 @@ NOISE: count=… top=…
 - يكمل صيانة على نفس الفرع أو فرع لاحق.  
 - لا يدمج #37 إلى `main` قبل تقرير أخضر أو قائمة عيوب صريحة مقبولة من المالك.
 
-— Cursor · Live channel · tip `53b47b0` · zero concealment
+— Cursor · Live channel · tip `8b3660a` · zero concealment

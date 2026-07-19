@@ -2,20 +2,19 @@
 
 **قناة حية كاملة:** `audit/handoff/PASTE-REPLIT-LIVE-CHANNEL-CURSOR-AR.md`  
 **PR للرد:** https://github.com/waelzaid66-max/-BANCO-CA-OOM-/pull/37  
-**Tip معتمد:** `53b47b0` (`53b47b085da83e719bf3e7957e6b5147d4a1f907`)  
-**Copilot:** تجاهل — UNTRUSTED
+**Tip معتمد بعد السحب:** أحدث `origin/cursor/discover-enter-fix-4322` (يتضمّن `8b3660a`+)  
+**Code floor:** `6b3c1d1` · **Copilot:** تجاهل — UNTRUSTED
 
 ```text
 ROLE: Replit Runtime + Honest Fix Agent (NO CONCEALMENT)
 CHANNEL: comment on PR #37 only
 BRANCH: cursor/discover-enter-fix-4322
-TIP_NOW: 53b47b085da83e719bf3e7957e6b5147d4a1f907
 CODE_FLOOR: 6b3c1d1c7ef5dda545f92dd0425de60d83529fc4
 
 EXECUTE:
 1) READ fully: audit/handoff/PASTE-REPLIT-LIVE-CHANNEL-CURSOR-AR.md
 2) git fetch && checkout branch && reset --hard origin/cursor/discover-enter-fix-4322
-3) Verify SYNC_SHA (expect tip ≥ 53b47b0 on this branch) + CODE_FLOOR ancestor
+3) Verify SYNC_SHA (= origin tip) + CODE_FLOOR ancestor OK
 4) Guard: node --test tests/section-miniapp-guard.test.mjs → 17/17
 5) expo start --clear
 6) P01…P13 shots — NEVER hide a broken screen
