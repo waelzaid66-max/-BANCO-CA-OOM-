@@ -58,7 +58,7 @@
 | FI P0 (#28) | مدمج | لا تلمسه هنا |
 | عزل Website | charter | لا موجات موبايل تلمسه |
 
-**حارس يمنع الانتكاس:** `section-miniapp-guard.test.mjs` **25/25** (يرفض ENTER و`StaysHomeHeader` ويفرض flexGrow/دولة/…).
+**حارس يمنع الانتكاس:** `section-miniapp-guard.test.mjs` **26/26** (يرفض ENTER و`StaysHomeHeader` ويفرض flexGrow/دولة/هيدر iconBtn 12…).
 
 ---
 
@@ -155,7 +155,9 @@
 
 ## مراجع
 
+- **خطة صيانة جراحية ميني-آب×ميني-آب:** `SURGICAL-MINIAPP-MAINTENANCE-PLAN-AR.md`  
 - فحص ميلي للأزرار/المسافات: `SCREEN-MM-INSPECT-AND-FIX-PROTOCOL-AR.md`  
+- جرد هيدر/void: `PAGE-BY-PAGE-HEADER-VOID-INVENTORY-AR.md`  
 - سلسلة الضرر: `FULL-DAMAGE-CHAIN-AND-BRANCH-MATRIX-AR.md`  
 - أنت فين: `YOU-ARE-HERE-OWNER-MAP-AR.md`  
 - اعتماد النسخة: `CANONICAL-CORRECT-VERSION-AR.md`  

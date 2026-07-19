@@ -4,7 +4,8 @@
 **هدف الموجة:** إصلاح الصفحات والـ Search **قسم قسم · صفحة صفحة · ميلي · زر · حرف**  
 **قاعدة Owner:** الهيدر كان كويس — لما اتصغّر باظ وخرجت الأزرار منه.  
 **مرجع قياس:** `SCREEN-MM-INSPECT-AND-FIX-PROTOCOL-AR.md`  
-**MUST-KEEP:** `INVESTIGATION-AND-REPAIR-PLAN-AR.md`
+**MUST-KEEP:** `INVESTIGATION-AND-REPAIR-PLAN-AR.md`  
+**خطة التنفيذ الممنهجة:** `SURGICAL-MINIAPP-MAINTENANCE-PLAN-AR.md` (وحدات A/B/C/D)
 
 ---
 
