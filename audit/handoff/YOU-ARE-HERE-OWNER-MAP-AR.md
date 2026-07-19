@@ -6,11 +6,11 @@
 
 ## اقرأ بالترتيب
 
-1. **`SURGICAL-MINIAPP-MAINTENANCE-PLAN-AR.md`** ← خطة الصيانة الممنهجة (عقد فصل + طابور وحدات)  
-2. `PAGE-BY-PAGE-HEADER-VOID-INVENTORY-AR.md` ← هيدر/void  
+1. **`ARCHITECTURE-LAYERS-PER-MINIAPP-AR.md`** ← طبقات كل قسم/مربع (افهم قبل أي حرف)  
+2. `SURGICAL-MINIAPP-MAINTENANCE-PLAN-AR.md` ← وحدات الصيانة  
 3. `SCREEN-MM-INSPECT-AND-FIX-PROTOCOL-AR.md` ← ميلي  
 4. `INVESTIGATION-AND-REPAIR-PLAN-AR.md` ← MUST-KEEP  
-5. PR **#37** tip الحي · Replit تأكيد فقط
+5. PR **#37** · **لا كود جديد بدون موافقة طبقة مسمّاة**
 
 ## السلم
 
