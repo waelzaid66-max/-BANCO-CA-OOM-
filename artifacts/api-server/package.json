@@ -10,6 +10,7 @@
     "typecheck": "tsc -b ../../lib/db ../../lib/api-zod ../../lib/integrations-openai-ai-server --force && tsc -p tsconfig.json --noEmit",
     "test": "vitest run",
     "test:watch": "vitest",
+    "test:seed-guard": "node --test tests/seed-production-guard.test.mjs",
     "seed": "tsx src/seed.ts",
     "seed:verify": "tsx src/seed-verify.ts",
     "seed:fresh": "pnpm run seed && pnpm run seed:verify",

@@ -53,6 +53,11 @@ jobs:
           cache: pnpm
       - run: pnpm install --frozen-lockfile
       - run: pnpm run typecheck
+      # Production deploy must not skip mobile static gates (parity with ci.yml).
+      - name: Mobile static regression (full pack)
+        run: pnpm --filter @workspace/banco-mobile run test
+      - name: Demo seed production guard (static)
+        run: pnpm --filter @workspace/api-server run test:seed-guard
       - name: Prepare test DB
         run: |
           sudo apt-get update && sudo apt-get install -y postgresql-client

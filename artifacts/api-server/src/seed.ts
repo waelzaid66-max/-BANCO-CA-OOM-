@@ -1180,8 +1180,34 @@ async function seedSupplyChain() {
   );
 }
 
+/**
+ * Demo inventory / seed_* users / opening wallets must never hit a real
+ * production database by accident. Staging/CI/dev remain allowed.
+ * Escape hatch (demo DBs only): BANCO_ALLOW_DEMO_SEED=1
+ */
+function assertDemoSeedAllowed(): void {
+  const nodeEnv = process.env.NODE_ENV ?? "development";
+  const bancoEnv = (
+    process.env.BANCO_ENV ??
+    process.env.APP_ENV ??
+    ""
+  ).toLowerCase();
+  const isProd =
+    nodeEnv === "production" ||
+    bancoEnv === "production" ||
+    bancoEnv === "prod";
+  if (isProd && process.env.BANCO_ALLOW_DEMO_SEED !== "1") {
+    throw new Error(
+      "Refusing demo seed in production. " +
+        "Use seed:reference / seed:car-brands / seed:admin for baseline data. " +
+        "If this is an intentional demo DB, set BANCO_ALLOW_DEMO_SEED=1.",
+    );
+  }
+}
+
 async function seed() {
   console.log("🌱 Starting BANCO seed...");
+  assertDemoSeedAllowed();
 
   await ensureDbExtensions();
 

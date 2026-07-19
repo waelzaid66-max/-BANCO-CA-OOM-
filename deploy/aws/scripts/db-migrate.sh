@@ -23,10 +23,12 @@ fi
 echo "==> Pushing Drizzle schema"
 pnpm --filter @workspace/db run push-force
 
-echo "==> (First deploy only) Seeding baseline data"
-echo "   Run ONCE per fresh database — plans baseline, reference locations, brands:"
-echo "     pnpm --filter @workspace/api-server run seed"
+echo "==> (First deploy only) Seeding baseline data — NOT demo inventory"
+echo "   SAFE on production (reference / brands / admin only):"
 echo "     pnpm --filter @workspace/api-server run seed:reference"
 echo "     pnpm --filter @workspace/api-server run seed:car-brands"
 echo "     pnpm --filter @workspace/api-server run seed:admin   # grants ADMIN_EMAILS staff role"
+echo "   BLOCKED in production by default (demo users/listings/wallets):"
+echo "     pnpm --filter @workspace/api-server run seed"
+echo "   Escape hatch for intentional demo DBs only: BANCO_ALLOW_DEMO_SEED=1"
 echo "✅ Schema applied."

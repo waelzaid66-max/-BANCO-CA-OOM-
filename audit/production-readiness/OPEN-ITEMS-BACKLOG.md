@@ -1,7 +1,7 @@
 # البنود غير المكتملة فقط — استخراج من تقرير الجاهزية
 
 **مصدر:** `FULL-READINESS-STATUS-PLAN.md` + 21-phase  
-**آخر تحديث إغلاق:** 2026-07-08
+**آخر تحديث إغلاق:** 2026-07-19 (production audit live)
 
 ---
 
@@ -18,6 +18,11 @@
 | O17 | **SKIP** | Website build |
 | O18 | **SKIP** | Paymob B5 |
 | O19 | **CLOSED** | Release freeze + RC update (this wave) |
+| O20 | **CLOSED** | CI+Deploy يشغّلان mobile full pack (`ci.yml` / `deploy.yml`) |
+| O21 | **CLOSED** | Demo `seed` محظور في production إلا `BANCO_ALLOW_DEMO_SEED=1` |
+| O22 | **OPEN — MERGE** | PR #37 mobile finish + إثبات Replit |
+| O23 | **OPEN — MERGE** | PR #28 FI P0 بعد #37 + smoke يدوي |
+| O24 | **BLOCKED** | W3 FI security — يحتاج Start صريح بعد #28 |
 
 ---
 
