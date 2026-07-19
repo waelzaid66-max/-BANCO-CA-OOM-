@@ -10,7 +10,9 @@
 |------|------|
 | **الفرع** | `cursor/discover-enter-fix-4322` |
 | **PR** | https://github.com/waelzaid66-max/-BANCO-CA-OOM-/pull/37 |
-| **معنى النسخة** | `origin/main` الحالي + تنظيف الضرر فقط (typecheck · حذف boom docs · i18n ميت) |
+| **SHORT الحي** | `084ec4f` (اطبع HEAD بعد hard reset على الفرع) |
+| **معنى النسخة** | `origin/main` + تنظيف الضرر فقط (typecheck · حذف boom docs · i18n ميت) |
+| **تحقيق + خطة** | `INVESTIGATION-AND-REPAIR-PLAN-AR.md` |
 | **سلسلة الضرر** | `FULL-DAMAGE-CHAIN-AND-BRANCH-MATRIX-AR.md` |
 
 > بعد كل push: اطبع `git rev-parse HEAD` على الفرع — هذا هو CANONICAL_CODE_SHA الحي.  
