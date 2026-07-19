@@ -441,11 +441,8 @@ export default function BanksScreen() {
                 {t(p.descKey)}
               </AppText>
             </View>
-            <Feather
-              name={isRTL ? "chevron-left" : "chevron-right"}
-              size={18}
-              color={colors.mutedForeground}
-            />
+            {/* Informational rows only — no destination yet. Chevrons implied
+                navigation and violated "no fabricated affordances". */}
           </View>
         ))}
 

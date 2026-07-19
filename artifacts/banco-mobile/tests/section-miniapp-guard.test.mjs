@@ -90,3 +90,17 @@ test("section route files exist on disk", () => {
     assert.ok(fs.existsSync(file), `missing ${file}`);
   }
 });
+
+test("Search catalogue chrome is gated off Discover (MOB-05)", () => {
+  const searchTab = fs.readFileSync(SEARCH_TAB, "utf8");
+  assert.match(
+    searchTab,
+    /viewState\s*!==\s*["']discover["']/,
+    "search.tsx must hide CategoryTabs/engines while Discover is showing",
+  );
+  assert.match(
+    searchTab,
+    /<CategoryTabs[\s\S]*?viewState\s*!==\s*["']discover["']|<Fragment>[\s\S]*CategoryTabs|viewState\s*!==\s*["']discover["'][\s\S]*CategoryTabs/,
+    "CategoryTabs must sit behind the Discover gate",
+  );
+});
