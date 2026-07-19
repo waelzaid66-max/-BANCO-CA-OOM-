@@ -50,10 +50,12 @@ cd artifacts/banco-mobile && npx expo start --clear
 ## REPLIT → CURSOR (CONFIRM CANONICAL ONLY — NO MAINTENANCE)
 SYNC_SHA: …
 SHORT: …
-GUARD: 25/25 PASS|FAIL
-FINGERPRINTS: sectionGrid YES|NO · Stay rose YES|NO · StaysHomeHeader absent YES|NO · boom docs absent YES|NO
+GUARD: 26/26 PASS|FAIL
+FINGERPRINTS: sectionGrid YES|NO · Stay rose YES|NO · StaysHomeHeader absent YES|NO · boom docs absent YES|NO · section header buttons INSIDE YES|NO
 SCREEN P1–P6: …
-MM_CHECK (إن FAIL): margins/cardH/gap/buttons hit — انظر بروتوكول الميلي
+HEADER_UNDER: chips بلا void أسود · أزرار search/filter داخل شريط الهيدر
+MM_CHECK (إن FAIL):margins/cardH/gap/buttons — بروتوكول الميلي + PAGE inventory
+PLAN: SURGICAL-MINIAPP-MAINTENANCE-PLAN-AR.md — وحدة A الحالية فقط
 METRO: NONE | …
 SHOTS: attached
 STOP
