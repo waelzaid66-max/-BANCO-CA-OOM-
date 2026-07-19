@@ -102,7 +102,27 @@ const en = {
     toastRoleFailedDesc: "The server rejected this change.",
     toastVerified: "User verified",
     toastUnverified: "Verification removed",
+    toastVerifiedFiHint:
+      "Trust badge only. Financing inbox still needs linking an intermediary owner below (or on Financing) — BANCO stays an ads marketplace.",
     toastActionFailed: "Action failed",
+    toastIdCopied: "User ID copied",
+    toastFiLinked: "Institution inbox linked",
+    toastFiLinkedDesc:
+      "This account can now receive forwarded financing requests from listings. Ads remain the core product.",
+    toastFiLinkFailed: "Could not link inbox",
+    toastFiLinkFailedDesc:
+      "Owner must be role financial_institution and the intermediary must exist/be active.",
+    userId: "User ID (for financing owner link)",
+    adsFirstHint:
+      "BANCO is a verified ads platform. Verification is a trust badge — it does not invent a bank directory or open inbox alone.",
+    fiLinkTitle: "Link financing inbox owner",
+    fiLinkHint:
+      "Optional admin step after KYC: attach this FI account to an existing intermediary CRM row. Does not create a public partner directory.",
+    fiLinkSelect: "Intermediary",
+    fiLinkSelectPh: "Select institution row…",
+    fiLinkAlreadyOwned: "has owner",
+    fiLinkInactive: "inactive",
+    fiLinkCta: "Link as inbox owner",
     kycTitle: "KYC / business review",
     kycReview: "Review KYC",
     kycPending: "KYC pending",
@@ -494,7 +514,27 @@ const ar: typeof en = {
     toastRoleFailedDesc: "الخادم رفض هذا التغيير.",
     toastVerified: "تم توثيق المستخدم",
     toastUnverified: "تم إلغاء التوثيق",
+    toastVerifiedFiHint:
+      "شارة ثقة فقط. صندوق التمويل لسه محتاج ربط مالك الوسيط من هنا أو من صفحة التمويل — بانكو تفضل سوق إعلانات.",
     toastActionFailed: "فشل الإجراء",
+    toastIdCopied: "تم نسخ معرّف المستخدم",
+    toastFiLinked: "تم ربط صندوق المؤسسة",
+    toastFiLinkedDesc:
+      "الحساب يقدر يستقبل طلبات التمويل المحوّلة من الإعلانات. الإعلانات تفضل المنتج الأساسي.",
+    toastFiLinkFailed: "تعذّر ربط الصندوق",
+    toastFiLinkFailedDesc:
+      "المالك لازم يكون دوره financial_institution والوسيط موجود/نشط.",
+    userId: "معرّف المستخدم (لربط مالك التمويل)",
+    adsFirstHint:
+      "بانكو منصة إعلانات موثّقة. التوثيق شارة ثقة — مش بيخلق دليل بنوك ولا بيفتح الصندوق لوحده.",
+    fiLinkTitle: "ربط مالك صندوق التمويل",
+    fiLinkHint:
+      "خطوة أدمن اختيارية بعد KYC: ربط حساب المؤسسة المالية بصف وسيط CRM موجود. مش دليل شركاء عام.",
+    fiLinkSelect: "الوسيط / المؤسسة",
+    fiLinkSelectPh: "اختَر صف المؤسسة…",
+    fiLinkAlreadyOwned: "له مالك",
+    fiLinkInactive: "غير نشط",
+    fiLinkCta: "اربط كمالك للصندوق",
     kycTitle: "مراجعة التوثيق / النشاط",
     kycReview: "مراجعة التوثيق",
     kycPending: "توثيق معلّق",

@@ -13,7 +13,7 @@
 | الفرع المطلوب للتصوير | `origin/main` |
 | Tip أدنى مقبول | `0696c66` أو أحدث |
 | PR المدمج | **#39** — https://github.com/waelzaid66-max/-BANCO-CA-OOM-/pull/39 |
-| حارس على main@#39 | 33/33 · على فرع AuthZ: 34/34 |
+| حارس على main@#39 | 33/33 · على فرع #40: 35/35 |
 
 ```bash
 git fetch origin

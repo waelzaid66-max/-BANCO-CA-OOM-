@@ -10,9 +10,10 @@
 
 ## قواعد لمس الكود (كل PR صغير)
 
+0. **ADS-FIRST** — انظر `ADS-FIRST-LOCK-AR.md` · إعلانات أولاً · تمويل = تسليم بعد طلب على إعلان  
 1. لا Discover ENTER · لا Stay أسود · لا iconBtn&lt;12 · لا topPad 67  
-2. لا Banks directory حي بلا Start صريح «ج»  
-3. AuthZ وكيل PATCH: Owner أمر «كمل» بعد #39 — Cursor ينفّذ R1+R2 جراحياً (هذه الموجة)  
+2. لا Banks directory حي بلا Start صريح «ج» (ويُرفض إن هدم فكرة الإعلانات)  
+3. AuthZ + صدق + مساعدة أدمن للربط — بدون تحويل بانكو لسوق بنوك  
 4. حارس `section-miniapp-guard` يبقى أخضر  
 5. ملفات مشتركة FI: أعلن في handoff قبل التعديل
 
@@ -27,7 +28,7 @@
 | F-UX-01 / OPEN-09 | لا اختصار Banks من البروفايل لـ FI | #39 | ✅ merged |
 | F-SEP (عرض) | FI يرى كارت «أضف إعلان» كتاجر | #39 | ✅ merged |
 | Honesty | productsHint على الهب | #39 | ✅ merged |
-| Guard | قفل المسارات | #39 ثم AuthZ | ✅ **35/35** |
+| Guard | قفل المسارات | #39 ثم #40 | ✅ **37/37** |
 | OPEN-03 / F-SEC-01 | AuthZ وكيل PATCH = list scope | **#40** | ✅ |
 | OPEN-05 / R2 | state machine forwarded→contacted→closed | **#40** | ✅ |
 | Honesty | fiSuccessBody لا يدّعي ربط تلقائي بعد Verify | **#40** | ✅ |
@@ -35,8 +36,10 @@
 | F-SEC-07 | منع مسح documents عند إعادة حفظ business | **#40** | ✅ |
 | F-SEC-03 | owner يجب أن يكون `financial_institution` | **#40** | ✅ |
 | F-UX-03 | خطأ شبكة inbox ≠ «لست عضواً» | **#40** | ✅ |
-| OPEN-02 | دليل شركاء حي | لاحقاً بعد D1=ج | ⏸ |
-| OPEN-04 | Verify→link inbox | لاحقاً (Start) | ⏸ |
+| Ads-first | شاشة توثيق FI + joinDesc صادق | **#40** | ✅ |
+| OPEN-04 جزئي | أدمن: UUID + ربط owner من KYC (بدون directory عام) | **#40** | ✅ |
+| OPEN-02 | دليل شركاء حي | **موقوف** — يهدم ads-first بلا Start «ج» صريح | ⏸ |
+| Guard | | **#40** | ✅ **37/37** |
 | OPEN-01 | تأكيد Replit بصري **G0** على `main ≥ 0696c66` | موازٍ | ▶️ انظر `G0-START-NOW-MOST-IMPORTANT-AR.md` |
 
 ---

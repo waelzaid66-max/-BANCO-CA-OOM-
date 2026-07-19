@@ -1407,7 +1407,8 @@ const en = {
       personalLoanTitle: "Personal financing",
       personalLoanDesc: "Flexible personal financing options",
       joinTitle: "Are you a bank or financier?",
-      joinDesc: "Join BANCO and receive vetted financing requests directly",
+      joinDesc:
+        "Register your institution on BANCO's ads marketplace. After review, an admin links your account so forwarded financing requests from listings can reach your team inbox.",
       joinCta: "Join as an institution",
       note: "BANCO is a verified ads platform — financing terms are set entirely by the institution.",
       inboxTitle: "Financing requests inbox",
@@ -1478,6 +1479,18 @@ const en = {
     vReviewBody: "We've received your business details and our team is reviewing them. You'll get the verified badge once approved.",
     vNoneTitle: "Get your business verified",
     vNoneBody: "Register your business to unlock dealer tools, the verified badge, and more buyer trust.",
+    vFiVerifiedTitle: "Institution profile verified",
+    vFiVerifiedBody:
+      "Your trust badge is on. Inbox access still needs a BANCO admin to link your institution account — BANCO stays an ads marketplace; financing is a handoff after listing requests.",
+    vFiReviewTitle: "Institution verification under review",
+    vFiReviewBody:
+      "We've received your institution details. After approval you get a trust badge. Linking the financing inbox is a separate admin step — verification alone does not open it.",
+    vFiNoneTitle: "Verify your financial institution",
+    vFiNoneBody:
+      "Register as a bank / financier on BANCO's ads platform to request a trust badge. Listing ads stay the core product; financing requests are forwarded after admin review.",
+    vFiRegisterCta: "Register as a financial institution",
+    vFiUpdateHint:
+      "You can update documents anytime. Inbox linking is done by BANCO admin after review — not automatic.",
     vDetailsTitle: "Your details",
     vActivity: "Activity",
     vRegisterCta: "Register your business",
@@ -3350,7 +3363,8 @@ const ar: typeof en = {
       personalLoanTitle: "تمويل شخصي",
       personalLoanDesc: "خيارات تمويل شخصي مرنة",
       joinTitle: "هل أنت بنك أو جهة تمويل؟",
-      joinDesc: "انضم لبانكو واستقبل طلبات تمويل مدروسة مباشرةً",
+      joinDesc:
+        "سجّل مؤسستك على سوق إعلانات بانكو. بعد المراجعة، الأدمن بيربط حسابك عشان طلبات التمويل المحوّلة من الإعلانات توصل لصندوق فريقك.",
       joinCta: "انضم كمؤسسة",
       note: "بانكو منصة إعلانات موثّقة — شروط التمويل تحددها المؤسسة بالكامل.",
       inboxTitle: "صندوق طلبات التمويل",
@@ -3421,6 +3435,18 @@ const ar: typeof en = {
     vReviewBody: "استلمنا بيانات نشاطك وفريقنا بيراجعها. هتاخد علامة التوثيق بمجرد الموافقة.",
     vNoneTitle: "وثّق نشاطك التجاري",
     vNoneBody: "سجّل نشاطك التجاري عشان تفتح أدوات التجار وعلامة التوثيق وثقة أكبر من المشترين.",
+    vFiVerifiedTitle: "حساب المؤسسة موثّق",
+    vFiVerifiedBody:
+      "شارة الثقة اتفعّلت. فتح صندوق الوارد لسه محتاج أدمن بانكو يربط حساب مؤسستك — بانكو تفضل سوق إعلانات؛ التمويل تسليم بعد طلبات الإعلانات.",
+    vFiReviewTitle: "توثيق المؤسسة قيد المراجعة",
+    vFiReviewBody:
+      "استلمنا بيانات مؤسستك. بعد الموافقة هتاخد شارة ثقة. ربط صندوق التمويل خطوة أدمن منفصلة — التوثيق لوحده مش بيفتحه.",
+    vFiNoneTitle: "وثّق مؤسستك المالية",
+    vFiNoneBody:
+      "سجّل كبنك / ممول على منصة إعلانات بانكو لطلب شارة ثقة. الإعلانات هي المنتج الأساسي؛ طلبات التمويل بتتحوّل بعد مراجعة الأدمن.",
+    vFiRegisterCta: "سجّل كمؤسسة مالية",
+    vFiUpdateHint:
+      "تقدر تحدّث المستندات في أي وقت. ربط الصندوق بيعمله أدمن بانكو بعد المراجعة — مش تلقائي.",
     vDetailsTitle: "بياناتك",
     vActivity: "النشاط",
     vRegisterCta: "سجّل نشاطك التجاري",
