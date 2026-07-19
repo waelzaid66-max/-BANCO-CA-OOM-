@@ -1,3 +1,5 @@
+# ⛔ مُلغى كأمر تشغيل — اذهب إلى `REPLIT-RUN-FULL-NOW-AR.md`
+
 # قناة حية — Replit (تشغيل) ↔ Cursor (إنتاج)
 
 **أدوار:** `ROLES-CURSOR-VS-REPLIT-AR.md` · **ذهبي:** `GOLDEN-PATH-REPLIT-CURSOR-AR.md`  

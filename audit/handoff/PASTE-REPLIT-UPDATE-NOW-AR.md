@@ -1,23 +1,15 @@
-# ⚡ REPLIT — تشغيل النسخة الحقيقية الآن
+# ⚡ REPLIT — الأمر الحي الوحيد
 
-**الأمر الحي الكامل:**  
-→ **`audit/handoff/PASTE-REPLIT-SHOW-TRUE-NOW-AR.md`**
+→ **افتح ونفّذ حرفياً:**  
+`audit/handoff/REPLIT-RUN-FULL-NOW-AR.md`
 
-**القفل:** Owner فقط · Cursor يسلّم · أنت عين+كاميرا  
-**PR:** https://github.com/waelzaid66-max/-BANCO-CA-OOM-/pull/37  
-**الفرع:** `cursor/discover-enter-fix-4322`  
-**tip:** اطبع `git rev-parse --short HEAD` بعد hard reset (≥ `681bd2a`)
+كل ملفات PASTE-REPLIT-* القديمة **ملغاة** إن تعارضت مع الملف فوق.
 
 ```text
-ROLE: Replit Runtime Proof ONLY
-AUTHORITY: Owner + Cursor only
-FORBIDDEN: edit · commit · push · Copilot · redesign · old SHA
-
-NOW:
-1) Open PASTE-REPLIT-SHOW-TRUE-NOW-AR.md and run it literally
-2) SYNC = origin/cursor/discover-enter-fix-4322 HEAD after hard reset
-3) Guard 25/25 · expo start --clear
-4) Shots MUST show: Discover 2x2 PHOTO cards + Stay ROSE hero
-5) Comment ## REPLIT → CURSOR (RUNTIME ONLY — NO CODE)
-6) STOP
+ROLE: runtime only
+BRANCH: cursor/discover-enter-fix-4322
+PR: #37
+DO: hard reset origin tip → guard 25/25 → expo start --clear → shots P1–P6
+REPLY: ## REPLIT → CURSOR (RUNTIME ONLY — NO CODE)
+FORBIDDEN: edit · commit · push · Copilot
 ```

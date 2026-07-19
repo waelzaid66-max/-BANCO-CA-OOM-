@@ -1,3 +1,5 @@
+# ⛔ مُلغى — ENTER redesign مرفوض · اذهب إلى `REPLIT-RUN-FULL-NOW-AR.md`
+
 # Replit — اسحب إصلاح دخول الأقسام الآن
 
 ## الهدف
