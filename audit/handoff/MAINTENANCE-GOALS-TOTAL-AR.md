@@ -58,13 +58,13 @@
 ### W4 — محاذاة موبايل وصدق الواجهة
 | هدف | قبول |
 |-----|------|
-| هيدر قسم غير مزدحم | دمج `claude/w4-mobile-align` بعد CI |
-| MOB-01 هاتف في edit | nudge يعمل حتى النهاية |
-| MOB-04 RTL غلاف | دمج #33 |
-| Banks: لا chevron ميّت / لا «شركاء موثّقون» بلا بيانات | قرار Owner ثم إصلاح |
-| CategoryTabs لا تخلط Discover | بعد #32 |
+| هيدر قسم غير مزدحم | ✅ مدمج `#34` → `58ddddc` |
+| MOB-04 RTL غلاف | ✅ مدمج `#33` → `a894f5a` |
+| MOB-01 هاتف في edit | ⏳ Copilot CP-2 |
+| Banks: لا chevron ميّت / لا «شركاء موثّقون» بلا بيانات | ⏳ Copilot audit + قرار Owner |
+| CategoryTabs لا تخلط Discover | ⏳ Cursor بعد تحقق Replit |
 
-**منفّذون:** Cursor (#33, عزل فلاتر) · Copilot (MOB-01 + مراجعة W4 + تقرير Banks) · Owner (قرار directory).
+**منفّذون:** Copilot (MOB-01 + Banks) · Replit (شوتات) · Owner (قرار directory).
 
 ### W5 — Stay شكل
 | هدف | قبول |
@@ -87,13 +87,15 @@
 
 ---
 
-## قائمة دمج مقترحة للمالك (بعد تقارير Copilot)
+## قائمة دمج — حالة
 
-1. #32 (W1)  
-2. #33 (MOB-04)  
-3. PR W4 من `claude/w4-mobile-align` (بعد فتحه + أخضر)  
-4. #28 (W2)  
-5. ثم فقط Start W3  
-6. #23 عند جاهزية شكل Stay  
+1. ~~#32 W1~~ ✅  
+2. ~~#33 MOB-04~~ ✅  
+3. ~~#34 W4 sort~~ ✅  
+4. **التالي للمالك:** سحب Replit `@58ddddc` + شوتات  
+5. #28 (W2) بعد تحقق Replit/Copilot  
+6. ثم فقط Start W3  
+7. #23 Stay عند جاهزية الشكل  
+
 
 — Cursor
