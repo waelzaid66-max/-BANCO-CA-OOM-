@@ -9,11 +9,14 @@
 ROLE: Replit Runtime Proof ONLY (no code ownership)
 FORBIDDEN: edit source · commit · push fixes · product decisions · Copilot
 
+FORENSIC: AGENT-DAMAGE-AND-DISCOVER-RESTORE-AR.md
+  Culprit = Cursor Agent @ 6ba5f1b (ENTER rows). Restored @ 6b18408 (2x2 photo cards).
+
 EXECUTE:
-1) READ: VISUAL-REGRESSION-AUDIT-FROM-OWNER-SHOTS-AR.md + ROLES-CURSOR-VS-REPLIT-AR.md
+1) READ: AGENT-DAMAGE-AND-DISCOVER-RESTORE-AR.md + VISUAL-REGRESSION-AUDIT-FROM-OWNER-SHOTS-AR.md + ROLES
 2) git fetch && checkout cursor/discover-enter-fix-4322
 3) git reset --hard origin/cursor/discover-enter-fix-4322
-4) Print SYNC_SHA + run section-miniapp-guard (report 26/26 or paste failure)
+4) Print SYNC_SHA — expect 6b18408 (or newer tip on same branch) + guard 26/26
 5) npx expo start --clear
 6) CRITICAL SHOTS: Discover · Cars · Real-estate · Factories · Stay
    MUST prove: Discover shows 2x2 PHOTO section CARDS (not ENTER rows)
