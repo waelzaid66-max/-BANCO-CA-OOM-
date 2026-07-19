@@ -5,7 +5,7 @@
 
 git fetch origin main && git checkout main && git pull origin main
 git rev-parse HEAD
-# ≥ f69d51e (MOB-01). إن ظهر دمج MOB-05 لاحقاً: اسحب وأعد S013 + S056.
+# ≥ 88e83ca (MOB-01 + MOB-05 + Banks honesty). أعد S013 + S056 بعد السحب.
 
 اقرأ:
 audit/handoff/REPLIT-SCREENSHOT-MATRIX-FULL-ORDERED-AR.md
