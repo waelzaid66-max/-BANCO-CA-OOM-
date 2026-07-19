@@ -850,42 +850,6 @@ export function SectionSearchApp({
         >
           <Feather name="search" size={18} color={draftQuery ? "#FFFFFF" : colors.foreground} />
         </Pressable>
-        {/* Quick sort — cycles recommended → newest → price low→high →
-            high→low. Isolated by design: plain criteria state, never persisted,
-            so leaving the section (or reload) resets it automatically, and it
-            rides the ordinary `sort` param without touching engines/facets. */}
-        <Pressable
-          onPress={() => {
-            playSound("tap");
-            const cycle = ["recommended", "newest", "price_asc", "price_desc"] as const;
-            const next =
-              cycle[(cycle.indexOf(criteria.sort as (typeof cycle)[number]) + 1) % cycle.length];
-            update({ sort: next });
-          }}
-          style={[
-            styles.iconBtn,
-            {
-              backgroundColor: criteria.sort !== "recommended" ? accent : colors.secondary,
-              borderRadius: colors.radius,
-            },
-          ]}
-          accessibilityLabel={t(`search.sortOptions.${criteria.sort}`)}
-          testID="section-sort-cycle"
-        >
-          <Feather
-            name={
-              criteria.sort === "price_asc"
-                ? "trending-up"
-                : criteria.sort === "price_desc"
-                  ? "trending-down"
-                  : criteria.sort === "newest"
-                    ? "clock"
-                    : "list"
-            }
-            size={18}
-            color={criteria.sort !== "recommended" ? "#FFFFFF" : colors.foreground}
-          />
-        </Pressable>
         <Pressable
           onPress={() => {
             playSound("tap");
@@ -1007,6 +971,43 @@ export function SectionSearchApp({
             setMarketPickerOpen(true);
           }}
         />
+        {/* Quick sort — a small in-strip filter present in every section (was a
+            4th header icon that crowded the title). Cycles recommended → newest
+            → price low→high → high→low. Isolated: plain criteria state, never
+            persisted, resets on leave/reload, rides the ordinary `sort` param
+            without touching engines/facets. */}
+        <Pressable
+          onPress={() => {
+            playSound("tap");
+            const cycle = ["recommended", "newest", "price_asc", "price_desc"] as const;
+            const next =
+              cycle[(cycle.indexOf(criteria.sort as (typeof cycle)[number]) + 1) % cycle.length];
+            update({ sort: next });
+          }}
+          style={[
+            styles.sortChip,
+            {
+              backgroundColor: criteria.sort !== "recommended" ? accent : colors.secondary,
+              flexDirection: rowDir,
+            },
+          ]}
+          accessibilityLabel={t(`search.sortOptions.${criteria.sort}`)}
+          testID="section-sort-cycle"
+        >
+          <Feather
+            name={
+              criteria.sort === "price_asc"
+                ? "trending-up"
+                : criteria.sort === "price_desc"
+                  ? "trending-down"
+                  : criteria.sort === "newest"
+                    ? "clock"
+                    : "list"
+            }
+            size={14}
+            color={criteria.sort !== "recommended" ? "#FFFFFF" : colors.mutedForeground}
+          />
+        </Pressable>
         {(showListingMode || showEngineChips || showIndustrialChips) ? (
           <View style={[styles.chipStripDivider, { backgroundColor: colors.border }]} />
         ) : null}
@@ -1395,6 +1396,13 @@ const styles = StyleSheet.create({
     paddingHorizontal: 14,
     paddingVertical: 7,
     borderRadius: 18,
+  },
+  sortChip: {
+    alignItems: "center",
+    justifyContent: "center",
+    width: 34,
+    height: 34,
+    borderRadius: 17,
   },
   stripChipText: {
     fontSize: 13,
