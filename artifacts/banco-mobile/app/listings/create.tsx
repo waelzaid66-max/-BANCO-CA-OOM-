@@ -160,7 +160,8 @@ export default function CreateListingScreen() {
   const { bumpListings } = useSession();
   const insets = useSafeAreaInsets();
   const { isSignedIn, isLoaded } = useUser();
-  const topPad = Platform.OS === "web" ? 67 : insets.top;
+  // Same safe-area contract as Search/Section — fake web 67 crushed chrome.
+  const topPad = Math.max(insets.top, Platform.OS === "web" ? 12 : 0);
 
   const meQuery = useGetMe({
     query: { enabled: !!isSignedIn, queryKey: getGetMeQueryKey() },

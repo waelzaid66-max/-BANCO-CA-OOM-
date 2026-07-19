@@ -167,12 +167,46 @@ export function SectionSearchApp({
     viewState,
     phase,
     hasNext,
-    commit,
-    update,
-    applyPatch,
+    commit: commitRaw,
+    update: updateRaw,
+    applyPatch: applyPatchRaw,
     loadMore,
     retry,
   } = search;
+
+  // Hard lock (fact): this mini-app's prop category must never drift through
+  // update/commit/applyPatch. FilterSheet already hides category UI, but a
+  // partial that carries `category` would otherwise melt the section.
+  const commit = useCallback(
+    (next: SearchCriteria) => {
+      commitRaw({
+        ...next,
+        category,
+        ...(lockedEngine ? { engineKey: lockedEngine } : {}),
+      });
+    },
+    [commitRaw, category, lockedEngine],
+  );
+  const update = useCallback(
+    (partial: Partial<SearchCriteria>) => {
+      updateRaw({
+        ...partial,
+        category,
+        ...(lockedEngine ? { engineKey: lockedEngine } : {}),
+      });
+    },
+    [updateRaw, category, lockedEngine],
+  );
+  const applyPatch = useCallback(
+    (partial: Partial<SearchCriteria>) => {
+      applyPatchRaw({
+        ...partial,
+        category,
+        ...(lockedEngine ? { engineKey: lockedEngine } : {}),
+      });
+    },
+    [applyPatchRaw, category, lockedEngine],
+  );
 
   // The seeded baseline for this section — the "clean" state a page starts in.
   const baseEngine = lockedEngine ?? "all";
@@ -1336,22 +1370,28 @@ const styles = StyleSheet.create({
   container: { flex: 1 },
   resultsArea: { flex: 1 },
   header: {
-    paddingHorizontal: 12,
+    // Match Search-host chrome (16/gap 8). Shrinking H-pad + icon hits to
+    // "fix crush" pushed search/filter buttons outside the header band
+    // (Owner: الهيدر كويس لما صغّر باظ والزراير خرجت منه).
+    paddingHorizontal: 16,
     paddingBottom: 10,
     borderBottomWidth: 1,
     alignItems: "center",
-    gap: 6,
+    gap: 8,
   },
   backBtn: {
     padding: 8,
+    flexShrink: 0,
   },
   headerTitleWrap: {
     flex: 1,
+    minWidth: 0,
     justifyContent: "center",
   },
   headerTitleRow: {
     alignItems: "center",
     gap: 8,
+    minWidth: 0,
   },
   headerIcon: {
     width: 26,
@@ -1359,9 +1399,11 @@ const styles = StyleSheet.create({
     borderRadius: 8,
     alignItems: "center",
     justifyContent: "center",
+    flexShrink: 0,
   },
   headerTitle: {
     flex: 1,
+    minWidth: 0,
     fontSize: 18,
     fontFamily: "Inter_700Bold",
   },
@@ -1390,10 +1432,11 @@ const styles = StyleSheet.create({
     padding: 0,
   },
   iconBtn: {
-    // Slightly tighter than 12 — two icon hits beside the title were crowding
-    // the section header on narrow phones (owner "crushed header" shots).
-    padding: 8,
+    // Restored to Search-host 12. Padding 8 let icon hits escape the header.
+    // Title shrinks (minWidth:0); buttons never flex-shrink.
+    padding: 12,
     position: "relative",
+    flexShrink: 0,
   },
   filterBadge: {
     position: "absolute",

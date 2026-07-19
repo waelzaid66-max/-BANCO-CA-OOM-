@@ -85,7 +85,8 @@ export default function WalletScreen() {
   const colors = useColors();
   const { t, isRTL, lang } = useI18n();
   const insets = useSafeAreaInsets();
-  const topPad = Platform.OS === "web" ? 67 : insets.top;
+  // Same safe-area contract as Search/Section — fake web 67 crushed chrome.
+  const topPad = Math.max(insets.top, Platform.OS === "web" ? 12 : 0);
   const egp = t("common.egp");
   const rowDir: "row" | "row-reverse" = isRTL ? "row-reverse" : "row";
 

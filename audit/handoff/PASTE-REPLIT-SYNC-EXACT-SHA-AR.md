@@ -1,3 +1,5 @@
+# ⛔ مُلغى كأمر تشغيل — اذهب إلى `REPLIT-RUN-FULL-NOW-AR.md`
+
 # Replit — مزامنة النسخة الصحيحة (Exact Branch Tip + Code Floor)
 
 **من:** Cursor · قائد الجودة التقنية  

@@ -11,7 +11,7 @@ import Animated, {
 
 import { Ionicons } from "@/components/icons";
 import { useColors } from "@/hooks/useColors";
-import { useI18n } from "@/hooks/useI18n";
+import { useI18n } from "@/context/LanguageContext";
 
 /**
  * The identity "B" (lightning bolt) cropped from the OFFICIAL transparent

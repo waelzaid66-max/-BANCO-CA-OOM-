@@ -56,7 +56,8 @@ export default function BookingsScreen() {
   const insets = useSafeAreaInsets();
   const queryClient = useQueryClient();
   const rowDir = isRTL ? "row-reverse" : "row";
-  const topPad = Platform.OS === "web" ? 67 : insets.top;
+  // Same safe-area contract as Search/Section — fake web 67 crushed chrome.
+  const topPad = Math.max(insets.top, Platform.OS === "web" ? 12 : 0);
 
   const { role: roleParam } = useLocalSearchParams<{ role?: string }>();
   const [role, setRole] = useState<ListBookingsRole>(

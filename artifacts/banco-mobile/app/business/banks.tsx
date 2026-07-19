@@ -69,7 +69,11 @@ const PRODUCTS: Product[] = [
  * Requests here are exclusively the ones Banco forwarded after its risk
  * review; the bank marks them contacted / closed as it works them.
  */
-function InstitutionInboxSection() {
+function InstitutionInboxSection({
+  onMembershipChange,
+}: {
+  onMembershipChange?: (active: boolean) => void;
+}) {
   const colors = useColors();
   const { t, isRTL } = useI18n();
   const { isSignedIn } = useAuth();
@@ -93,6 +97,14 @@ function InstitutionInboxSection() {
 
   const { mutate: updateRequest, isPending } = useUpdateInstitutionRequest();
   const [pendingLead, setPendingLead] = React.useState<string | null>(null);
+
+  // Tell the hub when a real institution membership is active so Join CTA
+  // (F-UX-02) is not stacked on top of an already-working inbox.
+  const membershipActive =
+    !!isSignedIn && !inbox.isLoading && !inbox.isError && !!inbox.data?.data;
+  React.useEffect(() => {
+    onMembershipChange?.(membershipActive);
+  }, [membershipActive, onMembershipChange]);
 
   const transition = (leadId: string, status: "contacted" | "closed") => {
     setPendingLead(leadId);
@@ -327,10 +339,15 @@ export default function BanksScreen() {
   const colors = useColors();
   const { t, isRTL } = useI18n();
   const insets = useSafeAreaInsets();
-  const topPad = Platform.OS === "web" ? 67 : insets.top;
+  // Same safe-area contract as Search/Section — fake web 67 crushed chrome.
+  const topPad = Math.max(insets.top, Platform.OS === "web" ? 12 : 0);
   const { isSignedIn } = useAuth();
   const rowDir = isRTL ? "row-reverse" : "row";
   const textAlign: "left" | "right" = isRTL ? "right" : "left";
+  const [isFiMember, setIsFiMember] = React.useState(false);
+  const onMembershipChange = React.useCallback((active: boolean) => {
+    setIsFiMember(active);
+  }, []);
 
   return (
     <View style={[styles.container, { backgroundColor: colors.background }]}>
@@ -391,9 +408,9 @@ export default function BanksScreen() {
         </LinearGradient>
 
         {/* FI phase 2 — the bank's own inbox (members only; hidden otherwise) */}
-        <InstitutionInboxSection />
+        <InstitutionInboxSection onMembershipChange={onMembershipChange} />
 
-        {/* Products section */}
+        {/* Product types — explanatory brochure only (not a live partner directory) */}
         <AppText
           style={[
             styles.sectionTitle,
@@ -402,10 +419,17 @@ export default function BanksScreen() {
         >
           {t("business.banks.productsTitle")}
         </AppText>
+        <AppText
+          style={[styles.productsHint, { color: colors.mutedForeground, textAlign }]}
+          testID="banks-products-hint"
+        >
+          {t("business.banks.productsHint")}
+        </AppText>
 
         {PRODUCTS.map((p) => (
           <View
             key={p.titleKey}
+            accessibilityRole="text"
             style={[
               styles.productCard,
               {
@@ -441,68 +465,69 @@ export default function BanksScreen() {
                 {t(p.descKey)}
               </AppText>
             </View>
-            {/* Informational rows only — no destination yet. Chevrons implied
-                navigation and violated "no fabricated affordances". */}
           </View>
         ))}
 
-        {/* Join CTA */}
-        <View
-          style={[
-            styles.joinBox,
-            {
-              backgroundColor: BLUE_BG,
-              borderColor: BLUE_BORDER,
-              borderRadius: colors.radius,
-            },
-          ]}
-        >
-          <View style={[styles.joinIconWrap, { backgroundColor: BLUE_BG }]}>
-            <MaterialCommunityIcons
-              name="bank-check"
-              size={32}
-              color={BLUE}
-            />
-          </View>
-          <AppText
+        {/* Join CTA — hidden for institution members who already have an inbox */}
+        {!isFiMember ? (
+          <View
             style={[
-              styles.joinTitle,
-              { color: colors.foreground, textAlign },
+              styles.joinBox,
+              {
+                backgroundColor: BLUE_BG,
+                borderColor: BLUE_BORDER,
+                borderRadius: colors.radius,
+              },
             ]}
+            testID="banks-join-box"
           >
-            {t("business.banks.joinTitle")}
-          </AppText>
-          <AppText
-            style={[
-              styles.joinDesc,
-              { color: colors.mutedForeground, textAlign },
-            ]}
-          >
-            {t("business.banks.joinDesc")}
-          </AppText>
-          <Pressable
-            onPress={() => {
-              if (isSignedIn) {
-                // intent=fi forces FI account_type + bank activity on onboarding
-                // so this CTA can never leave the user as a dealer.
-                router.push("/business/onboarding?intent=fi");
-              } else {
-                router.push("/(tabs)/profile");
-              }
-            }}
-            style={styles.joinBtn}
-            testID="banks-register-cta"
-          >
-            <MaterialCommunityIcons
-              name="bank-plus"
-              size={18}
-              color="#FFFFFF"
-            />
-            <AppText style={styles.joinBtnText}>
-              {t("business.banks.joinCta")}
+            <View style={[styles.joinIconWrap, { backgroundColor: BLUE_BG }]}>
+              <MaterialCommunityIcons
+                name="bank-check"
+                size={32}
+                color={BLUE}
+              />
+            </View>
+            <AppText
+              style={[
+                styles.joinTitle,
+                { color: colors.foreground, textAlign },
+              ]}
+            >
+              {t("business.banks.joinTitle")}
             </AppText>
-          </Pressable>
-        </View>
+            <AppText
+              style={[
+                styles.joinDesc,
+                { color: colors.mutedForeground, textAlign },
+              ]}
+            >
+              {t("business.banks.joinDesc")}
+            </AppText>
+            <Pressable
+              onPress={() => {
+                if (isSignedIn) {
+                  // intent=fi forces FI account_type + bank activity on onboarding
+                  // so this CTA can never leave the user as a dealer.
+                  router.push("/business/onboarding?intent=fi");
+                } else {
+                  router.push("/(tabs)/profile");
+                }
+              }}
+              style={styles.joinBtn}
+              testID="banks-register-cta"
+            >
+              <MaterialCommunityIcons
+                name="bank-plus"
+                size={18}
+                color="#FFFFFF"
+              />
+              <AppText style={styles.joinBtnText}>
+                {t("business.banks.joinCta")}
+              </AppText>
+            </Pressable>
+          </View>
+        ) : null}
 
         {/* Neutral disclaimer */}
         <View
@@ -579,6 +604,12 @@ const styles = StyleSheet.create({
     fontFamily: "Inter_700Bold",
     marginTop: 4,
     marginBottom: 2,
+  },
+  productsHint: {
+    fontSize: 12.5,
+    fontFamily: "Inter_400Regular",
+    lineHeight: 18,
+    marginBottom: 4,
   },
   productCard: {
     alignItems: "center",

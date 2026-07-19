@@ -7,7 +7,10 @@
 //   4. Stack screens for section/* remain registered in app/_layout.tsx
 //
 // Run: pnpm --filter @workspace/banco-mobile run test:section-guard
-// Expectation: 25/25 PASS (rose Stay hero + black-void flexGrow + country label).
+// Expectation: 33/33 PASS (rose Stay hero + black-void flexGrow + country label
+// + section header icon hits stay inside / padding 12 + hard category locks
+// + no fake web topPad 67 anywhere under banco-mobile
+// + Banks FI finish: intent=fi from profile, Join gated on membership).
 
 import test from "node:test";
 import assert from "node:assert/strict";
@@ -32,6 +35,9 @@ const BOOKING_APP = path.join(
   "search",
   "BookingStaysApp.tsx",
 );
+const BANKS = path.join(APP_ROOT, "app", "business", "banks.tsx");
+const PROFILE = path.join(APP_ROOT, "app", "(tabs)", "profile.tsx");
+const I18N = path.join(APP_ROOT, "constants", "i18n.ts");
 
 const SECTION_SCREENS = [
   "section/car",
@@ -216,8 +222,6 @@ test("Discover portals never call host update({ category })", () => {
 });
 
 const ICONS = path.join(APP_ROOT, "components", "icons.tsx");
-const BANKS = path.join(APP_ROOT, "app", "business", "banks.tsx");
-const I18N = path.join(APP_ROOT, "constants", "i18n.ts");
 
 test("BookingStaysApp restores rose hero (not black StaysHomeHeader shell)", () => {
   const booking = fs.readFileSync(BOOKING_APP, "utf8");
@@ -301,7 +305,6 @@ test("Search / section / stays suggestion text uses RTL textAlign", () => {
   }
 });
 
-const PROFILE = path.join(APP_ROOT, "app", "(tabs)", "profile.tsx");
 const BREACTION = path.join(APP_ROOT, "components", "BReactionButton.tsx");
 
 test("Root layout loud-fails missing API base + ErrorBoundary wraps Clerk", () => {
@@ -409,4 +412,140 @@ test("MarketCountryButton shows country label (not flag-only)", () => {
     "MarketCountryButton must render triggerLabel",
   );
   assert.match(src, /\{label\}/, "must display country label text");
+});
+
+test("Section header keeps Search-host icon hits (buttons stay inside)", () => {
+  const section = fs.readFileSync(SECTION_APP, "utf8");
+  // Owner: shrinking iconBtn to 8 pushed search/filter outside the header.
+  assert.match(
+    section,
+    /iconBtn:\s*\{[\s\S]*?padding:\s*12/,
+    "section iconBtn must keep padding 12 (Search-host parity)",
+  );
+  assert.doesNotMatch(
+    section,
+    /iconBtn:\s*\{[\s\S]*?padding:\s*8/,
+    "section iconBtn must not regress to padding 8",
+  );
+  assert.match(
+    section,
+    /headerTitleWrap:\s*\{[\s\S]*?minWidth:\s*0/,
+    "title wrap must minWidth:0 so the title shrinks, not the buttons",
+  );
+  assert.match(
+    section,
+    /iconBtn:\s*\{[\s\S]*?flexShrink:\s*0/,
+    "iconBtn must flexShrink:0 so hits stay inside the header band",
+  );
+  assert.match(
+    section,
+    /header:\s*\{[\s\S]*?paddingHorizontal:\s*16/,
+    "section header H-pad must match Search host (16)",
+  );
+});
+
+test("SectionSearchApp hard-locks prop category on update/commit", () => {
+  const section = fs.readFileSync(SECTION_APP, "utf8");
+  assert.match(
+    section,
+    /updateRaw\(\{[\s\S]*?category,/,
+    "update must re-assert prop category (anti-melt)",
+  );
+  assert.match(
+    section,
+    /commitRaw\(\{[\s\S]*?category,/,
+    "commit must re-assert prop category (anti-melt)",
+  );
+  assert.match(
+    section,
+    /applyPatchRaw\(\{[\s\S]*?category,/,
+    "applyPatch must re-assert prop category (anti-melt)",
+  );
+});
+
+test("BookingStaysApp hard-locks real_estate + rent on update/commit", () => {
+  const booking = fs.readFileSync(BOOKING_APP, "utf8");
+  assert.match(
+    booking,
+    /updateRaw\(\{[\s\S]*?category:\s*["']real_estate["'][\s\S]*?engineKey:\s*["']rent["']/,
+    "Stay update must lock real_estate + rent",
+  );
+  assert.match(
+    booking,
+    /commitRaw\(\{[\s\S]*?category:\s*["']real_estate["'][\s\S]*?engineKey:\s*["']rent["']/,
+    "Stay commit must lock real_estate + rent",
+  );
+});
+
+test("no fake web topPad 67 remains under banco-mobile", () => {
+  // Owner crush: inventing 67px web pad destroyed headers. Search/Section use
+  // Math.max(insets.top, web?12:0). This scan locks the B-wave cleanup.
+  const fake67 = /Platform\.OS\s*===\s*["']web["']\s*\?\s*67/;
+  const hits = [];
+  function walk(dir) {
+    for (const ent of fs.readdirSync(dir, { withFileTypes: true })) {
+      if (ent.name === "node_modules" || ent.name === ".expo") continue;
+      const p = path.join(dir, ent.name);
+      if (ent.isDirectory()) walk(p);
+      else if (/\.(tsx|ts|jsx|js)$/.test(ent.name)) {
+        const src = fs.readFileSync(p, "utf8");
+        if (fake67.test(src)) hits.push(path.relative(APP_ROOT, p));
+      }
+    }
+  }
+  walk(APP_ROOT);
+  assert.equal(
+    hits.length,
+    0,
+    `fake web topPad 67 must stay gone; found in: ${hits.join(", ")}`,
+  );
+});
+
+test("Profile FI account type pushes onboarding with intent=fi", () => {
+  const src = fs.readFileSync(PROFILE, "utf8");
+  assert.match(
+    src,
+    /type === "financial_institution"[\s\S]*?onboarding\?intent=fi/,
+    "choosing FI must force intent=fi (F-ORD-05)",
+  );
+  assert.match(
+    src,
+    /profile-open-banks|\/business\/banks/,
+    "FI profile surface must deep-link to Banks hub",
+  );
+  assert.match(
+    src,
+    /const isFi = role === "financial_institution"/,
+    "FI must be distinguished from dealer/company business chrome",
+  );
+});
+
+test("Banks hub hides Join when institution membership is active", () => {
+  const src = fs.readFileSync(BANKS, "utf8");
+  assert.match(src, /onMembershipChange/);
+  assert.match(src, /!isFiMember/);
+  assert.match(src, /testID="banks-join-box"/);
+  assert.match(
+    src,
+    /onboarding\?intent=fi/,
+    "Banks Join CTA must keep intent=fi",
+  );
+});
+
+test("Banks productsHint honesty keys exist in en+ar", () => {
+  const src = fs.readFileSync(I18N, "utf8");
+  assert.match(src, /productsHint:\s*[\s\S]*?not a browsable partner list/i);
+  assert.match(src, /productsHint:\s*[\s\S]*?ليست قائمة شركاء/);
+  assert.match(src, /fiMode:\s*"Financial institution"/);
+  assert.match(src, /fiMode:\s*"مؤسسة مالية"/);
+});
+
+test("Banks stays outside SECTION_ROUTE (dedicated business world)", () => {
+  const discover = fs.readFileSync(DISCOVER, "utf8");
+  assert.match(discover, /router\.push\("\/business\/banks"/);
+  assert.doesNotMatch(
+    discover,
+    /banks:\s*"\/section\//,
+    "Banks must not be melted into section mini-app routes",
+  );
 });
