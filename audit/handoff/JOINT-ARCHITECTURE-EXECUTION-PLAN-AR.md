@@ -34,8 +34,9 @@
 | W1 عزل الأقسام | ✅ **MERGED** #32 | main |
 | W0 Replit | ⏳ على جهاز المالك | `git pull origin main` + شوتات |
 | W2 #28 | ✅ **MERGED** (fi-separation P0) | main عبر merge |
-| W3 FI أمان | ⏸ مواصفات جاهزة · ينتظر `Start W3` · سؤال مسار #40 مطروح لكلود | `CURSOR-ASK-CLAUDE-STRATEGY-THREE-GATES-AR.md` |
-| تشطيب أقسام | ▶️ PR #41 · حارس 42/42 | لا يكسر سلسلة W3 |
+| W3 FI أمان | ✅ **MERGED #40** — Claude اعتمد β (`7f6f3ec`) · لا إعادة تنفيذ | `628e7a0` على main |
+| تشطيب أقسام | ✅ **MERGED #41** · حارس 46/46 | `dad3a59` |
+| صيانة Claude M-1/M-2 | ▶️ `cursor/claude-compose-m1m2-4322` | مرآة `propertyType` في search-contract |
 
 ---
 
