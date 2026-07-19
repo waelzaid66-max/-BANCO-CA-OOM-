@@ -1,15 +1,13 @@
-# ⚡ REPLIT — الأمر الحي الوحيد
+# ⚡ REPLIT — تأكيد النسخة الصحيحة فقط
 
-→ **افتح ونفّذ حرفياً:**  
-`audit/handoff/REPLIT-RUN-FULL-NOW-AR.md`
-
-كل ملفات PASTE-REPLIT-* القديمة **ملغاة** إن تعارضت مع الملف فوق.
+→ **`audit/handoff/REPLIT-RUN-FULL-NOW-AR.md`**  
+→ اعتماد: **`audit/handoff/CANONICAL-CORRECT-VERSION-AR.md`**
 
 ```text
-ROLE: runtime only
-BRANCH: cursor/discover-enter-fix-4322
+CANONICAL_CODE_SHA: 5bef87e9a632aee5f55cbe917284d31f3f763453
+RESET: git reset --hard 5bef87e9a632aee5f55cbe917284d31f3f763453
+ROLE: confirm + run + shots ONLY — NO MAINTENANCE
+FORBIDDEN: edit · commit · push · Copilot · fix
 PR: #37
-DO: hard reset origin tip → guard 25/25 → expo start --clear → shots P1–P6
-REPLY: ## REPLIT → CURSOR (RUNTIME ONLY — NO CODE)
-FORBIDDEN: edit · commit · push · Copilot
+REPLY: ## REPLIT → CURSOR (CONFIRM CANONICAL ONLY — NO MAINTENANCE)
 ```
