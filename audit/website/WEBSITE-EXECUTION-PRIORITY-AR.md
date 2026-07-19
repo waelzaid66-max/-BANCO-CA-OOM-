@@ -44,6 +44,8 @@ Kill-switch **وقت التشغيل** على الويب موجود: `WEB_PLUG_EN
 | 6 | Full-copy Phases 1–6 | ✅ على `main` — [`WEBSITE-TRANSFER-HANDOFF-AR.md`](./WEBSITE-TRANSFER-HANDOFF-AR.md) |
 | 7 | Staging pack (Docker/env/smoke) | ✅ Phase 7 — `pnpm run ops:website-staging-prep` |
 | 8 | Soft-launch pack | ✅ Phase 8 — `pnpm run ops:website-soft-launch-prep` · CDN ⏳ OPS |
+| 9 | Market RFQ create (write MVP) | ✅ Phase 9 — [`WEBSITE-PHASE9-MARKET-RFQ-CREATE-STATUS-AR.md`](./WEBSITE-PHASE9-MARKET-RFQ-CREATE-STATUS-AR.md) |
+| 10 | Offer write / RFQ detail | ⏳ موجة لاحقة بعد Phase 9 |
 
 
 | 7 | Clerk workspace / journeys | ✅ ضمن Phases 2–3 على المكدس |
