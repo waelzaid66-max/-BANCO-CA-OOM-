@@ -23,6 +23,8 @@
 | O22 | **OPEN — MERGE** | PR #37 mobile finish + إثبات Replit |
 | O23 | **OPEN — MERGE** | PR #28 FI P0 بعد #37 + smoke يدوي |
 | O24 | **BLOCKED** | W3 FI security — يحتاج Start صريح بعد #28 |
+| O25 | **CLOSED** | Booking Stay: شارة `rentalTerm` + empty post-request + RTL empty CTAs (#37) |
+| O26 | **CLOSED** | مبادئ تشطيب Cursor + جرد ميني-آبس صادق 2026-07-19 |
 
 ---
 

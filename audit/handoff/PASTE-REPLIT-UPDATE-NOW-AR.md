@@ -13,7 +13,7 @@ EXECUTE:
 1) READ: ROLES-CURSOR-VS-REPLIT-AR.md + GOLDEN-PATH-REPLIT-CURSOR-AR.md
 2) git fetch && checkout cursor/discover-enter-fix-4322
 3) git reset --hard origin/cursor/discover-enter-fix-4322
-4) Print SYNC_SHA + run section-miniapp-guard (report 21/21 or paste failure)
+4) Print SYNC_SHA + run section-miniapp-guard (report 24/24 or paste failure)
 5) npx expo start --clear
 6) Capture P01…P13 screenshots — NEVER hide FAIL, NEVER patch UI to look green
 7) Paste Metro errors / what looks broken / speed notes

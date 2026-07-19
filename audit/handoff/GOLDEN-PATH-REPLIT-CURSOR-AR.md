@@ -35,7 +35,7 @@ git merge-base --is-ancestor 6b3c1d1c7ef5dda545f92dd0425de60d83529fc4 HEAD
 ```bash
 cd artifacts/banco-mobile
 node --test tests/section-miniapp-guard.test.mjs
-# الصق: PASS count (المتوقع 21/21) أو الفشل حرفياً
+# الصق: PASS count (المتوقع 24/24) أو الفشل حرفياً
 ```
 
 ### 3) تشغيل Expo ونشر المعاينة
@@ -62,7 +62,7 @@ npx expo start --clear
 ## REPLIT → CURSOR (RUNTIME ONLY — NO CODE)
 
 SYNC_SHA: …
-GUARD: 21/21 PASS|FAIL (+ لصق الفشل إن وُجد)
+GUARD: 24/24 PASS|FAIL (+ لصق الفشل إن وُجد)
 EXPO: OK|FAIL
 
 P01…P13: PASS/FAIL + شوتات

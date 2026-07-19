@@ -740,7 +740,11 @@ export function SectionSearchApp({
             }}
             style={[
               styles.emptyCta,
-              { backgroundColor: accent, borderRadius: colors.radius },
+              {
+                flexDirection: rowDir,
+                backgroundColor: accent,
+                borderRadius: colors.radius,
+              },
             ]}
             testID="section-empty-clear"
           >
@@ -762,6 +766,7 @@ export function SectionSearchApp({
           style={[
             styles.emptyCta,
             {
+              flexDirection: rowDir,
               backgroundColor: colors.card,
               borderColor: accent,
               borderWidth: 1,
@@ -784,6 +789,7 @@ export function SectionSearchApp({
             style={[
               styles.emptyCta,
               {
+                flexDirection: rowDir,
                 backgroundColor: colors.card,
                 borderColor: colors.border,
                 borderWidth: 1,
@@ -1380,7 +1386,8 @@ const styles = StyleSheet.create({
   filterBadge: {
     position: "absolute",
     top: 6,
-    right: 6,
+    // Logical end — flips correctly under RTL (was pinned `right`).
+    end: 6,
     width: 14,
     height: 14,
     borderRadius: 7,
@@ -1498,7 +1505,6 @@ const styles = StyleSheet.create({
     paddingBottom: 80,
   },
   emptyCta: {
-    flexDirection: "row",
     alignItems: "center",
     gap: 8,
     paddingVertical: 11,

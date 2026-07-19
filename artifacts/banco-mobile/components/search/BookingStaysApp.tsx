@@ -6,7 +6,7 @@ import {
   FeedItem,
   SearchListingsCategory,
 } from "@workspace/api-client-react";
-import { router, useNavigation } from "expo-router";
+import { router, useNavigation, type Href } from "expo-router";
 import { usePreventRemove } from "@react-navigation/native";
 import * as Haptics from "expo-haptics";
 import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
@@ -328,12 +328,14 @@ export function BookingStaysApp() {
     commit(baseline);
   }, [buildSeed, commit, criteria.marketCountry]);
 
-  // Filter badge excludes the term tabs (surfaced separately) and payment (rentals
-  // carry no financing) — only price / location / near-me / market count here.
+  // Filter badge: property-type tabs are separate chrome (excluded). Rental TERM
+  // lives only in FilterSheet — must count so the badge stays honest. Payment
+  // omitted (rentals carry no financing).
   const activeFilterCount = [
     !!criteria.minPrice || !!criteria.maxPrice,
     !!criteria.location,
     criteria.nearMeEnabled,
+    !!criteria.rentalTerm,
     criteria.marketCountry !==
       (baselineRef.current?.marketCountry ?? DEFAULT_MARKET_COUNTRY),
   ].filter(Boolean).length;
@@ -435,7 +437,7 @@ export function BookingStaysApp() {
         <AppText style={[styles.emptyText, { color: colors.mutedForeground }]}>
           {t("search.noResultsHint")}
         </AppText>
-        {activeFilterCount > 0 || draftQuery.trim() || !!criteria.rentalTerm ? (
+        {activeFilterCount > 0 || draftQuery.trim() ? (
           <Pressable
             onPress={() => {
               playSound("tap");
@@ -443,7 +445,11 @@ export function BookingStaysApp() {
             }}
             style={[
               styles.emptyCta,
-              { backgroundColor: STAYS_ACCENT, borderRadius: colors.radius },
+              {
+                flexDirection: rowDir,
+                backgroundColor: STAYS_ACCENT,
+                borderRadius: colors.radius,
+              },
             ]}
             testID="stays-empty-clear"
           >
@@ -453,6 +459,29 @@ export function BookingStaysApp() {
             </AppText>
           </Pressable>
         ) : null}
+        {/* Same honesty bar as SectionSearchApp — empty must not dead-end. */}
+        <Pressable
+          onPress={() => {
+            playSound("tap");
+            router.push("/listings/create?request=1" as Href);
+          }}
+          style={[
+            styles.emptyCta,
+            {
+              flexDirection: rowDir,
+              backgroundColor: colors.card,
+              borderColor: STAYS_ACCENT,
+              borderWidth: 1,
+              borderRadius: colors.radius,
+            },
+          ]}
+          testID="stays-empty-post-request"
+        >
+          <Feather name="edit-2" size={16} color={STAYS_ACCENT} />
+          <AppText style={[styles.emptyCtaText, { color: STAYS_ACCENT }]}>
+            {t("search.emptyPostRequest")}
+          </AppText>
+        </Pressable>
       </View>
     );
   }
@@ -738,7 +767,6 @@ const styles = StyleSheet.create({
   },
   applyText: { fontSize: 15, fontFamily: "Inter_600SemiBold" },
   emptyCta: {
-    flexDirection: "row",
     alignItems: "center",
     gap: 8,
     paddingVertical: 11,

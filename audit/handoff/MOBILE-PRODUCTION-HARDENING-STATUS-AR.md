@@ -18,7 +18,12 @@
 | MOB-07 map param `string\|string[]` normalize | ✅ |
 | Search suggestions RTL insets | ✅ |
 | Profile grid badges logical start/end | ✅ |
-| حارس section-miniapp | ✅ **21/21** |
+| حارس section-miniapp | ✅ **24/24** |
+| Booking empty demand bridge | ✅ |
+| Booking filter badge + rentalTerm | ✅ |
+| Empty CTA RTL (`rowDir`) + badge `end` | ✅ |
+| مبادئ التشطيب | `CURSOR-FINISH-GOVERNANCE-PRINCIPLES-AR.md` |
+| جرد ميني-آبس صادق | `audit/mobile/MINI-APPS-HONEST-INVENTORY-2026-07-19-AR.md` |
 | Map CTA = real_estate فقط | ✅ |
 | suggestion textAlign RTL (3 أسطح) | ✅ |
 | Stay header مضغوط (لا pad 67) | ✅ |

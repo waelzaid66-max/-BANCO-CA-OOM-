@@ -342,7 +342,8 @@ const styles = StyleSheet.create({
   filterBadge: {
     position: "absolute",
     top: -2,
-    right: -2,
+    // Logical end — flips correctly under RTL (was pinned `right`).
+    end: -2,
     minWidth: 15,
     height: 15,
     borderRadius: 8,

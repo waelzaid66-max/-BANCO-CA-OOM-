@@ -7,6 +7,7 @@
 //   4. Stack screens for section/* remain registered in app/_layout.tsx
 //
 // Run: pnpm --filter @workspace/banco-mobile run test:section-guard
+// Expectation: 24/24 PASS (includes Booking honesty + RTL empty CTAs).
 
 import test from "node:test";
 import assert from "node:assert/strict";
@@ -324,4 +325,44 @@ test("BReactionButton fans inward under RTL", () => {
   const src = fs.readFileSync(BREACTION, "utf8");
   assert.match(src, /fanSign|isRTL/, "must be RTL-aware");
   assert.match(src, /chipHolderStart/, "RTL chip anchor required");
+});
+
+test("Booking empty state offers demand bridge (no dead-end)", () => {
+  const booking = fs.readFileSync(BOOKING_APP, "utf8");
+  assert.match(
+    booking,
+    /testID=["']stays-empty-post-request["']/,
+    "BookingStaysApp empty must offer post-request CTA",
+  );
+  assert.match(
+    booking,
+    /search\.emptyPostRequest/,
+    "Booking empty CTA must use emptyPostRequest copy",
+  );
+});
+
+test("Booking filter badge counts rentalTerm (FilterSheet-only filter)", () => {
+  const booking = fs.readFileSync(BOOKING_APP, "utf8");
+  // activeFilterCount array must include !!criteria.rentalTerm — term moved off
+  // header tabs into FilterSheet; omitting it lies about active filters.
+  assert.match(
+    booking,
+    /activeFilterCount\s*=\s*\[[\s\S]*?!!criteria\.rentalTerm/,
+    "activeFilterCount must include rentalTerm",
+  );
+});
+
+test("Section + Stays empty CTAs set flexDirection from rowDir (RTL)", () => {
+  const section = fs.readFileSync(SECTION_APP, "utf8");
+  const booking = fs.readFileSync(BOOKING_APP, "utf8");
+  assert.match(
+    section,
+    /emptyCta[\s\S]{0,80}flexDirection:\s*rowDir/,
+    "SectionSearchApp empty CTAs must honor rowDir",
+  );
+  assert.match(
+    booking,
+    /emptyCta[\s\S]{0,80}flexDirection:\s*rowDir/,
+    "BookingStaysApp empty CTAs must honor rowDir",
+  );
 });

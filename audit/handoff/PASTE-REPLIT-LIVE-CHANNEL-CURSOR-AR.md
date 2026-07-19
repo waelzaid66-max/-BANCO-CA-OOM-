@@ -15,7 +15,7 @@
 | Branch | `cursor/discover-enter-fix-4322` |
 | **أمر النسخة** | `git reset --hard origin/cursor/discover-enter-fix-4322` ثم اطبع `git rev-parse HEAD` |
 | Code floor (سلف إلزامي) | `6b3c1d1c7ef5dda545f92dd0425de60d83529fc4` |
-| حارس | **21/21 PASS** (`section-miniapp-guard`) |
+| حارس | **24/24 PASS** (`section-miniapp-guard`) |
 | مسار ذهبي | `GOLDEN-PATH-REPLIT-CURSOR-AR.md` |
 | PR | https://github.com/waelzaid66-max/-BANCO-CA-OOM-/pull/37 |
 
@@ -58,7 +58,7 @@ rg -n "Array\.isArray\(\s*params\.map\s*\)" artifacts/banco-mobile/components/se
 
 cd artifacts/banco-mobile
 node --test tests/section-miniapp-guard.test.mjs
-# المتوقع: 21/21 pass
+# المتوقع: 24/24 pass
 
 # نظّف الضجيج ثم شغّل
 npx expo start --clear
@@ -139,7 +139,7 @@ npx expo start --clear
 ## REPLIT → CURSOR (RUNTIME ONLY — NO CODE)
 
 SYNC_SHA: …
-GUARD: 21/21 PASS|FAIL
+GUARD: 24/24 PASS|FAIL
 EXPO: OK|FAIL
 
 ### P01…P13
