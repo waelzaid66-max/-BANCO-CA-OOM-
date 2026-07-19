@@ -13,7 +13,8 @@
     "test:resilience": "node --test tests/mobile-resilience.test.mjs",
     "test:universal-links": "node --test tests/universal-links-config.test.mjs",
     "test:session-restore": "node --test tests/session-restore.test.mjs",
-    "test": "pnpm run test:icons && pnpm run test:lib && pnpm run test:resilience && pnpm run test:universal-links && pnpm run test:session-restore"
+    "test:section-guard": "node --test tests/section-miniapp-guard.test.mjs",
+    "test": "pnpm run test:icons && pnpm run test:lib && pnpm run test:resilience && pnpm run test:universal-links && pnpm run test:session-restore && pnpm run test:section-guard"
   },
   "devDependencies": {
     "@babel/core": "^7.25.2",

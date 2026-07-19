@@ -75,12 +75,6 @@ interface Props {
   onApplySaved: (s: SavedSearch) => void;
   onOpenListing: (item: FeedItem) => void;
   /**
-   * @deprecated Section cards navigate via SECTION_ROUTE / router.push.
-   * Kept optional so the Search tab host can still pass a no-op without
-   * re-melting catalogues into shared Search-tab criteria.
-   */
-  onBrowseSection?: (cat: Category, engine: string) => void;
-  /**
    * Open the existing results map over a coordinate-rich category (real-estate).
    * The host latches the intent and auto-enables map mode once mappable results
    * arrive, falling back to the list when none carry coordinates — so tapping
