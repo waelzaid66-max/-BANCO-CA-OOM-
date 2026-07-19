@@ -7,7 +7,8 @@
 
 ```text
 ROLE: Replit Runtime Proof ONLY (no code ownership)
-FORBIDDEN: edit source · commit · push fixes · product decisions · Copilot
+AUTHORITY: Owner + Cursor only — see OWNER-ONLY-HONEST-ENGINEER-LOCK-AR.md
+FORBIDDEN: edit source · commit · push fixes · product decisions · Copilot · any redesign advice
 
 FORENSIC:
   ENTER rows culprit = Cursor @ 6ba5f1b — restored photo cards @ 6b18408
