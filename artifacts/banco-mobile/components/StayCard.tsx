@@ -186,8 +186,10 @@ function StayCardComponent({ item, onPress, onSave, isSaved }: StayCardProps) {
               style={styles.scrim}
             />
 
-            {/* Top-start: bookable ribbon + sponsored */}
-            <View style={[styles.topBadges, isRTL ? { right: 10, left: undefined } : null]}>
+            {/* Top-start: bookable ribbon + sponsored (logical start/end — not
+                physical left/right — so RTL mirrors correctly; Claude/Cursor
+                coverActions lesson). */}
+            <View style={styles.topBadges}>
               {bookable ? (
                 <View style={[styles.bookablePill, { backgroundColor: STAYS_ACCENT }]}>
                   <Ionicons name="calendar" size={12} color="#FFFFFF" />
@@ -204,7 +206,7 @@ function StayCardComponent({ item, onPress, onSave, isSaved }: StayCardProps) {
             </View>
 
             {/* Top-end: share + the identity B reaction (fully wired) */}
-            <View style={[styles.topActions, isRTL ? { left: 10, right: undefined } : null]}>
+            <View style={styles.topActions}>
               <Pressable style={styles.actionBtn} onPress={handleShare} hitSlop={8}>
                 <Ionicons name="share-social-outline" size={19} color="#FFFFFF" />
               </Pressable>
@@ -306,7 +308,8 @@ const styles = StyleSheet.create({
   topBadges: {
     position: "absolute",
     top: 10,
-    left: 10,
+    // Logical edge — mirrors in RTL (physical left/right do not).
+    start: 10,
     flexDirection: "row",
     gap: 6,
     alignItems: "center",
@@ -335,7 +338,7 @@ const styles = StyleSheet.create({
   topActions: {
     position: "absolute",
     top: 10,
-    right: 10,
+    end: 10,
     flexDirection: "row",
     gap: 8,
   },

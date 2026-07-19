@@ -72,7 +72,18 @@ C6 Market matrix: دول + عملات
 C7 results · FilterSheet: industry (لما آلة) · material · origin (بدون تسريب أصل للمصانع)
 ```
 
-Deep-link: `/section/car?engine=import` · `/section/real-estate?map=1`
+**Stay / Booking (`/section/booking`):**
+```
+S1 Rose hero (B-OOM STAY · Where to?)
+S2 Type strip: sort 34px · الكل / استوديو / شقة / فيلا / شاليه · مطلوب
+S3 Market matrix: دول + عملات
+S4 Rental strip: يومي / قانون جديد… → criteria.rentalTerm (نفس ورقة الفلاتر)
+S5 results StayCard · map toggle · ?map=1 latch
+S6 FilterSheet: أنواع Stay فقط · أنظمة إيجار · مطلوب · موقع · سعر
+EXIT: باك / سوايپ / هاردوير → ريست فلاتر أوتوماتيك (لا ديالوج تأكيد)
+```
+
+Deep-link: `/section/car?engine=import` · `/section/real-estate?map=1` · `/section/booking?map=1`
 
 ---
 

@@ -7,7 +7,7 @@
 //   4. Stack screens for section/* remain registered in app/_layout.tsx
 //
 // Run: pnpm --filter @workspace/banco-mobile run test:section-guard
-// Expectation: 39/39 PASS (rose Stay hero + black-void flexGrow + country label
+// Expectation: 40/40 PASS (rose Stay hero + black-void flexGrow + country label
 // + section header icon hits stay inside / padding 12 + hard category locks
 // + no fake web topPad 67 anywhere under banco-mobile
 // + Banks FI finish: intent=fi from profile, Join gated on membership
@@ -15,7 +15,8 @@
 // + RE offer/type/market strips + FilterSheet refinements wiring
 // + Car brand/origin strips + Discover ENTER + car?engine=import
 // + Materials material/origin/market strips + FilterSheet showMaterial wired
-// + Stay auto-reset on back + rental strip + map latch + scoped property types).
+// + Stay auto-reset on back + rental strip + map latch + scoped property types
+// + Stay sort 34px + StayCard logical start/end).
 
 import test from "node:test";
 import assert from "node:assert/strict";
@@ -341,6 +342,38 @@ test("Stay auto-resets filters on back; rental strip + map latch wired", () => {
     booking,
     /testID="stays-type-strip"/,
     "Stay type strip must be identifiable for visual audit",
+  );
+  assert.match(
+    booking,
+    /testID="stays-sort-cycle"/,
+    "Stay must expose W4-style 34px sort chip in type strip (every-section)",
+  );
+  assert.match(
+    booking,
+    /sortChip:\s*\{[\s\S]*?width:\s*34[\s\S]*?height:\s*34/,
+    "Stay sort chip must be 34×34 (P-SECTION S6 / Claude W4)",
+  );
+});
+
+test("StayCard badges use logical start/end (RTL-safe)", () => {
+  const stayCard = fs.readFileSync(
+    path.join(APP_ROOT, "components", "StayCard.tsx"),
+    "utf8",
+  );
+  assert.match(
+    stayCard,
+    /topBadges:[\s\S]*?start:\s*10/,
+    "StayCard topBadges must use logical start (not physical left)",
+  );
+  assert.match(
+    stayCard,
+    /topActions:[\s\S]*?end:\s*10/,
+    "StayCard topActions must use logical end (not physical right)",
+  );
+  assert.doesNotMatch(
+    stayCard,
+    /isRTL\s*\?\s*\{\s*right:\s*10/,
+    "StayCard must not reintroduce physical left/right RTL overrides",
   );
 });
 

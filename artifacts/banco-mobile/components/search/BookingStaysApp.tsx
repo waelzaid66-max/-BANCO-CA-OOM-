@@ -785,7 +785,8 @@ export function BookingStaysApp() {
         </View>
       )}
 
-      {/* Controls: stay-type tabs + Wanted — country/currency in matrix below. */}
+      {/* Controls: sort (W4 / every-section) · stay-type tabs · Wanted.
+          Country/currency live in the matrix below — keep this strip short. */}
       <ScrollView
         horizontal
         showsHorizontalScrollIndicator={false}
@@ -794,6 +795,60 @@ export function BookingStaysApp() {
         contentContainerStyle={[styles.controlsRow, { flexDirection: rowDir }]}
         testID="stays-type-strip"
       >
+        <Pressable
+          onPress={() => {
+            playSound("tap");
+            Haptics.selectionAsync();
+            const cycle = [
+              "recommended",
+              "newest",
+              "price_asc",
+              "price_desc",
+            ] as const;
+            const next =
+              cycle[
+                (cycle.indexOf(
+                  criteria.sort as (typeof cycle)[number],
+                ) +
+                  1) %
+                  cycle.length
+              ];
+            update({ sort: next });
+          }}
+          style={[
+            styles.sortChip,
+            {
+              backgroundColor:
+                criteria.sort !== "recommended"
+                  ? STAYS_ACCENT
+                  : colors.secondary,
+              flexDirection: rowDir,
+            },
+          ]}
+          accessibilityLabel={t(`search.sortOptions.${criteria.sort}`)}
+          testID="stays-sort-cycle"
+        >
+          <Feather
+            name={
+              criteria.sort === "price_asc"
+                ? "trending-up"
+                : criteria.sort === "price_desc"
+                  ? "trending-down"
+                  : criteria.sort === "newest"
+                    ? "clock"
+                    : "list"
+            }
+            size={14}
+            color={
+              criteria.sort !== "recommended"
+                ? "#FFFFFF"
+                : colors.mutedForeground
+            }
+          />
+        </Pressable>
+        <View
+          style={[styles.chipStripDivider, { backgroundColor: colors.border }]}
+        />
         {[{ value: ALL_TAB, label: t("search.discover.section.staysAll") }]
           .concat(
             STAY_TYPE_VALUES.map((v) => {
@@ -1232,12 +1287,26 @@ const styles = StyleSheet.create({
     flexGrow: 0,
   },
   // Type tabs only (country/currency moved to marketMatrix below).
+  // Vertical rhythm: 8 → 6 → 4 between type / market / rental (P-STAY mm).
   controlsRow: {
     alignItems: "center",
     gap: 8,
     paddingHorizontal: 12,
     paddingTop: 8,
     paddingBottom: 2,
+  },
+  sortChip: {
+    width: 34,
+    height: 34,
+    borderRadius: 17,
+    alignItems: "center",
+    justifyContent: "center",
+    flexShrink: 0,
+  },
+  chipStripDivider: {
+    width: StyleSheet.hairlineWidth,
+    height: 22,
+    alignSelf: "center",
   },
   marketMatrix: {
     alignItems: "center",
