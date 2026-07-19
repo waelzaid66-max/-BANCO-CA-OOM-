@@ -129,8 +129,9 @@ jobs:
           node-version: 24
           cache: pnpm
       - run: pnpm install --frozen-lockfile
-      - name: Icons + lib + resilience guards
-        run: >-
-          pnpm --filter @workspace/banco-mobile run test:icons
-          && pnpm --filter @workspace/banco-mobile run test:lib
-          && pnpm --filter @workspace/banco-mobile run test:resilience
+      # Full mobile static pack — icons · lib · resilience · universal-links ·
+      # session-restore · section-miniapp (must match package.json "test").
+      - name: Mobile static regression (full pack)
+        run: pnpm --filter @workspace/banco-mobile run test
+      - name: Demo seed production guard (static)
+        run: pnpm --filter @workspace/api-server run test:seed-guard
