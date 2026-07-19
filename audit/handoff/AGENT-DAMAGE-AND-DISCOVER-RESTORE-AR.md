@@ -45,16 +45,15 @@
 
 ## حارس
 
-`section-miniapp-guard.test.mjs` → **26/26 PASS**  
-يفرض وجود `sectionGrid|sectionCard` ويرفض `sectionPortal|sectionList`.
+`section-miniapp-guard.test.mjs` → **25/25 PASS**  
+يفرض كروت Discover + هيرو Stay الوردي ويرفض ENTER و`StaysHomeHeader`.
 
 ## إثبات Replit (فوري)
 
 ```bash
 git fetch && git checkout cursor/discover-enter-fix-4322
 git reset --hard origin/cursor/discover-enter-fix-4322
-# SYNC_SHA يجب = 6b18408 (أو أحدث tip على نفس الفرع)
-node --test artifacts/banco-mobile/tests/section-miniapp-guard.test.mjs  # 26/26
+node --test artifacts/banco-mobile/tests/section-miniapp-guard.test.mjs  # 25/25
 npx expo start --clear
 ```
 

@@ -12,7 +12,7 @@
 |-----|--------|
 | Discover بوابات ENTER أفقية | ✅ |
 | إخفاء CategoryTabs/engines/فلتر على Discover | ✅ |
-| BOOM STAY هيدر مضغوط (`StaysHomeHeader`) | ✅ |
+| BOOM STAY هيرو وردي من main (`SectionBackdrop`) — الأسود محذوف | ✅ |
 | أيقونات `key` / `business` | ✅ |
 | **MOB-07** Explore on map → `/section/real-estate?map=1` | ✅ |
 | MOB-07 map param `string\|string[]` normalize | ✅ |

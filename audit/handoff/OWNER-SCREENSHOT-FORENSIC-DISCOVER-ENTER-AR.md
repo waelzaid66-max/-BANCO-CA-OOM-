@@ -32,13 +32,14 @@
 
 ---
 
-## ماذا أصلحنا في هذا الفرع
+## تصحيح لاحق (مهم — لا تعتمد الفقرات القديمة أعلاه)
 
-1. **Discover:** استبدال شبكة المربعات 2×2 بصفوف بوابة أفقية (صورة مصغّرة + عنوان + «ادخل» + شيفرون) — كلها `router.push(SECTION_ROUTE)`.
-2. **Search host:** على Discover — هيدر أقصر + إخفاء زر الفلتر (مع إخفاء CategoryTabs/engines من MOB-05).
-3. **BOOM STAY:** تركيب `StaysHomeHeader` أسود مضغوط (صف هوية واحد + بحث 44px + تبويبات قصيرة).
-4. **SectionSearchApp:** هيدر أخف قليلاً.
-5. **حارس CI:** اختبارات ضد عودة EngineChips داخل Discover وإخفاء `filter-toggle`.
+المالك رفض صفوف ENTER والهيدر الأسود. الاسترجاع الحالي:
+
+1. **Discover:** شبكة كروت صور 2×2 من `main` + `router.push(SECTION_ROUTE)`.
+2. **Stay:** هيرو وردي + `SectionBackdrop` من `main` — `StaysHomeHeader` محذوف.
+3. **Search host:** إخفاء CategoryTabs/engines على Discover (MOB-05).
+4. **حارس CI:** يرفض ENTER ويرفض `StaysHomeHeader` ويفرض `flexGrow:0` + اسم الدولة.
 
 ---
 

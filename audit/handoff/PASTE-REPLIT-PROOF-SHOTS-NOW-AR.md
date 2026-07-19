@@ -38,7 +38,8 @@ git rev-parse --short HEAD
 ```bash
 rg -n "sectionPortal|sectionList" artifacts/banco-mobile/components/SearchDiscover.tsx
 rg -n 'viewState !== "discover"' "artifacts/banco-mobile/app/(tabs)/search.tsx"
-rg -n "StaysHomeHeader" artifacts/banco-mobile/components/search/BookingStaysApp.tsx
+rg -n "SectionBackdrop|styles\\.hero|StaysHomeHeader" artifacts/banco-mobile/components/search/BookingStaysApp.tsx
+# expect rose hero; StaysHomeHeader ABSENT
 ```
 
 ثم **Full Reload** لـ Expo (امسح كاش المعاينة إن ظهر الشكل القديم).

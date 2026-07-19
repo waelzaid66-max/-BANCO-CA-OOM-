@@ -7,7 +7,7 @@
 //   4. Stack screens for section/* remain registered in app/_layout.tsx
 //
 // Run: pnpm --filter @workspace/banco-mobile run test:section-guard
-// Expectation: 26/26 PASS (includes black-void flexGrow + country label).
+// Expectation: 25/25 PASS (rose Stay hero + black-void flexGrow + country label).
 
 import test from "node:test";
 import assert from "node:assert/strict";
@@ -217,25 +217,34 @@ test("Discover portals never call host update({ category })", () => {
 
 const ICONS = path.join(APP_ROOT, "components", "icons.tsx");
 const BANKS = path.join(APP_ROOT, "app", "business", "banks.tsx");
-const STAYS_HEADER = path.join(
-  APP_ROOT,
-  "components",
-  "search",
-  "stays",
-  "StaysHomeHeader.tsx",
-);
 const I18N = path.join(APP_ROOT, "constants", "i18n.ts");
 
-test("BookingStaysApp mounts StaysHomeHeader (compact BOOM STAY)", () => {
+test("BookingStaysApp restores rose hero (not black StaysHomeHeader shell)", () => {
   const booking = fs.readFileSync(BOOKING_APP, "utf8");
   assert.match(
     booking,
-    /StaysHomeHeader/,
-    "BookingStaysApp must mount StaysHomeHeader",
+    /SectionBackdrop/,
+    "BookingStaysApp must mount the rose SectionBackdrop hero from main",
   );
-  assert.ok(
-    fs.existsSync(STAYS_HEADER),
-    "StaysHomeHeader.tsx must exist",
+  assert.match(
+    booking,
+    /styles\.hero/,
+    "BookingStaysApp must render the rose hero shell",
+  );
+  assert.doesNotMatch(
+    booking,
+    /StaysHomeHeader/,
+    "must not remount the black StaysHomeHeader that replaced the working Stay UI",
+  );
+  assert.doesNotMatch(
+    booking,
+    /Platform\.OS\s*===\s*["']web["']\s*\?\s*67/,
+    "Stay must not restore fake web topPad 67",
+  );
+  assert.match(
+    booking,
+    /hScroll:\s*\{\s*flexGrow:\s*0/,
+    "Stay chip strip must pin flexGrow:0 (no black void)",
   );
 });
 
@@ -294,16 +303,6 @@ test("Search / section / stays suggestion text uses RTL textAlign", () => {
 
 const PROFILE = path.join(APP_ROOT, "app", "(tabs)", "profile.tsx");
 const BREACTION = path.join(APP_ROOT, "components", "BReactionButton.tsx");
-
-test("StaysHomeHeader stays compact — no web pad constant 67", () => {
-  const src = fs.readFileSync(STAYS_HEADER, "utf8");
-  assert.doesNotMatch(
-    src,
-    /Platform\.OS\s*===\s*["']web["']\s*\?\s*67/,
-    "must not restore the oversized web top pad (67)",
-  );
-  assert.match(src, /testID=["']stays-header["']/);
-});
 
 test("Root layout loud-fails missing API base + ErrorBoundary wraps Clerk", () => {
   const layout = fs.readFileSync(LAYOUT, "utf8");

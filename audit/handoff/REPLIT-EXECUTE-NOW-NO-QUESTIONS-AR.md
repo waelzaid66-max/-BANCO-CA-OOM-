@@ -11,8 +11,8 @@
 
 | سؤالك | القرار النهائي |
 |--------|----------------|
-| هل نعمل redesign حقيقي لصفحة Booking؟ | **لا.** ممنوع redesign واسع. شكل الهيدر فقط عبر `StaysHomeHeader` المضغوط الموجود في الفرع. لا تعيد بناء Booking. |
-| تعارض هيدر: inline قديم vs `StaysHomeHeader`؟ | **اعتمد `StaysHomeHeader` فقط** كما في `BookingStaysApp.tsx` على هذا الفرع. لا ترجع الـ hero الوردي/الطويل. لا تخلط النسختين. |
+| هل نعمل redesign حقيقي لصفحة Booking؟ | **لا.** ممنوع redesign. الهيدر الوردي من `main` هو الصحيح — `StaysHomeHeader` الأسود **محذوف**. |
+| تعارض هيدر؟ | **اعتمد الهيرو الوردي + `SectionBackdrop` فقط** في `BookingStaysApp.tsx`. ممنوع أي شريط أسود بديل. |
 | تسجيل أيقونات `key` و `business`؟ | **نعم — إلزامي.** تُسجَّل في `components/icons.tsx` (Cursor يصلحها على نفس الفرع). بعد السحب: لا تحذيرات Unmapped لهذين الاسمين. |
 
 ---

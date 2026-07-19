@@ -71,12 +71,13 @@ git merge-base --is-ancestor 6b3c1d1c7ef5dda545f92dd0425de60d83529fc4 HEAD \
 rg -n "sectionPortal|sectionList" artifacts/banco-mobile/components/SearchDiscover.tsx
 rg -n 'router\.push\("/section/real-estate\?map=1"\)' "artifacts/banco-mobile/app/(tabs)/search.tsx"
 rg -n "Array\.isArray\(\s*params\.map\s*\)" artifacts/banco-mobile/components/search/SectionSearchApp.tsx
-rg -n "StaysHomeHeader" artifacts/banco-mobile/components/search/BookingStaysApp.tsx
+rg -n "SectionBackdrop|styles\\.hero|StaysHomeHeader" artifacts/banco-mobile/components/search/BookingStaysApp.tsx
+# expect SectionBackdrop + hero; StaysHomeHeader must be ABSENT
 rg -n '"key":\s*Key' artifacts/banco-mobile/components/icons.tsx
 rg -n '"business":\s*Building2' artifacts/banco-mobile/components/icons.tsx
 
 cd artifacts/banco-mobile && node --test tests/section-miniapp-guard.test.mjs
-# المتوقع: 26/26 pass
+# المتوقع: 25/25 pass
 ```
 
 ---
@@ -105,7 +106,7 @@ npx expo start --clear
 SYNC_SHA: <خرج git rev-parse HEAD بعد reset>
 SHORT: <قصير>
 CODE_FLOOR: 6b3c1d1 ANCESTOR_OK
-GUARD: 26/26 PASS|FAIL
+GUARD: 25/25 PASS|FAIL
 EXPO: OK|FAIL
 COPILOT: IGNORED (UNTRUSTED)
 

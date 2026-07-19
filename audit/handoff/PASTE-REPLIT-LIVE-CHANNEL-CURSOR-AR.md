@@ -15,7 +15,7 @@
 | Branch | `cursor/discover-enter-fix-4322` |
 | **أمر النسخة** | `git reset --hard origin/cursor/discover-enter-fix-4322` ثم اطبع `git rev-parse HEAD` |
 | Code floor (سلف إلزامي) | `6b3c1d1c7ef5dda545f92dd0425de60d83529fc4` |
-| حارس | **26/26 PASS** (`section-miniapp-guard`) |
+| حارس | **25/25 PASS** (`section-miniapp-guard`) — rose Stay · لا StaysHomeHeader |
 | مسار ذهبي | `GOLDEN-PATH-REPLIT-CURSOR-AR.md` |
 | PR | https://github.com/waelzaid66-max/-BANCO-CA-OOM-/pull/37 |
 
@@ -53,12 +53,13 @@ echo "CODE_FLOOR_OK=$?"
 rg -n "sectionPortal|sectionList" artifacts/banco-mobile/components/SearchDiscover.tsx
 rg -n 'category\s*===\s*"real_estate"' artifacts/banco-mobile/components/SearchDiscover.tsx
 rg -n 'router\.push\("/section/real-estate\?map=1"\)' "artifacts/banco-mobile/app/(tabs)/search.tsx"
-rg -n "StaysHomeHeader" artifacts/banco-mobile/components/search/BookingStaysApp.tsx
+rg -n "SectionBackdrop|styles\\.hero|StaysHomeHeader" artifacts/banco-mobile/components/search/BookingStaysApp.tsx
+# expect SectionBackdrop + hero; StaysHomeHeader must be ABSENT
 rg -n "Array\.isArray\(\s*params\.map\s*\)" artifacts/banco-mobile/components/search/SectionSearchApp.tsx
 
 cd artifacts/banco-mobile
 node --test tests/section-miniapp-guard.test.mjs
-# المتوقع: 26/26 pass
+# المتوقع: 25/25 pass
 
 # نظّف الضجيج ثم شغّل
 npx expo start --clear
@@ -139,7 +140,7 @@ npx expo start --clear
 ## REPLIT → CURSOR (RUNTIME ONLY — NO CODE)
 
 SYNC_SHA: …
-GUARD: 26/26 PASS|FAIL
+GUARD: 25/25 PASS|FAIL
 EXPO: OK|FAIL
 
 ### P01…P13

@@ -37,15 +37,21 @@
 
 ---
 
+## تحديث شكوى الأقسام
+
+Stay رُجّع للهيرو الوردي من `main` — الهيدر الأسود محذوف.  
+انظر `OWNER-COMPLAINT-SECTIONS-RESTORE-AR.md`.
+
 ## أمر Replit بعد السحب (تشغيل فقط)
 
 ```bash
 git fetch && git checkout cursor/discover-enter-fix-4322
 git reset --hard origin/cursor/discover-enter-fix-4322
 node --test artifacts/banco-mobile/tests/section-miniapp-guard.test.mjs
-# توقّع: كل الاختبارات PASS بما فيها flexGrow + country label
+# توقّع: 25/25 PASS — rose Stay + flexGrow + country label
 npx expo start --clear
-# شوتات: Discover · سيارات · عقارات · مصانع · Stay — ركّز على: لا فراغ أسود · زر دول باسم · هيدر سليم
+# شوتات: Discover · سيارات · عقارات · مصانع · Stay
+# Stay = هيرو وردي · Discover = كروت صور 2×2 · لا فراغ أسود · دولة باسم
 ```
 
 — Cursor · Visual forensic

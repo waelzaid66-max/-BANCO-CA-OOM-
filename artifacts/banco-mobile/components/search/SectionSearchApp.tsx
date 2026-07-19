@@ -1390,7 +1390,9 @@ const styles = StyleSheet.create({
     padding: 0,
   },
   iconBtn: {
-    padding: 12,
+    // Slightly tighter than 12 — two icon hits beside the title were crowding
+    // the section header on narrow phones (owner "crushed header" shots).
+    padding: 8,
     position: "relative",
   },
   filterBadge: {
