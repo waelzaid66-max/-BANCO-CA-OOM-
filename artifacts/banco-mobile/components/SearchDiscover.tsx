@@ -75,10 +75,8 @@ interface Props {
   onApplySaved: (s: SavedSearch) => void;
   onOpenListing: (item: FeedItem) => void;
   /**
-   * Open the existing results map over a coordinate-rich category (real-estate).
-   * The host latches the intent and auto-enables map mode once mappable results
-   * arrive, falling back to the list when none carry coordinates — so tapping
-   * this never lands the user on an empty map.
+   * Enter the real-estate section mini-app with map intent (host pushes
+   * /section/real-estate?map=1). Must never melt Discover into shared Search.
    */
   onExploreMap: () => void;
   /** Re-run a recent text search (fills the input + commits immediately). */

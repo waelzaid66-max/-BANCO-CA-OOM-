@@ -125,3 +125,17 @@ test("Discover section portals are ENTER rows (not a melt filter grid)", () => {
     "Section press must push the section mini-app route",
   );
 });
+
+test("MOB-07: Explore on map enters real-estate section (no Search melt)", () => {
+  const searchTab = fs.readFileSync(SEARCH_TAB, "utf8");
+  assert.match(
+    searchTab,
+    /router\.push\(\s*["']\/section\/real-estate\?map=1["']\s*\)/,
+    "exploreOnMap must push /section/real-estate?map=1",
+  );
+  assert.doesNotMatch(
+    searchTab,
+    /exploreOnMap[\s\S]{0,400}update\(\s*\{[\s\S]*category:\s*["']real_estate["']/,
+    "exploreOnMap must not update shared Search criteria to real_estate",
+  );
+});

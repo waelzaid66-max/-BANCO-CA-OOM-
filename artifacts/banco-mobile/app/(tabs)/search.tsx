@@ -252,25 +252,6 @@ export default function SearchScreen() {
     if (!canMap && mapMode) setMapMode(false);
   }, [canMap, mapMode]);
 
-  // "Explore on map" from discover: the results that decide whether a map is
-  // even possible haven't loaded yet, so latch the intent. Flip to map mode the
-  // moment mappable results arrive, or drop the intent when the browse resolves
-  // with no coordinates (results/empty/error) — never wait on an impossible map.
-  const [wantMap, setWantMap] = useState(false);
-  useEffect(() => {
-    if (!wantMap) return;
-    if (canMap) {
-      setMapMode(true);
-      setWantMap(false);
-    } else if (
-      viewState === "results" ||
-      viewState === "empty" ||
-      viewState === "error"
-    ) {
-      setWantMap(false);
-    }
-  }, [wantMap, canMap, viewState]);
-
   // Category chips are facet-gated: only categories with live inventory show.
   // Fails open while facets load; the active category is always kept visible.
   const { globalFacets, scopedFacets, loading: facetsLoading } =
@@ -517,13 +498,13 @@ export default function SearchScreen() {
   // catalogues into shared Search criteria). They router.push SECTION_ROUTE
   // inside SearchDiscover — do not reintroduce a Discover→host category bridge.
 
-  // Discover "Explore on map" → browse a coordinate-rich category (real-estate)
-  // and latch the intent to flip to the map once mappable results land.
+  // Discover "Explore on map" → ENTER the real-estate section mini-app with a
+  // map latch (?map=1). Never melt Discover into shared Search criteria
+  // (MOB-07): that forced category=real_estate on the Search tab in place.
   const exploreOnMap = () => {
     if (brandValue) setDraftQuery("");
     setBrandValue(null);
-    setWantMap(true);
-    update({ ...CLEAR_ATTRS, category: "real_estate", engineKey: "all" });
+    router.push("/section/real-estate?map=1");
   };
 
   // Engine chip → committed criteria; sale (تمليك) clears rent-only filters.

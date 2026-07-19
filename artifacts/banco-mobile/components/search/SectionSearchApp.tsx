@@ -7,7 +7,7 @@ import {
   FeedItem,
   SearchListingsCategory,
 } from "@workspace/api-client-react";
-import { router, useNavigation, type Href } from "expo-router";
+import { router, useLocalSearchParams, useNavigation, type Href } from "expo-router";
 import { usePreventRemove } from "@react-navigation/native";
 import * as Haptics from "expo-haptics";
 import React, {
@@ -235,7 +235,13 @@ export function SectionSearchApp({
   }, [applyPatch, retry, items.length, phase, criteria.marketCountry]);
 
   // ── Map view ──────────────────────────────────────────────────────────────
+  const params = useLocalSearchParams<{ map?: string }>();
   const [mapMode, setMapMode] = useState(false);
+  // Discover "Explore on map" pushes /section/real-estate?map=1 — latch until
+  // mappable results arrive (or the browse resolves empty/error).
+  const [wantMap, setWantMap] = useState(
+    () => params.map === "1" || params.map === "true",
+  );
   const [marketPickerOpen, setMarketPickerOpen] = useState(false);
   const mappableItems = useMemo(
     () =>
@@ -254,13 +260,25 @@ export function SectionSearchApp({
     if (!inResultsView && mapMode) setMapMode(false);
   }, [inResultsView, mapMode]);
 
+  useEffect(() => {
+    if (!wantMap) return;
+    if (inResultsView && hasPagePins) {
+      setMapMode(true);
+      setWantMap(false);
+    } else if (viewState === "empty" || viewState === "error") {
+      setWantMap(false);
+    }
+  }, [wantMap, inResultsView, hasPagePins, viewState]);
+
   const mapSectionKey = mapAnchorKey(criteria);
   const prevMapSectionKey = useRef(mapSectionKey);
   useEffect(() => {
     if (prevMapSectionKey.current === mapSectionKey) return;
     prevMapSectionKey.current = mapSectionKey;
-    setMapMode(false);
-  }, [mapSectionKey]);
+    // Keep a Discover map latch across the first seed/query; only clear map
+    // when the shopper changes filters after that.
+    if (!wantMap) setMapMode(false);
+  }, [mapSectionKey, wantMap]);
 
   // ── Facet gating (scoped to the locked category) ───────────────────────────
   const { scopedFacets, loading: facetsLoading } =
