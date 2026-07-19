@@ -241,6 +241,8 @@ const ICONS: Record<string, LucideIcon> = {
   "dots-vertical": EllipsisVertical,
   "ellipsis-horizontal": Ellipsis,
   "ellipsis-vertical": EllipsisVertical,
+  // Feather market-matrix "more" chip (Stay / RE / Materials strips).
+  "more-horizontal": Ellipsis,
   "edit-2": Pencil,
   "eye": Eye,
   "eye-off": EyeOff,
