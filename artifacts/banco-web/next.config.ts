@@ -13,6 +13,17 @@ const nextConfig: NextConfig = {
   poweredByHeader: false,
   // Allow Replit's proxied preview (cross-origin iframe) to load /_next/* assets
   allowedDevOrigins: ["*"],
+  // Allow Server Actions from Replit proxy (port mismatch in x-forwarded-host vs origin)
+  experimental: {
+    serverActions: {
+      allowedOrigins: [
+        "localhost:3000",
+        "127.0.0.1:3000",
+        process.env.REPLIT_DOMAINS ?? "",
+        `${process.env.REPLIT_DOMAINS ?? ""}:6800`,
+      ].filter(Boolean),
+    },
+  },
   transpilePackages: [
     "@workspace/design-tokens",
     "@workspace/search-contract",
