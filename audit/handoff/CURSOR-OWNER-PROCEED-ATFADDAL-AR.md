@@ -11,8 +11,9 @@
 | خطوة | الحالة | دليل |
 |------|--------|------|
 | قراءة مراجعة Claude لكل PRs | ✅ | `7f6f3ec` — اختار المسار β: #40 = W3 كامل |
-| دمج #40 إلى `main` | ✅ | merge `628e7a0` · CI كان أخضر · FinancingService 8/8 |
-| إعادة بناء #41 فوق main الجديد | ✅ | rebase نظيف · حارس **46/46** |
+| دمج #40 إلى `main` | ✅ | merge `628e7a0` · CI أخضر · FinancingService 8/8 |
+| إعادة بناء #41 فوق main | ✅ | rebase · إصلاح `more-horizontal` · حارس **46/46** · CI أخضر |
+| دمج #41 إلى `main` | ✅ | merge `dad3a59` |
 | دليل بنوك حي | ⏸ | ADS-FIRST · بلا Start «ج» |
 | Stay أسود #23 | ❌ | MUST-KEEP وردي · Claude وافق |
 
