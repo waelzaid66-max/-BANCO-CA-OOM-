@@ -778,6 +778,56 @@ importers:
         specifier: ~5.9.3
         version: 5.9.3
 
+  # Independent website project (seeded from banco-web; do not extend banco-web).
+  artifacts/banco-website:
+    dependencies:
+      '@clerk/nextjs':
+        specifier: ^6.12.0
+        version: 6.39.5(next@15.5.20(babel-plugin-react-compiler@1.0.0)(react-dom@19.1.0(react@19.1.0))(react@19.1.0))(react-dom@19.1.0(react@19.1.0))(react@19.1.0)
+      '@clerk/themes':
+        specifier: ^2.4.57
+        version: 2.4.57(react-dom@19.1.0(react@19.1.0))(react@19.1.0)
+      '@tanstack/react-query':
+        specifier: 'catalog:'
+        version: 5.101.0(react@19.1.0)
+      '@vis.gl/react-google-maps':
+        specifier: ^1.8.3
+        version: 1.8.3(react-dom@19.1.0(react@19.1.0))(react@19.1.0)
+      '@workspace/api-client-react':
+        specifier: workspace:*
+        version: link:../../lib/api-client-react
+      '@workspace/design-tokens':
+        specifier: workspace:*
+        version: link:../../lib/design-tokens
+      '@workspace/search-contract':
+        specifier: workspace:*
+        version: link:../../lib/search-contract
+      '@workspace/taxonomy':
+        specifier: workspace:*
+        version: link:../../lib/taxonomy
+      next:
+        specifier: 'catalog:'
+        version: 15.5.20(babel-plugin-react-compiler@1.0.0)(react-dom@19.1.0(react@19.1.0))(react@19.1.0)
+      react:
+        specifier: 'catalog:'
+        version: 19.1.0
+      react-dom:
+        specifier: 'catalog:'
+        version: 19.1.0(react@19.1.0)
+    devDependencies:
+      '@types/node':
+        specifier: 'catalog:'
+        version: 25.9.3
+      '@types/react':
+        specifier: 'catalog:'
+        version: 19.2.17
+      '@types/react-dom':
+        specifier: 'catalog:'
+        version: 19.2.3(@types/react@19.2.17)
+      typescript:
+        specifier: ~5.9.3
+        version: 5.9.3
+
   artifacts/dealer-os:
     dependencies:
       '@clerk/react':
