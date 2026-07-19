@@ -17,9 +17,9 @@
 
 ---
 
-## نتائج CI (قبل إصلاح Typecheck)
+## نتائج CI
 
-على `9b082dc`:
+### قبل الإصلاح (`9b082dc`)
 
 | الفحص | النتيجة |
 |-------|---------|
@@ -33,6 +33,17 @@
 **سبب الفشل:** في `artifacts/admin-os/src/pages/financing.tsx` استدعاءات `useGetFinancingBranches` / `useGetFinancingSeats` مرّرت `{ enabled }` بدون `queryKey` المطلوب من `UseQueryOptions`.
 
 **الإصلاح:** `3dd14bb` — إضافة `queryKey: getGetFinancingBranchesQueryKey(id)` و `getGetFinancingSeatsQueryKey(id)`.
+
+### بعد الإصلاح (`3674de9`) — كلها خضراء
+
+| الفحص | النتيجة |
+|-------|---------|
+| API tests (Postgres) | ✅ PASS |
+| Mobile regression (static) | ✅ PASS |
+| ESLint (scripts) | ✅ PASS |
+| GCP config gate | ✅ PASS |
+| Build consumer web | ✅ PASS |
+| Typecheck & build | ✅ PASS |
 
 ---
 
@@ -76,5 +87,5 @@
 ## الخلاصة
 
 - منطق P0 موجود ومتسق في الكود.
-- اختبارات API في CI كانت خضراء على الالتزام السابق.
-- عائق Typecheck الوحيد أُصلح في `3dd14bb`؛ إعادة تشغيل CI هي بوابة الدمج.
+- عائق Typecheck أُصلح في `3dd14bb`.
+- CI على `3674de9` **أخضر بالكامل** — جاهز للمراجعة/الدمج بعد التحقق اليدوي المقترح.
