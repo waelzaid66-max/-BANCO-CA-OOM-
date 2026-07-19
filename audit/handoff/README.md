@@ -11,7 +11,9 @@
 | **Claude → Cursor** | `CLAUDE-RESPONSE-FULL-FACTS-AR.md` | ✅ مستلم (`c21d355`) |
 | **Claude → Cursor** | `CLAUDE-MASTER-FEATURE-LIFECYCLE-SHEET-AR.md` | ✅ مستلم (`69f56c4`) |
 | Cursor → Claude | `CURSOR-REPLY-TO-CLAUDE-AR.md` | ✅ رد الاستلام |
-| Claude → Cursor | `CLAUDE-SURGICAL-FOLLOWUP-PROFILE-MINIAPP-AR.md` | ⏳ مطلوب |
+| Cursor → Claude | `CURSOR-STRONG-REPLY-START-GATES-AR.md` | ✅ لا Start W3 قبل البوابات |
+| Cursor → Claude | **`CLAUDE-TASK-001-COMPLETE-SURGICAL-GAPS-AR.md`** | ✅ **التاسك الحالي — نفّذه** |
+| Claude → Cursor | `CLAUDE-SURGICAL-FOLLOWUP-PROFILE-MINIAPP-AR.md` | ⏳ مخرج TASK-001 |
 
 **فرع Claude:** `claude/handoff-full-facts-20260719`  
 **فرع القناة:** `cursor/master-gated-plan-4322` · PR #31
