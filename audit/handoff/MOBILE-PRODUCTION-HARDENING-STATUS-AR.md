@@ -18,7 +18,10 @@
 | MOB-07 map param `string\|string[]` normalize | ✅ |
 | Search suggestions RTL insets | ✅ |
 | Profile grid badges logical start/end | ✅ |
-| حارس section-miniapp | ✅ 12/12 |
+| حارس section-miniapp | ✅ 17/17 (موسّع: Stay/icons/banks/RTL/map honesty) |
+| Map CTA = real_estate فقط | ✅ |
+| suggestion textAlign RTL (3 أسطح) | ✅ |
+| Copilot | ❌ UNTRUSTED — Cursor يملك المسح |
 
 ## أُغلق سابقاً على main
 

@@ -98,14 +98,12 @@ export function SearchDiscover({
   const { data: trendingRes } = useGetTrending();
   const trending = trendingRes?.data ?? [];
 
-  // Honest gate for the "Explore on map" entry: only surface it when we have
-  // real evidence that coordinate-bearing inventory exists. The trending feed is
-  // already loaded here and runs through the same coordinate resolver as search
-  // (listing override → area centroid), so any trending item with finite coords
-  // proves the catalogue has mappable listings — no extra query needed. When no
-  // such evidence exists we hide the CTA rather than advertise a map we can't fill.
+  // Honest gate for "Explore on map": CTA always enters /section/real-estate?map=1
+  // (MOB-07), so only advertise it when trending proves coordinate-bearing
+  // *real_estate* inventory — not cars/industrial with coords that would mislead.
   const mapAvailable = trending.some(
     (i) =>
+      i.category === "real_estate" &&
       i.coordinates &&
       Number.isFinite(i.coordinates.lat) &&
       Number.isFinite(i.coordinates.lng)

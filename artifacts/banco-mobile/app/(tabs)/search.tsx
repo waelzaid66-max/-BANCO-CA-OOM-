@@ -1028,9 +1028,15 @@ export default function SearchScreen() {
                 size={14}
                 color={colors.mutedForeground}
               />
-              <AppText style={[styles.suggestionText, { color: colors.foreground }]}>
+              <AppText
+                style={[
+                  styles.suggestionText,
+                  { color: colors.foreground, textAlign },
+                ]}
+              >
                 {s}
               </AppText>
+
             </Pressable>
           ))}
         </View>

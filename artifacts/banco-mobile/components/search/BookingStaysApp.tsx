@@ -522,9 +522,15 @@ export function BookingStaysApp() {
               ]}
             >
               <Ionicons name="search-outline" size={14} color={colors.mutedForeground} />
-              <AppText style={[styles.suggestionText, { color: colors.foreground }]}>
+              <AppText
+                style={[
+                  styles.suggestionText,
+                  { color: colors.foreground, textAlign },
+                ]}
+              >
                 {s}
               </AppText>
+
             </Pressable>
           ))}
         </View>

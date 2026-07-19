@@ -203,3 +203,80 @@ test("Discover portals never call host update({ category })", () => {
     "SearchDiscover must not call selectCategory",
   );
 });
+
+const ICONS = path.join(APP_ROOT, "components", "icons.tsx");
+const BANKS = path.join(APP_ROOT, "app", "business", "banks.tsx");
+const STAYS_HEADER = path.join(
+  APP_ROOT,
+  "components",
+  "search",
+  "stays",
+  "StaysHomeHeader.tsx",
+);
+const I18N = path.join(APP_ROOT, "constants", "i18n.ts");
+
+test("BookingStaysApp mounts StaysHomeHeader (compact BOOM STAY)", () => {
+  const booking = fs.readFileSync(BOOKING_APP, "utf8");
+  assert.match(
+    booking,
+    /StaysHomeHeader/,
+    "BookingStaysApp must mount StaysHomeHeader",
+  );
+  assert.ok(
+    fs.existsSync(STAYS_HEADER),
+    "StaysHomeHeader.tsx must exist",
+  );
+});
+
+test("Icon registry maps key / key-outline / business / bed-outline", () => {
+  const icons = fs.readFileSync(ICONS, "utf8");
+  for (const name of ['"key"', '"key-outline"', '"business"', '"bed-outline"']) {
+    assert.match(
+      icons,
+      new RegExp(`${name}\\s*:\\s*\\w+`),
+      `icons.tsx must map ${name}`,
+    );
+  }
+});
+
+test("Banks hub honesty — not a live partner directory (i18n + screen)", () => {
+  const banks = fs.readFileSync(BANKS, "utf8");
+  const i18n = fs.readFileSync(I18N, "utf8");
+  assert.match(
+    banks,
+    /business\.banks\.(subtitle|disclaimer)/,
+    "banks.tsx must surface honesty copy keys",
+  );
+  assert.match(
+    i18n,
+    /not a live partner directory|ليست دليل شركاء حي/,
+    "i18n must state Banks is not a live partner directory",
+  );
+});
+
+test("Discover map CTA requires real_estate evidence (MOB-07 honesty)", () => {
+  const src = fs.readFileSync(DISCOVER, "utf8");
+  assert.match(
+    src,
+    /category\s*===\s*["']real_estate["']/,
+    "mapAvailable must require trending category === real_estate",
+  );
+});
+
+test("Search / section / stays suggestion text uses RTL textAlign", () => {
+  const search = fs.readFileSync(SEARCH_TAB, "utf8");
+  const section = fs.readFileSync(SECTION_APP, "utf8");
+  const booking = fs.readFileSync(BOOKING_APP, "utf8");
+  // Each surface should pass textAlign into suggestion AppText style.
+  for (const [label, src] of [
+    ["search.tsx", search],
+    ["SectionSearchApp", section],
+    ["BookingStaysApp", booking],
+  ]) {
+    assert.match(
+      src,
+      /suggestionText[\s\S]{0,120}textAlign/,
+      `${label} suggestion rows must set textAlign for RTL`,
+    );
+  }
+});
