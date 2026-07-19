@@ -95,12 +95,16 @@
 
 ### المرحلة 2 — عيوب شاشات متبقية (صغيرة · قائمة صريحة)
 
+> **طريقة القياس والإصلاح بالميلي:** اتبع `SCREEN-MM-INSPECT-AND-FIX-PROTOCOL-AR.md`  
+> (طبقات L1–L7 · جدول CANONICAL dp · ورقة عيب · عتبة ≤2 dp · hit ≥44).
+
 | ID | العيب | النطاق المسموح | ممنوع |
 |----|-------|----------------|--------|
 | S2.1 | `topPad = 67` على شاشات غير-قسمية (profile/banks/onboarding…) | استبدال بـ `Math.max(insets.top, web?12:0)` **ملف بملف** | تغيير تخطيط الصفحة |
 | S2.2 | إثبات جهاز: Discover pad سفلي / تداخل FAB | ضبط `paddingBottom` فقط إن الشوت يثبت التداخل | إعادة ترتيب Discover |
 | S2.3 | Legal AR (MOB-08) | تحقق شوت + نص فقط إن ناقص | redesign قانوني |
 | S2.4 | Banks «دليل شركاء حي» | قرار منتج Owner — لا كود حتى Start | اختراع بيانات شركاء |
+| S2.5 | أي انحراف مسافة/زر عن CANONICAL بعد الشوت | ورقة §5 + تعديل style واحد | redesign / دفعة ملفات |
 
 ### المرحلة 3 — إمكانيات كبيرة معلقة (لا تُخلط مع مشاكل الشاشات)
 
@@ -150,6 +154,7 @@
 
 ## مراجع
 
+- فحص ميلي للأزرار/المسافات: `SCREEN-MM-INSPECT-AND-FIX-PROTOCOL-AR.md`  
 - سلسلة الضرر: `FULL-DAMAGE-CHAIN-AND-BRANCH-MATRIX-AR.md`  
 - أنت فين: `YOU-ARE-HERE-OWNER-MAP-AR.md`  
 - اعتماد النسخة: `CANONICAL-CORRECT-VERSION-AR.md`  

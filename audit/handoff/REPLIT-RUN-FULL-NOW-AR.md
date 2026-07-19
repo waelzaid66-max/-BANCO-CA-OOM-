@@ -42,6 +42,10 @@ cd artifacts/banco-mobile && npx expo start --clear
 
 ## شوتات P1–P6 ثم رد
 
+قياس المسافات/الأزرار بالميلي عند أي FAIL بصري:  
+`SCREEN-MM-INSPECT-AND-FIX-PROTOCOL-AR.md` (§4 مصفوفات · §8 جدول قبول).  
+**ممنوع تعديل كود** — سجّل الأرقام فقط.
+
 ```text
 ## REPLIT → CURSOR (CONFIRM CANONICAL ONLY — NO MAINTENANCE)
 SYNC_SHA: …
@@ -49,6 +53,7 @@ SHORT: …
 GUARD: 25/25 PASS|FAIL
 FINGERPRINTS: sectionGrid YES|NO · Stay rose YES|NO · StaysHomeHeader absent YES|NO · boom docs absent YES|NO
 SCREEN P1–P6: …
+MM_CHECK (إن FAIL): margins/cardH/gap/buttons hit — انظر بروتوكول الميلي
 METRO: NONE | …
 SHOTS: attached
 STOP

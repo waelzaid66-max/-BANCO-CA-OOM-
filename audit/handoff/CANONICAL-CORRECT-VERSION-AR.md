@@ -13,6 +13,7 @@
 | **SHORT الحي** | اطبع `git rev-parse --short HEAD` على الفرع بعد `git fetch` + hard reset — لا تثبت SHA قديم من الدوك |
 | **معنى النسخة** | `origin/main` + تنظيف الضرر فقط (typecheck · حذف boom docs · i18n ميت) |
 | **تحقيق + خطة** | `INVESTIGATION-AND-REPAIR-PLAN-AR.md` |
+| **فحص ميلي مسافات/أزرار** | `SCREEN-MM-INSPECT-AND-FIX-PROTOCOL-AR.md` |
 | **سلسلة الضرر** | `FULL-DAMAGE-CHAIN-AND-BRANCH-MATRIX-AR.md` |
 
 > بعد كل push: اطبع `git rev-parse HEAD` على الفرع — هذا هو CANONICAL_CODE_SHA الحي.  
