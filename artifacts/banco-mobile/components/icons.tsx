@@ -67,6 +67,7 @@ import {
   Inbox,
   Info,
   Instagram,
+  Key,
   Landmark,
   LayoutGrid,
   Link,
@@ -205,6 +206,8 @@ const ICONS: Record<string, LucideIcon> = {
   "bookmark": Bookmark,
   "box": Box,
   "briefcase": Briefcase,
+  // SmartAssetCard / StayCard / sectionTheme use bare Ionicon names:
+  "business": Building2,
   "business-outline": Building2,
   "calendar": Calendar,
   "calendar-outline": Calendar,
@@ -271,6 +274,9 @@ const ICONS: Record<string, LucideIcon> = {
   "images-outline": Images,
   "inbox": Inbox,
   "info": Info,
+  // StayCard / SmartAssetCard / settings / rentals hub (Ionicon names):
+  "key": Key,
+  "key-outline": Key,
   "link-outline": Link,
   "location-outline": MapPin,
   "lock": Lock,
