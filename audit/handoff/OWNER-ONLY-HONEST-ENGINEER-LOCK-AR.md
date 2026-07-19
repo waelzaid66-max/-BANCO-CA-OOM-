@@ -29,7 +29,7 @@
 | | |
 |--|--|
 | فرع | `cursor/discover-enter-fix-4322` |
-| tip | `bb7f0fc` |
+| tip | `origin/cursor/discover-enter-fix-4322` HEAD (الآن ≥ `681bd2a`) |
 | PR | #37 |
 | أمر Replit الآن | `PASTE-REPLIT-SHOW-TRUE-NOW-AR.md` |
 

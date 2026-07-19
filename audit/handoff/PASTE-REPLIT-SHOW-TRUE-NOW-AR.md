@@ -11,7 +11,7 @@
 | | |
 |--|--|
 | **الفرع** | `cursor/discover-enter-fix-4322` |
-| **SYNC_SHA المطلوب** | `457d6f7` (أو أحدث tip على نفس الفرع بعد `git fetch` — اطبع `git rev-parse HEAD`) |
+| **SYNC_SHA المطلوب** | `git rev-parse HEAD` بعد `reset --hard origin/cursor/discover-enter-fix-4322` (الآن ≥ `681bd2a`) |
 | **PR** | https://github.com/waelzaid66-max/-BANCO-CA-OOM-/pull/37 |
 
 ### ماذا يجب أن يظهر (الحقيقة)
