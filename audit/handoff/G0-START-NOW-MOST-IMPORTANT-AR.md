@@ -12,7 +12,7 @@
 | بند | قيمة |
 |-----|------|
 | الفرع المطلوب على الجهاز | `cursor/surgical-finish-wave-4322` |
-| Tip SHA | `bbcce88` |
+| Tip SHA | `9bca3c4` (كود التشطيب `bbcce88` + حزمة G0) |
 | PR الكود | **#39** — https://github.com/waelzaid66-max/-BANCO-CA-OOM-/pull/39 |
 | PR docs/حراس سابق | **#37** (محتواه docs موجود أصلاً داخل تاريخ #39) |
 | `origin/main` عند الكتابة | `14d3a89` |

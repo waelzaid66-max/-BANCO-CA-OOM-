@@ -8,7 +8,7 @@
    git checkout cursor/surgical-finish-wave-4322
    git reset --hard origin/cursor/surgical-finish-wave-4322
    git rev-parse --short HEAD
-   → المفروض: bbcce88
+   → المفروض: 9bca3c4
    (لو اختلف: وقف واكتب الـ SHA الفعلي)
 
 2) حارس:
