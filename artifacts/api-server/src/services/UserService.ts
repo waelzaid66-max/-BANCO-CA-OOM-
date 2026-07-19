@@ -5,6 +5,7 @@ import { clerkClient } from "@clerk/express";
 import { logger } from "../lib/logger";
 import { checkProfileMutationRate, flagDuplicateAccount } from "./AbuseService";
 import { sendWelcomeEmail } from "./EmailService";
+import { mergeBusinessCompanyDetails } from "../lib/mergeBusinessCompanyDetails";
 
 export async function getOrCreateUser(clerkId: string, data?: { name?: string; email?: string }) {
   const [existing] = await db
@@ -187,20 +188,8 @@ export async function updateUserProfile(
       patch.role = "dealer";
     }
 
-    patch.companyDetails = {
-      activity_type: input.business.activity_type,
-      business_name: input.business.business_name,
-      ...(input.business.trade_name
-        ? { trade_name: input.business.trade_name }
-        : {}),
-      ...(input.business.owner_name
-        ? { owner_name: input.business.owner_name }
-        : {}),
-      city: input.business.city,
-      ...(input.business.documents && input.business.documents.length > 0
-        ? { documents: input.business.documents }
-        : {}),
-    };
+    // F-SEC-07: merge — never wipe KYC docs on a business re-save that omits them.
+    patch.companyDetails = mergeBusinessCompanyDetails(user.companyDetails, input.business);
   }
 
   // Empty patch (no-op) — return the current row without an empty UPDATE.

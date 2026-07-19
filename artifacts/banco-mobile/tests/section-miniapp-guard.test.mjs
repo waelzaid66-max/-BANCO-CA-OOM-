@@ -37,6 +37,7 @@ const BOOKING_APP = path.join(
 );
 const BANKS = path.join(APP_ROOT, "app", "business", "banks.tsx");
 const PROFILE = path.join(APP_ROOT, "app", "(tabs)", "profile.tsx");
+const VERIFICATION = path.join(APP_ROOT, "app", "business", "verification.tsx");
 const I18N = path.join(APP_ROOT, "constants", "i18n.ts");
 
 const SECTION_SCREENS = [
@@ -540,6 +541,32 @@ test("Banks productsHint honesty keys exist in en+ar", () => {
   assert.match(src, /fiMode:\s*"مؤسسة مالية"/);
 });
 
+test("fiSuccessBody does not claim verify auto-links inbox (en+ar)", () => {
+  const src = fs.readFileSync(I18N, "utf8");
+  assert.match(
+    src,
+    /fiSuccessBody:\s*[\s\S]*?verification alone does not open the inbox/i,
+  );
+  assert.match(
+    src,
+    /fiSuccessBody:\s*[\s\S]*?التوثيق لوحده مش بيفتح الصندوق/,
+  );
+  assert.doesNotMatch(
+    src,
+    /fiSuccessBody:\s*[\s\S]*?After verification, BANCO will link your inbox/,
+  );
+});
+
+test("Banks inbox surfaces non-403 load errors (F-UX-03)", () => {
+  const src = fs.readFileSync(BANKS, "utf8");
+  assert.match(src, /httpStatus/);
+  assert.match(src, /testID="banks-inbox-error"/);
+  assert.match(src, /testID="banks-inbox-retry"/);
+  const i18n = fs.readFileSync(I18N, "utf8");
+  assert.match(i18n, /inboxLoadError:\s*"/);
+  assert.match(i18n, /inboxRetry:\s*"/);
+});
+
 test("Banks stays outside SECTION_ROUTE (dedicated business world)", () => {
   const discover = fs.readFileSync(DISCOVER, "utf8");
   assert.match(discover, /router\.push\("\/business\/banks"/);
@@ -548,4 +575,22 @@ test("Banks stays outside SECTION_ROUTE (dedicated business world)", () => {
     /banks:\s*"\/section\//,
     "Banks must not be melted into section mini-app routes",
   );
+});
+
+test("Ads-first: Banks hub is brochure — no live intermediary directory API", () => {
+  const src = fs.readFileSync(BANKS, "utf8");
+  assert.doesNotMatch(src, /useGetFinancingIntermediaries/);
+  assert.doesNotMatch(src, /listIntermediaries/);
+  assert.match(src, /explanatory brochure only/);
+});
+
+test("Ads-first: FI verification uses /me role and does not unlock dealer storefront copy", () => {
+  const src = fs.readFileSync(VERIFICATION, "utf8");
+  assert.match(src, /financial_institution/);
+  assert.match(src, /meQuery\.data\?\.data\?\.role/);
+  assert.match(src, /onboarding\?intent=fi/);
+  assert.match(src, /vFiVerifiedBody/);
+  const i18n = fs.readFileSync(I18N, "utf8");
+  assert.match(i18n, /vFiVerifiedBody:\s*[\s\S]*?ads marketplace/i);
+  assert.match(i18n, /joinDesc:\s*[\s\S]*?ads marketplace/i);
 });

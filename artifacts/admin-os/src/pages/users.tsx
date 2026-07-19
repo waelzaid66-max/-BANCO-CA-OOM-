@@ -1,16 +1,19 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import {
   useGetAdminUsers,
   useGetMe,
   useSetUserBan,
   useSetUserRole,
   useSetUserVerified,
+  useGetFinancingIntermediaries,
+  useUpdateFinancingIntermediary,
   getGetAdminUsersQueryKey,
   getGetMeQueryKey,
+  getGetFinancingIntermediariesQueryKey,
   type AdminUser,
 } from "@workspace/api-client-react";
 import { useQueryClient } from "@tanstack/react-query";
-import { Loader2, Search, Ban, ShieldCheck, BadgeCheck, FileSearch } from "lucide-react";
+import { Loader2, Search, Ban, ShieldCheck, BadgeCheck, FileSearch, Copy, Link2 } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
@@ -33,6 +36,7 @@ import {
 import { useToast } from "@/hooks/use-toast";
 import { useLang } from "@/context/LanguageContext";
 import { hasPermission, STAFF_ROLES, type StaffRole } from "@/lib/permissions";
+import { Label } from "@/components/ui/label";
 
 const ROLE_BADGE: Record<string, string> = {
   owner: "bg-[#E8002D]/15 text-[#E8002D] border-[#E8002D]/30",
@@ -47,6 +51,7 @@ function KycReviewDialog({
   open,
   onOpenChange,
   canVerify,
+  canLinkFi,
   verifying,
   onVerify,
 }: {
@@ -54,12 +59,64 @@ function KycReviewDialog({
   open: boolean;
   onOpenChange: (open: boolean) => void;
   canVerify: boolean;
+  canLinkFi: boolean;
   verifying: boolean;
   onVerify: (id: string, currentlyVerified: boolean) => void;
 }) {
   const { t } = useLang();
+  const { toast } = useToast();
+  const queryClient = useQueryClient();
   const details = user?.company_details ?? null;
   const docs = details?.documents ?? [];
+  const isFi = user?.role === "financial_institution";
+  const [linkIntermediaryId, setLinkIntermediaryId] = useState("");
+
+  const { data: intermResp, isLoading: intermLoading } = useGetFinancingIntermediaries({
+    query: {
+      queryKey: getGetFinancingIntermediariesQueryKey(),
+      enabled: open && canLinkFi && isFi,
+    },
+  });
+  const updateInterm = useUpdateFinancingIntermediary();
+  const intermediaries = intermResp?.data ?? [];
+
+  useEffect(() => {
+    if (!open) setLinkIntermediaryId("");
+  }, [open, user?.id]);
+
+  const copyUserId = async () => {
+    if (!user?.id) return;
+    try {
+      await navigator.clipboard.writeText(user.id);
+      toast({ title: t("usersPage.toastIdCopied") });
+    } catch {
+      toast({ title: t("usersPage.toastActionFailed"), variant: "destructive" });
+    }
+  };
+
+  const linkOwner = () => {
+    if (!user?.id || !linkIntermediaryId) return;
+    updateInterm.mutate(
+      { id: linkIntermediaryId, data: { owner_user_id: user.id } },
+      {
+        onSuccess: () => {
+          void queryClient.invalidateQueries({
+            queryKey: getGetFinancingIntermediariesQueryKey(),
+          });
+          toast({
+            title: t("usersPage.toastFiLinked"),
+            description: t("usersPage.toastFiLinkedDesc"),
+          });
+        },
+        onError: () =>
+          toast({
+            title: t("usersPage.toastFiLinkFailed"),
+            description: t("usersPage.toastFiLinkFailedDesc"),
+            variant: "destructive",
+          }),
+      },
+    );
+  };
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -71,6 +128,19 @@ function KycReviewDialog({
             {user?.email || user?.phone ? ` · ${user.email || user.phone}` : ""}
           </DialogDescription>
         </DialogHeader>
+
+        {user?.id ? (
+          <div className="rounded-md border bg-muted/30 px-3 py-2 text-xs space-y-1">
+            <div className="text-muted-foreground">{t("usersPage.userId")}</div>
+            <div className="flex items-center gap-2">
+              <code className="font-mono break-all flex-1">{user.id}</code>
+              <Button type="button" size="sm" variant="outline" onClick={() => void copyUserId()}>
+                <Copy className="w-3.5 h-3.5" />
+              </Button>
+            </div>
+            <p className="text-muted-foreground leading-snug">{t("usersPage.adsFirstHint")}</p>
+          </div>
+        ) : null}
 
         {!details ? (
           <p className="text-sm text-muted-foreground py-4">
@@ -137,6 +207,50 @@ function KycReviewDialog({
           </div>
         )}
 
+        {/* Ads-first: verify badge ≠ inbox. Admin links an existing intermediary only. */}
+        {isFi && canLinkFi && user?.id ? (
+          <div className="space-y-2 rounded-md border border-blue-500/30 bg-blue-500/5 p-3">
+            <div className="flex items-center gap-2 text-sm font-medium">
+              <Link2 className="w-4 h-4" />
+              {t("usersPage.fiLinkTitle")}
+            </div>
+            <p className="text-xs text-muted-foreground leading-snug">
+              {t("usersPage.fiLinkHint")}
+            </p>
+            <Label className="text-xs">{t("usersPage.fiLinkSelect")}</Label>
+            <Select
+              value={linkIntermediaryId || undefined}
+              onValueChange={setLinkIntermediaryId}
+              disabled={intermLoading || updateInterm.isPending}
+            >
+              <SelectTrigger className="h-9">
+                <SelectValue placeholder={t("usersPage.fiLinkSelectPh")} />
+              </SelectTrigger>
+              <SelectContent>
+                {intermediaries
+                  .filter((im): im is typeof im & { id: string } => !!im.id)
+                  .map((im) => (
+                    <SelectItem key={im.id} value={im.id} disabled={im.is_active === false}>
+                      {im.name}
+                      {im.owner_user_id ? ` · ${t("usersPage.fiLinkAlreadyOwned")}` : ""}
+                      {im.is_active === false ? ` · ${t("usersPage.fiLinkInactive")}` : ""}
+                    </SelectItem>
+                  ))}
+              </SelectContent>
+            </Select>
+            <Button
+              type="button"
+              size="sm"
+              variant="secondary"
+              disabled={!linkIntermediaryId || updateInterm.isPending}
+              onClick={linkOwner}
+            >
+              {updateInterm.isPending && <Loader2 className="w-4 h-4 me-2 animate-spin" />}
+              {t("usersPage.fiLinkCta")}
+            </Button>
+          </div>
+        ) : null}
+
         <DialogFooter className="gap-2">
           <Button variant="ghost" onClick={() => onOpenChange(false)}>
             {t("usersPage.kycClose")}
@@ -170,6 +284,7 @@ export default function UsersPage() {
   const canManageRoles = hasPermission(myStaffRole, "manage_roles");
   const canVerify = hasPermission(myStaffRole, "verify_users");
   const canBan = hasPermission(myStaffRole, "ban_users");
+  const canLinkFi = hasPermission(myStaffRole, "manage_financing");
 
   const { data: usersResp, isLoading } = useGetAdminUsers({ search: search || undefined });
   const users = usersResp?.data ?? [];
@@ -218,6 +333,8 @@ export default function UsersPage() {
   };
 
   const handleToggleVerified = (id: string, currentlyVerified: boolean) => {
+    const target = users.find((u) => u.id === id);
+    const isFi = target?.role === "financial_institution";
     setVerified.mutate(
       { id, data: { verified: !currentlyVerified } },
       {
@@ -230,6 +347,9 @@ export default function UsersPage() {
             title: currentlyVerified
               ? t("usersPage.toastUnverified")
               : t("usersPage.toastVerified"),
+            // Ads-first honesty: badge ≠ financing inbox.
+            description:
+              !currentlyVerified && isFi ? t("usersPage.toastVerifiedFiHint") : undefined,
           });
         },
         onError: () =>
@@ -300,9 +420,30 @@ export default function UsersPage() {
                       <div className="text-xs text-muted-foreground">{user.email || user.phone}</div>
                     </TableCell>
                     <TableCell>
-                      <span className="font-mono text-xs text-muted-foreground">
-                        {user.account_number || "—"}
-                      </span>
+                      <div className="space-y-1">
+                        <span className="font-mono text-xs text-muted-foreground">
+                          {user.account_number || "—"}
+                        </span>
+                        {user.id ? (
+                          <button
+                            type="button"
+                            className="block font-mono text-[10px] text-muted-foreground/80 hover:text-foreground truncate max-w-[140px] text-start"
+                            title={user.id}
+                            onClick={() => {
+                              void navigator.clipboard.writeText(user.id!).then(
+                                () => toast({ title: t("usersPage.toastIdCopied") }),
+                                () =>
+                                  toast({
+                                    title: t("usersPage.toastActionFailed"),
+                                    variant: "destructive",
+                                  }),
+                              );
+                            }}
+                          >
+                            {user.id}
+                          </button>
+                        ) : null}
+                      </div>
                     </TableCell>
                     <TableCell>
                       <Badge variant="outline" className="capitalize">{user.role}</Badge>
@@ -400,6 +541,7 @@ export default function UsersPage() {
           if (!o) setReviewUser(null);
         }}
         canVerify={canVerify}
+        canLinkFi={canLinkFi}
         verifying={setVerified.isPending}
         onVerify={handleToggleVerified}
       />

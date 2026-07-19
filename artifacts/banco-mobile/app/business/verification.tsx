@@ -136,8 +136,13 @@ export default function VerificationScreen() {
     );
   }
 
-  const role = (user.publicMetadata?.role as string) || "";
-  const isBusiness = ["dealer", "company", "enterprise"].includes(role);
+  // /me.role is authoritative (DB). Clerk metadata is fallback only.
+  const meRole = meQuery.data?.data?.role ?? "";
+  const clerkRole = (user.publicMetadata?.role as string) || "";
+  const role = meRole || clerkRole;
+  const isFi = role === "financial_institution";
+  // Ads-first: FI is a business account for trust badge — not a dealer storefront unlock.
+  const isBusiness = ["dealer", "company", "enterprise", "financial_institution"].includes(role);
   const isVerified = !!meQuery.data?.data?.is_verified;
   const isUnderReview = isBusiness && !isVerified;
   const status: Status = isVerified ? "verified" : isUnderReview ? "review" : "none";
@@ -164,28 +169,39 @@ export default function VerificationScreen() {
     verified: {
       icon: "check-decagram",
       color: colors.primary,
-      title: t("business.vVerifiedTitle"),
-      body: t("business.vVerifiedBody"),
+      title: isFi ? t("business.vFiVerifiedTitle") : t("business.vVerifiedTitle"),
+      body: isFi ? t("business.vFiVerifiedBody") : t("business.vVerifiedBody"),
     },
     review: {
       icon: "clock-outline",
       color: colors.foreground,
-      title: t("business.vReviewTitle"),
-      body: t("business.vReviewBody"),
+      title: isFi ? t("business.vFiReviewTitle") : t("business.vReviewTitle"),
+      body: isFi ? t("business.vFiReviewBody") : t("business.vReviewBody"),
     },
     none: {
       icon: "shield-check",
       color: colors.mutedForeground,
-      title: t("business.vNoneTitle"),
-      body: t("business.vNoneBody"),
+      title: isFi ? t("business.vFiNoneTitle") : t("business.vNoneTitle"),
+      body: isFi ? t("business.vFiNoneBody") : t("business.vNoneBody"),
     },
   };
   const current = hero[status];
-  const ctaLabel = status === "none" ? t("business.vRegisterCta") : t("business.vUpdateCta");
+  const ctaLabel =
+    status === "none"
+      ? isFi
+        ? t("business.vFiRegisterCta")
+        : t("business.vRegisterCta")
+      : t("business.vUpdateCta");
 
   const goOnboarding = () => {
     Haptics.selectionAsync().catch(() => {});
-    router.push("/business/onboarding");
+    // FI must keep intent=fi — never demote into dealer listing onboarding.
+    router.push(isFi ? "/business/onboarding?intent=fi" : "/business/onboarding");
+  };
+
+  const goBanksHub = () => {
+    Haptics.selectionAsync().catch(() => {});
+    router.push("/business/banks");
   };
 
   return (
@@ -256,11 +272,27 @@ export default function VerificationScreen() {
             {ctaLabel}
           </AppText>
         </Pressable>
+        {isFi && status === "verified" ? (
+          <Pressable
+            onPress={goBanksHub}
+            style={[
+              styles.primaryBtn,
+              styles.secondaryCta,
+              { borderColor: colors.border, borderRadius: colors.radius },
+            ]}
+            testID="verification-open-banks"
+          >
+            <MaterialCommunityIcons name="bank-outline" size={18} color={colors.foreground} />
+            <AppText style={[styles.primaryBtnText, { color: colors.foreground }]}>
+              {t("business.fiGoBanks")}
+            </AppText>
+          </Pressable>
+        ) : null}
         {status !== "none" ? (
           <AppText
             style={[styles.ctaHint, { color: colors.mutedForeground }]}
           >
-            {t("business.vUpdateHint")}
+            {isFi ? t("business.vFiUpdateHint") : t("business.vUpdateHint")}
           </AppText>
         ) : null}
       </ScrollView>
@@ -300,6 +332,11 @@ const styles = StyleSheet.create({
     paddingHorizontal: 22,
   },
   cta: { marginTop: 24 },
+  secondaryCta: {
+    marginTop: 12,
+    borderWidth: StyleSheet.hairlineWidth,
+    backgroundColor: "transparent",
+  },
   primaryBtnText: { fontSize: 15, fontWeight: "700" },
   ctaHint: { fontSize: 12.5, textAlign: "center", marginTop: 10, lineHeight: 18 },
 });

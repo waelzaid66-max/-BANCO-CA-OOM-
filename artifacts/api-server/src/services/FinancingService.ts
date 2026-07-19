@@ -319,15 +319,25 @@ export async function updateFinancingRequest(params: {
     throw Object.assign(new Error("Finance request not found"), { code: "NOT_FOUND" });
   }
 
-  // Validate the intermediary exists when assigning one.
+  // Validate the intermediary exists (and is active) when assigning one.
+  // F-SEC-05: forwarding to an inactive institution creates a dead handoff —
+  // membership resolve rejects inactive rows, so the bank never sees the request.
   if (params.intermediaryId) {
     const [im] = await db
-      .select({ id: financingIntermediaries.id })
+      .select({
+        id: financingIntermediaries.id,
+        isActive: financingIntermediaries.isActive,
+      })
       .from(financingIntermediaries)
       .where(eq(financingIntermediaries.id, params.intermediaryId))
       .limit(1);
     if (!im) {
       throw Object.assign(new Error("Intermediary not found"), { code: "NOT_FOUND" });
+    }
+    if (!im.isActive) {
+      throw Object.assign(new Error("Intermediary is not active"), {
+        code: "INVALID_DATA",
+      });
     }
   }
 
@@ -485,12 +495,19 @@ export async function updateIntermediary(params: {
   if (params.ownerUserId !== undefined) {
     if (params.ownerUserId) {
       const [owner] = await db
-        .select({ id: users.id })
+        .select({ id: users.id, role: users.role })
         .from(users)
         .where(eq(users.id, params.ownerUserId))
         .limit(1);
       if (!owner) {
         throw Object.assign(new Error("Owner user not found"), { code: "NOT_FOUND" });
+      }
+      // F-SEC-03: only a financial_institution account may own an intermediary.
+      if (owner.role !== "financial_institution") {
+        throw Object.assign(
+          new Error("Owner must have financial_institution role"),
+          { code: "INVALID_DATA" },
+        );
       }
     }
     set.ownerUserId = params.ownerUserId;
@@ -663,11 +680,50 @@ export async function listInstitutionRequests(params: {
 }
 
 /**
+ * Bank-side status machine (institution members only):
+ * forwarded → contacted → closed. Idempotent same-status updates are allowed.
+ * Admin still owns new / forwarded / rejected via the admin CRM path.
+ */
+const INSTITUTION_STATUS_TRANSITIONS: Record<
+  FinancingStatus,
+  ReadonlySet<Extract<FinancingStatus, "contacted" | "closed">>
+> = {
+  new: new Set(),
+  forwarded: new Set(["contacted"]),
+  contacted: new Set(["closed"]),
+  closed: new Set(),
+  rejected: new Set(),
+};
+
+function assertInstitutionStatusTransition(
+  from: FinancingStatus,
+  to: Extract<FinancingStatus, "contacted" | "closed">,
+): void {
+  if (from === to) return;
+  if (!INSTITUTION_STATUS_TRANSITIONS[from].has(to)) {
+    throw Object.assign(
+      new Error(`Invalid status transition from ${from} to ${to}`),
+      { code: "INVALID_DATA" },
+    );
+  }
+}
+
+/** Same visibility rule as listInstitutionRequests for branch-scoped agents. */
+function agentCanAccessRequest(
+  membership: InstitutionMembership,
+  requestBranchId: string | null,
+): boolean {
+  if (membership.role !== "agent" || !membership.branch_id) return true;
+  return requestBranchId === null || requestBranchId === membership.branch_id;
+}
+
+/**
  * Bank-side lifecycle transitions: contacted / closed only (the admin owns
  * new/forwarded/rejected). Owner + manager may also route a request to one of
  * the institution's branches. Scoped hard to the caller's institution — a
  * request belonging to another bank reads as NOT_FOUND, never FORBIDDEN, so
- * membership probing leaks nothing.
+ * membership probing leaks nothing. Branch-scoped agents get the same NOT_FOUND
+ * treatment for out-of-scope requests (F-SEC-01 / R1).
  */
 export async function updateInstitutionRequest(params: {
   dbUserId: string;
@@ -685,6 +741,15 @@ export async function updateInstitutionRequest(params: {
   const existing = await getFinancingRequestByLeadId(params.leadId);
   if (!existing || existing.intermediary_id !== membership.intermediary_id) {
     throw Object.assign(new Error("Finance request not found"), { code: "NOT_FOUND" });
+  }
+
+  // F-SEC-01: LIST and PATCH must share the same branch scope for agents.
+  if (!agentCanAccessRequest(membership, existing.branch_id)) {
+    throw Object.assign(new Error("Finance request not found"), { code: "NOT_FOUND" });
+  }
+
+  if (params.status !== undefined) {
+    assertInstitutionStatusTransition(existing.status, params.status);
   }
 
   const set: Partial<typeof financingRequests.$inferInsert> = { updatedAt: new Date() };
