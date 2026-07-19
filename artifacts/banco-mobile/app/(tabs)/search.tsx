@@ -236,6 +236,9 @@ export default function SearchScreen() {
   // both the toggle's visibility and the map's honest "N on the map" caption are
   // driven by this subset — never the full result list.
   const [mapMode, setMapMode] = useState(false);
+  // wantMap: latches "show map when results arrive" — triggered from the
+  // discover-state FAB so users can jump to the map without typing a query.
+  const [wantMap, setWantMap] = useState(false);
   const mappableItems = useMemo(
     () =>
       items.filter(
@@ -252,6 +255,16 @@ export default function SearchScreen() {
   useEffect(() => {
     if (!canMap && mapMode) setMapMode(false);
   }, [canMap, mapMode]);
+  // Auto-enable map mode when discover-state FAB was tapped and results arrive.
+  useEffect(() => {
+    if (!wantMap) return;
+    if (viewState === "results" && mappableItems.length > 0) {
+      setMapMode(true);
+      setWantMap(false);
+    } else if (viewState === "empty" || viewState === "error") {
+      setWantMap(false);
+    }
+  }, [wantMap, viewState, mappableItems.length]);
 
   // Category chips are facet-gated: only categories with live inventory show.
   // Fails open while facets load; the active category is always kept visible.
@@ -1110,6 +1123,41 @@ export default function SearchScreen() {
             </Pressable>
           </View>
         ) : null}
+
+        {/* Discover-state map FAB: visible when no active criteria so users can
+            jump directly to the map without typing a query first. Tapping it
+            triggers a default search with the current (or default) category and
+            auto-enables map mode once mappable results arrive. */}
+        {viewState === "discover" && (
+          <View
+            style={[styles.mapToggleWrap, { bottom: insets.bottom + 80 }]}
+            pointerEvents="box-none"
+          >
+            <Pressable
+              onPress={() => {
+                playSound("tap");
+                setWantMap(true);
+                commit({
+                  ...criteria,
+                  category: criteria.category === "all" ? "car" : criteria.category,
+                });
+              }}
+              style={[
+                styles.mapToggle,
+                {
+                  backgroundColor: colors.foreground,
+                  flexDirection: isRTL ? "row-reverse" : "row",
+                },
+              ]}
+              testID="discover-map-toggle"
+            >
+              <Feather name="map" size={16} color={colors.background} />
+              <AppText style={[styles.mapToggleText, { color: colors.background }]}>
+                {t("search.viewMap")}
+              </AppText>
+            </Pressable>
+          </View>
+        )}
       </View>
 
       <LocationPicker

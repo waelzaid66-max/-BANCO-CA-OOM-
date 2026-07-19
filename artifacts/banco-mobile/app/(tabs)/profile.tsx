@@ -23,7 +23,7 @@ import {
   type SocialLinkPlatform,
 } from "@workspace/api-client-react";
 import { useQueryClient } from "@tanstack/react-query";
-import React, { useEffect, useRef, useState } from "react";
+import React, { useEffect, useMemo, useRef, useState } from "react";
 import {
   ActivityIndicator,
   Alert,
@@ -166,19 +166,19 @@ export default function ProfileScreen() {
 
   // Real seller metrics + server-backed social links (Task #38 — REAL data only).
   const metricsQuery = useGetMyMetrics({
-    query: { queryKey: getGetMyMetricsQueryKey(), enabled: !!user },
+    query: { queryKey: getGetMyMetricsQueryKey(), enabled: !!user, staleTime: 60_000 },
   });
   // Authoritative account state (internal account number lives here).
   const meQuery = useGetMe({
-    query: { queryKey: getGetMeQueryKey(), enabled: !!user },
+    query: { queryKey: getGetMeQueryKey(), enabled: !!user, staleTime: 60_000 },
   });
   const queryClient = useQueryClient();
   const socialQuery = useGetMySocialLinks({
-    query: { queryKey: getGetMySocialLinksQueryKey(), enabled: !!user },
+    query: { queryKey: getGetMySocialLinksQueryKey(), enabled: !!user, staleTime: 60_000 },
   });
   // The Instagram-style grid of the caller's OWN real listings (role-agnostic).
   const listingsQuery = useGetMyListings(undefined, {
-    query: { queryKey: getGetMyListingsQueryKey(), enabled: !!user },
+    query: { queryKey: getGetMyListingsQueryKey(), enabled: !!user, staleTime: 30_000 },
   });
   // Refetch the profile grid when the user publishes a listing so it appears
   // immediately — the profile tab stays mounted, so react-query won't refetch on
@@ -874,13 +874,16 @@ export default function ProfileScreen() {
     // Banks are not rental hosts — do not push the rental hub from FI role alone.
     const showRentalHub = hasBookableRentals || (isBusiness && !isFi);
 
-    const menuItems: {
+    // useMemo: only rebuilds when role/hub/language change — not on every render.
+    // Handlers (router, setShowMenu, signOut) are stable refs; safe to omit from deps.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    const menuItems = useMemo<{
       key: string;
       icon: React.ComponentProps<typeof Feather>["name"];
       label: string;
       onPress: () => void;
       danger?: boolean;
-    }[] = [
+    }[]>(() => [
       {
         key: "edit",
         icon: "edit-2",
@@ -988,7 +991,8 @@ export default function ProfileScreen() {
         },
         danger: true,
       },
-    ];
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    ], [showRentalHub, isBusiness, isFi, t]);
 
     return (
       <ScrollView
