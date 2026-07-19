@@ -71,6 +71,17 @@ export type WorkspaceUiCopy = {
   marketRfqsEmpty: string;
   marketRfqsOffers: string;
   marketRfqsDeadline: string;
+  marketRfqCreateTitle: string;
+  marketRfqCreateHint: string;
+  marketRfqCreateSubmit: string;
+  marketRfqCreateSuccess: string;
+  marketRfqTitleRequired: string;
+  marketRfqQuantity: string;
+  marketRfqUnit: string;
+  marketRfqTargetPrice: string;
+  marketRfqDestination: string;
+  marketRfqIndustry: string;
+  marketRfqIndustrialType: string;
   marketSupplyTitle: string;
   marketSupplyEmpty: string;
   marketSupplyResponses: string;
@@ -260,6 +271,17 @@ const COPY: Record<SiteLocale, WorkspaceUiCopy> = {
     marketRfqsEmpty: "لا توجد طلبات RFQ مفتوحة حالياً.",
     marketRfqsOffers: "عروض",
     marketRfqsDeadline: "آخر موعد",
+    marketRfqCreateTitle: "إنشاء طلب RFQ",
+    marketRfqCreateHint: "يُنشأ عبر نفس API الماركت — دون لمس Dealer OS.",
+    marketRfqCreateSubmit: "نشر الطلب",
+    marketRfqCreateSuccess: "تم إنشاء طلب RFQ. ستظهر القائمة محدّثة بعد لحظات.",
+    marketRfqTitleRequired: "العنوان مطلوب (٣ أحرف على الأقل).",
+    marketRfqQuantity: "الكمية",
+    marketRfqUnit: "الوحدة",
+    marketRfqTargetPrice: "الحد الأقصى للسعر",
+    marketRfqDestination: "بلد الوجهة",
+    marketRfqIndustry: "الصناعة",
+    marketRfqIndustrialType: "نوع صناعي",
     marketSupplyTitle: "طلبات توريد / استيراد",
     marketSupplyEmpty: "لا توجد طلبات توريد مفتوحة حالياً.",
     marketSupplyResponses: "ردود",
@@ -447,6 +469,17 @@ const COPY: Record<SiteLocale, WorkspaceUiCopy> = {
     marketRfqsEmpty: "No open RFQs right now.",
     marketRfqsOffers: "Offers",
     marketRfqsDeadline: "Deadline",
+    marketRfqCreateTitle: "Create RFQ",
+    marketRfqCreateHint: "Posted through the shared Market API — dealer-os stays untouched.",
+    marketRfqCreateSubmit: "Publish RFQ",
+    marketRfqCreateSuccess: "RFQ created. The list will refresh shortly.",
+    marketRfqTitleRequired: "Title is required (at least 3 characters).",
+    marketRfqQuantity: "Quantity",
+    marketRfqUnit: "Unit",
+    marketRfqTargetPrice: "Max target price",
+    marketRfqDestination: "Destination country",
+    marketRfqIndustry: "Industry",
+    marketRfqIndustrialType: "Industrial type",
     marketSupplyTitle: "Open sourcing requests",
     marketSupplyEmpty: "No open sourcing requests right now.",
     marketSupplyResponses: "Responses",

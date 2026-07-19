@@ -5,6 +5,7 @@ import { usePathname } from "next/navigation";
 import { localeFromPathname } from "../../../lib/hub-config";
 import { workspaceUiCopy } from "../../../lib/workspace-ui-copy";
 import { MarketTabs } from "./MarketTabs";
+import { RfqCreateForm } from "./RfqCreateForm";
 
 const tableStyle: React.CSSProperties = {
   width: "100%",
@@ -56,6 +57,8 @@ export function MarketRfqsPanel() {
         {copy.marketCopyBody}
       </p>
       <MarketTabs />
+
+      <RfqCreateForm onCreated={() => void query.refetch()} />
 
       {query.isLoading ? (
         <p style={{ color: "var(--banco-muted)" }}>{copy.loading}</p>

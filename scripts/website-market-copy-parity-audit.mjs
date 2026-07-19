@@ -110,8 +110,20 @@ mustInclude(
 
 mustInclude(
   `${WEB}/components/workspace/market/MarketRfqsPanel.tsx`,
-  ["useListRfqs", 'data-banco-journey="market-rfqs"'],
+  ["useListRfqs", 'data-banco-journey="market-rfqs"', "RfqCreateForm"],
   "market RFQs panel API wiring",
+);
+
+mustInclude(
+  `${WEB}/components/workspace/market/RfqCreateForm.tsx`,
+  [
+    "useCreateRfq",
+    "getListRfqsQueryKey",
+    "getListMyRfqsQueryKey",
+    'data-banco-journey="market-rfq-create"',
+    "createRfq",
+  ],
+  "market RFQ create form write MVP",
 );
 
 mustInclude(
@@ -141,7 +153,13 @@ mustInclude(
 
 mustInclude(
   `${WEB}/lib/workspace-ui-copy.ts`,
-  ["marketCopyTitle", "marketTabRfqs", "marketNavWebCopy"],
+  [
+    "marketCopyTitle",
+    "marketTabRfqs",
+    "marketNavWebCopy",
+    "marketRfqCreateTitle",
+    "marketRfqCreateSubmit",
+  ],
   "workspace UI copy market strings",
 );
 

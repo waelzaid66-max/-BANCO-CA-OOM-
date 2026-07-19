@@ -18,7 +18,7 @@
 |-----|--------|
 | Feature flag | `NEXT_PUBLIC_WEB_MARKET_COPY` (افتراضي `false`) |
 | نظرة عامة | `MarketDashboardPanel` — `useGetDealerStats` + `useGetMarketTrends` |
-| RFQs | `/workspace/b2b/rfqs` — `useListRfqs` |
+| RFQs | `/workspace/b2b/rfqs` — `useListRfqs` + إنشاء عبر `RfqCreateForm` (Phase 9) |
 | توريد عالمي | `/workspace/b2b/supply` — `useListGlobalSupply` (`status: open`) |
 | تبويبات | `MarketTabs` (AR + EN) |
 | Nav | عنصر «ماركت الويب» داخل قائمة Market عند تفعيل العلم |
@@ -31,7 +31,8 @@
 
 ## خارج النطاق (متعمد — لاحقاً)
 
-- إنشاء RFQ / عروض / توريد جديد / ردود  
+- إنشاء RFQ → **تم في Phase 9** (`RfqCreateForm` + `useCreateRfq`)  
+- عروض (submit/accept) / توريد جديد / ردود  
 - Bulk / import / boost / ads / wallet / subscription من ماركت  
 - استيراد shadcn أو أي ملف من `dealer-os`  
 - سطح SEO عام `/market` منفصل  
@@ -68,4 +69,5 @@ node scripts/website-seller-workspace-parity-audit.mjs
 - [x] flag off = سلوك B2B الكلاسيكي السابق  
 - [x] لا imports من dealer-os  
 - [x] audit + CI path filter  
-- [ ] موافقة مالك على توسيع إنشاء/عروض في موجة لاحقة  
+- [x] إنشاء RFQ (Phase 9)  
+- [ ] موافقة مالك على عروض/توريد في موجة لاحقة  
