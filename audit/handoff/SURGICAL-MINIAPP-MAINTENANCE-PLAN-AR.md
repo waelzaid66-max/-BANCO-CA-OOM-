@@ -251,10 +251,13 @@ sed -n '1,20p' artifacts/banco-mobile/app/section/*.tsx
 |----|------|---------|--------|
 | G0 | ⏳ بانتظار Owner | — | دمج #37 |
 | G1 | ⏳ | — | شوتات Replit |
-| A1–A5 | 🟡 جاهز للفحص | هيدر Section/Stay مُثبَّت على الفرع | لا redesign |
-| A6 | 🟡 | كروت + SECTION_ROUTE على main/فرع | — |
-| A7 | 🟡 | guard 26/26 على الفرع | — |
-| B* | ⏸ مجمّد | — | بعد A7 |
+| A1–A5 | ✅ كود | hard-lock category على Section + Stay | شوتات Replit للتأكيد البصري |
+| A6 | ✅ كود | SECTION_ROUTE + كروت + لا melt (حارس) | — |
+| A7 | ✅ كود | guard **28/28** + hard locks | — |
+| B1 | ✅ كود | `profile.tsx` topPad حقيقي (لا 67) | شوت Profile |
+| B2 | ✅ كود | `banks.tsx` topPad حقيقي | شوت Banks |
+| B3 | ✅ كود | `onboarding.tsx` topPad حقيقي | شوت Onboarding |
+| B4+ | ⏸ التالي | wallet → plans → … | وحدة×وحدة |
 | C* | ⏸ | — | بعد إثبات |
 | D* | ⏸ | — | Start فقط |
 

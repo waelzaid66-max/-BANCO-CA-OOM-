@@ -51,7 +51,8 @@ export default function BusinessOnboardingScreen() {
   const { t, isRTL } = useI18n();
   const { user, isLoaded, isSignedIn } = useUser();
   const insets = useSafeAreaInsets();
-  const topPad = Platform.OS === "web" ? 67 : insets.top;
+  // Same safe-area contract as Search/Section — fake web 67 crushed chrome.
+  const topPad = Math.max(insets.top, Platform.OS === "web" ? 12 : 0);
   const params = useLocalSearchParams<{ intent?: string }>();
   const fiIntent = params.intent === "fi";
 
