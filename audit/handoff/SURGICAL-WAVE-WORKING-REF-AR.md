@@ -30,7 +30,7 @@
 | OPEN-02 | دليل شركاء حي | لاحقاً بعد D1=ج | ⏸ |
 | OPEN-03 | AuthZ وكيل PATCH | Claude W3 | ⏸ |
 | OPEN-04/05 | Verify→link · state machine | لاحقاً | ⏸ |
-| OPEN-01 | تأكيد Replit بصري | Owner/Replit | ⏸ |
+| OPEN-01 | تأكيد Replit بصري **G0** | **الآن — الأهم** | ▶️ انظر `G0-START-NOW-MOST-IMPORTANT-AR.md` |
 
 ---
 
