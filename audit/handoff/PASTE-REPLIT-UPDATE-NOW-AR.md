@@ -6,7 +6,7 @@
 **القفل:** Owner فقط · Cursor يسلّم · أنت عين+كاميرا  
 **PR:** https://github.com/waelzaid66-max/-BANCO-CA-OOM-/pull/37  
 **الفرع:** `cursor/discover-enter-fix-4322`  
-**tip:** `457d6f7` (بعد fetch: اطبع HEAD)
+**tip:** `bb7f0fc` (بعد fetch: اطبع HEAD)
 
 ```text
 ROLE: Replit Runtime Proof ONLY

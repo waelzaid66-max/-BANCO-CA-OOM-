@@ -42,7 +42,7 @@ git reset --hard origin/cursor/discover-enter-fix-4322
 
 echo "SYNC_SHA=$(git rev-parse HEAD)"
 echo "SHORT=$(git rev-parse --short HEAD)"
-# يجب أن يبدأ بـ 457d6f7 أو يكون أحدث commit على نفس الفرع بعد هذا الـ tip
+# يجب أن يبدأ بـ bb7f0fc أو يكون أحدث commit على نفس الفرع بعد هذا الـ tip
 
 # إثبات سريع أن النسخة الحقيقية مش ENTER/أسود:
 rg -n "sectionGrid|sectionPortal|StaysHomeHeader|SectionBackdrop" \
