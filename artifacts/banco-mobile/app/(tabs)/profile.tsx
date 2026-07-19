@@ -22,6 +22,7 @@ import {
   type SocialLink,
   type SocialLinkPlatform,
 } from "@workspace/api-client-react";
+import { useQueryClient } from "@tanstack/react-query";
 import React, { useEffect, useRef, useState } from "react";
 import {
   ActivityIndicator,
@@ -170,6 +171,7 @@ export default function ProfileScreen() {
   const meQuery = useGetMe({
     query: { queryKey: getGetMeQueryKey(), enabled: !!user },
   });
+  const queryClient = useQueryClient();
   const socialQuery = useGetMySocialLinks({
     query: { queryKey: getGetMySocialLinksQueryKey(), enabled: !!user },
   });
@@ -198,6 +200,9 @@ export default function ProfileScreen() {
   const [displayTitleDraft, setDisplayTitleDraft] = useState("");
   const [categoryLabelDraft, setCategoryLabelDraft] = useState("");
   const [bioDraft, setBioDraft] = useState("");
+  // Phone lives on /me (updateMe), not Clerk metadata — keep a separate draft
+  // so signup's `phone` state is never mixed into edit-profile.
+  const [phoneDraft, setPhoneDraft] = useState("");
 
   const isSigningIn = signInStatus === "fetching";
   const isSigningUp = signUpStatus === "fetching";
@@ -383,6 +388,7 @@ export default function ProfileScreen() {
       typeof meta.categoryLabel === "string" ? meta.categoryLabel : "",
     );
     setBioDraft(typeof meta.bio === "string" ? meta.bio : "");
+    setPhoneDraft(meQuery.data?.data?.phone?.trim() ?? "");
     setShowEditProfile(true);
   };
 
@@ -400,6 +406,12 @@ export default function ProfileScreen() {
         },
       });
       await user?.reload();
+      // Same contract as post-signup: phone is authoritative on /me via updateMe.
+      const trimmedPhone = phoneDraft.trim();
+      await updateMe({
+        phone: trimmedPhone.length > 0 ? trimmedPhone : null,
+      });
+      await queryClient.invalidateQueries({ queryKey: getGetMeQueryKey() });
       Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
       setShowEditProfile(false);
     } catch {
@@ -2010,6 +2022,41 @@ export default function ProfileScreen() {
                 >
                   {bioDraft.length}/160
                 </AppText>
+              </View>
+
+              <View style={styles.editField}>
+                <AppText
+                  style={[
+                    styles.editLabel,
+                    {
+                      color: colors.foreground,
+                      textAlign: isRTL ? "right" : "left",
+                    },
+                  ]}
+                >
+                  {t("profile.phoneLabel")}
+                </AppText>
+                <TextInput
+                  value={phoneDraft}
+                  onChangeText={setPhoneDraft}
+                  placeholder={t("profile.phoneEditPlaceholder")}
+                  placeholderTextColor={colors.mutedForeground}
+                  keyboardType="phone-pad"
+                  autoComplete="tel"
+                  textContentType="telephoneNumber"
+                  maxLength={20}
+                  style={[
+                    styles.editInput,
+                    {
+                      color: colors.foreground,
+                      backgroundColor: colors.secondary,
+                      borderColor: colors.border,
+                      borderRadius: colors.radius,
+                      textAlign: isRTL ? "right" : "left",
+                    },
+                  ]}
+                  testID="edit-phone-input"
+                />
               </View>
 
               <Pressable
