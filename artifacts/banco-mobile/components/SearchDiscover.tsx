@@ -3,7 +3,7 @@ import { FeedItem, useGetTrending } from "@workspace/api-client-react";
 import { Image } from "expo-image";
 import { LinearGradient } from "expo-linear-gradient";
 import { router, type Href } from "expo-router";
-import React, { useState } from "react";
+import React from "react";
 import {
   Pressable,
   ScrollView,
@@ -15,18 +15,27 @@ import { AppText } from "@/components/AppText";
 import {
   Category,
   CategoryIcon,
-  EngineChips,
 } from "@/components/CategoryTabs";
 import { type CarBrand } from "@/constants/cars";
-import { enginesForCategory } from "@/constants/engines";
 import { useI18n } from "@/context/LanguageContext";
 import { SavedSearch } from "@/context/SessionContext";
 import { useColors } from "@/hooks/useColors";
 
 // Concrete, browseable sections (no "all" — these are the real catalogues a
-// shopper picks between). Each gets a bold image-style card; cars / real-estate
-// then reveal their engine chips, others go straight to results.
+// shopper picks between). Each card pushes a dedicated section mini-app —
+// never filters the shared Search tab in place (that melt collapsed every
+// catalogue into one melted search surface).
 const SECTIONS: Category[] = ["car", "real_estate", "facilities", "materials"];
+
+// Dedicated section mini-app routes. Must stay registered in app/_layout.tsx
+// as Stack.Screen entries or router.push 404s.
+const SECTION_ROUTE: Record<Category, Href> = {
+  all: "/section/car",
+  car: "/section/car",
+  real_estate: "/section/real-estate",
+  facilities: "/section/factories",
+  materials: "/section/materials",
+};
 
 // On-brand gradient pairs per section so each card reads as its own world while
 // staying in the BANCO red/charcoal family.
@@ -66,12 +75,11 @@ interface Props {
   onApplySaved: (s: SavedSearch) => void;
   onOpenListing: (item: FeedItem) => void;
   /**
-   * Browse a section (and optional engine) by filtering the current Search tab
-   * in place — the same committed-criteria path the persistent section tabs use.
-   * Replaces the old navigation to a separate /search-results screen so the
-   * Search tab has one coherent selection model.
+   * @deprecated Section cards navigate via SECTION_ROUTE / router.push.
+   * Kept optional so the Search tab host can still pass a no-op without
+   * re-melting catalogues into shared Search-tab criteria.
    */
-  onBrowseSection: (cat: Category, engine: string) => void;
+  onBrowseSection?: (cat: Category, engine: string) => void;
   /**
    * Open the existing results map over a coordinate-rich category (real-estate).
    * The host latches the intent and auto-enables map mode once mappable results
@@ -84,20 +92,16 @@ interface Props {
 }
 
 export function SearchDiscover({
-  onBrowseBrand,
-  onApplySaved,
-  onOpenListing,
-  onBrowseSection,
+  onBrowseBrand: _onBrowseBrand,
+  onApplySaved: _onApplySaved,
+  onOpenListing: _onOpenListing,
   onExploreMap,
-  onSearchQuery,
+  onSearchQuery: _onSearchQuery,
 }: Props) {
   const colors = useColors();
   const { t, isRTL } = useI18n();
   const rowDir = isRTL ? "row-reverse" : "row";
   const textAlign = isRTL ? "right" : "left";
-
-  // Which section card is expanded to reveal its engine chips (cars/real-estate).
-  const [openSection, setOpenSection] = useState<Category | null>(null);
 
   const { data: trendingRes } = useGetTrending();
   const trending = trendingRes?.data ?? [];
@@ -115,18 +119,8 @@ export function SearchDiscover({
       Number.isFinite(i.coordinates.lng)
   );
 
-  const goToResults = (category: Category, engine: string) => {
-    onBrowseSection(category, engine);
-  };
-
   const handleSectionPress = (cat: Category) => {
-    // Cars & real-estate reveal their engine chips inline; the others have no
-    // engine bar, so jump straight to the (browse-all) results screen.
-    if (enginesForCategory(cat)) {
-      setOpenSection((prev) => (prev === cat ? null : cat));
-    } else {
-      goToResults(cat, "all");
-    }
+    router.push(SECTION_ROUTE[cat]);
   };
 
   const SectionHeader = ({ label }: { label: string }) => (
@@ -147,98 +141,78 @@ export function SearchDiscover({
       {/* Image-style section cards */}
       <SectionHeader label={t("search.discover.sections")} />
       <View style={styles.sectionGrid}>
-        {SECTIONS.map((cat) => {
-          const open = openSection === cat;
-          return (
-            <Pressable
-              key={cat}
-              onPress={() => handleSectionPress(cat)}
-              style={styles.sectionCardWrap}
-              testID={`section-card-${cat}`}
+        {SECTIONS.map((cat) => (
+          <Pressable
+            key={cat}
+            onPress={() => handleSectionPress(cat)}
+            style={styles.sectionCardWrap}
+            testID={`section-card-${cat}`}
+          >
+            <View
+              style={[
+                styles.sectionCard,
+                { backgroundColor: SECTION_GRADIENT[cat][1] },
+              ]}
             >
+              <Image
+                source={SECTION_PHOTO[cat]}
+                style={styles.sectionPhoto}
+                contentFit="cover"
+                transition={220}
+              />
+              {/* Cinematic scrim: keeps the photo legible and lends a premium,
+                  editorial depth (light at the top, deep at the base). */}
+              <LinearGradient
+                colors={[
+                  "rgba(12,4,5,0.10)",
+                  "rgba(12,4,5,0.46)",
+                  "rgba(12,4,5,0.88)",
+                ]}
+                locations={[0, 0.55, 1]}
+                start={{ x: 0, y: 0 }}
+                end={{ x: 0, y: 1 }}
+                style={styles.sectionScrim}
+              />
+              <View pointerEvents="none" style={styles.sectionWatermarkWrap}>
+                <Image
+                  source={BANCO_WATERMARK}
+                  style={styles.sectionWatermark}
+                  contentFit="contain"
+                  tintColor="#FFFFFF"
+                />
+              </View>
+              <View style={styles.sectionBadge}>
+                <CategoryIcon category={cat} color="#FFFFFF" />
+              </View>
               <View
                 style={[
-                  styles.sectionCard,
-                  { backgroundColor: SECTION_GRADIENT[cat][1] },
-                  open && styles.sectionCardOpen,
+                  styles.sectionLabelRow,
+                  isRTL && { flexDirection: "row-reverse" },
                 ]}
               >
-                <Image
-                  source={SECTION_PHOTO[cat]}
-                  style={styles.sectionPhoto}
-                  contentFit="cover"
-                  transition={220}
-                />
-                {/* Cinematic scrim: keeps the photo legible and lends a premium,
-                    editorial depth (light at the top, deep at the base). */}
-                <LinearGradient
-                  colors={[
-                    "rgba(12,4,5,0.10)",
-                    "rgba(12,4,5,0.46)",
-                    "rgba(12,4,5,0.88)",
-                  ]}
-                  locations={[0, 0.55, 1]}
-                  start={{ x: 0, y: 0 }}
-                  end={{ x: 0, y: 1 }}
-                  style={styles.sectionScrim}
-                />
-                <View
-                  pointerEvents="none"
-                  style={styles.sectionWatermarkWrap}
-                >
-                  <Image
-                    source={BANCO_WATERMARK}
-                    style={styles.sectionWatermark}
-                    contentFit="contain"
-                    tintColor="#FFFFFF"
-                  />
-                </View>
-                <View style={styles.sectionBadge}>
-                  <CategoryIcon category={cat} color="#FFFFFF" />
-                </View>
                 <View
                   style={[
-                    styles.sectionLabelRow,
-                    isRTL && { flexDirection: "row-reverse" },
+                    styles.sectionAccent,
+                    { backgroundColor: colors.primary },
                   ]}
-                >
-                  <View
-                    style={[
-                      styles.sectionAccent,
-                      { backgroundColor: colors.primary },
-                    ]}
-                  />
-                  <AppText style={[styles.sectionLabel, { textAlign }]}>
-                    {t(`home.categories.${cat}`)}
-                  </AppText>
-                </View>
-                {enginesForCategory(cat) && (
-                  <Feather
-                    name={open ? "chevron-up" : "chevron-down"}
-                    size={16}
-                    color="rgba(255,255,255,0.92)"
-                    style={[
-                      styles.sectionChevron,
-                      isRTL ? { left: 12 } : { right: 12 },
-                    ]}
-                  />
-                )}
+                />
+                <AppText style={[styles.sectionLabel, { textAlign }]}>
+                  {t(`home.categories.${cat}`)}
+                </AppText>
               </View>
-            </Pressable>
-          );
-        })}
+              <Feather
+                name={isRTL ? "chevron-left" : "chevron-right"}
+                size={16}
+                color="rgba(255,255,255,0.92)"
+                style={[
+                  styles.sectionChevron,
+                  isRTL ? { left: 12 } : { right: 12 },
+                ]}
+              />
+            </View>
+          </Pressable>
+        ))}
       </View>
-
-      {/* Engine chips for the expanded section → dedicated results screen */}
-      {openSection && enginesForCategory(openSection) && (
-        <View style={styles.engineReveal}>
-          <EngineChips
-            engines={enginesForCategory(openSection)!}
-            selected="all"
-            onChange={(key) => goToResults(openSection, key)}
-          />
-        </View>
-      )}
 
       {/* ── 5th portal card — Booking & Stays (إيجار وحجز) ──────────────────
           Residential + furnished rental (NOT hotels). Full-width to read as a
@@ -352,10 +326,10 @@ export function SearchDiscover({
         </Pressable>
       )}
 
-      {/* Car import — marketplace cars scoped to the import engine (this is a
-          car-catalogue entry, deliberately NOT under the Business hub). */}
+      {/* Car import — opens the Cars section mini-app (never melts into the
+          shared Search tab). Engine chips live inside SectionSearchApp. */}
       <Pressable
-        onPress={() => goToResults("car", "import")}
+        onPress={() => router.push(SECTION_ROUTE.car)}
         style={styles.hubCtaWrap}
         testID="discover-car-import"
       >
@@ -553,10 +527,6 @@ const styles = StyleSheet.create({
     shadowOffset: { width: 0, height: 6 },
     elevation: 5,
   },
-  sectionCardOpen: {
-    borderColor: "#FFFFFF",
-    borderWidth: 2,
-  },
   sectionPhoto: {
     ...StyleSheet.absoluteFillObject,
   },
@@ -606,9 +576,6 @@ const styles = StyleSheet.create({
   sectionChevron: {
     position: "absolute",
     top: 14,
-  },
-  engineReveal: {
-    marginTop: 6,
   },
   mapCtaWrap: {
     marginHorizontal: 16,
