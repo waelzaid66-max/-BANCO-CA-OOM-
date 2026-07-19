@@ -10,7 +10,7 @@
 |------|------|
 | **الفرع** | `cursor/discover-enter-fix-4322` |
 | **PR** | https://github.com/waelzaid66-max/-BANCO-CA-OOM-/pull/37 |
-| **SHORT الحي** | `084ec4f` (اطبع HEAD بعد hard reset على الفرع) |
+| **SHORT الحي** | `d8687ad` (اطبع HEAD بعد hard reset على الفرع) |
 | **معنى النسخة** | `origin/main` + تنظيف الضرر فقط (typecheck · حذف boom docs · i18n ميت) |
 | **تحقيق + خطة** | `INVESTIGATION-AND-REPAIR-PLAN-AR.md` |
 | **سلسلة الضرر** | `FULL-DAMAGE-CHAIN-AND-BRANCH-MATRIX-AR.md` |
