@@ -8,7 +8,7 @@
 
 1. **`INVESTIGATION-AND-REPAIR-PLAN-AR.md`** ← التحقيق + MUST-KEEP + مراحل الإصلاح  
 2. `FULL-DAMAGE-CHAIN-AND-BRANCH-MATRIX-AR.md` ← ليه ENTER/الأسود  
-3. PR **#37** tip `d8687ad` ← تنظيف فوق main (ادمج بعد الشوتات)  
+3. PR **#37** tip `e09f33a` ← تنظيف فوق main (ادمج بعد الشوتات)  
 4. Replit = تأكيد فقط · `REPLIT-RUN-FULL-NOW-AR.md`
 
 ## السلم
