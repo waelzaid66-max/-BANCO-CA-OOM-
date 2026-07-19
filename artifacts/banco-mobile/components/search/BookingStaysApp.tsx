@@ -899,8 +899,10 @@ const styles = StyleSheet.create({
     backgroundColor: "rgba(255,255,255,0.18)",
     alignItems: "center",
     justifyContent: "center",
+    flexShrink: 0,
   },
-  heroTitleWrap: { flex: 1 },
+  // Title band shrinks; action buttons stay inside the rose hero (no escape).
+  heroTitleWrap: { flex: 1, minWidth: 0 },
   heroTitle: {
     fontSize: 20,
     fontFamily: "Inter_700Bold",
@@ -952,6 +954,7 @@ const styles = StyleSheet.create({
     alignItems: "center",
     justifyContent: "center",
     position: "relative",
+    flexShrink: 0,
   },
   heroActionBtnActive: { backgroundColor: "#FFFFFF" },
   filterBadge: {

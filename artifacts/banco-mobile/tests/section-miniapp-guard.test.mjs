@@ -7,7 +7,8 @@
 //   4. Stack screens for section/* remain registered in app/_layout.tsx
 //
 // Run: pnpm --filter @workspace/banco-mobile run test:section-guard
-// Expectation: 25/25 PASS (rose Stay hero + black-void flexGrow + country label).
+// Expectation: 26/26 PASS (rose Stay hero + black-void flexGrow + country label
+// + section header icon hits stay inside / padding 12).
 
 import test from "node:test";
 import assert from "node:assert/strict";
@@ -409,4 +410,34 @@ test("MarketCountryButton shows country label (not flag-only)", () => {
     "MarketCountryButton must render triggerLabel",
   );
   assert.match(src, /\{label\}/, "must display country label text");
+});
+
+test("Section header keeps Search-host icon hits (buttons stay inside)", () => {
+  const section = fs.readFileSync(SECTION_APP, "utf8");
+  // Owner: shrinking iconBtn to 8 pushed search/filter outside the header.
+  assert.match(
+    section,
+    /iconBtn:\s*\{[\s\S]*?padding:\s*12/,
+    "section iconBtn must keep padding 12 (Search-host parity)",
+  );
+  assert.doesNotMatch(
+    section,
+    /iconBtn:\s*\{[\s\S]*?padding:\s*8/,
+    "section iconBtn must not regress to padding 8",
+  );
+  assert.match(
+    section,
+    /headerTitleWrap:\s*\{[\s\S]*?minWidth:\s*0/,
+    "title wrap must minWidth:0 so the title shrinks, not the buttons",
+  );
+  assert.match(
+    section,
+    /iconBtn:\s*\{[\s\S]*?flexShrink:\s*0/,
+    "iconBtn must flexShrink:0 so hits stay inside the header band",
+  );
+  assert.match(
+    section,
+    /header:\s*\{[\s\S]*?paddingHorizontal:\s*16/,
+    "section header H-pad must match Search host (16)",
+  );
 });

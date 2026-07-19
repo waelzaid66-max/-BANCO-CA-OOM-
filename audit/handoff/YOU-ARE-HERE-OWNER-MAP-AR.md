@@ -6,11 +6,10 @@
 
 ## اقرأ بالترتيب
 
-1. **`INVESTIGATION-AND-REPAIR-PLAN-AR.md`** ← التحقيق + MUST-KEEP + مراحل الإصلاح  
-2. **`SCREEN-MM-INSPECT-AND-FIX-PROTOCOL-AR.md`** ← فحص المسافات/الأزرار بالميلي + إصلاح جراحي  
-3. `FULL-DAMAGE-CHAIN-AND-BRANCH-MATRIX-AR.md` ← ليه ENTER/الأسود  
-4. PR **#37** ← tip الحي = `origin/cursor/discover-enter-fix-4322` (ادمج بعد الشوتات)  
-5. Replit = تأكيد فقط · `REPLIT-RUN-FULL-NOW-AR.md`
+1. **`PAGE-BY-PAGE-HEADER-VOID-INVENTORY-AR.md`** ← جرد هيدر/void/صفحات + موجة Search الآن  
+2. **`SCREEN-MM-INSPECT-AND-FIX-PROTOCOL-AR.md`** ← فحص ميلي  
+3. **`INVESTIGATION-AND-REPAIR-PLAN-AR.md`** ← MUST-KEEP + مراحل  
+4. PR **#37** tip الحي · Replit تأكيد فقط
 
 ## السلم
 

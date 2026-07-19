@@ -123,11 +123,15 @@ rg -n 'Platform\.OS === "web" \? 67' artifacts/banco-mobile
 
 | عنصر | مرئي | hitSlop | hit فعّال تقريباً |
 |------|------|---------|-------------------|
-| backBtn | `padding: 8` حول أيقونة 22 | **12** | ≥ 44 ✓ |
-| iconBtn (بحث/فلتر) | `padding: 8` حول أيقونة 18 | (اضغط المنطقة) | راقب الازدحام |
-| Stay back | heroBackBtn + hitSlop **12** | 12 | ≥ 44 ✓ |
+| Section header H-pad | **16** (مثل Search host) | — | H12 = خطر خروج أزرار |
+| backBtn | `padding: 8` · `flexShrink: 0` · أيقونة 22 | **12** | ≥ 44 ✓ |
+| iconBtn (بحث/فلتر) | **`padding: 12`** · `flexShrink: 0` · أيقونة 18 | (المنطقة) | ≥ 44 ✓ — **ممنوع 8** |
+| عنوان الهيدر | `minWidth: 0` · ينكمش | — | الأزرار لا تُضغط |
+| Stay back / actions | 36×36 · `flexShrink: 0` | 12 على back | داخل الهيرو الوردي |
 | مسح بحث / أيقونات ثانوية | — | **8** | ارفع لـ 12 إن الشوت يثبت صعوبة اللمس |
 | Market country | يجب **علم + label** | — | علم فقط = FAIL |
+
+> Owner: تصغير `iconBtn` 12→8 خرّج الأزرار من الهيدر. الحارس يرفض الرجوع لـ 8.
 
 ### 3.4 شريط الفلاتر / chips
 
