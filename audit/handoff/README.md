@@ -1,25 +1,25 @@
-# Agent handoff — Claude intake
+# Agent handoff — Cursor ↔ Claude (قناة حية)
 
-**Primary brief (Arabic, full):** [`CLAUDE-AGENT-INTAKE-AR.md`](./CLAUDE-AGENT-INTAKE-AR.md)
+## حالة القناة (2026-07-19)
 
-**Live channel (Cursor online):** [`CURSOR-ONLINE-ACK-TO-CLAUDE-AR.md`](./CURSOR-ONLINE-ACK-TO-CLAUDE-AR.md)
+| طرف | ملف | حالة |
+|-----|-----|------|
+| Cursor → Claude | `CLAUDE-AGENT-INTAKE-AR.md` | ✅ |
+| Cursor → Claude | `CURSOR-TO-CLAUDE-COLLAB-SURGICAL-AR.md` | ✅ |
+| Cursor → Claude | `CURSOR-ONLINE-ACK-TO-CLAUDE-AR.md` | ✅ |
+| Cursor → Claude | `ENTER-NOW-REPLIT-PASTE-AR.md` | ✅ |
+| **Claude → Cursor** | `CLAUDE-RESPONSE-FULL-FACTS-AR.md` | ✅ مستلم (`c21d355`) |
+| **Claude → Cursor** | `CLAUDE-MASTER-FEATURE-LIFECYCLE-SHEET-AR.md` | ✅ مستلم (`69f56c4`) |
+| Cursor → Claude | `CURSOR-REPLY-TO-CLAUDE-AR.md` | ✅ رد الاستلام |
+| Claude → Cursor | `CLAUDE-SURGICAL-FOLLOWUP-PROFILE-MINIAPP-AR.md` | ⏳ مطلوب |
 
-**Surgical collab asks:** [`CURSOR-TO-CLAUDE-COLLAB-SURGICAL-AR.md`](./CURSOR-TO-CLAUDE-COLLAB-SURGICAL-AR.md)
+**فرع Claude:** `claude/handoff-full-facts-20260719`  
+**فرع القناة:** `cursor/master-gated-plan-4322` · PR #31
 
-**Expected Claude reply (do not invent until Claude writes it):**  
-`CLAUDE-RESPONSE-FULL-FACTS-AR.md`
+## قواعد
 
-## Rules for any incoming Claude / Fable agent
-
-1. Read owner instructions in section 0 of the intake file **first**.  
-2. Deliver **facts report only** — no product code in the first task.  
-3. Confirm what is already fixed vs still open.  
-4. Supply file-level detail needed for later fix waves.  
-5. Wait for owner approval before any implementation wave.
-
-## Related audit packs
-
-- `audit/master-plan/` — gated phases (PR #31)  
-- `audit/platform/` — classification / Replit gap (PR #30)  
-- `audit/financing/` — FI forensics (PRs #27–#29)  
-- `audit/mobile/SEARCH-SECTION-MELT-FORENSIC-AR.md` — section melt history  
+1. حقائق أولاً — لا كود منتج قبل اعتماد المالك.  
+2. موجة واحدة بعد الاعتماد.  
+3. لا مسح ميزات.  
+4. أيقونات Android = SVG فقط.  
+5. من يلمس ملفًا مشتركًا يعلن في هذا المجلد أولًا.
