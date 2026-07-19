@@ -3486,7 +3486,9 @@ const styles = StyleSheet.create({
   },
   coverActions: {
     position: "absolute",
-    right: 16,
+    // Logical end — keeps cover controls on the trailing edge in LTR and RTL
+    // (PROJECT_CONTEXT: never physical left/right for RTL chrome).
+    end: 16,
     flexDirection: "row",
     gap: 8,
   },
