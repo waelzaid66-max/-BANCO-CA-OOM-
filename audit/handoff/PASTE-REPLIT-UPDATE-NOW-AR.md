@@ -1,38 +1,32 @@
-# ⚡ REPLIT — حدّث النسخة الآن (أمر تنفيذي)
+# ⚡ REPLIT — اركب أفضل نسخة كاملة الآن + بلّغ Cursor بكل التفاصيل
 
-انسخ البلوك كاملاً إلى وكيل Replit / Shell — **لا أسئلة، لا تعديل كود.**
+**قناة حية كاملة:** `audit/handoff/PASTE-REPLIT-LIVE-CHANNEL-CURSOR-AR.md`  
+**PR للرد:** https://github.com/waelzaid66-max/-BANCO-CA-OOM-/pull/37  
+**Tip معتمد:** `53b47b0` (`53b47b085da83e719bf3e7957e6b5147d4a1f907`)  
+**Copilot:** تجاهل — UNTRUSTED
 
 ```text
-ROLE: Replit Runtime Proof Agent
-PR: https://github.com/waelzaid66-max/-BANCO-CA-OOM-/pull/37
+ROLE: Replit Runtime + Honest Fix Agent (NO CONCEALMENT)
+CHANNEL: comment on PR #37 only
 BRANCH: cursor/discover-enter-fix-4322
-CODE_FLOOR_SHA: 6b3c1d1c7ef5dda545f92dd0425de60d83529fc4
-# بعد كوميت honesty+guards: tip على origin يجب أن يمرّ الحارس 17/17
+TIP_NOW: 53b47b085da83e719bf3e7957e6b5147d4a1f907
+CODE_FLOOR: 6b3c1d1c7ef5dda545f92dd0425de60d83529fc4
 
-EXECUTE EXACTLY (no improvisation):
-1) git fetch origin
-2) git checkout cursor/discover-enter-fix-4322
-3) git reset --hard origin/cursor/discover-enter-fix-4322
-4) Print: git rev-parse HEAD && git rev-parse --short HEAD && git log -1 --oneline
-5) Assert exit 0:
-   git merge-base --is-ancestor 6b3c1d1c7ef5dda545f92dd0425de60d83529fc4 HEAD
-6) Fingerprints from PASTE-REPLIT-SYNC-EXACT-SHA-AR.md §2
-   + cd artifacts/banco-mobile && node --test tests/section-miniapp-guard.test.mjs
-   → expect **17/17 PASS**
-7) npx expo start --clear   (or Stop→Run + clear Metro)
-8) Capture P01…P13 per PASTE-PRODUCTION-MOBILE-REPLIT-COPILOT-AR.md
-9) Reply with SYNC_SHA + CODE_FLOOR ANCESTOR_OK + GUARD 17/17 + shots
+EXECUTE:
+1) READ fully: audit/handoff/PASTE-REPLIT-LIVE-CHANNEL-CURSOR-AR.md
+2) git fetch && checkout branch && reset --hard origin/cursor/discover-enter-fix-4322
+3) Verify SYNC_SHA (expect tip ≥ 53b47b0 on this branch) + CODE_FLOOR ancestor
+4) Guard: node --test tests/section-miniapp-guard.test.mjs → 17/17
+5) expo start --clear
+6) P01…P13 shots — NEVER hide a broken screen
+7) Collect Metro logs (80–120 lines), connection checks, speed notes, noise count
+8) If broken UI/bug found: surgical fix in banco-mobile OR BLOCKED with evidence;
+   push + ## REPLIT FIX comment with BEFORE/AFTER SHA
+9) Post ## REPLIT → CURSOR FULL REPORT template from LIVE-CHANNEL file
 
-HARD STOPS:
-- reset لم يُنفَّذ / HEAD خلف 6b3c1d1 → STOP، لا شوت
-- لا تعديل source
-- لا لمس artifacts/banco-website
-- NO-WIPE
-- لا تعتمد على Copilot (UNTRUSTED) — اتبع Cursor + هذا الملف فقط
-
-PROTOCOL:
-audit/handoff/PASTE-REPLIT-SYNC-EXACT-SHA-AR.md
-audit/handoff/COPILOT-UNTRUSTED-CURSOR-OWNS-SCAN-AR.md
+HARD RULES:
+- Do not hide FAIL to look green
+- NO-WIPE / no website / no W3 FI
+- Ignore Copilot
+- Every ERROR in logs must appear in the PR comment
 ```
-
-**معنى «النسخة الصحيحة» تقنياً:** رأس الفرع على GitHub بعد hard reset، متضمناً finish pack من `6b3c1d1` فأعلى + حارس 17/17.

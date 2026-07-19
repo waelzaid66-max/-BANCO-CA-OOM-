@@ -11,8 +11,10 @@
 | Branch | `cursor/discover-enter-fix-4322` |
 | PR | https://github.com/waelzaid66-max/-BANCO-CA-OOM-/pull/37 |
 | **أمر المزامنة** | `git reset --hard origin/cursor/discover-enter-fix-4322` |
+| **Tip منشور عند كتابة البروتوكول** | `53b47b085da83e719bf3e7957e6b5147d4a1f907` (`53b47b0`) |
 | **Code floor (كود الموبايل المعتمد)** | `6b3c1d1c7ef5dda545f92dd0425de60d83529fc4` (`6b3c1d1`) |
 | رسالة الـ floor | `fix(mobile): harden MOB-07 map latch, RTL chrome, section guards` |
+| **قناة حية Replit↔Cursor** | `PASTE-REPLIT-LIVE-CHANNEL-CURSOR-AR.md` |
 
 **تعريف النسخة الصحيحة:** أي `HEAD` على هذا الفرع بعد `fetch` + `reset --hard`، بشرط:
 
