@@ -194,4 +194,4 @@ NOISE: count=… top=…
 - يكمل صيانة على نفس الفرع أو فرع لاحق.  
 - لا يدمج #37 إلى `main` قبل تقرير أخضر أو قائمة عيوب صريحة مقبولة من المالك.
 
-— Cursor · Live channel · tip `8b3660a` · zero concealment
+— Cursor · Live channel · origin tip after hard reset · zero concealment
