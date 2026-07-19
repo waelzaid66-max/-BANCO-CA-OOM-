@@ -319,15 +319,25 @@ export async function updateFinancingRequest(params: {
     throw Object.assign(new Error("Finance request not found"), { code: "NOT_FOUND" });
   }
 
-  // Validate the intermediary exists when assigning one.
+  // Validate the intermediary exists (and is active) when assigning one.
+  // F-SEC-05: forwarding to an inactive institution creates a dead handoff —
+  // membership resolve rejects inactive rows, so the bank never sees the request.
   if (params.intermediaryId) {
     const [im] = await db
-      .select({ id: financingIntermediaries.id })
+      .select({
+        id: financingIntermediaries.id,
+        isActive: financingIntermediaries.isActive,
+      })
       .from(financingIntermediaries)
       .where(eq(financingIntermediaries.id, params.intermediaryId))
       .limit(1);
     if (!im) {
       throw Object.assign(new Error("Intermediary not found"), { code: "NOT_FOUND" });
+    }
+    if (!im.isActive) {
+      throw Object.assign(new Error("Intermediary is not active"), {
+        code: "INVALID_DATA",
+      });
     }
   }
 
@@ -485,12 +495,19 @@ export async function updateIntermediary(params: {
   if (params.ownerUserId !== undefined) {
     if (params.ownerUserId) {
       const [owner] = await db
-        .select({ id: users.id })
+        .select({ id: users.id, role: users.role })
         .from(users)
         .where(eq(users.id, params.ownerUserId))
         .limit(1);
       if (!owner) {
         throw Object.assign(new Error("Owner user not found"), { code: "NOT_FOUND" });
+      }
+      // F-SEC-03: only a financial_institution account may own an intermediary.
+      if (owner.role !== "financial_institution") {
+        throw Object.assign(
+          new Error("Owner must have financial_institution role"),
+          { code: "INVALID_DATA" },
+        );
       }
     }
     set.ownerUserId = params.ownerUserId;

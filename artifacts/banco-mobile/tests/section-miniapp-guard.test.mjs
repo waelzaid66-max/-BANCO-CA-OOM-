@@ -556,6 +556,16 @@ test("fiSuccessBody does not claim verify auto-links inbox (en+ar)", () => {
   );
 });
 
+test("Banks inbox surfaces non-403 load errors (F-UX-03)", () => {
+  const src = fs.readFileSync(BANKS, "utf8");
+  assert.match(src, /httpStatus/);
+  assert.match(src, /testID="banks-inbox-error"/);
+  assert.match(src, /testID="banks-inbox-retry"/);
+  const i18n = fs.readFileSync(I18N, "utf8");
+  assert.match(i18n, /inboxLoadError:\s*"/);
+  assert.match(i18n, /inboxRetry:\s*"/);
+});
+
 test("Banks stays outside SECTION_ROUTE (dedicated business world)", () => {
   const discover = fs.readFileSync(DISCOVER, "utf8");
   assert.match(discover, /router\.push\("\/business\/banks"/);

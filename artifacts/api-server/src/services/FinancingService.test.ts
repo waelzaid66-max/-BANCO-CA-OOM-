@@ -155,7 +155,7 @@ describe("FinancingService — institution AuthZ + status machine (F-SEC-01 / R2
     uids.push(agentA);
     const agentB = await createUser();
     uids.push(agentB);
-    const owner = await createUser();
+    const owner = await createUser({ role: "financial_institution" });
     uids.push(owner);
 
     const im = await createIntermediary({ name: uniq("FI Bank"), adminUserId: admin });
@@ -297,5 +297,40 @@ describe("FinancingService — institution AuthZ + status machine (F-SEC-01 / R2
       status: "closed",
     });
     expect(again.status).toBe("closed");
+  });
+
+  it("rejects forward to an inactive intermediary (F-SEC-05)", async () => {
+    const admin = await createUser();
+    uids.push(admin);
+    const im = await createIntermediary({ name: uniq("Sleepy Bank"), adminUserId: admin });
+    imIds.push(im.id);
+    await updateIntermediary({ id: im.id, isActive: false, adminUserId: admin });
+
+    const leadId = await financeLead();
+    await expect(
+      updateFinancingRequest({
+        leadId,
+        status: "forwarded",
+        intermediaryId: im.id,
+        adminUserId: admin,
+      }),
+    ).rejects.toMatchObject({ code: "INVALID_DATA" });
+  });
+
+  it("rejects linking an owner without financial_institution role (F-SEC-03)", async () => {
+    const admin = await createUser();
+    uids.push(admin);
+    const individual = await createUser({ role: "individual" });
+    uids.push(individual);
+    const im = await createIntermediary({ name: uniq("Role Gate Bank"), adminUserId: admin });
+    imIds.push(im.id);
+
+    await expect(
+      updateIntermediary({
+        id: im.id,
+        ownerUserId: individual,
+        adminUserId: admin,
+      }),
+    ).rejects.toMatchObject({ code: "INVALID_DATA" });
   });
 });

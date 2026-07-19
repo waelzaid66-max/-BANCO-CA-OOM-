@@ -27,30 +27,40 @@
 | F-UX-01 / OPEN-09 | لا اختصار Banks من البروفايل لـ FI | #39 | ✅ merged |
 | F-SEP (عرض) | FI يرى كارت «أضف إعلان» كتاجر | #39 | ✅ merged |
 | Honesty | productsHint على الهب | #39 | ✅ merged |
-| Guard | قفل المسارات | #39 ثم +1 | ✅ **34/34** |
-| OPEN-03 / F-SEC-01 | AuthZ وكيل PATCH = list scope | **هذه** | ▶️ |
-| OPEN-05 / R2 | state machine forwarded→contacted→closed | **هذه** | ▶️ |
-| Honesty | fiSuccessBody لا يدّعي ربط تلقائي بعد Verify | **هذه** | ▶️ |
+| Guard | قفل المسارات | #39 ثم AuthZ | ✅ **35/35** |
+| OPEN-03 / F-SEC-01 | AuthZ وكيل PATCH = list scope | **#40** | ✅ |
+| OPEN-05 / R2 | state machine forwarded→contacted→closed | **#40** | ✅ |
+| Honesty | fiSuccessBody لا يدّعي ربط تلقائي بعد Verify | **#40** | ✅ |
+| F-SEC-05 | رفض forward لوسيط inactive | **#40** | ✅ |
+| F-SEC-07 | منع مسح documents عند إعادة حفظ business | **#40** | ✅ |
+| F-SEC-03 | owner يجب أن يكون `financial_institution` | **#40** | ✅ |
+| F-UX-03 | خطأ شبكة inbox ≠ «لست عضواً» | **#40** | ✅ |
 | OPEN-02 | دليل شركاء حي | لاحقاً بعد D1=ج | ⏸ |
 | OPEN-04 | Verify→link inbox | لاحقاً (Start) | ⏸ |
 | OPEN-01 | تأكيد Replit بصري **G0** على `main ≥ 0696c66` | موازٍ | ▶️ انظر `G0-START-NOW-MOST-IMPORTANT-AR.md` |
 
 ---
 
-## ملفات هذه الموجة (AuthZ)
+## ملفات هذه الموجة (#40)
 
-- `artifacts/api-server/src/services/FinancingService.ts` — R1 branch scope + R2 transitions  
-- `artifacts/api-server/src/services/FinancingService.test.ts` — اختبارات سالبة/إيجابية  
-- `artifacts/banco-mobile/constants/i18n.ts` — صدق `fiSuccessBody`  
+- `artifacts/api-server/src/services/FinancingService.ts` — R1/R2 + F-SEC-05/03  
+- `artifacts/api-server/src/services/FinancingService.test.ts`  
+- `artifacts/api-server/src/lib/mergeBusinessCompanyDetails.ts` (+ test) — F-SEC-07  
+- `artifacts/api-server/src/services/UserService.ts` — merge docs  
+- `artifacts/banco-mobile/app/business/banks.tsx` — F-UX-03  
+- `artifacts/banco-mobile/constants/i18n.ts`  
 - `artifacts/banco-mobile/tests/section-miniapp-guard.test.mjs`
+
+**لم يُمس (متعمد):** F-SEC-04 فرض دور على seat — تصميم المقاعد = حساب marketplace عادي  
+**موقوف بلا Start:** OPEN-02 دليل حي · OPEN-04 Verify→link · نقل آمن
 
 ---
 
 ## بعد كل دفعة
 
 ```bash
-node artifacts/banco-mobile/tests/section-miniapp-guard.test.mjs   # 34/34
+node artifacts/banco-mobile/tests/section-miniapp-guard.test.mjs   # 35/35
 # مع DATABASE_URL (docker-compose.test.yml):
-# pnpm --filter @workspace/api-server exec vitest run src/services/FinancingService.test.ts
+# pnpm --filter @workspace/api-server exec vitest run src/services/FinancingService.test.ts src/lib/mergeBusinessCompanyDetails.test.ts
 git rev-parse --short HEAD
 ```

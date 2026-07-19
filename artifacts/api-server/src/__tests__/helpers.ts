@@ -15,7 +15,12 @@ import { users } from "@workspace/db/schema";
 
 export { db, pool, randomUUID };
 
-export type Role = "individual" | "dealer" | "company" | "enterprise";
+export type Role =
+  | "individual"
+  | "dealer"
+  | "company"
+  | "enterprise"
+  | "financial_institution";
 
 /**
  * A unique-per-call token. The durable counters are DB-backed and shared across

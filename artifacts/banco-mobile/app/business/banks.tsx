@@ -33,6 +33,15 @@ const BLUE_DIM = "#0E4C92";
 const BLUE_BG = "#1668B518";
 const BLUE_BORDER = "#1668B538";
 
+/** Read HTTP status from orval/fetch errors without treating network failures as 403. */
+function httpStatus(err: unknown): number | undefined {
+  if (!err || typeof err !== "object") return undefined;
+  const e = err as { status?: number; response?: { status?: number } };
+  if (typeof e.status === "number") return e.status;
+  if (typeof e.response?.status === "number") return e.response.status;
+  return undefined;
+}
+
 type Product = {
   icon: React.ComponentProps<typeof MaterialCommunityIcons>["name"];
   titleKey: string;
@@ -121,9 +130,40 @@ function InstitutionInboxSection({
     );
   };
 
-  // Not signed in, still loading, or not a member (403/any error) → nothing.
+  // F-UX-03: only 401/403 mean "not institution staff". Network/5xx must surface.
   const data = inbox.data?.data;
-  if (!isSignedIn || inbox.isLoading || inbox.isError || !data) return null;
+  const errStatus = httpStatus(inbox.error);
+  const isNotMember = inbox.isError && (errStatus === 401 || errStatus === 403);
+  if (!isSignedIn || inbox.isLoading || isNotMember) return null;
+  if (inbox.isError) {
+    return (
+      <View
+        style={[
+          styles.inboxErrorBox,
+          { backgroundColor: colors.card, borderColor: colors.border },
+        ]}
+        testID="banks-inbox-error"
+      >
+        <AppText style={[styles.inboxEmpty, { color: colors.mutedForeground, textAlign }]}>
+          {t("business.banks.inboxLoadError")}
+        </AppText>
+        <Pressable
+          onPress={() => {
+            void inbox.refetch();
+          }}
+          accessibilityRole="button"
+          testID="banks-inbox-retry"
+          style={[styles.inboxRetryBtn, { borderColor: BLUE, flexDirection: rowDir }]}
+        >
+          <Feather name="refresh-cw" size={14} color={BLUE} />
+          <AppText style={{ color: BLUE, fontWeight: "600" }}>
+            {t("business.banks.inboxRetry")}
+          </AppText>
+        </Pressable>
+      </View>
+    );
+  }
+  if (!data) return null;
 
   const { membership, items } = data;
   // Branch routing: the inbox response carries the institution's branches so
@@ -714,6 +754,23 @@ const styles = StyleSheet.create({
     fontFamily: "Inter_400Regular",
     marginHorizontal: 16,
     marginTop: 4,
+  },
+  inboxErrorBox: {
+    marginTop: 8,
+    marginBottom: 4,
+    padding: 14,
+    borderWidth: 1,
+    borderRadius: 14,
+    gap: 10,
+  },
+  inboxRetryBtn: {
+    alignSelf: "flex-start",
+    alignItems: "center",
+    gap: 8,
+    paddingVertical: 8,
+    paddingHorizontal: 12,
+    borderWidth: 1,
+    borderRadius: 10,
   },
   inboxCard: {
     marginHorizontal: 16,
