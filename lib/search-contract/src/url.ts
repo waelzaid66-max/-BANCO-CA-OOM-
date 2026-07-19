@@ -92,6 +92,10 @@ export function parseSearchCriteriaFromUrl(
     location: first(searchParams.location) ?? "",
     paymentType: asPaymentType(searchParams.payment_type),
     rentalTerm,
+    propertyType:
+      category === "real_estate"
+        ? (first(searchParams.property_type) ?? null)
+        : null,
     brand: first(searchParams.brand) ?? null,
     model: first(searchParams.model) ?? null,
     fuelType: (first(searchParams.fuel_type) as SearchCriteria["fuelType"]) ?? null,

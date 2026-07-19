@@ -238,8 +238,9 @@ export function buildSearchParams(
 
   // Explicit property-type selection (Booking & Stays type tabs). Assigned
   // AFTER engine params so a user's explicit choice wins over an engine preset.
+  // SearchParams already includes property_type from generated API schemas (Claude M-2).
   if (c.category === "real_estate" && c.propertyType) {
-    (sp as SearchParams & { property_type?: string }).property_type = c.propertyType;
+    sp.property_type = c.propertyType;
   }
 
   // recommended is the server default — omit it to keep params minimal.

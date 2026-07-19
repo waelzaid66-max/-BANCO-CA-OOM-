@@ -36,6 +36,11 @@ export interface SearchCriteria {
   location: string;
   paymentType: PaymentType;
   rentalTerm: string | null;
+  /**
+   * Real-estate property type (specs.property_type) — villa / apartment / …
+   * null = any. Composes with offer engines (sale/rent); mirrors mobile Stay/RE strips.
+   */
+  propertyType: string | null;
   brand: string | null;
   model: string | null;
   fuelType: SearchListingsFuelType | null;
@@ -67,6 +72,7 @@ export const DEFAULT_CRITERIA: SearchCriteria = {
   location: "",
   paymentType: "any",
   rentalTerm: null,
+  propertyType: null,
   brand: null,
   model: null,
   fuelType: null,
@@ -103,6 +109,7 @@ export const CLEAR_SECTION_ATTRS: Partial<SearchCriteria> = {
   material: null,
   industrialType: "all",
   rentalTerm: null,
+  propertyType: null,
 };
 
 export function hasActiveCriteria(c: SearchCriteria): boolean {
@@ -116,6 +123,7 @@ export function hasActiveCriteria(c: SearchCriteria): boolean {
     !!c.location ||
     c.paymentType !== "any" ||
     !!c.rentalTerm ||
+    !!c.propertyType ||
     !!c.brand ||
     !!c.model ||
     !!c.fuelType ||
@@ -148,6 +156,7 @@ export function criteriaKey(c: SearchCriteria): string {
     c.location.trim(),
     c.paymentType,
     c.rentalTerm,
+    c.propertyType,
     c.brand,
     c.model,
     c.fuelType,

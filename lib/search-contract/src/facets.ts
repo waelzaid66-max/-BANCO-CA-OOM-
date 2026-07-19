@@ -60,6 +60,10 @@ export function applyFacetToCriteria(
   }
 
   if (section === "property_type") {
+    // Prefer criteria.propertyType (composes with sale/rent engines) — same
+    // axis as mobile RE/Stay type strips. Keep legacy engine-key mapping when
+    // a property-type engine still exists for older web chips.
+    next.propertyType = value;
     const engines = enginesForCategory(next.category as Category) ?? [];
     const match = engines.find((e) => e.params.property_type === value);
     if (match) next.engineKey = match.key;

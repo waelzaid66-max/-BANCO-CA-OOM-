@@ -1,4 +1,7 @@
-# ⛔ مُلغى كأمر تشغيل — اذهب إلى `REPLIT-RUN-FULL-NOW-AR.md`
+# ⛔ مُلغى كأمر تشغيل — اذهب إلى `REPLIT-CURRENT-VERSION-NOW-AR.md`
+
+> **2026-07-19:** النسخة الحالية = `origin/main` @ `dad3a59` (مش فرع discover-enter).  
+> أي أوامر `reset` لفرع قديم هنا = **باطلة**.
 
 # Replit — مزامنة النسخة الصحيحة (Exact Branch Tip + Code Floor)
 
