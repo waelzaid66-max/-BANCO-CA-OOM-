@@ -119,8 +119,39 @@ export function BookingStaysApp() {
   );
 
   const search = useSearchMiniApp(onCommitted);
-  const { criteria, items, viewState, phase, hasNext, commit, update, applyPatch, loadMore, retry } =
-    search;
+  const {
+    criteria,
+    items,
+    viewState,
+    phase,
+    hasNext,
+    commit: commitRaw,
+    update: updateRaw,
+    applyPatch: applyPatchRaw,
+    loadMore,
+    retry,
+  } = search;
+
+  // Hard lock (fact): Stay is always real_estate + rent — never melt to another
+  // category/engine via a partial update.
+  const commit = useCallback(
+    (next: SearchCriteria) => {
+      commitRaw({ ...next, category: "real_estate", engineKey: "rent" });
+    },
+    [commitRaw],
+  );
+  const update = useCallback(
+    (partial: Partial<SearchCriteria>) => {
+      updateRaw({ ...partial, category: "real_estate", engineKey: "rent" });
+    },
+    [updateRaw],
+  );
+  const applyPatch = useCallback(
+    (partial: Partial<SearchCriteria>) => {
+      applyPatchRaw({ ...partial, category: "real_estate", engineKey: "rent" });
+    },
+    [applyPatchRaw],
+  );
 
   // The clean, per-entry baseline: real_estate + rent + market's default term
   // basis (null → "All"). Dirty = any delta from this, so entering never prompts.

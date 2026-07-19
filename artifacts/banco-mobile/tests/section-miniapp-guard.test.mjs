@@ -7,8 +7,8 @@
 //   4. Stack screens for section/* remain registered in app/_layout.tsx
 //
 // Run: pnpm --filter @workspace/banco-mobile run test:section-guard
-// Expectation: 26/26 PASS (rose Stay hero + black-void flexGrow + country label
-// + section header icon hits stay inside / padding 12).
+// Expectation: 28/28 PASS (rose Stay hero + black-void flexGrow + country label
+// + section header icon hits stay inside / padding 12 + hard category locks).
 
 import test from "node:test";
 import assert from "node:assert/strict";
@@ -439,5 +439,38 @@ test("Section header keeps Search-host icon hits (buttons stay inside)", () => {
     section,
     /header:\s*\{[\s\S]*?paddingHorizontal:\s*16/,
     "section header H-pad must match Search host (16)",
+  );
+});
+
+test("SectionSearchApp hard-locks prop category on update/commit", () => {
+  const section = fs.readFileSync(SECTION_APP, "utf8");
+  assert.match(
+    section,
+    /updateRaw\(\{[\s\S]*?category,/,
+    "update must re-assert prop category (anti-melt)",
+  );
+  assert.match(
+    section,
+    /commitRaw\(\{[\s\S]*?category,/,
+    "commit must re-assert prop category (anti-melt)",
+  );
+  assert.match(
+    section,
+    /applyPatchRaw\(\{[\s\S]*?category,/,
+    "applyPatch must re-assert prop category (anti-melt)",
+  );
+});
+
+test("BookingStaysApp hard-locks real_estate + rent on update/commit", () => {
+  const booking = fs.readFileSync(BOOKING_APP, "utf8");
+  assert.match(
+    booking,
+    /updateRaw\(\{[\s\S]*?category:\s*["']real_estate["'][\s\S]*?engineKey:\s*["']rent["']/,
+    "Stay update must lock real_estate + rent",
+  );
+  assert.match(
+    booking,
+    /commitRaw\(\{[\s\S]*?category:\s*["']real_estate["'][\s\S]*?engineKey:\s*["']rent["']/,
+    "Stay commit must lock real_estate + rent",
   );
 });

@@ -167,12 +167,46 @@ export function SectionSearchApp({
     viewState,
     phase,
     hasNext,
-    commit,
-    update,
-    applyPatch,
+    commit: commitRaw,
+    update: updateRaw,
+    applyPatch: applyPatchRaw,
     loadMore,
     retry,
   } = search;
+
+  // Hard lock (fact): this mini-app's prop category must never drift through
+  // update/commit/applyPatch. FilterSheet already hides category UI, but a
+  // partial that carries `category` would otherwise melt the section.
+  const commit = useCallback(
+    (next: SearchCriteria) => {
+      commitRaw({
+        ...next,
+        category,
+        ...(lockedEngine ? { engineKey: lockedEngine } : {}),
+      });
+    },
+    [commitRaw, category, lockedEngine],
+  );
+  const update = useCallback(
+    (partial: Partial<SearchCriteria>) => {
+      updateRaw({
+        ...partial,
+        category,
+        ...(lockedEngine ? { engineKey: lockedEngine } : {}),
+      });
+    },
+    [updateRaw, category, lockedEngine],
+  );
+  const applyPatch = useCallback(
+    (partial: Partial<SearchCriteria>) => {
+      applyPatchRaw({
+        ...partial,
+        category,
+        ...(lockedEngine ? { engineKey: lockedEngine } : {}),
+      });
+    },
+    [applyPatchRaw, category, lockedEngine],
+  );
 
   // The seeded baseline for this section — the "clean" state a page starts in.
   const baseEngine = lockedEngine ?? "all";
