@@ -2912,7 +2912,15 @@ export const GetAdminUsersResponse = zod.object({
   "is_shadow_banned": zod.boolean().optional(),
   "wallet_balance": zod.string().optional(),
   "listing_count": zod.number().optional(),
-  "created_at": zod.string().optional()
+  "created_at": zod.string().optional(),
+  "company_details": zod.object({
+  "activity_type": zod.string().nullish(),
+  "business_name": zod.string().nullish(),
+  "trade_name": zod.string().nullish(),
+  "owner_name": zod.string().nullish(),
+  "city": zod.string().nullish(),
+  "documents": zod.array(zod.string()).optional().describe('Uploaded verification document / ID photo URLs.')
+}).nullish().describe('Business / FI onboarding payload used for KYC review (activity, names, city, document URLs). Null when the user never submitted business verification.')
 })).optional(),
   "error": zod.object({
   "code": zod.enum(['INVALID_DATA', 'NOT_FOUND', 'UNAUTHORIZED', 'INTERNAL_ERROR', 'FORBIDDEN', 'RATE_LIMITED', 'INVALID_TOKEN', 'CONFLICT']),
@@ -2952,7 +2960,15 @@ export const SetUserBanResponse = zod.object({
   "is_shadow_banned": zod.boolean().optional(),
   "wallet_balance": zod.string().optional(),
   "listing_count": zod.number().optional(),
-  "created_at": zod.string().optional()
+  "created_at": zod.string().optional(),
+  "company_details": zod.object({
+  "activity_type": zod.string().nullish(),
+  "business_name": zod.string().nullish(),
+  "trade_name": zod.string().nullish(),
+  "owner_name": zod.string().nullish(),
+  "city": zod.string().nullish(),
+  "documents": zod.array(zod.string()).optional().describe('Uploaded verification document / ID photo URLs.')
+}).nullish().describe('Business / FI onboarding payload used for KYC review (activity, names, city, document URLs). Null when the user never submitted business verification.')
 }).optional(),
   "error": zod.object({
   "code": zod.enum(['INVALID_DATA', 'NOT_FOUND', 'UNAUTHORIZED', 'INTERNAL_ERROR', 'FORBIDDEN', 'RATE_LIMITED', 'INVALID_TOKEN', 'CONFLICT']),
@@ -2987,7 +3003,15 @@ export const SetUserRoleResponse = zod.object({
   "is_shadow_banned": zod.boolean().optional(),
   "wallet_balance": zod.string().optional(),
   "listing_count": zod.number().optional(),
-  "created_at": zod.string().optional()
+  "created_at": zod.string().optional(),
+  "company_details": zod.object({
+  "activity_type": zod.string().nullish(),
+  "business_name": zod.string().nullish(),
+  "trade_name": zod.string().nullish(),
+  "owner_name": zod.string().nullish(),
+  "city": zod.string().nullish(),
+  "documents": zod.array(zod.string()).optional().describe('Uploaded verification document / ID photo URLs.')
+}).nullish().describe('Business / FI onboarding payload used for KYC review (activity, names, city, document URLs). Null when the user never submitted business verification.')
 }).optional(),
   "error": zod.object({
   "code": zod.enum(['INVALID_DATA', 'NOT_FOUND', 'UNAUTHORIZED', 'INTERNAL_ERROR', 'FORBIDDEN', 'RATE_LIMITED', 'INVALID_TOKEN', 'CONFLICT']),
@@ -3022,7 +3046,15 @@ export const SetUserVerifiedResponse = zod.object({
   "is_shadow_banned": zod.boolean().optional(),
   "wallet_balance": zod.string().optional(),
   "listing_count": zod.number().optional(),
-  "created_at": zod.string().optional()
+  "created_at": zod.string().optional(),
+  "company_details": zod.object({
+  "activity_type": zod.string().nullish(),
+  "business_name": zod.string().nullish(),
+  "trade_name": zod.string().nullish(),
+  "owner_name": zod.string().nullish(),
+  "city": zod.string().nullish(),
+  "documents": zod.array(zod.string()).optional().describe('Uploaded verification document / ID photo URLs.')
+}).nullish().describe('Business / FI onboarding payload used for KYC review (activity, names, city, document URLs). Null when the user never submitted business verification.')
 }).optional(),
   "error": zod.object({
   "code": zod.enum(['INVALID_DATA', 'NOT_FOUND', 'UNAUTHORIZED', 'INTERNAL_ERROR', 'FORBIDDEN', 'RATE_LIMITED', 'INVALID_TOKEN', 'CONFLICT']),

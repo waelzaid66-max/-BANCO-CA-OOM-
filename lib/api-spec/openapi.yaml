@@ -1486,6 +1486,34 @@ components:
           type: integer
         created_at:
           type: string
+        company_details:
+          type: object
+          nullable: true
+          description: >
+            Business / FI onboarding payload used for KYC review (activity,
+            names, city, document URLs). Null when the user never submitted
+            business verification.
+          properties:
+            activity_type:
+              type: string
+              nullable: true
+            business_name:
+              type: string
+              nullable: true
+            trade_name:
+              type: string
+              nullable: true
+            owner_name:
+              type: string
+              nullable: true
+            city:
+              type: string
+              nullable: true
+            documents:
+              type: array
+              items:
+                type: string
+              description: Uploaded verification document / ID photo URLs.
 
     AdminListing:
       type: object

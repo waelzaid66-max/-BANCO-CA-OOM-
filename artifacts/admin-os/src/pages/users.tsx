@@ -7,9 +7,10 @@ import {
   useSetUserVerified,
   getGetAdminUsersQueryKey,
   getGetMeQueryKey,
+  type AdminUser,
 } from "@workspace/api-client-react";
 import { useQueryClient } from "@tanstack/react-query";
-import { Loader2, Search, Ban, ShieldCheck, BadgeCheck } from "lucide-react";
+import { Loader2, Search, Ban, ShieldCheck, BadgeCheck, FileSearch } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
@@ -21,6 +22,14 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 import { useToast } from "@/hooks/use-toast";
 import { useLang } from "@/context/LanguageContext";
 import { hasPermission, STAFF_ROLES, type StaffRole } from "@/lib/permissions";
@@ -33,8 +42,124 @@ const ROLE_BADGE: Record<string, string> = {
   user: "bg-muted text-muted-foreground border-border",
 };
 
+function KycReviewDialog({
+  user,
+  open,
+  onOpenChange,
+  canVerify,
+  verifying,
+  onVerify,
+}: {
+  user: AdminUser | null;
+  open: boolean;
+  onOpenChange: (open: boolean) => void;
+  canVerify: boolean;
+  verifying: boolean;
+  onVerify: (id: string, currentlyVerified: boolean) => void;
+}) {
+  const { t } = useLang();
+  const details = user?.company_details ?? null;
+  const docs = details?.documents ?? [];
+
+  return (
+    <Dialog open={open} onOpenChange={onOpenChange}>
+      <DialogContent className="max-w-lg max-h-[85vh] overflow-y-auto">
+        <DialogHeader>
+          <DialogTitle>{t("usersPage.kycTitle")}</DialogTitle>
+          <DialogDescription>
+            {user?.name} · {user?.role}
+            {user?.email || user?.phone ? ` · ${user.email || user.phone}` : ""}
+          </DialogDescription>
+        </DialogHeader>
+
+        {!details ? (
+          <p className="text-sm text-muted-foreground py-4">
+            {t("usersPage.kycNoBusiness")}
+          </p>
+        ) : (
+          <div className="space-y-3 text-sm">
+            <div className="grid grid-cols-2 gap-2">
+              <div>
+                <div className="text-xs text-muted-foreground">{t("usersPage.kycActivity")}</div>
+                <div className="font-medium">{details.activity_type || "—"}</div>
+              </div>
+              <div>
+                <div className="text-xs text-muted-foreground">{t("usersPage.kycCity")}</div>
+                <div className="font-medium">{details.city || "—"}</div>
+              </div>
+              <div className="col-span-2">
+                <div className="text-xs text-muted-foreground">{t("usersPage.kycBusiness")}</div>
+                <div className="font-medium">{details.business_name || "—"}</div>
+              </div>
+              {details.trade_name ? (
+                <div className="col-span-2">
+                  <div className="text-xs text-muted-foreground">{t("usersPage.kycTrade")}</div>
+                  <div className="font-medium">{details.trade_name}</div>
+                </div>
+              ) : null}
+              {details.owner_name ? (
+                <div className="col-span-2">
+                  <div className="text-xs text-muted-foreground">{t("usersPage.kycOwner")}</div>
+                  <div className="font-medium">{details.owner_name}</div>
+                </div>
+              ) : null}
+            </div>
+
+            <div>
+              <div className="text-xs text-muted-foreground mb-2">
+                {t("usersPage.kycDocuments")} ({docs.length})
+              </div>
+              {!docs.length ? (
+                <p className="text-muted-foreground">{t("usersPage.kycNoDocs")}</p>
+              ) : (
+                <div className="grid grid-cols-2 gap-2">
+                  {docs.map((url, i) => (
+                    <a
+                      key={`${url}-${i}`}
+                      href={url}
+                      target="_blank"
+                      rel="noreferrer"
+                      className="border rounded-md overflow-hidden bg-muted/40 hover:border-primary"
+                    >
+                      <img
+                        src={url}
+                        alt={`doc-${i + 1}`}
+                        className="w-full h-28 object-cover"
+                      />
+                      <div className="px-2 py-1 text-[11px] truncate text-muted-foreground">
+                        {t("usersPage.kycOpenDoc")} #{i + 1}
+                      </div>
+                    </a>
+                  ))}
+                </div>
+              )}
+            </div>
+          </div>
+        )}
+
+        <DialogFooter className="gap-2">
+          <Button variant="ghost" onClick={() => onOpenChange(false)}>
+            {t("usersPage.kycClose")}
+          </Button>
+          {canVerify && user?.id ? (
+            <Button
+              onClick={() => onVerify(user.id!, !!user.is_verified)}
+              disabled={verifying}
+            >
+              {verifying && <Loader2 className="w-4 h-4 me-2 animate-spin" />}
+              <ShieldCheck className="w-4 h-4 me-2" />
+              {user.is_verified ? t("usersPage.unverify") : t("usersPage.verify")}
+            </Button>
+          ) : null}
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
+  );
+}
+
 export default function UsersPage() {
   const [search, setSearch] = useState("");
+  const [reviewUser, setReviewUser] = useState<AdminUser | null>(null);
   const queryClient = useQueryClient();
   const { toast } = useToast();
   const { t } = useLang();
@@ -98,6 +223,9 @@ export default function UsersPage() {
       {
         onSuccess: () => {
           refresh();
+          setReviewUser((cur) =>
+            cur?.id === id ? { ...cur, is_verified: !currentlyVerified } : cur,
+          );
           toast({
             title: currentlyVerified
               ? t("usersPage.toastUnverified")
@@ -161,6 +289,10 @@ export default function UsersPage() {
               users.map((user: NonNullable<typeof users>[number]) => {
                 const isSelf = !!myId && user.id === myId;
                 const staffRole = (user.staff_role ?? "user") as StaffRole;
+                const hasKyc =
+                  !!user.company_details &&
+                  (!!user.company_details.business_name ||
+                    (user.company_details.documents?.length ?? 0) > 0);
                 return (
                   <TableRow key={user.id}>
                     <TableCell>
@@ -215,21 +347,25 @@ export default function UsersPage() {
                             <BadgeCheck className="w-3 h-3 me-1" /> {t("usersPage.verified")}
                           </Badge>
                         )}
+                        {hasKyc && !user.is_verified && (
+                          <Badge variant="outline" className="bg-amber-500/10 text-amber-500 border-amber-500/20">
+                            {t("usersPage.kycPending")}
+                          </Badge>
+                        )}
                       </div>
                     </TableCell>
                     <TableCell>{user.listing_count}</TableCell>
                     {showActions && (
                       <TableCell className="text-right">
                         <div className="flex items-center justify-end gap-2">
-                          {canVerify && (
+                          {(canVerify || hasKyc) && (
                             <Button
                               variant="outline"
                               size="sm"
-                              onClick={() => handleToggleVerified(user.id!, !!user.is_verified)}
-                              disabled={setVerified.isPending}
+                              onClick={() => setReviewUser(user)}
                             >
-                              <ShieldCheck className="w-4 h-4 me-2" />
-                              {user.is_verified ? t("usersPage.unverify") : t("usersPage.verify")}
+                              <FileSearch className="w-4 h-4 me-2" />
+                              {t("usersPage.kycReview")}
                             </Button>
                           )}
                           {canBan && (
@@ -256,6 +392,17 @@ export default function UsersPage() {
           </TableBody>
         </Table>
       </div>
+
+      <KycReviewDialog
+        user={reviewUser}
+        open={!!reviewUser}
+        onOpenChange={(o) => {
+          if (!o) setReviewUser(null);
+        }}
+        canVerify={canVerify}
+        verifying={setVerified.isPending}
+        onVerify={handleToggleVerified}
+      />
     </div>
   );
 }
