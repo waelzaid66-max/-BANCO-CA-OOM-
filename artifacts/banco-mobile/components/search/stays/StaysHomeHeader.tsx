@@ -92,12 +92,14 @@ export function StaysHomeHeader({
 }: StaysHomeHeaderProps) {
   const insets = useSafeAreaInsets();
   const { t, isRTL } = useI18n();
-  const topPad = Platform.OS === "web" ? 67 : insets.top;
+  // Compact chrome: use real safe-area on every platform. The old web constant
+  // (67) wasted ~half a viewport before content — never restore that pad.
+  const topPad = Math.max(insets.top, Platform.OS === "web" ? 12 : 0);
   const rowDir = isRTL ? "row-reverse" : "row";
   const textAlign = isRTL ? "right" : "left";
 
   return (
-    <View style={[styles.root, { paddingTop: topPad + 4 }]} testID="stays-header">
+    <View style={[styles.root, { paddingTop: topPad + 2 }]} testID="stays-header">
       {/* Band A — back · compact brand · save (one short row, not half-screen) */}
       <View style={[styles.topBar, { flexDirection: rowDir }]}>
         <Pressable
@@ -265,13 +267,13 @@ const styles = StyleSheet.create({
   root: {
     backgroundColor: VOID,
     paddingHorizontal: 14,
-    paddingBottom: 8,
+    paddingBottom: 6,
   },
   topBar: {
     alignItems: "center",
-    minHeight: 40,
-    marginBottom: 8,
-    gap: 6,
+    minHeight: 36,
+    marginBottom: 6,
+    gap: 4,
   },
   brandInline: {
     flex: 1,
@@ -306,7 +308,7 @@ const styles = StyleSheet.create({
     textAlign: "center",
   },
   searchPill: {
-    height: 44,
+    height: 40,
     borderRadius: 999,
     paddingHorizontal: 12,
     alignItems: "center",
@@ -319,7 +321,7 @@ const styles = StyleSheet.create({
     flex: 1,
     alignItems: "center",
     gap: 8,
-    minHeight: 42,
+    minHeight: 38,
   },
   searchPlaceholder: {
     flex: 1,
@@ -355,14 +357,14 @@ const styles = StyleSheet.create({
     color: SNOW,
   },
   tabsScroll: {
-    marginTop: 8,
+    marginTop: 6,
     marginHorizontal: -14,
   },
   tabsRow: {
     alignItems: "stretch",
     paddingHorizontal: 10,
     gap: 0,
-    minHeight: 44,
+    minHeight: 40,
   },
   tabItem: {
     alignItems: "center",

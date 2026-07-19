@@ -18,10 +18,17 @@
 | MOB-07 map param `string\|string[]` normalize | ✅ |
 | Search suggestions RTL insets | ✅ |
 | Profile grid badges logical start/end | ✅ |
-| حارس section-miniapp | ✅ 17/17 (موسّع: Stay/icons/banks/RTL/map honesty) |
+| حارس section-miniapp | ✅ **21/21** |
 | Map CTA = real_estate فقط | ✅ |
 | suggestion textAlign RTL (3 أسطح) | ✅ |
-| Copilot | ❌ UNTRUSTED — Cursor يملك المسح |
+| Stay header مضغوط (لا pad 67) | ✅ |
+| ErrorBoundary يغلف Clerk | ✅ |
+| API base loud-fail | ✅ |
+| B-reaction RTL inward fan | ✅ |
+| Proof testIDs (legal/badges) | ✅ |
+| CI/seed gates مدموجة من #38 | ✅ |
+| Copilot | ❌ UNTRUSTED |
+| مسار ذهبي Replit | `GOLDEN-PATH-REPLIT-CURSOR-AR.md` |
 
 ## أُغلق سابقاً على main
 

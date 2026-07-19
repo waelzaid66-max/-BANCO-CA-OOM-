@@ -34,8 +34,27 @@ import { ThemeProvider } from "@/context/ThemeContext";
 import { SoundProvider } from "@/context/SoundContext";
 import { PushNotificationsBridge } from "@/hooks/usePushNotifications";
 
-if (process.env.EXPO_PUBLIC_DOMAIN) {
-  setBaseUrl(`https://${process.env.EXPO_PUBLIC_DOMAIN}`);
+{
+  const explicitBase = process.env.EXPO_PUBLIC_API_BASE_URL?.replace(/\/+$/, "");
+  const domain = process.env.EXPO_PUBLIC_DOMAIN?.replace(/^https?:\/\//, "").replace(
+    /\/+$/,
+    "",
+  );
+  if (explicitBase) {
+    setBaseUrl(explicitBase);
+  } else if (domain) {
+    setBaseUrl(`https://${domain}`);
+  } else if (typeof __DEV__ !== "undefined" && __DEV__) {
+    console.warn(
+      "[BANCO] API base unset (EXPO_PUBLIC_API_BASE_URL / EXPO_PUBLIC_DOMAIN). " +
+        "Relative /api calls only work behind a same-origin proxy.",
+    );
+  } else {
+    console.error(
+      "[BANCO] FATAL: production build missing EXPO_PUBLIC_API_BASE_URL or EXPO_PUBLIC_DOMAIN — " +
+        "network calls will fail silently as relative /api paths.",
+    );
+  }
 }
 
 // Capture uncaught global JS errors (in addition to React render crashes caught
@@ -266,19 +285,21 @@ export default function RootLayout() {
 
   if (!fontsLoaded && !fontError) return null;
 
+  // ErrorBoundary wraps Clerk so a missing/invalid publishable key or provider
+  // boot crash still surfaces the recovery UI instead of a white screen.
   return (
-    <ClerkProvider
-      publishableKey={publishableKey}
-      tokenCache={tokenCache}
-      proxyUrl={proxyUrl}
-    >
-      <ClerkLoaded>
-        <SafeAreaProvider>
-          <ErrorBoundary
-            onError={(error, componentStack) =>
-              logClientCrash(error, { kind: "reactRender", componentStack })
-            }
-          >
+    <SafeAreaProvider>
+      <ErrorBoundary
+        onError={(error, componentStack) =>
+          logClientCrash(error, { kind: "reactRender", componentStack })
+        }
+      >
+        <ClerkProvider
+          publishableKey={publishableKey}
+          tokenCache={tokenCache}
+          proxyUrl={proxyUrl}
+        >
+          <ClerkLoaded>
             <QueryClientProvider client={queryClient}>
               <AuthTokenBridge />
               <ThemeProvider>
@@ -287,30 +308,30 @@ export default function RootLayout() {
                     <SessionProvider>
                       <BiometricProvider>
                         <SoundProvider>
-                        <PushNotificationsBridge />
-                        <GestureHandlerRootView style={{ flex: 1 }}>
-                          <KeyboardProvider>
-                            <RootLayoutNav />
-                          </KeyboardProvider>
-                          {!introDone && (
-                            <CinematicIntro
-                              onDone={() => {
-                                setIntroDone(true);
-                                if (
-                                  Platform.OS === "web" &&
-                                  typeof window !== "undefined"
-                                ) {
-                                  try {
-                                    window.sessionStorage.setItem(
-                                      "banco_intro_seen",
-                                      "1",
-                                    );
-                                  } catch {}
-                                }
-                              }}
-                            />
-                          )}
-                        </GestureHandlerRootView>
+                          <PushNotificationsBridge />
+                          <GestureHandlerRootView style={{ flex: 1 }}>
+                            <KeyboardProvider>
+                              <RootLayoutNav />
+                            </KeyboardProvider>
+                            {!introDone && (
+                              <CinematicIntro
+                                onDone={() => {
+                                  setIntroDone(true);
+                                  if (
+                                    Platform.OS === "web" &&
+                                    typeof window !== "undefined"
+                                  ) {
+                                    try {
+                                      window.sessionStorage.setItem(
+                                        "banco_intro_seen",
+                                        "1",
+                                      );
+                                    } catch {}
+                                  }
+                                }}
+                              />
+                            )}
+                          </GestureHandlerRootView>
                         </SoundProvider>
                       </BiometricProvider>
                     </SessionProvider>
@@ -318,9 +339,9 @@ export default function RootLayout() {
                 </LanguageProvider>
               </ThemeProvider>
             </QueryClientProvider>
-          </ErrorBoundary>
-        </SafeAreaProvider>
-      </ClerkLoaded>
-    </ClerkProvider>
+          </ClerkLoaded>
+        </ClerkProvider>
+      </ErrorBoundary>
+    </SafeAreaProvider>
   );
 }

@@ -280,3 +280,48 @@ test("Search / section / stays suggestion text uses RTL textAlign", () => {
     );
   }
 });
+
+const PROFILE = path.join(APP_ROOT, "app", "(tabs)", "profile.tsx");
+const BREACTION = path.join(APP_ROOT, "components", "BReactionButton.tsx");
+
+test("StaysHomeHeader stays compact — no web pad constant 67", () => {
+  const src = fs.readFileSync(STAYS_HEADER, "utf8");
+  assert.doesNotMatch(
+    src,
+    /Platform\.OS\s*===\s*["']web["']\s*\?\s*67/,
+    "must not restore the oversized web top pad (67)",
+  );
+  assert.match(src, /testID=["']stays-header["']/);
+});
+
+test("Root layout loud-fails missing API base + ErrorBoundary wraps Clerk", () => {
+  const layout = fs.readFileSync(LAYOUT, "utf8");
+  assert.match(
+    layout,
+    /EXPO_PUBLIC_API_BASE_URL|EXPO_PUBLIC_DOMAIN/,
+    "must configure API base from env",
+  );
+  assert.match(
+    layout,
+    /FATAL: production build missing/,
+    "production must log FATAL when API base env is missing",
+  );
+  // Closing-tag order: ErrorBoundary must close after ClerkProvider (wraps it).
+  const errClose = layout.lastIndexOf("</ErrorBoundary>");
+  const clerkClose = layout.lastIndexOf("</ClerkProvider>");
+  assert.ok(errClose > clerkClose, "ErrorBoundary must wrap ClerkProvider");
+});
+
+test("Proof hooks — legal + profile badge testIDs", () => {
+  const profile = fs.readFileSync(PROFILE, "utf8");
+  assert.match(profile, /testID=["']legal-terms-link["']/);
+  assert.match(profile, /testID=["']legal-privacy-link["']/);
+  assert.match(profile, /testID=\{`post-\$\{item\.id\}-video`\}/);
+  assert.match(profile, /testID=\{`post-\$\{item\.id\}-featured`\}/);
+});
+
+test("BReactionButton fans inward under RTL", () => {
+  const src = fs.readFileSync(BREACTION, "utf8");
+  assert.match(src, /fanSign|isRTL/, "must be RTL-aware");
+  assert.match(src, /chipHolderStart/, "RTL chip anchor required");
+});

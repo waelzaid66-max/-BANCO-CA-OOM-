@@ -11,6 +11,7 @@ import Animated, {
 
 import { Ionicons } from "@/components/icons";
 import { useColors } from "@/hooks/useColors";
+import { useI18n } from "@/hooks/useI18n";
 
 /**
  * The identity "B" (lightning bolt) cropped from the OFFICIAL transparent
@@ -94,6 +95,10 @@ export function BReactionButton({
   testID?: string;
 }) {
   const colors = useColors();
+  const { isRTL } = useI18n();
+  // StayCard parks this control on the physical left in RTL — fan chips inward
+  // (positive X) so the menu stays on-card instead of clipping off-screen.
+  const fanSign = isRTL ? 1 : -1;
   const [open, setOpen] = useState(false);
   const progress = useSharedValue(0);
   const closeTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -134,27 +139,27 @@ export function BReactionButton({
     { key: "angry", icon: "thumbs-down", color: "#B3122F", onPress: onAngry },
   ];
 
-  // One spring drives all chips (single GPU timeline). Chips fan out to the
-  // physical left of the B, staying over the card image — never clipped.
+  // One spring drives all chips (single GPU timeline). Direction follows layout:
+  // LTR → fan left (over card); RTL → fan right (over card when B is left-edge).
   // Three explicit hook calls (fixed order — React Compiler friendly).
   const chipStyle0 = useAnimatedStyle(() => ({
     opacity: progress.value,
     transform: [
-      { translateX: -1 * (CHIP_SIZE + CHIP_GAP) * progress.value },
+      { translateX: fanSign * 1 * (CHIP_SIZE + CHIP_GAP) * progress.value },
       { scale: 0.4 + 0.6 * progress.value },
     ],
   }));
   const chipStyle1 = useAnimatedStyle(() => ({
     opacity: progress.value,
     transform: [
-      { translateX: -2 * (CHIP_SIZE + CHIP_GAP) * progress.value },
+      { translateX: fanSign * 2 * (CHIP_SIZE + CHIP_GAP) * progress.value },
       { scale: 0.4 + 0.6 * progress.value },
     ],
   }));
   const chipStyle2 = useAnimatedStyle(() => ({
     opacity: progress.value,
     transform: [
-      { translateX: -3 * (CHIP_SIZE + CHIP_GAP) * progress.value },
+      { translateX: fanSign * 3 * (CHIP_SIZE + CHIP_GAP) * progress.value },
       { scale: 0.4 + 0.6 * progress.value },
     ],
   }));
@@ -172,8 +177,13 @@ export function BReactionButton({
         <Animated.View
           key={chip.key}
           pointerEvents={open ? "auto" : "none"}
-          style={[styles.chipHolder, chipStyles[i]]}
+          style={[
+            styles.chipHolder,
+            isRTL ? styles.chipHolderStart : styles.chipHolderEnd,
+            chipStyles[i],
+          ]}
         >
+
           <Pressable
             onPress={() => pick(chip)}
             style={[
@@ -214,7 +224,12 @@ const styles = StyleSheet.create({
   },
   chipHolder: {
     position: "absolute",
+  },
+  chipHolderEnd: {
     right: 0,
+  },
+  chipHolderStart: {
+    left: 0,
   },
   chip: {
     width: CHIP_SIZE,

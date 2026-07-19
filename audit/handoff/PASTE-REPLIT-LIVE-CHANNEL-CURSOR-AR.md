@@ -14,7 +14,8 @@
 | Branch | `cursor/discover-enter-fix-4322` |
 | **أمر النسخة** | `git reset --hard origin/cursor/discover-enter-fix-4322` ثم اطبع `git rev-parse HEAD` |
 | Code floor (سلف إلزامي) | `6b3c1d1c7ef5dda545f92dd0425de60d83529fc4` |
-| حارس | **17/17 PASS** |
+| حارس | **21/21 PASS** (`section-miniapp-guard`) |
+| مسار ذهبي | `GOLDEN-PATH-REPLIT-CURSOR-AR.md` |
 | PR | https://github.com/waelzaid66-max/-BANCO-CA-OOM-/pull/37 |
 
 **قاعدة tip:** بعد `fetch`+`reset --hard` اركب ما يطبعه `git rev-parse HEAD` — لا تثبتوا SHA قديم من رسالة سابقة. إن `CODE_FLOOR` ليس سلفاً → توقفوا.

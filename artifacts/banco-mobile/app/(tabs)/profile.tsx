@@ -1673,7 +1673,10 @@ export default function ProfileScreen() {
                     transition={150}
                   />
                   {item.has_video ? (
-                    <View style={styles.postVideoBadge}>
+                    <View
+                      style={styles.postVideoBadge}
+                      testID={`post-${item.id}-video`}
+                    >
                       <Ionicons name="play" size={11} color="#fff" />
                     </View>
                   ) : null}
@@ -1683,6 +1686,7 @@ export default function ProfileScreen() {
                         styles.postFeatured,
                         { backgroundColor: colors.primary },
                       ]}
+                      testID={`post-${item.id}-featured`}
                     >
                       <Feather
                         name="star"
@@ -2710,6 +2714,7 @@ export default function ProfileScreen() {
             <AppText
               style={[styles.consentLink, { color: colors.primary }]}
               onPress={() => router.push("/legal/terms")}
+              testID="legal-terms-link"
             >
               {t("profile.terms")}
             </AppText>
@@ -2717,6 +2722,7 @@ export default function ProfileScreen() {
             <AppText
               style={[styles.consentLink, { color: colors.primary }]}
               onPress={() => router.push("/legal/privacy")}
+              testID="legal-privacy-link"
             >
               {t("profile.privacy")}
             </AppText>
