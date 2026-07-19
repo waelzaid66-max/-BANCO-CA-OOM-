@@ -1,33 +1,23 @@
-# ⚡ REPLIT — تشغيل وشوت فقط (لا كود)
+# ⚡ REPLIT — تشغيل النسخة الحقيقية الآن
 
-**قرار المالك:** أنت منفّذ لـ Cursor — لا تصلح المشروع وحدك.  
-**أدوار:** `audit/handoff/ROLES-CURSOR-VS-REPLIT-AR.md`  
-**شكوى الأقسام:** `audit/handoff/OWNER-COMPLAINT-SECTIONS-RESTORE-AR.md`  
-**PR:** https://github.com/waelzaid66-max/-BANCO-CA-OOM-/pull/37
+**الأمر الحي الكامل:**  
+→ **`audit/handoff/PASTE-REPLIT-SHOW-TRUE-NOW-AR.md`**
+
+**القفل:** Owner فقط · Cursor يسلّم · أنت عين+كاميرا  
+**PR:** https://github.com/waelzaid66-max/-BANCO-CA-OOM-/pull/37  
+**الفرع:** `cursor/discover-enter-fix-4322`  
+**tip:** `457d6f7` (بعد fetch: اطبع HEAD)
 
 ```text
-ROLE: Replit Runtime Proof ONLY (no code ownership)
-AUTHORITY: Owner + Cursor only — see OWNER-ONLY-HONEST-ENGINEER-LOCK-AR.md
-FORBIDDEN: edit source · commit · push fixes · product decisions · Copilot · any redesign advice
+ROLE: Replit Runtime Proof ONLY
+AUTHORITY: Owner + Cursor only
+FORBIDDEN: edit · commit · push · Copilot · redesign · old SHA
 
-FORENSIC:
-  ENTER rows culprit = Cursor @ 6ba5f1b — restored photo cards @ 6b18408
-  Black Stay header culprit = Cursor — restored rose hero THIS tip
-  DO NOT look for StaysHomeHeader — it was DELETED on purpose
-
-EXECUTE:
-1) READ: OWNER-COMPLAINT-SECTIONS-RESTORE-AR.md + ROLES
-2) git fetch && checkout cursor/discover-enter-fix-4322
-3) git reset --hard origin/cursor/discover-enter-fix-4322
-4) Print SYNC_SHA + node --test artifacts/banco-mobile/tests/section-miniapp-guard.test.mjs
-   Expect PASS (rose hero + flexGrow + country label + no StaysHomeHeader)
-5) npx expo start --clear
-6) CRITICAL SHOTS: Discover · Cars · Real-estate · Factories · Stay
-   MUST prove:
-   - Discover = 2x2 PHOTO section CARDS (not ENTER rows)
-   - Stay = ROSE hero + SectionBackdrop (NOT black header)
-   - NO black void · country button shows NAME · header not crushed · map pill not giant
-7) Paste Metro errors / remaining breaks — NEVER hide FAIL
-8) Comment on PR #37 with ## REPLIT → CURSOR (RUNTIME ONLY — NO CODE)
-9) STOP. Wait for Cursor tip if anything still fails.
+NOW:
+1) Open PASTE-REPLIT-SHOW-TRUE-NOW-AR.md and run it literally
+2) SYNC to origin tip (expect 457d6f7 or newer on same branch)
+3) Guard 25/25 · expo start --clear
+4) Shots MUST show: Discover 2x2 PHOTO cards + Stay ROSE hero
+5) Comment ## REPLIT → CURSOR (RUNTIME ONLY — NO CODE)
+6) STOP
 ```

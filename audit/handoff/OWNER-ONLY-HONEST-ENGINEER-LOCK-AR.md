@@ -24,9 +24,16 @@
 - لا يستمع لـ Copilot ولا لـ «حل سريع» من Replit.
 - لو تعارضت تعليمات وكيل مع أمر المالك → **أمر المالك يفوز فوراً**.
 
-## tip الاسترجاع الحالي
+## tip الاسترجاع الحالي (النسخة الحقيقية للنشر أمام المالك)
 
-انظر PR #37 + `OWNER-COMPLAINT-SECTIONS-RESTORE-AR.md`.  
-Discover = كروت صور · Stay = هيرو وردي · حارس يرفض الرجوع.
+| | |
+|--|--|
+| فرع | `cursor/discover-enter-fix-4322` |
+| tip | `457d6f7` |
+| PR | #37 |
+| أمر Replit الآن | `PASTE-REPLIT-SHOW-TRUE-NOW-AR.md` |
+
+Discover = كروت صور · Stay = هيرو وردي · حارس يرفض الرجوع.  
+تجميع الصح + رفض الغلط فقط — ممنوع نسخ أقدم/أغبي.
 
 — Cursor · Honest engineer lock · Owner-only
