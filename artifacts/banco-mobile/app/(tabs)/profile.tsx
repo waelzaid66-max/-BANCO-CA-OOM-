@@ -540,13 +540,11 @@ export default function ProfileScreen() {
       Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
       setNeedsAccountType(false);
       // Dealer / company / financial-institution all continue to the business
-      // onboarding, where verification (KYC / bank approval) is collected. A
-      // financial institution's financing features stay locked until verified.
-      if (
-        type === "dealer" ||
-        type === "company" ||
-        type === "financial_institution"
-      ) {
+      // onboarding, where verification (KYC / bank approval) is collected.
+      // FI must pass intent=fi so activity + account_type stay bank — never dealer.
+      if (type === "financial_institution") {
+        router.push("/business/onboarding?intent=fi");
+      } else if (type === "dealer" || type === "company") {
         router.push("/business/onboarding");
       }
     } catch {
@@ -793,6 +791,7 @@ export default function ProfileScreen() {
     })();
 
     const role = (user.publicMetadata?.role as string) || "";
+    const isFi = role === "financial_institution";
     const isBusiness = [
       "dealer",
       "company",
@@ -857,7 +856,13 @@ export default function ProfileScreen() {
         route: "/notifications",
       },
     ];
-    if (isBusiness) {
+    if (isFi) {
+      profileTabs.push({
+        icon: "cash-outline",
+        label: "tabBanks",
+        route: "/business/banks",
+      });
+    } else if (isBusiness) {
       profileTabs.push({
         icon: "people-outline",
         label: "tabLeads",
@@ -866,7 +871,8 @@ export default function ProfileScreen() {
     }
     const posts = listingsQuery.data?.data ?? [];
     const hasBookableRentals = filterBookableListings(posts).length > 0;
-    const showRentalHub = hasBookableRentals || isBusiness;
+    // Banks are not rental hosts — do not push the rental hub from FI role alone.
+    const showRentalHub = hasBookableRentals || (isBusiness && !isFi);
 
     const menuItems: {
       key: string;
@@ -1408,7 +1414,72 @@ export default function ProfileScreen() {
           ))}
         </View>
 
-        {isBusiness ? (
+        {isFi ? (
+          <View
+            style={[
+              styles.businessCard,
+              {
+                backgroundColor: "#1668B518",
+                borderColor: "#1668B538",
+                borderRadius: colors.radius,
+              },
+            ]}
+            testID="profile-fi-card"
+          >
+            <View style={[styles.businessHeader, isRTL && styles.rowReverse]}>
+              <MaterialCommunityIcons
+                name="bank-outline"
+                size={22}
+                color="#1668B5"
+              />
+              <View style={{ flex: 1 }}>
+                <AppText
+                  style={[
+                    styles.businessTitle,
+                    {
+                      color: colors.foreground,
+                      textAlign: isRTL ? "right" : "left",
+                    },
+                  ]}
+                >
+                  {t("profile.fiMode")}
+                </AppText>
+                <AppText
+                  style={[
+                    styles.businessHint,
+                    {
+                      color: colors.mutedForeground,
+                      textAlign: isRTL ? "right" : "left",
+                    },
+                  ]}
+                >
+                  {t("profile.fiModeHint")}
+                </AppText>
+              </View>
+            </View>
+            <Pressable
+              onPress={() => router.push("/business/banks")}
+              style={[
+                styles.businessBtn,
+                {
+                  backgroundColor: "#1668B5",
+                  borderRadius: colors.radius,
+                  width: "100%",
+                },
+              ]}
+              testID="profile-open-banks"
+            >
+              <MaterialCommunityIcons
+                name="bank-check"
+                size={16}
+                color="#FFFFFF"
+              />
+              <AppText style={[styles.businessBtnText, { color: "#FFFFFF" }]}>
+                {t("profile.fiOpenBanks")}
+              </AppText>
+            </Pressable>
+          </View>
+        ) : isBusiness ? (
           <View
             style={[
               styles.businessCard,
