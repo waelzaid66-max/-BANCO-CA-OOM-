@@ -807,153 +807,165 @@ export default function SearchScreen() {
         </Pressable>
       </View>
 
-      {/* Persistent, always-visible section selector — the primary "selection
-          tool". Picking a section sets criteria.category, which makes the
-          criteria active and filters the list in place (no navigating away). */}
-      <CategoryTabs
-        selected={criteria.category}
-        onChange={selectCategory}
-        visible={shownCategories}
-      />
-      {/* In-place sub-filters for car / real-estate (new/used, property type,
-          financing, …), surfaced under the tabs instead of buried in the filter
-          sheet. Empty for every other section, so this row only appears where it
-          applies. No rent/lease chip — that data does not exist (see
-          constants/engines.ts). */}
-      {!facetsLoading && engineList.length > 1 && !showIndustrialChips && (
-        <EngineChips
-          engines={engineList}
-          selected={criteria.engineKey}
-          onChange={selectEngine}
-        />
-      )}
-      {showIndustrialChips && (
-        <IndustrialSubChips
-          types={visibleIndTypes!}
-          selected={criteria.industrialType}
-          onChange={selectIndustrialType}
-        />
-      )}
-      {activeGroup ? (
-        <View style={[styles.originRow, { flexDirection: rowDir }]}>
-          {(["all", "local", "imported"] as const).map((o) => {
-            const active = originKey === o;
-            return (
-              <Pressable
-                key={o}
-                onPress={() => {
-                  playSound("tap");
-                  selectOrigin(o);
-                }}
-                style={[
-                  styles.originChip,
-                  {
-                    backgroundColor: active ? colors.primary : colors.secondary,
-                  },
-                ]}
-                testID={`search-origin-${o}`}
-              >
-                <AppText
-                  style={[
-                    styles.originChipText,
-                    {
-                      color: active
-                        ? colors.primaryForeground
-                        : colors.mutedForeground,
-                    },
-                  ]}
-                >
-                  {o === "all"
-                    ? t("search.any")
-                    : t(`create.opts.${o}`)}
-                </AppText>
-              </Pressable>
-            );
-          })}
-        </View>
-      ) : null}
-      {showRentalTerms ? (
+      {/* Catalogue chrome belongs to active Search browse — not Discover.
+          Discover already routes sections via SECTION_ROUTE mini-apps; showing
+          CategoryTabs/engines here would melt Discover into shared criteria. */}
+      {viewState !== "discover" ? (
         <>
-          <ScrollView
-            horizontal
-            showsHorizontalScrollIndicator={false}
-            contentContainerStyle={[styles.originRow, { flexDirection: rowDir }]}
-          >
-            {MARKET_COUNTRIES.map((m) => {
-              const active = criteria.marketCountry === m.value;
-              return (
-                <Pressable
-                  key={m.value}
-                  onPress={() => {
-                    playSound("tap");
-                    selectMarketCountry(m.value);
-                  }}
-                  style={[
-                    styles.originChip,
-                    {
-                      backgroundColor: active
-                        ? colors.primary
-                        : colors.secondary,
-                    },
-                  ]}
-                  testID={`search-market-${m.value}`}
-                >
-                  <AppText
+          <CategoryTabs
+            selected={criteria.category}
+            onChange={selectCategory}
+            visible={shownCategories}
+          />
+          {/* In-place sub-filters for car / real-estate (new/used, property type,
+              financing, …), surfaced under the tabs instead of buried in the filter
+              sheet. Empty for every other section, so this row only appears where it
+              applies. No rent/lease chip — that data does not exist (see
+              constants/engines.ts). */}
+          {!facetsLoading && engineList.length > 1 && !showIndustrialChips && (
+            <EngineChips
+              engines={engineList}
+              selected={criteria.engineKey}
+              onChange={selectEngine}
+            />
+          )}
+          {showIndustrialChips && (
+            <IndustrialSubChips
+              types={visibleIndTypes!}
+              selected={criteria.industrialType}
+              onChange={selectIndustrialType}
+            />
+          )}
+          {activeGroup ? (
+            <View style={[styles.originRow, { flexDirection: rowDir }]}>
+              {(["all", "local", "imported"] as const).map((o) => {
+                const active = originKey === o;
+                return (
+                  <Pressable
+                    key={o}
+                    onPress={() => {
+                      playSound("tap");
+                      selectOrigin(o);
+                    }}
                     style={[
-                      styles.originChipText,
+                      styles.originChip,
                       {
-                        color: active
-                          ? colors.primaryForeground
-                          : colors.mutedForeground,
+                        backgroundColor: active
+                          ? colors.primary
+                          : colors.secondary,
                       },
                     ]}
+                    testID={`search-origin-${o}`}
                   >
-                    {marketCountryLabel(m.value, isRTL)}
-                  </AppText>
-                </Pressable>
-              );
-            })}
-          </ScrollView>
-          <ScrollView
-            horizontal
-            showsHorizontalScrollIndicator={false}
-            contentContainerStyle={[styles.originRow, { flexDirection: rowDir }]}
-          >
-            {rentalTerms.map((r) => {
-              const active = criteria.rentalTerm === r.value;
-              return (
-                <Pressable
-                  key={r.value}
-                  onPress={() => {
-                    playSound("tap");
-                    selectRentalTerm(r.value);
-                  }}
-                  style={[
-                    styles.originChip,
-                    {
-                      backgroundColor: active
-                        ? colors.primary
-                        : colors.secondary,
-                    },
-                  ]}
-                  testID={`search-rental-${r.value}`}
-                >
-                  <AppText
-                    style={[
-                      styles.originChipText,
-                      {
-                        color: active
-                          ? colors.primaryForeground
-                          : colors.mutedForeground,
-                      },
-                    ]}
-                  >
-                    {isRTL ? r.ar : r.en}
-                  </AppText>
-                </Pressable>
-              );
-            })}
-          </ScrollView>
+                    <AppText
+                      style={[
+                        styles.originChipText,
+                        {
+                          color: active
+                            ? colors.primaryForeground
+                            : colors.mutedForeground,
+                        },
+                      ]}
+                    >
+                      {o === "all"
+                        ? t("search.any")
+                        : t(`create.opts.${o}`)}
+                    </AppText>
+                  </Pressable>
+                );
+              })}
+            </View>
+          ) : null}
+          {showRentalTerms ? (
+            <>
+              <ScrollView
+                horizontal
+                showsHorizontalScrollIndicator={false}
+                contentContainerStyle={[
+                  styles.originRow,
+                  { flexDirection: rowDir },
+                ]}
+              >
+                {MARKET_COUNTRIES.map((m) => {
+                  const active = criteria.marketCountry === m.value;
+                  return (
+                    <Pressable
+                      key={m.value}
+                      onPress={() => {
+                        playSound("tap");
+                        selectMarketCountry(m.value);
+                      }}
+                      style={[
+                        styles.originChip,
+                        {
+                          backgroundColor: active
+                            ? colors.primary
+                            : colors.secondary,
+                        },
+                      ]}
+                      testID={`search-market-${m.value}`}
+                    >
+                      <AppText
+                        style={[
+                          styles.originChipText,
+                          {
+                            color: active
+                              ? colors.primaryForeground
+                              : colors.mutedForeground,
+                          },
+                        ]}
+                      >
+                        {marketCountryLabel(m.value, isRTL)}
+                      </AppText>
+                    </Pressable>
+                  );
+                })}
+              </ScrollView>
+              <ScrollView
+                horizontal
+                showsHorizontalScrollIndicator={false}
+                contentContainerStyle={[
+                  styles.originRow,
+                  { flexDirection: rowDir },
+                ]}
+              >
+                {rentalTerms.map((r) => {
+                  const active = criteria.rentalTerm === r.value;
+                  return (
+                    <Pressable
+                      key={r.value}
+                      onPress={() => {
+                        playSound("tap");
+                        selectRentalTerm(r.value);
+                      }}
+                      style={[
+                        styles.originChip,
+                        {
+                          backgroundColor: active
+                            ? colors.primary
+                            : colors.secondary,
+                        },
+                      ]}
+                      testID={`search-rental-${r.value}`}
+                    >
+                      <AppText
+                        style={[
+                          styles.originChipText,
+                          {
+                            color: active
+                              ? colors.primaryForeground
+                              : colors.mutedForeground,
+                          },
+                        ]}
+                      >
+                        {isRTL ? r.ar : r.en}
+                      </AppText>
+                    </Pressable>
+                  );
+                })}
+              </ScrollView>
+            </>
+          ) : null}
         </>
       ) : null}
 
