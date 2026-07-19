@@ -35,7 +35,7 @@ test ! -f artifacts/banco-mobile/docs/boom-stay-header-redesign-plan.md \
 rg -n "LanguageContext" artifacts/banco-mobile/components/BReactionButton.tsx
 
 node --test artifacts/banco-mobile/tests/section-miniapp-guard.test.mjs
-# 25/25 — لو FAIL: الصق وSTOP. لا تصلح.
+# 26/26 — لو FAIL: الصق وSTOP. لا تصلح.
 
 cd artifacts/banco-mobile && npx expo start --clear
 ```
