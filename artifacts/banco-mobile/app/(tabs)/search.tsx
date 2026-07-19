@@ -513,14 +513,9 @@ export default function SearchScreen() {
     update({ ...CLEAR_ATTRS, category: cat });
   };
 
-  // Discover-surface section/engine browse → filter THIS tab in place (same
-  // committed-criteria path as the persistent tabs), instead of pushing a
-  // separate /search-results screen. Sets category + engine atomically.
-  const browseSection = (cat: FilterCategory, engine: string) => {
-    if (brandValue) setDraftQuery("");
-    setBrandValue(null);
-    update({ ...CLEAR_ATTRS, category: cat, engineKey: engine });
-  };
+  // Discover section cards MUST NOT filter this tab in place (that melted
+  // catalogues into shared Search criteria). They router.push SECTION_ROUTE
+  // inside SearchDiscover — do not reintroduce a Discover→host category bridge.
 
   // Discover "Explore on map" → browse a coordinate-rich category (real-estate)
   // and latch the intent to flip to the map once mappable results land.
@@ -649,7 +644,6 @@ export default function SearchScreen() {
         onBrowseBrand={(b) => browseBrand(b, null)}
         onApplySaved={applySaved}
         onOpenListing={handleCardPress}
-        onBrowseSection={browseSection}
         onExploreMap={exploreOnMap}
         onSearchQuery={(q) => {
           setDraftQuery(q);
