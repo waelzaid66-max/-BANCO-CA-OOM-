@@ -7,11 +7,12 @@
 //   4. Stack screens for section/* remain registered in app/_layout.tsx
 //
 // Run: pnpm --filter @workspace/banco-mobile run test:section-guard
-// Expectation: 35/35 PASS (rose Stay hero + black-void flexGrow + country label
+// Expectation: 36/36 PASS (rose Stay hero + black-void flexGrow + country label
 // + section header icon hits stay inside / padding 12 + hard category locks
 // + no fake web topPad 67 anywhere under banco-mobile
 // + Banks FI finish: intent=fi from profile, Join gated on membership
-// + Stay market matrix under type strip + no engine-chip facet-load flash).
+// + Stay market matrix under type strip + no engine-chip facet-load flash
+// + RE offer strip + type strip, no listingMode For-sale clash).
 
 import test from "node:test";
 import assert from "node:assert/strict";
@@ -300,6 +301,35 @@ test("SectionSearchApp keeps engine chips during facet load (no reload flash)", 
     industrialBlock,
     /facetsLoading/,
     "showIndustrialChips must not hide on facetsLoading",
+  );
+});
+
+test("Real-estate section uses offer strip + type strip (no listingMode clash)", () => {
+  const section = fs.readFileSync(SECTION_APP, "utf8");
+  assert.match(
+    section,
+    /testID="re-type-strip"/,
+    "RE must expose a dedicated property-type strip",
+  );
+  assert.match(
+    section,
+    /isReOfferEngine|stripEngineList/,
+    "RE primary chips must be offer-axis only (تمليك/إيجار)",
+  );
+  assert.match(
+    section,
+    /showListingMode\s*=\s*!lockedEngine\s*&&\s*!isRealEstateSection/,
+    "RE must hide listingMode For-sale/Wanted (clashes with offer sale/rent)",
+  );
+  assert.match(
+    section,
+    /selectRePropertyType|propertyType:\s*value/,
+    "RE type strip must drive criteria.propertyType (Stay-parallel)",
+  );
+  assert.match(
+    section,
+    /propertyType:\s*null/,
+    "CLEAR_SECTION_ATTRS / clear path must reset propertyType",
   );
 });
 

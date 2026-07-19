@@ -49,12 +49,15 @@ import {
 } from "@/lib/facets";
 import { POPULAR_BRANDS, brandQuery, type CarBrand } from "@/constants/cars";
 import { labelForValue } from "@/constants/locations";
-import { DEFAULT_MARKET_COUNTRY } from "@/constants/listingCreateTaxonomy";
+import {
+  DEFAULT_MARKET_COUNTRY,
+  PROPERTY_TYPES,
+} from "@/constants/listingCreateTaxonomy";
 import {
   loadPreferredMarketCountry,
   savePreferredMarketCountry,
 } from "@/lib/marketPreference";
-import { engineByKey } from "@/constants/engines";
+import { engineByKey, type EngineDef } from "@/constants/engines";
 import { useI18n } from "@/context/LanguageContext";
 import { useSession } from "@/context/SessionContext";
 import { useSound } from "@/context/SoundContext";
@@ -79,6 +82,28 @@ import { sectionAccent } from "@/lib/sectionTheme";
 
 const QUICK_BRANDS: CarBrand[] = POPULAR_BRANDS;
 const CLEAR_ATTRS = CLEAR_SECTION_ATTRS;
+
+/** RE primary type strip — Stay-parallel axis via criteria.propertyType.
+ *  Kept short so the section reads as strips, not a square filter grid. */
+const RE_TYPE_PRIMARY = [
+  "apartment",
+  "villa",
+  "land",
+  "studio",
+  "chalet",
+  "office",
+  "shop",
+  "townhouse",
+] as const;
+
+const RE_TYPE_ALL = "__all__";
+
+/** Offer-axis engines only (تمليك / إيجار). Property-type engines belong on
+ *  the separate type strip via propertyType — never mixed into this row. */
+function isReOfferEngine(engine: EngineDef): boolean {
+  if (engine.key === "all") return true;
+  return engine.params.offer_type === "sale" || engine.params.offer_type === "rent";
+}
 
 /**
  * Deterministic serialization of a criteria object (key-sorted) so the section
@@ -326,6 +351,29 @@ export function SectionSearchApp({
     () => visibleEngines(criteria.category, scopedFacets),
     [criteria.category, scopedFacets],
   );
+  const isRealEstateSection = criteria.category === "real_estate";
+  /** RE strip 1: offer only. Other sections keep the full engine bar. */
+  const stripEngineList = useMemo(() => {
+    if (!isRealEstateSection) return engineList;
+    return engineList.filter(isReOfferEngine);
+  }, [engineList, isRealEstateSection]);
+  /** FilterSheet may still show refinements (furnished/compound/…) but never
+   *  the property-type engines — those live on the type strip. */
+  const filterSheetEngines = useMemo(() => {
+    if (!isRealEstateSection) return engineList;
+    return engineList.filter((e) => !e.params.property_type);
+  }, [engineList, isRealEstateSection]);
+  /** RE strip 2: property types (composes with offer via propertyType). */
+  const reTypeTabs = useMemo(() => {
+    if (!isRealEstateSection) return [] as string[];
+    const counts = scopedFacets?.property_type;
+    return RE_TYPE_PRIMARY.filter((ty) => {
+      // Core residential/land always visible (fail-open identity of the section).
+      if (ty === "apartment" || ty === "villa" || ty === "land") return true;
+      if (!counts) return true;
+      return (counts[ty] ?? 0) > 0;
+    });
+  }, [isRealEstateSection, scopedFacets]);
   const activeGroup = industrialGroupForCategory(criteria.category);
   const visibleIndTypes = useMemo(
     () =>
@@ -342,9 +390,20 @@ export function SectionSearchApp({
   useEffect(() => {
     if (facetsLoading) return;
     const patch: Partial<SearchCriteria> = {};
+    // Migrate legacy RE property-type engines → propertyType strip so
+    // تمليك/إيجار can compose with شقة/فيلا (single engineKey could not).
+    if (criteria.category === "real_estate" && !lockedEngine) {
+      const eng = engineByKey(criteria.category, criteria.engineKey);
+      if (eng?.params.property_type) {
+        patch.propertyType =
+          criteria.propertyType ?? eng.params.property_type;
+        patch.engineKey = "all";
+      }
+    }
     if (
       !lockedEngine &&
       criteria.engineKey !== "all" &&
+      !patch.engineKey &&
       engineList.length > 0 &&
       !engineList.some((e) => e.key === criteria.engineKey)
     ) {
@@ -367,17 +426,33 @@ export function SectionSearchApp({
         patch.material = null;
       }
     }
+    if (
+      criteria.category === "real_estate" &&
+      criteria.propertyType &&
+      reTypeTabs.length > 0 &&
+      !reTypeTabs.includes(criteria.propertyType)
+    ) {
+      // Don't wipe a type that is merely facet-hidden mid-load; only when the
+      // tab list is populated and excludes it.
+      if (scopedFacets?.property_type) {
+        patch.propertyType = null;
+      }
+    }
     if (Object.keys(patch).length === 0) return;
     applyPatch(patch);
     retry();
   }, [
     engineList,
+    stripEngineList,
     visibleIndTypes,
+    reTypeTabs,
     criteria,
     applyPatch,
     retry,
     facetsLoading,
     lockedEngine,
+    isRealEstateSection,
+    scopedFacets,
   ]);
 
   // ── Text query + autocomplete ──────────────────────────────────────────────
@@ -545,6 +620,15 @@ export function SectionSearchApp({
   const selectListingMode = (mode: "all" | "sale" | "buy") =>
     update({ listingMode: mode });
 
+  /** RE type strip — composes with offer engine (sale/rent) via propertyType. */
+  const selectRePropertyType = (value: string) => {
+    if (value === RE_TYPE_ALL || value === criteria.propertyType) {
+      update({ propertyType: null });
+      return;
+    }
+    update({ propertyType: value });
+  };
+
   const selectRentalTerm = (term: string) => {
     const next = criteria.rentalTerm === term ? null : term;
     update({
@@ -623,11 +707,15 @@ export function SectionSearchApp({
   // Keep engine chips visible during facet load — visibleEngines already
   // fails open when scopedFacets are undefined. Hiding on facetsLoading made
   // every section entry flash an empty strip then repaint.
+  // RE: only offer-axis chips (تمليك/إيجار) — types move to their own strip.
   const showEngineChips =
     !lockedEngine &&
-    engineList.length > 1 &&
+    stripEngineList.length > 1 &&
     !showIndustrialChips;
-  const showListingMode = !lockedEngine;
+  // listingMode "For sale / Wanted" collides with RE offer sale/rent labels —
+  // keep it for cars; RE uses offer engines + type strip (+ FilterSheet for مطلوب).
+  const showListingMode = !lockedEngine && !isRealEstateSection;
+  const showReTypeStrip = isRealEstateSection && reTypeTabs.length > 0;
 
   // ── Section-scoped "dirty" filter count (excludes the locked baseline) ──────
   const rentEngineActive =
@@ -636,6 +724,7 @@ export function SectionSearchApp({
       "rent";
   const activeFilterCount = [
     !lockedEngine && criteria.engineKey !== "all",
+    isRealEstateSection && !!criteria.propertyType,
     criteria.category === "facilities" || criteria.category === "materials"
       ? criteria.industrialType !== "all"
       : false,
@@ -656,6 +745,7 @@ export function SectionSearchApp({
     (criteria.category === "car" || criteria.category === "materials") &&
       !!criteria.originType,
     criteria.category === "materials" && !!criteria.material,
+    criteria.listingMode !== "all",
     criteria.nearMeEnabled,
     // Baseline-aware: the market only counts as an active filter once the
     // shopper changes it from the market they entered on (not just from the
@@ -1103,7 +1193,7 @@ export function SectionSearchApp({
             </Pressable>
           );
         }) : null}
-        {showEngineChips ? engineList.map((e) => {
+        {showEngineChips ? stripEngineList.map((e) => {
           const active = criteria.engineKey === e.key;
           return (
             <Pressable
@@ -1118,6 +1208,39 @@ export function SectionSearchApp({
             </Pressable>
           );
         }) : null}
+        {/* RE: single Wanted chip (is_request) — not the full listingMode trio
+            that duplicated "For sale" next to offer "Sale/تمليك". */}
+        {isRealEstateSection && !lockedEngine ? (
+          <Pressable
+            onPress={() => {
+              playSound("tap");
+              Haptics.selectionAsync();
+              selectListingMode(criteria.listingMode === "buy" ? "all" : "buy");
+            }}
+            style={[
+              styles.stripChip,
+              {
+                backgroundColor:
+                  criteria.listingMode === "buy" ? accent : colors.secondary,
+              },
+            ]}
+            testID="section-listing-mode-buy"
+          >
+            <AppText
+              style={[
+                styles.stripChipText,
+                {
+                  color:
+                    criteria.listingMode === "buy"
+                      ? "#FFFFFF"
+                      : colors.mutedForeground,
+                },
+              ]}
+            >
+              {t("search.listingModeBuy")}
+            </AppText>
+          </Pressable>
+        ) : null}
         {showIndustrialChips ? [
           { key: "all" as IndustrialType, i18nKey: "home.industrialTypes.all" },
           ...((visibleIndTypes ?? []).map((ty) => ({ key: ty, i18nKey: `home.industrialTypes.${ty}` }))),
@@ -1137,6 +1260,62 @@ export function SectionSearchApp({
           );
         }) : null}
       </ScrollView>
+
+      {/* ── RE property-type strip (Stay-parallel) — never mixed into offer row ── */}
+      {showReTypeStrip ? (
+        <ScrollView
+          horizontal
+          showsHorizontalScrollIndicator={false}
+          style={styles.hScroll}
+          contentContainerStyle={[styles.reTypeStrip, { flexDirection: rowDir }]}
+          testID="re-type-strip"
+        >
+          {[{ value: RE_TYPE_ALL, label: t("home.engines.all") }]
+            .concat(
+              reTypeTabs.map((v) => {
+                const def = PROPERTY_TYPES.find((p) => p.value === v);
+                return {
+                  value: v,
+                  label: def ? (isRTL ? def.ar : def.en) : v,
+                };
+              }),
+            )
+            .map((tab) => {
+              const active =
+                tab.value === RE_TYPE_ALL
+                  ? !criteria.propertyType
+                  : criteria.propertyType === tab.value;
+              return (
+                <Pressable
+                  key={tab.value}
+                  onPress={() => {
+                    playSound("tap");
+                    Haptics.selectionAsync();
+                    selectRePropertyType(tab.value);
+                  }}
+                  style={[
+                    styles.stripChip,
+                    {
+                      backgroundColor: active ? accent : colors.card,
+                      borderWidth: 1,
+                      borderColor: active ? accent : colors.border,
+                    },
+                  ]}
+                  testID={`re-type-${tab.value}`}
+                >
+                  <AppText
+                    style={[
+                      styles.stripChipText,
+                      { color: active ? "#FFFFFF" : colors.foreground },
+                    ]}
+                  >
+                    {tab.label}
+                  </AppText>
+                </Pressable>
+              );
+            })}
+        </ScrollView>
+      ) : null}
 
       {/* ── Origin chips (materials only) ── */}
       {showOriginChrome ? (
@@ -1226,7 +1405,7 @@ export function SectionSearchApp({
         onClose={() => setShowFilters(false)}
         criteria={criteria}
         shownCategories={[category]}
-        engines={engineList}
+        engines={filterSheetEngines}
         quickBrands={QUICK_BRANDS}
         brandValue={brandValue}
         locationLabel={locationLabel}
@@ -1506,6 +1685,13 @@ const styles = StyleSheet.create({
     gap: 8,
     paddingHorizontal: 16,
     paddingTop: 10,
+    paddingBottom: 2,
+  },
+  reTypeStrip: {
+    alignItems: "center",
+    gap: 8,
+    paddingHorizontal: 12,
+    paddingTop: 8,
     paddingBottom: 2,
   },
   resultsCount: { fontSize: 12.5, paddingHorizontal: 16, paddingTop: 8 },
