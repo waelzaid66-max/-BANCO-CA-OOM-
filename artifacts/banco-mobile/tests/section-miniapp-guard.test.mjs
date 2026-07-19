@@ -19,6 +19,18 @@ const APP_ROOT = path.dirname(__dirname);
 const DISCOVER = path.join(APP_ROOT, "components", "SearchDiscover.tsx");
 const SEARCH_TAB = path.join(APP_ROOT, "app", "(tabs)", "search.tsx");
 const LAYOUT = path.join(APP_ROOT, "app", "_layout.tsx");
+const SECTION_APP = path.join(
+  APP_ROOT,
+  "components",
+  "search",
+  "SectionSearchApp.tsx",
+);
+const BOOKING_APP = path.join(
+  APP_ROOT,
+  "components",
+  "search",
+  "BookingStaysApp.tsx",
+);
 
 const SECTION_SCREENS = [
   "section/car",
@@ -137,5 +149,57 @@ test("MOB-07: Explore on map enters real-estate section (no Search melt)", () =>
     searchTab,
     /exploreOnMap[\s\S]{0,400}update\(\s*\{[\s\S]*category:\s*["']real_estate["']/,
     "exploreOnMap must not update shared Search criteria to real_estate",
+  );
+});
+
+test("Discover booking portal pushes /section/booking", () => {
+  const src = fs.readFileSync(DISCOVER, "utf8");
+  assert.match(
+    src,
+    /router\.push\(\s*["']\/section\/booking["']/,
+    "Booking & Stays portal must push /section/booking",
+  );
+});
+
+test("Section + Stays FilterSheets keep lockCategory (no category melt)", () => {
+  const section = fs.readFileSync(SECTION_APP, "utf8");
+  const booking = fs.readFileSync(BOOKING_APP, "utf8");
+  assert.match(
+    section,
+    /lockCategory/,
+    "SectionSearchApp FilterSheet must lock category",
+  );
+  assert.match(
+    booking,
+    /lockCategory/,
+    "BookingStaysApp FilterSheet must lock category",
+  );
+});
+
+test("SectionSearchApp latches map intent from ?map= (MOB-07)", () => {
+  const section = fs.readFileSync(SECTION_APP, "utf8");
+  assert.match(
+    section,
+    /wantMap|mapParam|params\.map/,
+    "SectionSearchApp must read map query / latch wantMap",
+  );
+  assert.match(
+    section,
+    /Array\.isArray\(\s*params\.map\s*\)/,
+    "map query must normalize string|string[] from Expo Router",
+  );
+});
+
+test("Discover portals never call host update({ category })", () => {
+  const src = fs.readFileSync(DISCOVER, "utf8");
+  assert.doesNotMatch(
+    src,
+    /update\(\s*\{[^}]*category\s*:/,
+    "SearchDiscover must not mutate shared Search category criteria",
+  );
+  assert.doesNotMatch(
+    src,
+    /selectCategory\s*\(/,
+    "SearchDiscover must not call selectCategory",
   );
 });

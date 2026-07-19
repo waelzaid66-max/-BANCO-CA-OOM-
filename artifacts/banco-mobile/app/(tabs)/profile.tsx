@@ -3473,7 +3473,8 @@ const styles = StyleSheet.create({
   postVideoBadge: {
     position: "absolute",
     top: 6,
-    right: 6,
+    // Logical end so the badge mirrors correctly under RTL (MOB-04 pattern).
+    end: 6,
     width: 20,
     height: 20,
     borderRadius: 10,
@@ -3690,7 +3691,7 @@ const styles = StyleSheet.create({
   postFeatured: {
     position: "absolute",
     top: 6,
-    left: 6,
+    start: 6,
     flexDirection: "row",
     alignItems: "center",
     gap: 3,
@@ -3705,7 +3706,7 @@ const styles = StyleSheet.create({
   postPromote: {
     position: "absolute",
     bottom: 6,
-    right: 6,
+    end: 6,
   },
 
   // Edit-profile modal fields

@@ -1002,6 +1002,11 @@ export default function SearchScreen() {
               backgroundColor: colors.card,
               borderColor: colors.border,
               borderRadius: colors.radius,
+              // Mirror the filter button: inset from the trailing edge so the
+              // dropdown never sits under the sliders control in LTR or RTL.
+              ...(isRTL
+                ? { left: 76, right: 16 }
+                : { left: 16, right: 76 }),
             },
           ]}
         >
@@ -1228,8 +1233,6 @@ const styles = StyleSheet.create({
   suggestions: {
     position: "absolute",
     top: 90,
-    left: 16,
-    right: 76,
     zIndex: 100,
     borderWidth: 1,
     overflow: "hidden",

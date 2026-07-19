@@ -235,12 +235,15 @@ export function SectionSearchApp({
   }, [applyPatch, retry, items.length, phase, criteria.marketCountry]);
 
   // ── Map view ──────────────────────────────────────────────────────────────
-  const params = useLocalSearchParams<{ map?: string }>();
+  const params = useLocalSearchParams<{ map?: string | string[] }>();
+  // Expo Router may deliver query values as string | string[] — normalize so
+  // ?map=1 always latches (MOB-07 must not silently no-op on web/native).
+  const mapParam = Array.isArray(params.map) ? params.map[0] : params.map;
   const [mapMode, setMapMode] = useState(false);
   // Discover "Explore on map" pushes /section/real-estate?map=1 — latch until
   // mappable results arrive (or the browse resolves empty/error).
   const [wantMap, setWantMap] = useState(
-    () => params.map === "1" || params.map === "true",
+    () => mapParam === "1" || mapParam === "true",
   );
   const [marketPickerOpen, setMarketPickerOpen] = useState(false);
   const mappableItems = useMemo(

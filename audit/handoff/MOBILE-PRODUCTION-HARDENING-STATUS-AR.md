@@ -15,7 +15,10 @@
 | BOOM STAY هيدر مضغوط (`StaysHomeHeader`) | ✅ |
 | أيقونات `key` / `business` | ✅ |
 | **MOB-07** Explore on map → `/section/real-estate?map=1` | ✅ |
-| حارس section-miniapp | ✅ 8/8 |
+| MOB-07 map param `string\|string[]` normalize | ✅ |
+| Search suggestions RTL insets | ✅ |
+| Profile grid badges logical start/end | ✅ |
+| حارس section-miniapp | ✅ 12/12 |
 
 ## أُغلق سابقاً على main
 
