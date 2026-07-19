@@ -83,7 +83,12 @@ S6 FilterSheet: أنواع Stay فقط · أنظمة إيجار · مطلوب ·
 EXIT: باك / سوايپ / هاردوير → ريست فلاتر أوتوماتيك (لا ديالوج تأكيد)
 ```
 
+**كروت النتائج (RTL):** StayCard + SmartAssetCard → بادجات/أزرار بـ`start`/`end` منطقي (عربي يمين/يسار صحيح).  
+**عدّاد الفلاتر:** Section و Stay يعدّان الترتيب غير الافتراضي في البادج.
+
 Deep-link: `/section/car?engine=import` · `/section/real-estate?map=1` · `/section/booking?map=1`
+
+**تقارير Cursor المرفقة:** `CURSOR-BATCH-FULL-REPORT-AR.md` · `CURSOR-GAP-CLOSEOUT-AR.md` · `CURSOR-RECEIPT-CLAUDE-THREE-FILES-STAY-AR.md`
 
 ---
 

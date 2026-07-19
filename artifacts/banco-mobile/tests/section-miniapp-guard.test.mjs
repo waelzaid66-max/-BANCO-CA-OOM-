@@ -7,7 +7,7 @@
 //   4. Stack screens for section/* remain registered in app/_layout.tsx
 //
 // Run: pnpm --filter @workspace/banco-mobile run test:section-guard
-// Expectation: 40/40 PASS (rose Stay hero + black-void flexGrow + country label
+// Expectation: 42/42 PASS (rose Stay hero + black-void flexGrow + country label
 // + section header icon hits stay inside / padding 12 + hard category locks
 // + no fake web topPad 67 anywhere under banco-mobile
 // + Banks FI finish: intent=fi from profile, Join gated on membership
@@ -16,7 +16,8 @@
 // + Car brand/origin strips + Discover ENTER + car?engine=import
 // + Materials material/origin/market strips + FilterSheet showMaterial wired
 // + Stay auto-reset on back + rental strip + map latch + scoped property types
-// + Stay sort 34px + StayCard logical start/end).
+// + Stay sort 34px + StayCard logical start/end
+// + SmartAssetCard start/end + Section activeFilterCount includes sort).
 
 import test from "node:test";
 import assert from "node:assert/strict";
@@ -374,6 +375,46 @@ test("StayCard badges use logical start/end (RTL-safe)", () => {
     stayCard,
     /isRTL\s*\?\s*\{\s*right:\s*10/,
     "StayCard must not reintroduce physical left/right RTL overrides",
+  );
+});
+
+test("SmartAssetCard badges/actions use logical start/end (RTL-safe)", () => {
+  const card = fs.readFileSync(
+    path.join(APP_ROOT, "components", "SmartAssetCard.tsx"),
+    "utf8",
+  );
+  assert.match(
+    card,
+    /topBadges:[\s\S]*?start:\s*10/,
+    "SmartAssetCard topBadges must use logical start (section results RTL)",
+  );
+  assert.match(
+    card,
+    /topRightActions:[\s\S]*?end:\s*10/,
+    "SmartAssetCard topRightActions must use logical end (section results RTL)",
+  );
+  assert.doesNotMatch(
+    card,
+    /topBadges:[\s\S]*?left:\s*10/,
+    "SmartAssetCard must not pin badges with physical left",
+  );
+  assert.doesNotMatch(
+    card,
+    /topRightActions:[\s\S]*?right:\s*10/,
+    "SmartAssetCard must not pin actions with physical right",
+  );
+});
+
+test("Section activeFilterCount includes sort (badge honesty vs Stay)", () => {
+  const section = fs.readFileSync(SECTION_APP, "utf8");
+  const countBlock = section.match(
+    /const activeFilterCount\s*=\s*\[[\s\S]*?\]\.filter\(Boolean\)\.length/,
+  )?.[0];
+  assert.ok(countBlock, "Section activeFilterCount declaration must exist");
+  assert.match(
+    countBlock,
+    /criteria\.sort\s*!==\s*"recommended"/,
+    "Section filter badge must count non-default sort (parity with Stay)",
   );
 });
 

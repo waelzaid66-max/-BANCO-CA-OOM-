@@ -201,7 +201,8 @@ const styles = StyleSheet.create({
   adBadge: {
     position: "absolute",
     top: 6,
-    left: 6,
+    // Logical start — mirrors in RTL.
+    start: 6,
     backgroundColor: "rgba(0,0,0,0.7)",
     paddingHorizontal: 6,
     paddingVertical: 2,

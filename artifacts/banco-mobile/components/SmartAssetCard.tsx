@@ -359,7 +359,8 @@ const styles = StyleSheet.create({
   topBadges: {
     position: "absolute",
     top: 10,
-    left: 10,
+    // Logical edge — mirrors in RTL (same StayCard / coverActions lesson).
+    start: 10,
     flexDirection: "row",
     gap: 6,
   },
@@ -408,12 +409,12 @@ const styles = StyleSheet.create({
   videoIndicator: {
     position: "absolute",
     bottom: 10,
-    left: 10,
+    start: 10,
   },
   topRightActions: {
     position: "absolute",
     top: 10,
-    right: 10,
+    end: 10,
     flexDirection: "row",
     gap: 8,
   },

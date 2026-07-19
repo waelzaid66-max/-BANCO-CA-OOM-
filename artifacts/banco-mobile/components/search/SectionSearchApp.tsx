@@ -839,6 +839,9 @@ export function SectionSearchApp({
     criteria.category === "materials" && !!criteria.material,
     criteria.listingMode !== "all",
     criteria.nearMeEnabled,
+    // Sort chip lives on the primary strip — count it like Stay so the
+    // filter badge stays honest when shopper cycles off recommended.
+    criteria.sort !== "recommended",
     // Baseline-aware: the market only counts as an active filter once the
     // shopper changes it from the market they entered on (not just from the
     // global default), keeping the badge consistent with isDirty.
