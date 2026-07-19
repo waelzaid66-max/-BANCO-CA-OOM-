@@ -34,7 +34,7 @@ W3 أُغلق بدمج #40 (اعتماد Claude + أمر Owner «اتفضل»). 
 | ID | البند | موجة | حالة |
 |----|-------|------|------|
 | W3 / #40 | AuthZ · state machine · docs · isActive · ads-first | **#40** | ✅ **MERGED** `628e7a0` |
-| Guard | قفل المسارات | **#41 G2** | ✅ 42/42 |
+| Guard | قفل المسارات | **#41 G2** | ✅ 46/46 |
 | **G2** | فينش أقسام: Stay/RE/Car/Materials · RTL · sort | **#41** | ▶️ |
 | OPEN-02 | دليل شركاء حي | بلا Start «ج» | ⏸ |
 | Stay أسود #23 | ضد MUST-KEEP وردي | مرفوض | ❌ |
