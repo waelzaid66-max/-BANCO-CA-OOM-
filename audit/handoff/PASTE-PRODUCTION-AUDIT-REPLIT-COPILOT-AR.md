@@ -9,18 +9,11 @@
 
 بعد دمج #37 → `main`: أعد `reset --hard origin/main` وصوّر من جديد.
 
-## Copilot — مسح برودكشن (قراءة فقط أثناء إثبات #37)
+## Copilot — ملغى كاعتماد (UNTRUSTED)
 
-أنشئ/حدّث: `audit/handoff/COPILOT-SCAN-REPORT-PRODUCTION-MOBILE-AR.md`
-
-افحص فقط (لا PR كود إلا بطلب):
-
-- مطابقة حراس `section-miniapp-guard` مع سلوك Discover/Stay/MOB-07  
-- عدم ذوبان Search←→sections  
-- مسارات FI على main مقابل ما يعد به #28 (لا تلمس W3)  
-- هل `ci.yml` / `deploy.yml` يشغّلان `pnpm --filter @workspace/banco-mobile run test` بعد دمج فرع CI  
-
-صيغة التقرير: ملف · سطر · PASS/FAIL · لا اقتراح حذف ميزات.
+المالك أكّد: Copilot لم يتبع التعليمات. **لا تنتظروا Copilot.**
+- `audit/handoff/COPILOT-UNTRUSTED-CURSOR-OWNS-SCAN-AR.md`
+- المسح الرسمي على #37: `CURSOR-SCAN-REPORT-PRODUCTION-MOBILE-AR.md`
 
 ## ترتيب المالك (حقيقة برودكشن)
 

@@ -7,6 +7,13 @@
 
 ---
 
+## 0.1) Copilot — غير موثوق (إعلان المالك 2026-07-19)
+
+**Copilot = UNTRUSTED.** لم يتبع تعليمات المسح. أي ادّعاء منه بدون ملف مُسنَد مرفوض.
+المسح الرسمي: `audit/handoff/CURSOR-SCAN-REPORT-PRODUCTION-MOBILE-AR.md` (على فرع #37).
+البروتوكول: `audit/handoff/COPILOT-UNTRUSTED-CURSOR-OWNS-SCAN-AR.md`.
+لا تنتظروا Copilot قبل دمج #37/#38/#28.
+
 ## 0) حكم تنفيذي (Verdict)
 
 | سؤال | الحكم |
