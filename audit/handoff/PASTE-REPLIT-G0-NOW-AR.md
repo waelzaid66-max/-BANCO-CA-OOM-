@@ -8,8 +8,7 @@
    git checkout cursor/surgical-finish-wave-4322
    git reset --hard origin/cursor/surgical-finish-wave-4322
    git rev-parse --short HEAD
-   → المفروض: 9bca3c4
-   (لو اختلف: وقف واكتب الـ SHA الفعلي)
+   → سجّل الـ SHA في تقرير الشوتات (لازم يطابق origin للفرع)
 
 2) حارس:
    node artifacts/banco-mobile/tests/section-miniapp-guard.test.mjs
