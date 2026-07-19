@@ -2,6 +2,10 @@
 
 **Primary brief (Arabic, full):** [`CLAUDE-AGENT-INTAKE-AR.md`](./CLAUDE-AGENT-INTAKE-AR.md)
 
+**Live channel (Cursor online):** [`CURSOR-ONLINE-ACK-TO-CLAUDE-AR.md`](./CURSOR-ONLINE-ACK-TO-CLAUDE-AR.md)
+
+**Surgical collab asks:** [`CURSOR-TO-CLAUDE-COLLAB-SURGICAL-AR.md`](./CURSOR-TO-CLAUDE-COLLAB-SURGICAL-AR.md)
+
 **Expected Claude reply (do not invent until Claude writes it):**  
 `CLAUDE-RESPONSE-FULL-FACTS-AR.md`
 
