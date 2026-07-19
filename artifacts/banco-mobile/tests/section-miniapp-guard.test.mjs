@@ -7,10 +7,11 @@
 //   4. Stack screens for section/* remain registered in app/_layout.tsx
 //
 // Run: pnpm --filter @workspace/banco-mobile run test:section-guard
-// Expectation: 33/33 PASS (rose Stay hero + black-void flexGrow + country label
+// Expectation: 35/35 PASS (rose Stay hero + black-void flexGrow + country label
 // + section header icon hits stay inside / padding 12 + hard category locks
 // + no fake web topPad 67 anywhere under banco-mobile
-// + Banks FI finish: intent=fi from profile, Join gated on membership).
+// + Banks FI finish: intent=fi from profile, Join gated on membership
+// + Stay market matrix under type strip + no engine-chip facet-load flash).
 
 import test from "node:test";
 import assert from "node:assert/strict";
@@ -250,6 +251,55 @@ test("BookingStaysApp restores rose hero (not black StaysHomeHeader shell)", () 
     booking,
     /hScroll:\s*\{\s*flexGrow:\s*0/,
     "Stay chip strip must pin flexGrow:0 (no black void)",
+  );
+});
+
+test("Stay keeps country/currency in matrix under type strip (not in-strip globe)", () => {
+  const booking = fs.readFileSync(BOOKING_APP, "utf8");
+  assert.match(
+    booking,
+    /testID="stays-market-matrix"/,
+    "Stay must expose the launch-market matrix under the type strip",
+  );
+  assert.match(
+    booking,
+    /MARKET_COUNTRIES\.map/,
+    "Stay matrix must reuse MARKET_COUNTRIES taxonomy (no invented market list)",
+  );
+  assert.match(
+    booking,
+    /CURRENCY_BY_MARKET/,
+    "Stay matrix must show currency from existing taxonomy",
+  );
+  // Type strip must not lead with MarketCountryButton anymore.
+  assert.doesNotMatch(
+    booking,
+    /MarketCountryButton/,
+    "Stay must not put MarketCountryButton back in the type strip",
+  );
+});
+
+test("SectionSearchApp keeps engine chips during facet load (no reload flash)", () => {
+  const section = fs.readFileSync(SECTION_APP, "utf8");
+  // showEngineChips / showIndustrialChips must not gate on facetsLoading —
+  // that hid the strip until facets returned and flashed every section entry.
+  const engineBlock = section.match(
+    /const showEngineChips\s*=\s*[^;]+;/s,
+  )?.[0];
+  assert.ok(engineBlock, "showEngineChips declaration must exist");
+  assert.doesNotMatch(
+    engineBlock,
+    /facetsLoading/,
+    "showEngineChips must not hide on facetsLoading",
+  );
+  const industrialBlock = section.match(
+    /const showIndustrialChips\s*=\s*[^;]+;/s,
+  )?.[0];
+  assert.ok(industrialBlock, "showIndustrialChips declaration must exist");
+  assert.doesNotMatch(
+    industrialBlock,
+    /facetsLoading/,
+    "showIndustrialChips must not hide on facetsLoading",
   );
 });
 

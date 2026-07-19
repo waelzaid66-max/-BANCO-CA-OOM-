@@ -332,8 +332,10 @@ export function SectionSearchApp({
       activeGroup ? visibleIndustrialTypes(activeGroup, scopedFacets) : null,
     [activeGroup, scopedFacets],
   );
+  // Show industrial baseline chips while facets load (fail-open). Gating on
+  // facetsLoading hid the whole strip and caused a reload flash per section.
   const showIndustrialChips =
-    !facetsLoading && !!visibleIndTypes && visibleIndTypes.length > 1;
+    !!visibleIndTypes && visibleIndTypes.length > 1;
 
   // Normalize criteria if facets reveal the committed engine/sub-type is empty.
   // Never touches a locked engine.
@@ -618,9 +620,11 @@ export function SectionSearchApp({
     criteria.category === "real_estate" &&
     engineByKey(criteria.category, criteria.engineKey)?.params.offer_type ===
       "rent";
+  // Keep engine chips visible during facet load — visibleEngines already
+  // fails open when scopedFacets are undefined. Hiding on facetsLoading made
+  // every section entry flash an empty strip then repaint.
   const showEngineChips =
     !lockedEngine &&
-    !facetsLoading &&
     engineList.length > 1 &&
     !showIndustrialChips;
   const showListingMode = !lockedEngine;

@@ -34,9 +34,12 @@ import { MiniAppBottomNav } from "@/components/MiniAppBottomNav";
 import { apiCategoryFor } from "@/components/CategoryTabs";
 import { labelForValue } from "@/constants/locations";
 import {
+  CURRENCY_BY_MARKET,
   DEFAULT_MARKET_COUNTRY,
+  MARKET_COUNTRIES,
   PROPERTY_TYPES,
 } from "@/constants/listingCreateTaxonomy";
+import { PHONE_COUNTRIES } from "@/constants/countryCodes";
 import {
   loadPreferredMarketCountry,
   savePreferredMarketCountry,
@@ -52,10 +55,7 @@ import {
   mapAnchorKey,
 } from "@/lib/searchParams";
 import { requestNearMeCoords, DEFAULT_NEAR_RADIUS_KM } from "@/lib/nearMe";
-import {
-  MarketCountryButton,
-  MarketCountryPicker,
-} from "@/components/MarketCountryPicker";
+import { MarketCountryPicker } from "@/components/MarketCountryPicker";
 import { sanitizeRentalTermForMarket } from "@/lib/searchTaxonomy";
 
 const ALL_TAB = "__all__";
@@ -529,7 +529,7 @@ export function BookingStaysApp() {
           marketplace search chrome. Carries title, save/filter actions and a
           single "Where to?" search pill. ─────────────────────────────────── */}
       <View style={[styles.hero, { paddingTop: topPad + 8 }]} testID="stays-hero">
-        <SectionBackdrop section="real_estate" motifSize={140} />
+        <SectionBackdrop section="real_estate" motifSize={115} />
         {/* BANCO watermark — same identity signal as the Discover section cards */}
         <View pointerEvents="none" style={styles.heroWatermarkWrap}>
           <Image
@@ -732,8 +732,8 @@ export function BookingStaysApp() {
         </View>
       )}
 
-      {/* Controls: 🌐 globe + rental-term tabs — all one horizontal scrollable strip.
-          MarketCountryButton is the FIRST item so the globe is always in the strip. */}
+      {/* Controls: stay-type tabs only — country/currency live in the matrix
+          below so the type strip stays short and section-shaped. */}
       <ScrollView
         horizontal
         showsHorizontalScrollIndicator={false}
@@ -741,14 +741,6 @@ export function BookingStaysApp() {
         style={styles.hScroll}
         contentContainerStyle={[styles.controlsRow, { flexDirection: rowDir }]}
       >
-        <MarketCountryButton
-          selected={criteria.marketCountry}
-          onPress={() => {
-            playSound("tap");
-            setMarketPickerOpen(true);
-          }}
-        />
-        <View style={[styles.controlsDivider, { backgroundColor: colors.border }]} />
         {[{ value: ALL_TAB, label: t("search.discover.section.staysAll") }]
           .concat(
             STAY_TYPE_VALUES.map((v) => {
@@ -782,6 +774,89 @@ export function BookingStaysApp() {
               </Pressable>
             );
           })}
+      </ScrollView>
+
+      {/* Launch-market matrix under the type strip — compact flag · country ·
+          currency cells. Uses taxonomy already wired to FilterSheet / seed;
+          does not invent a new market system. Active = soft rose outline only. */}
+      <ScrollView
+        horizontal
+        showsHorizontalScrollIndicator={false}
+        style={styles.hScroll}
+        contentContainerStyle={[styles.marketMatrix, { flexDirection: rowDir }]}
+        testID="stays-market-matrix"
+      >
+        {MARKET_COUNTRIES.map((m) => {
+          const active = criteria.marketCountry === m.value;
+          const currency = CURRENCY_BY_MARKET[m.value] ?? "";
+          const flag = PHONE_COUNTRIES.find((c) => c.iso === m.value)?.flag;
+          return (
+            <Pressable
+              key={m.value}
+              onPress={() => {
+                playSound("tap");
+                Haptics.selectionAsync();
+                selectMarketCountry(m.value);
+              }}
+              style={[
+                styles.matrixCell,
+                {
+                  flexDirection: rowDir,
+                  backgroundColor: active
+                    ? "rgba(101,14,54,0.08)"
+                    : colors.card,
+                  borderColor: active ? STAYS_ACCENT : colors.border,
+                },
+              ]}
+              testID={`stays-market-${m.value}`}
+              accessibilityLabel={`${isRTL ? m.ar : m.en} ${currency}`}
+            >
+              {flag ? (
+                <AppText style={styles.matrixFlag}>{flag}</AppText>
+              ) : (
+                <Feather
+                  name="globe"
+                  size={12}
+                  color={colors.mutedForeground}
+                />
+              )}
+              <AppText
+                style={[
+                  styles.matrixCountry,
+                  { color: colors.foreground },
+                ]}
+                numberOfLines={1}
+              >
+                {isRTL ? m.ar : m.en}
+              </AppText>
+              <AppText
+                style={[
+                  styles.matrixCurrency,
+                  { color: colors.mutedForeground },
+                ]}
+              >
+                {currency}
+              </AppText>
+            </Pressable>
+          );
+        })}
+        <Pressable
+          onPress={() => {
+            playSound("tap");
+            setMarketPickerOpen(true);
+          }}
+          style={[
+            styles.matrixMore,
+            {
+              backgroundColor: colors.secondary,
+              borderColor: colors.border,
+            },
+          ]}
+          testID="stays-market-more"
+          accessibilityLabel={t("search.marketCountryTitle")}
+        >
+          <Feather name="more-horizontal" size={14} color={colors.mutedForeground} />
+        </Pressable>
       </ScrollView>
 
       {viewState === "results" && items.length > 0 ? (
@@ -913,16 +988,16 @@ const styles = StyleSheet.create({
   container: { flex: 1 },
   resultsArea: { flex: 1 },
 
-  // ── Stays hero ───────────────────────────────────────────────────────────
+  // ── Stays hero (G2: slight trim — same options, less chrome height) ──────
   hero: {
     paddingHorizontal: 14,
-    paddingBottom: 12,
-    borderBottomLeftRadius: 24,
-    borderBottomRightRadius: 24,
+    paddingBottom: 8,
+    borderBottomLeftRadius: 22,
+    borderBottomRightRadius: 22,
     overflow: "hidden",
     backgroundColor: "#650E36",
   },
-  heroTopRow: { alignItems: "center", gap: 8, marginBottom: 10 },
+  heroTopRow: { alignItems: "center", gap: 8, marginBottom: 6 },
   heroBackBtn: {
     width: 36,
     height: 36,
@@ -935,46 +1010,46 @@ const styles = StyleSheet.create({
   // Title band shrinks; action buttons stay inside the rose hero (no escape).
   heroTitleWrap: { flex: 1, minWidth: 0 },
   heroTitle: {
-    fontSize: 20,
+    fontSize: 18,
     fontFamily: "Inter_700Bold",
     color: "#FFFFFF",
     letterSpacing: 0.2,
   },
   heroSub: {
-    fontSize: 12.5,
+    fontSize: 12,
     fontFamily: "Inter_400Regular",
     color: "rgba(255,255,255,0.78)",
-    marginTop: 2,
+    marginTop: 1,
   },
   wordmarkRow: {
     alignItems: "center",
-    gap: 6,
+    gap: 5,
   },
   wordmarkBoom: {
-    width: 76,
-    height: 26,
+    width: 64,
+    height: 22,
   },
   wordmarkStay: {
-    fontSize: 19,
+    fontSize: 17,
     fontFamily: "Inter_700Bold",
     color: "#FFFFFF",
-    letterSpacing: 2.5,
+    letterSpacing: 2.2,
   },
   poweredRow: {
     alignItems: "center",
     gap: 4,
-    marginTop: 2,
+    marginTop: 1,
   },
   poweredText: {
-    fontSize: 10,
+    fontSize: 9.5,
     fontFamily: "Inter_500Medium",
     color: "rgba(255,255,255,0.7)",
     letterSpacing: 0.8,
     textTransform: "uppercase",
   },
   poweredLogo: {
-    width: 46,
-    height: 12,
+    width: 42,
+    height: 11,
     opacity: 0.9,
   },
   heroActionBtn: {
@@ -1006,23 +1081,23 @@ const styles = StyleSheet.create({
     color: "#FFFFFF",
   },
   heroSearch: {
-    height: 50,
-    borderRadius: 15,
-    paddingHorizontal: 14,
+    height: 44,
+    borderRadius: 14,
+    paddingHorizontal: 12,
     alignItems: "center",
-    gap: 10,
+    gap: 8,
     backgroundColor: "rgba(255,255,255,0.16)",
     borderWidth: 1,
     borderColor: "rgba(255,255,255,0.24)",
   },
   heroSearchText: {
     flex: 1,
-    fontSize: 15,
+    fontSize: 14.5,
     fontFamily: "Inter_500Medium",
   },
   heroSearchInput: {
     flex: 1,
-    fontSize: 15,
+    fontSize: 14.5,
     fontFamily: "Inter_400Regular",
     color: "#FFFFFF",
     padding: 0,
@@ -1030,32 +1105,66 @@ const styles = StyleSheet.create({
   hScroll: {
     flexGrow: 0,
   },
-  // controlsRow is the ScrollView contentContainerStyle — globe + type tabs in one row
+  // Type tabs only (country/currency moved to marketMatrix below).
   controlsRow: {
     alignItems: "center",
     gap: 8,
     paddingHorizontal: 12,
-    paddingTop: 10,
+    paddingTop: 8,
     paddingBottom: 2,
   },
-  controlsDivider: { width: 1, height: 22, opacity: 0.7 },
+  marketMatrix: {
+    alignItems: "center",
+    gap: 6,
+    paddingHorizontal: 12,
+    paddingTop: 6,
+    paddingBottom: 4,
+  },
+  matrixCell: {
+    alignItems: "center",
+    gap: 5,
+    paddingHorizontal: 9,
+    paddingVertical: 5,
+    borderRadius: 10,
+    borderWidth: 1,
+    maxWidth: 148,
+  },
+  matrixFlag: { fontSize: 13, lineHeight: 16 },
+  matrixCountry: {
+    fontSize: 11.5,
+    fontFamily: "Inter_600SemiBold",
+    flexShrink: 1,
+  },
+  matrixCurrency: {
+    fontSize: 10.5,
+    fontFamily: "Inter_500Medium",
+    letterSpacing: 0.3,
+  },
+  matrixMore: {
+    width: 32,
+    height: 28,
+    borderRadius: 10,
+    borderWidth: 1,
+    alignItems: "center",
+    justifyContent: "center",
+  },
   heroWatermarkWrap: {
     position: "absolute",
-    top: 14,
-    right: 14,
+    top: 12,
+    right: 12,
   },
   heroWatermark: {
-    width: 72,
-    height: 24,
+    width: 64,
+    height: 22,
     opacity: 0.55,
   },
   termTab: {
-    paddingHorizontal: 14,
-    paddingVertical: 7,
+    paddingHorizontal: 12,
+    paddingVertical: 6,
     borderRadius: 999,
     borderWidth: 1,
   },
-  termTabText: { fontSize: 13, fontFamily: "Inter_600SemiBold" },
+  termTabText: { fontSize: 12.5, fontFamily: "Inter_600SemiBold" },
   resultsCount: {
     fontSize: 12,
     fontFamily: "Inter_400Regular",

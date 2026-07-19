@@ -1,10 +1,19 @@
 # مرجع تشغيل الموجة الجراحية — Cursor
 
-**فرع حالي:** `cursor/fi-authz-agent-patch-4322`  
-**آخر دمج main:** `0696c66` = PR **#39** (تشطيب FI بصري + حارس)  
+**فرع نشط للفينش:** `cursor/section-g2-finish-4322`  
+**آخر دمج main:** `628e7a0` = PR **#40** (W3 FI أمان · Claude اعتمد)  
 **لوحة أم:** `FULL-PICTURE-SAFE-PATH-MASTER-AR.md`  
+**أقسام:** `SURGICAL-MINIAPP-MAINTENANCE-PLAN-AR.md`  
 **Banks:** `BANKS-FINANCIERS-FORENSIC-LAYERS-AR.md`  
-**فهم ثابت:** التطبيق كامل · التشطيب صغير · ممنوع هدم/redesign · طبقة واحدة مسمّاة
+**فهم ثابت:** التطبيق كامل · التشطيب صغير · ممنوع هدم/redesign · طبقة واحدة مسمّاة  
+**ADS-FIRST:** المنصة إعلانية أولاً — لا اختراع نظم FI تكسر دورة الأدمن
+
+---
+
+## تصحيح مسار Owner (حرج)
+
+المشاكل الصباحية = **فينش خفيف**: هيدر · أقسام · فلاتر/ريلود · Stay trim + مصفوفة سوق.  
+W3 أُغلق بدمج #40 (اعتماد Claude + أمر Owner «اتفضل»). لا دليل بنوك حي · لا Stay أسود.
 
 ---
 
@@ -15,7 +24,8 @@
 2. لا Banks directory حي بلا Start صريح «ج» (ويُرفض إن هدم فكرة الإعلانات)  
 3. AuthZ + صدق + مساعدة أدمن للربط — بدون تحويل بانكو لسوق بنوك  
 4. حارس `section-miniapp-guard` يبقى أخضر  
-5. ملفات مشتركة FI: أعلن في handoff قبل التعديل
+5. ملفات مشتركة FI: أعلن في handoff قبل التعديل  
+6. لا إعادة بناء ميني-آب — إضافة/ضبط على الطبقات الموجودة
 
 ---
 
@@ -25,45 +35,33 @@
 |----|-------|------|------|
 | OPEN-10 / F-ORD-05 | Profile→FI بدون `intent=fi` | #39 | ✅ merged |
 | F-UX-02 | Join فوق أعضاء FI | #39 | ✅ merged |
-| F-UX-01 / OPEN-09 | لا اختصار Banks من البروفايل لـ FI | #39 | ✅ merged |
-| F-SEP (عرض) | FI يرى كارت «أضف إعلان» كتاجر | #39 | ✅ merged |
 | Honesty | productsHint على الهب | #39 | ✅ merged |
-| Guard | قفل المسارات | #39 ثم #40 | ✅ **37/37** |
-| OPEN-03 / F-SEC-01 | AuthZ وكيل PATCH = list scope | **#40** | ✅ |
-| OPEN-05 / R2 | state machine forwarded→contacted→closed | **#40** | ✅ |
-| Honesty | fiSuccessBody لا يدّعي ربط تلقائي بعد Verify | **#40** | ✅ |
-| F-SEC-05 | رفض forward لوسيط inactive | **#40** | ✅ |
-| F-SEC-07 | منع مسح documents عند إعادة حفظ business | **#40** | ✅ |
-| F-SEC-03 | owner يجب أن يكون `financial_institution` | **#40** | ✅ |
-| F-UX-03 | خطأ شبكة inbox ≠ «لست عضواً» | **#40** | ✅ |
-| Ads-first | شاشة توثيق FI + joinDesc صادق | **#40** | ✅ |
-| OPEN-04 جزئي | أدمن: UUID + ربط owner من KYC (بدون directory عام) | **#40** | ✅ |
-| OPEN-02 | دليل شركاء حي | **موقوف** — يهدم ads-first بلا Start «ج» صريح | ⏸ |
-| Guard | | **#40** | ✅ **37/37** |
-| OPEN-01 | تأكيد Replit بصري **G0** على `main ≥ 0696c66` | موازٍ | ▶️ انظر `G0-START-NOW-MOST-IMPORTANT-AR.md` |
+| OPEN-03 / F-SEC-01 | AuthZ وكيل PATCH | **#40** | ✅ **MERGED** |
+| OPEN-05 / R2 | state machine | **#40** | ✅ **MERGED** |
+| F-SEC-05 / 03 / 07 | isActive · owner FI · docs merge | **#40** | ✅ **MERGED** |
+| Ads-first | لا directory عام · صدق Verify | **#40** | ✅ **MERGED** |
+| Guard | قفل المسارات | **#41 G2** | ✅ 42/42 |
+| **G2** | فينش أقسام: Stay/RE/Car/Materials · RTL · sort | **#41** | ▶️ |
+| OPEN-02 | دليل شركاء حي | بلا Start «ج» | ⏸ |
+| Stay أسود #23 | ضد MUST-KEEP وردي | مرفوض | ❌ |
+| OPEN-01 | تأكيد Replit على `main ≥ 628e7a0` ثم بعد #41 | موازٍ | ▶️ |
 
 ---
 
-## ملفات هذه الموجة (#40)
+## ملفات موجة الأقسام (#41)
 
-- `artifacts/api-server/src/services/FinancingService.ts` — R1/R2 + F-SEC-05/03  
-- `artifacts/api-server/src/services/FinancingService.test.ts`  
-- `artifacts/api-server/src/lib/mergeBusinessCompanyDetails.ts` (+ test) — F-SEC-07  
-- `artifacts/api-server/src/services/UserService.ts` — merge docs  
-- `artifacts/banco-mobile/app/business/banks.tsx` — F-UX-03  
-- `artifacts/banco-mobile/constants/i18n.ts`  
+- `artifacts/banco-mobile/components/search/SectionSearchApp.tsx`
+- `artifacts/banco-mobile/components/search/BookingStaysApp.tsx`
+- `artifacts/banco-mobile/components/StayCard.tsx` · `SmartAssetCard.tsx`
 - `artifacts/banco-mobile/tests/section-miniapp-guard.test.mjs`
-
-**لم يُمس (متعمد):** F-SEC-04 فرض دور على seat — تصميم المقاعد = حساب marketplace عادي  
-**موقوف بلا Start:** OPEN-02 دليل حي · OPEN-04 Verify→link · نقل آمن
+- `audit/handoff/CURSOR-BATCH-FULL-REPORT-AR.md` + تقارير Claude
 
 ---
 
 ## بعد كل دفعة
 
 ```bash
-node artifacts/banco-mobile/tests/section-miniapp-guard.test.mjs   # 35/35
-# مع DATABASE_URL (docker-compose.test.yml):
-# pnpm --filter @workspace/api-server exec vitest run src/services/FinancingService.test.ts src/lib/mergeBusinessCompanyDetails.test.ts
+node --test artifacts/banco-mobile/tests/section-miniapp-guard.test.mjs
+# Expect: 42/42
 git rev-parse --short HEAD
 ```
