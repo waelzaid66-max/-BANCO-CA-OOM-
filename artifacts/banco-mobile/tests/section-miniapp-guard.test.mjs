@@ -7,10 +7,17 @@
 //   4. Stack screens for section/* remain registered in app/_layout.tsx
 //
 // Run: pnpm --filter @workspace/banco-mobile run test:section-guard
-// Expectation: 33/33 PASS (rose Stay hero + black-void flexGrow + country label
+// Expectation: 46/46 PASS (rose Stay hero + black-void flexGrow + country label
 // + section header icon hits stay inside / padding 12 + hard category locks
 // + no fake web topPad 67 anywhere under banco-mobile
-// + Banks FI finish: intent=fi from profile, Join gated on membership).
+// + Banks FI finish: intent=fi from profile, Join gated on membership
+// + Stay market matrix under type strip + no engine-chip facet-load flash
+// + RE offer/type/market strips + FilterSheet refinements wiring
+// + Car brand/origin strips + Discover ENTER + car?engine=import
+// + Materials material/origin/market strips + FilterSheet showMaterial wired
+// + Stay auto-reset on back + rental strip + map latch + scoped property types
+// + Stay sort 34px + StayCard logical start/end
+// + SmartAssetCard start/end + Section activeFilterCount includes sort).
 
 import test from "node:test";
 import assert from "node:assert/strict";
@@ -34,6 +41,12 @@ const BOOKING_APP = path.join(
   "components",
   "search",
   "BookingStaysApp.tsx",
+);
+const FILTER_SHEET = path.join(
+  APP_ROOT,
+  "components",
+  "search",
+  "FilterSheet.tsx",
 );
 const BANKS = path.join(APP_ROOT, "app", "business", "banks.tsx");
 const PROFILE = path.join(APP_ROOT, "app", "(tabs)", "profile.tsx");
@@ -63,7 +76,12 @@ test("SearchDiscover keeps SECTION_ROUTE for every catalogue section", () => {
 test("Discover section press pushes SECTION_ROUTE (not shared Search criteria)", () => {
   const src = fs.readFileSync(DISCOVER, "utf8");
   assert.match(src, /router\.push\(SECTION_ROUTE\[cat\]\)/);
-  assert.match(src, /router\.push\(SECTION_ROUTE\.car\)/);
+  // Car import CTA may append ?engine=import via template string.
+  assert.match(
+    src,
+    /SECTION_ROUTE\.car/,
+    "Discover must still reference SECTION_ROUTE.car for Cars ENTER",
+  );
 });
 
 test("Discover→Search melt bridge is gone (no prop, no host helper)", () => {
@@ -253,6 +271,291 @@ test("BookingStaysApp restores rose hero (not black StaysHomeHeader shell)", () 
   );
 });
 
+test("Stay keeps country/currency in matrix under type strip (not in-strip globe)", () => {
+  const booking = fs.readFileSync(BOOKING_APP, "utf8");
+  assert.match(
+    booking,
+    /testID="stays-market-matrix"/,
+    "Stay must expose the launch-market matrix under the type strip",
+  );
+  assert.match(
+    booking,
+    /MARKET_COUNTRIES\.map/,
+    "Stay matrix must reuse MARKET_COUNTRIES taxonomy (no invented market list)",
+  );
+  assert.match(
+    booking,
+    /CURRENCY_BY_MARKET/,
+    "Stay matrix must show currency from existing taxonomy",
+  );
+  // Type strip must not lead with MarketCountryButton anymore.
+  assert.doesNotMatch(
+    booking,
+    /MarketCountryButton/,
+    "Stay must not put MarketCountryButton back in the type strip",
+  );
+});
+
+test("Stay auto-resets filters on back; rental strip + map latch wired", () => {
+  const booking = fs.readFileSync(BOOKING_APP, "utf8");
+  const filter = fs.readFileSync(FILTER_SHEET, "utf8");
+  assert.match(
+    booking,
+    /resetAndLeave|exitingRef/,
+    "Stay must auto-reset filters on exit (no confirm-only path)",
+  );
+  assert.doesNotMatch(
+    booking,
+    /exitTitle|exitMessage|exitConfirm/,
+    "Stay must not prompt confirm-on-dirty exit (Owner: auto reset on back)",
+  );
+  assert.match(
+    booking,
+    /testID="stays-rental-strip"/,
+    "Stay must expose rental-term strip under market matrix",
+  );
+  assert.match(
+    booking,
+    /selectRentalTerm|rentalTermsForSearch/,
+    "Stay rental strip must drive criteria.rentalTerm",
+  );
+  assert.match(
+    booking,
+    /wantMap|mapParam === "1"/,
+    "Stay must latch ?map=1 deep-link like RE",
+  );
+  assert.match(
+    booking,
+    /focus=booking/,
+    "Stay card/map open must land listing with focus=booking",
+  );
+  assert.match(
+    booking,
+    /propertyTypeOptions=\{STAY_TYPE_OPTIONS\}/,
+    "Stay FilterSheet must scope property types to stay units",
+  );
+  assert.match(
+    filter,
+    /propertyTypeOptions/,
+    "FilterSheet must accept propertyTypeOptions for Stay scoping",
+  );
+  assert.match(
+    booking,
+    /testID="stays-type-strip"/,
+    "Stay type strip must be identifiable for visual audit",
+  );
+  assert.match(
+    booking,
+    /testID="stays-sort-cycle"/,
+    "Stay must expose W4-style 34px sort chip in type strip (every-section)",
+  );
+  assert.match(
+    booking,
+    /sortChip:\s*\{[\s\S]*?width:\s*34[\s\S]*?height:\s*34/,
+    "Stay sort chip must be 34×34 (P-SECTION S6 / Claude W4)",
+  );
+});
+
+test("StayCard badges use logical start/end (RTL-safe)", () => {
+  const stayCard = fs.readFileSync(
+    path.join(APP_ROOT, "components", "StayCard.tsx"),
+    "utf8",
+  );
+  assert.match(
+    stayCard,
+    /topBadges:[\s\S]*?start:\s*10/,
+    "StayCard topBadges must use logical start (not physical left)",
+  );
+  assert.match(
+    stayCard,
+    /topActions:[\s\S]*?end:\s*10/,
+    "StayCard topActions must use logical end (not physical right)",
+  );
+  assert.doesNotMatch(
+    stayCard,
+    /isRTL\s*\?\s*\{\s*right:\s*10/,
+    "StayCard must not reintroduce physical left/right RTL overrides",
+  );
+});
+
+test("SmartAssetCard badges/actions use logical start/end (RTL-safe)", () => {
+  const card = fs.readFileSync(
+    path.join(APP_ROOT, "components", "SmartAssetCard.tsx"),
+    "utf8",
+  );
+  assert.match(
+    card,
+    /topBadges:[\s\S]*?start:\s*10/,
+    "SmartAssetCard topBadges must use logical start (section results RTL)",
+  );
+  assert.match(
+    card,
+    /topRightActions:[\s\S]*?end:\s*10/,
+    "SmartAssetCard topRightActions must use logical end (section results RTL)",
+  );
+  assert.doesNotMatch(
+    card,
+    /topBadges:[\s\S]*?left:\s*10/,
+    "SmartAssetCard must not pin badges with physical left",
+  );
+  assert.doesNotMatch(
+    card,
+    /topRightActions:[\s\S]*?right:\s*10/,
+    "SmartAssetCard must not pin actions with physical right",
+  );
+});
+
+test("Section activeFilterCount includes sort (badge honesty vs Stay)", () => {
+  const section = fs.readFileSync(SECTION_APP, "utf8");
+  const countBlock = section.match(
+    /const activeFilterCount\s*=\s*\[[\s\S]*?\]\.filter\(Boolean\)\.length/,
+  )?.[0];
+  assert.ok(countBlock, "Section activeFilterCount declaration must exist");
+  assert.match(
+    countBlock,
+    /criteria\.sort\s*!==\s*"recommended"/,
+    "Section filter badge must count non-default sort (parity with Stay)",
+  );
+});
+
+test("SectionSearchApp keeps engine chips during facet load (no reload flash)", () => {
+  const section = fs.readFileSync(SECTION_APP, "utf8");
+  // showEngineChips / showIndustrialChips must not gate on facetsLoading —
+  // that hid the strip until facets returned and flashed every section entry.
+  const engineBlock = section.match(
+    /const showEngineChips\s*=\s*[^;]+;/s,
+  )?.[0];
+  assert.ok(engineBlock, "showEngineChips declaration must exist");
+  assert.doesNotMatch(
+    engineBlock,
+    /facetsLoading/,
+    "showEngineChips must not hide on facetsLoading",
+  );
+  const industrialBlock = section.match(
+    /const showIndustrialChips\s*=\s*[^;]+;/s,
+  )?.[0];
+  assert.ok(industrialBlock, "showIndustrialChips declaration must exist");
+  assert.doesNotMatch(
+    industrialBlock,
+    /facetsLoading/,
+    "showIndustrialChips must not hide on facetsLoading",
+  );
+});
+
+test("Real-estate section uses offer strip + type strip (no listingMode clash)", () => {
+  const section = fs.readFileSync(SECTION_APP, "utf8");
+  assert.match(
+    section,
+    /testID="re-type-strip"/,
+    "RE must expose a dedicated property-type strip",
+  );
+  assert.match(
+    section,
+    /testID="re-market-matrix"/,
+    "RE must expose market matrix under type strip",
+  );
+  assert.match(
+    section,
+    /isReOfferEngine|stripEngineList/,
+    "RE primary chips must be offer-axis only (تمليك/إيجار)",
+  );
+  assert.match(
+    section,
+    /isReSheetEngine|filterSheetEngines/,
+    "RE FilterSheet engines must be refinements-only (not offer/type)",
+  );
+  assert.match(
+    section,
+    /showListingMode\s*=\s*!lockedEngine\s*&&\s*!isRealEstateSection/,
+    "RE must hide listingMode For-sale/Wanted (clashes with offer sale/rent)",
+  );
+  assert.match(
+    section,
+    /selectRePropertyType|propertyType:\s*value/,
+    "RE type strip must drive criteria.propertyType (Stay-parallel)",
+  );
+  assert.match(
+    section,
+    /propertyType:\s*null/,
+    "CLEAR_SECTION_ATTRS / clear path must reset propertyType",
+  );
+});
+
+test("Car section expands brand + origin strips; import deep-links engine", () => {
+  const section = fs.readFileSync(SECTION_APP, "utf8");
+  const discover = fs.readFileSync(DISCOVER, "utf8");
+  assert.match(
+    section,
+    /testID="car-brand-strip"/,
+    "Car must expose secondary brand strip",
+  );
+  assert.match(
+    section,
+    /testID="car-origin-strip"/,
+    "Car must expose origin strip (local/imported)",
+  );
+  assert.match(
+    section,
+    /engineParam|enginesForCategory/,
+    "Section must seed ?engine= deep-link on mount",
+  );
+  assert.match(
+    discover,
+    /SECTION_ROUTE\.car.*engine=import|engine=import.*SECTION_ROUTE\.car/,
+    "Discover car-import CTA must ENTER car with engine=import",
+  );
+  assert.match(
+    discover,
+    /router\.push\(SECTION_ROUTE\[cat\]\)/,
+    "Discover section cards must ENTER SECTION_ROUTE (not melt strips)",
+  );
+});
+
+test("Materials (toridat) restores material strip + origin + market matrix", () => {
+  const section = fs.readFileSync(SECTION_APP, "utf8");
+  const filter = fs.readFileSync(FILTER_SHEET, "utf8");
+  assert.match(
+    section,
+    /testID="materials-material-strip"/,
+    "Materials must expose commodity material strip",
+  );
+  assert.match(
+    section,
+    /testID="materials-origin-strip"/,
+    "Materials must expose origin strip (local/imported)",
+  );
+  assert.match(
+    section,
+    /testID="materials-market-matrix"/,
+    "Materials must expose market matrix under origin (Stay/RE pattern)",
+  );
+  assert.match(
+    section,
+    /showMaterialChrome|selectMaterial/,
+    "Materials material strip must drive criteria.material",
+  );
+  assert.match(
+    filter,
+    /showMaterial[\s\S]*filter-material|filter-material[\s\S]*showMaterial/,
+    "FilterSheet must wire showMaterial to material chips (not dead flag)",
+  );
+  assert.match(
+    filter,
+    /MATERIAL_TYPES/,
+    "FilterSheet must import MATERIAL_TYPES for commodity chips",
+  );
+  assert.match(
+    filter,
+    /showIndustry \|\| showOrigin \|\| showMaterial/,
+    "FilterSheet industrial block must gate by showIndustry/Origin/Material",
+  );
+  assert.doesNotMatch(
+    filter,
+    /\{isIndustrial && \(/,
+    "FilterSheet must not collapse industrial filters to raw isIndustrial",
+  );
+});
+
 test("Icon registry maps key / key-outline / business / bed-outline", () => {
   const icons = fs.readFileSync(ICONS, "utf8");
   for (const name of ['"key"', '"key-outline"', '"business"', '"bed-outline"']) {
@@ -354,14 +657,18 @@ test("Booking empty state offers demand bridge (no dead-end)", () => {
   );
 });
 
-test("Booking filter badge counts rentalTerm (FilterSheet-only filter)", () => {
+test("Booking filter badge counts rentalTerm + propertyType (honest chrome)", () => {
   const booking = fs.readFileSync(BOOKING_APP, "utf8");
-  // activeFilterCount array must include !!criteria.rentalTerm — term moved off
-  // header tabs into FilterSheet; omitting it lies about active filters.
+  // Strip + FilterSheet share rentalTerm / propertyType — badge must count both.
   assert.match(
     booking,
     /activeFilterCount\s*=\s*\[[\s\S]*?!!criteria\.rentalTerm/,
     "activeFilterCount must include rentalTerm",
+  );
+  assert.match(
+    booking,
+    /activeFilterCount\s*=\s*\[[\s\S]*?!!criteria\.propertyType/,
+    "activeFilterCount must include propertyType",
   );
 });
 

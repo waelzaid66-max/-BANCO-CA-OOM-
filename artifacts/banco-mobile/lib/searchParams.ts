@@ -207,6 +207,8 @@ export const CLEAR_SECTION_ATTRS: Partial<SearchCriteria> = {
   material: null,
   industrialType: "all",
   rentalTerm: null,
+  /** RE type-strip selection (Stay-parallel); must not leak across sections. */
+  propertyType: null,
 };
 
 export function buildSearchParams(

@@ -8,7 +8,7 @@ import {
   FeedItem,
   SearchListingsCategory,
 } from "@workspace/api-client-react";
-import { router, useNavigation, type Href } from "expo-router";
+import { router, useLocalSearchParams, useNavigation, type Href } from "expo-router";
 import { usePreventRemove } from "@react-navigation/native";
 import * as Haptics from "expo-haptics";
 import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
@@ -34,9 +34,12 @@ import { MiniAppBottomNav } from "@/components/MiniAppBottomNav";
 import { apiCategoryFor } from "@/components/CategoryTabs";
 import { labelForValue } from "@/constants/locations";
 import {
+  CURRENCY_BY_MARKET,
   DEFAULT_MARKET_COUNTRY,
+  MARKET_COUNTRIES,
   PROPERTY_TYPES,
 } from "@/constants/listingCreateTaxonomy";
+import { PHONE_COUNTRIES } from "@/constants/countryCodes";
 import {
   loadPreferredMarketCountry,
   savePreferredMarketCountry,
@@ -52,11 +55,11 @@ import {
   mapAnchorKey,
 } from "@/lib/searchParams";
 import { requestNearMeCoords, DEFAULT_NEAR_RADIUS_KM } from "@/lib/nearMe";
+import { MarketCountryPicker } from "@/components/MarketCountryPicker";
 import {
-  MarketCountryButton,
-  MarketCountryPicker,
-} from "@/components/MarketCountryPicker";
-import { sanitizeRentalTermForMarket } from "@/lib/searchTaxonomy";
+  rentalTermsForSearch,
+  sanitizeRentalTermForMarket,
+} from "@/lib/searchTaxonomy";
 
 const ALL_TAB = "__all__";
 const BANCO_LOGO = require("../../assets/images/banco-logo.png");
@@ -65,9 +68,11 @@ const BOOM_LOGO = require("../../assets/images/boom-logo.png");
 
 // The stays type tabs (per the approved header mock): Stays (all) · Studio ·
 // Apartment · Villa · Chalet. Labels come from the canonical PROPERTY_TYPES
-// taxonomy so the tab wording always matches create/search. Rental TERM moved
-// to the FilterSheet (rentalTerm chips) — type is the primary segmentation.
+// taxonomy so the tab wording always matches create/search. Rental TERM is a
+// secondary strip under the market matrix (also in FilterSheet) — both drive
+// the same criteria.rentalTerm axis.
 const STAY_TYPE_VALUES = ["studio", "apartment", "villa", "chalet"] as const;
+const STAY_TYPE_OPTIONS = [...STAY_TYPE_VALUES];
 
 /** Deterministic, key-sorted serialization used for baseline-delta dirty checks
  *  (mirrors SectionSearchApp — a freshly-landed page is never falsely dirty). */
@@ -202,8 +207,13 @@ export function BookingStaysApp() {
     };
   }, [applyPatch, retry, items.length, phase, criteria.marketCountry]);
 
-  // ── Map view ──
+  // ── Map view (?map=1 deep-link latch, same MOB-07 contract as RE) ──
+  const params = useLocalSearchParams<{ map?: string | string[] }>();
+  const mapParam = Array.isArray(params.map) ? params.map[0] : params.map;
   const [mapMode, setMapMode] = useState(false);
+  const [wantMap, setWantMap] = useState(
+    () => mapParam === "1" || mapParam === "true",
+  );
   const [marketPickerOpen, setMarketPickerOpen] = useState(false);
   const mappableItems = useMemo(
     () =>
@@ -221,11 +231,25 @@ export function BookingStaysApp() {
     if (!inResultsView && mapMode) setMapMode(false);
   }, [inResultsView, mapMode]);
 
+  useEffect(() => {
+    if (!wantMap) return;
+    // Stay map can open once results exist — server clusters fill gaps even
+    // when the loaded page has few pins (do not hard-require hasPagePins).
+    if (inResultsView) {
+      setMapMode(true);
+      setWantMap(false);
+    } else if (viewState === "empty" || viewState === "error") {
+      setWantMap(false);
+    }
+  }, [wantMap, inResultsView, viewState]);
+
   const mapSectionKey = mapAnchorKey(criteria);
   const prevMapSectionKey = useRef(mapSectionKey);
   useEffect(() => {
     if (prevMapSectionKey.current === mapSectionKey) return;
     prevMapSectionKey.current = mapSectionKey;
+    // Keep map open across filter tweaks only when user is already in map;
+    // section-key change from market/type still drops to list for clarity.
     setMapMode(false);
   }, [mapSectionKey]);
 
@@ -313,13 +337,13 @@ export function BookingStaysApp() {
   const handleCardPress = useCallback(
     (item: FeedItem) => {
       cacheFeedItem(item);
-      router.push(`/listing/${item.id}`);
+      router.push(`/listing/${item.id}?focus=booking` as Href);
     },
     [cacheFeedItem],
   );
 
-  // Type tabs: Stays(all) / studio / apartment / villa / chalet. The rental
-  // TERM (daily/new-law/annual) is a FilterSheet chip now, not the tab axis.
+  // Type tabs: Stays(all) / studio / apartment / villa / chalet.
+  // Rental TERM (daily/new-law/annual) = secondary strip + FilterSheet (same axis).
   const activeStayType = criteria.propertyType ?? ALL_TAB;
   const selectStayType = (value: string) => {
     playSound("tap");
@@ -329,6 +353,23 @@ export function BookingStaysApp() {
     } else {
       update({ propertyType: value, engineKey: "rent" });
     }
+  };
+
+  const selectRentalTerm = (term: string) => {
+    playSound("tap");
+    Haptics.selectionAsync();
+    update({
+      rentalTerm: criteria.rentalTerm === term ? null : term,
+      engineKey: "rent",
+    });
+  };
+
+  const selectListingModeWanted = () => {
+    playSound("tap");
+    Haptics.selectionAsync();
+    update({
+      listingMode: criteria.listingMode === "buy" ? "all" : "buy",
+    });
   };
 
   const selectMarketCountry = (code: string) => {
@@ -363,17 +404,22 @@ export function BookingStaysApp() {
     setDraftQuery("");
     setSuggestions([]);
     setShowSuggestions(false);
+    setSearchOpen(false);
+    setShowFilters(false);
+    setMapMode(false);
     const baseline = baselineRef.current ?? buildSeed(criteria.marketCountry);
     commit(baseline);
   }, [buildSeed, commit, criteria.marketCountry]);
 
-  // Filter badge: type tabs are separate chrome. Rental TERM lives only in
-  // FilterSheet — must count so the badge stays honest. Payment omitted.
+  // Honest badge: every Stay chrome/sheet axis that narrows results.
   const activeFilterCount = [
+    !!criteria.propertyType,
     !!criteria.minPrice || !!criteria.maxPrice,
     !!criteria.location,
     criteria.nearMeEnabled,
     !!criteria.rentalTerm,
+    criteria.listingMode !== "all",
+    criteria.sort !== "recommended",
     criteria.marketCountry !==
       (baselineRef.current?.marketCountry ?? DEFAULT_MARKET_COUNTRY),
   ].filter(Boolean).length;
@@ -406,25 +452,32 @@ export function BookingStaysApp() {
     });
   };
 
-  usePreventRemove(isDirty, ({ data }) => {
-    Alert.alert(
-      t("search.discover.section.exitTitle"),
-      t("search.discover.section.exitMessage"),
-      [
-        { text: t("search.discover.section.exitCancel"), style: "cancel" },
-        {
-          text: t("search.discover.section.exitConfirm"),
-          style: "destructive",
-          onPress: () => navigation.dispatch(data.action),
-        },
-      ],
-    );
+  // Owner order: filters auto-reset on back — no confirm dialog. Hardware
+  // back / swipe / header all hit the same path via usePreventRemove + goBack.
+  const exitingRef = useRef(false);
+  const resetAndLeave = useCallback(
+    (leave: () => void) => {
+      exitingRef.current = true;
+      clearAllFilters();
+      leave();
+    },
+    [clearAllFilters],
+  );
+
+  usePreventRemove(isDirty && !exitingRef.current, ({ data }) => {
+    resetAndLeave(() => navigation.dispatch(data.action));
   });
 
   const goBack = () => {
     playSound("tap");
+    if (isDirty) {
+      resetAndLeave(() => router.back());
+      return;
+    }
     router.back();
   };
+
+  const rentalTerms = rentalTermsForSearch(criteria.marketCountry);
 
   const rowDir = isRTL ? "row-reverse" : "row";
   const textAlign = isRTL ? "right" : "left";
@@ -529,7 +582,7 @@ export function BookingStaysApp() {
           marketplace search chrome. Carries title, save/filter actions and a
           single "Where to?" search pill. ─────────────────────────────────── */}
       <View style={[styles.hero, { paddingTop: topPad + 8 }]} testID="stays-hero">
-        <SectionBackdrop section="real_estate" motifSize={140} />
+        <SectionBackdrop section="real_estate" motifSize={115} />
         {/* BANCO watermark — same identity signal as the Discover section cards */}
         <View pointerEvents="none" style={styles.heroWatermarkWrap}>
           <Image
@@ -732,23 +785,70 @@ export function BookingStaysApp() {
         </View>
       )}
 
-      {/* Controls: 🌐 globe + rental-term tabs — all one horizontal scrollable strip.
-          MarketCountryButton is the FIRST item so the globe is always in the strip. */}
+      {/* Controls: sort (W4 / every-section) · stay-type tabs · Wanted.
+          Country/currency live in the matrix below — keep this strip short. */}
       <ScrollView
         horizontal
         showsHorizontalScrollIndicator={false}
         // Critical: horizontal ScrollView must NOT flex-grow (black-void class).
         style={styles.hScroll}
         contentContainerStyle={[styles.controlsRow, { flexDirection: rowDir }]}
+        testID="stays-type-strip"
       >
-        <MarketCountryButton
-          selected={criteria.marketCountry}
+        <Pressable
           onPress={() => {
             playSound("tap");
-            setMarketPickerOpen(true);
+            Haptics.selectionAsync();
+            const cycle = [
+              "recommended",
+              "newest",
+              "price_asc",
+              "price_desc",
+            ] as const;
+            const next =
+              cycle[
+                (cycle.indexOf(
+                  criteria.sort as (typeof cycle)[number],
+                ) +
+                  1) %
+                  cycle.length
+              ];
+            update({ sort: next });
           }}
+          style={[
+            styles.sortChip,
+            {
+              backgroundColor:
+                criteria.sort !== "recommended"
+                  ? STAYS_ACCENT
+                  : colors.secondary,
+              flexDirection: rowDir,
+            },
+          ]}
+          accessibilityLabel={t(`search.sortOptions.${criteria.sort}`)}
+          testID="stays-sort-cycle"
+        >
+          <Feather
+            name={
+              criteria.sort === "price_asc"
+                ? "trending-up"
+                : criteria.sort === "price_desc"
+                  ? "trending-down"
+                  : criteria.sort === "newest"
+                    ? "clock"
+                    : "list"
+            }
+            size={14}
+            color={
+              criteria.sort !== "recommended"
+                ? "#FFFFFF"
+                : colors.mutedForeground
+            }
+          />
+        </Pressable>
+        <View
+          style={[styles.chipStripDivider, { backgroundColor: colors.border }]}
         />
-        <View style={[styles.controlsDivider, { backgroundColor: colors.border }]} />
         {[{ value: ALL_TAB, label: t("search.discover.section.staysAll") }]
           .concat(
             STAY_TYPE_VALUES.map((v) => {
@@ -782,7 +882,157 @@ export function BookingStaysApp() {
               </Pressable>
             );
           })}
+        <Pressable
+          onPress={selectListingModeWanted}
+          style={[
+            styles.termTab,
+            {
+              backgroundColor:
+                criteria.listingMode === "buy" ? STAYS_ACCENT : colors.card,
+              borderColor:
+                criteria.listingMode === "buy" ? STAYS_ACCENT : colors.border,
+            },
+          ]}
+          testID="stays-listing-mode-buy"
+        >
+          <AppText
+            style={[
+              styles.termTabText,
+              {
+                color:
+                  criteria.listingMode === "buy"
+                    ? "#FFFFFF"
+                    : colors.foreground,
+              },
+            ]}
+          >
+            {t("search.listingModeBuy")}
+          </AppText>
+        </Pressable>
       </ScrollView>
+
+      {/* Launch-market matrix under the type strip — compact flag · country ·
+          currency cells. Uses taxonomy already wired to FilterSheet / seed;
+          does not invent a new market system. Active = soft rose outline only. */}
+      <ScrollView
+        horizontal
+        showsHorizontalScrollIndicator={false}
+        style={styles.hScroll}
+        contentContainerStyle={[styles.marketMatrix, { flexDirection: rowDir }]}
+        testID="stays-market-matrix"
+      >
+        {MARKET_COUNTRIES.map((m) => {
+          const active = criteria.marketCountry === m.value;
+          const currency = CURRENCY_BY_MARKET[m.value] ?? "";
+          const flag = PHONE_COUNTRIES.find((c) => c.iso === m.value)?.flag;
+          return (
+            <Pressable
+              key={m.value}
+              onPress={() => {
+                playSound("tap");
+                Haptics.selectionAsync();
+                selectMarketCountry(m.value);
+              }}
+              style={[
+                styles.matrixCell,
+                {
+                  flexDirection: rowDir,
+                  backgroundColor: active
+                    ? "rgba(101,14,54,0.08)"
+                    : colors.card,
+                  borderColor: active ? STAYS_ACCENT : colors.border,
+                },
+              ]}
+              testID={`stays-market-${m.value}`}
+              accessibilityLabel={`${isRTL ? m.ar : m.en} ${currency}`}
+            >
+              {flag ? (
+                <AppText style={styles.matrixFlag}>{flag}</AppText>
+              ) : (
+                <Feather
+                  name="globe"
+                  size={12}
+                  color={colors.mutedForeground}
+                />
+              )}
+              <AppText
+                style={[
+                  styles.matrixCountry,
+                  { color: colors.foreground },
+                ]}
+                numberOfLines={1}
+              >
+                {isRTL ? m.ar : m.en}
+              </AppText>
+              <AppText
+                style={[
+                  styles.matrixCurrency,
+                  { color: colors.mutedForeground },
+                ]}
+              >
+                {currency}
+              </AppText>
+            </Pressable>
+          );
+        })}
+        <Pressable
+          onPress={() => {
+            playSound("tap");
+            setMarketPickerOpen(true);
+          }}
+          style={[
+            styles.matrixMore,
+            {
+              backgroundColor: colors.secondary,
+              borderColor: colors.border,
+            },
+          ]}
+          testID="stays-market-more"
+          accessibilityLabel={t("search.marketCountryTitle")}
+        >
+          <Feather name="more-horizontal" size={14} color={colors.mutedForeground} />
+        </Pressable>
+      </ScrollView>
+
+      {/* Rental-term strip — market-honest regimes (daily / new-law / …).
+          Same criteria.rentalTerm as FilterSheet — one axis, two surfaces. */}
+      {rentalTerms.length > 0 ? (
+        <ScrollView
+          horizontal
+          showsHorizontalScrollIndicator={false}
+          style={styles.hScroll}
+          contentContainerStyle={[styles.rentalChrome, { flexDirection: rowDir }]}
+          testID="stays-rental-strip"
+        >
+          {rentalTerms.map((r) => {
+            const active = criteria.rentalTerm === r.value;
+            return (
+              <Pressable
+                key={r.value}
+                onPress={() => selectRentalTerm(r.value)}
+                style={[
+                  styles.rentalChip,
+                  {
+                    backgroundColor: active ? STAYS_ACCENT : colors.secondary,
+                  },
+                ]}
+                testID={`stays-rental-${r.value}`}
+              >
+                <AppText
+                  style={[
+                    styles.rentalChipText,
+                    {
+                      color: active ? "#FFFFFF" : colors.mutedForeground,
+                    },
+                  ]}
+                >
+                  {isRTL ? r.ar : r.en}
+                </AppText>
+              </Pressable>
+            );
+          })}
+        </ScrollView>
+      ) : null}
 
       {viewState === "results" && items.length > 0 ? (
         <AppText
@@ -813,13 +1063,19 @@ export function BookingStaysApp() {
           if (partial.marketCountry) {
             void savePreferredMarketCountry(partial.marketCountry);
           }
-          update(partial);
+          // Stay hard-lock: never accept sale engines / foreign categories.
+          update({
+            ...partial,
+            category: "real_estate",
+            engineKey: "rent",
+          });
         }}
         onOpenLocationPicker={() => setLocationPickerOpen(true)}
         onClearLocation={() => update({ location: "" })}
         onToggleNearMe={() => void toggleNearMe()}
         onClearAll={clearAllFilters}
         hidePaymentType
+        propertyTypeOptions={STAY_TYPE_OPTIONS}
       />
 
       <View style={styles.resultsArea}>
@@ -913,16 +1169,16 @@ const styles = StyleSheet.create({
   container: { flex: 1 },
   resultsArea: { flex: 1 },
 
-  // ── Stays hero ───────────────────────────────────────────────────────────
+  // ── Stays hero (G2: slight trim — same options, less chrome height) ──────
   hero: {
     paddingHorizontal: 14,
-    paddingBottom: 12,
-    borderBottomLeftRadius: 24,
-    borderBottomRightRadius: 24,
+    paddingBottom: 8,
+    borderBottomLeftRadius: 22,
+    borderBottomRightRadius: 22,
     overflow: "hidden",
     backgroundColor: "#650E36",
   },
-  heroTopRow: { alignItems: "center", gap: 8, marginBottom: 10 },
+  heroTopRow: { alignItems: "center", gap: 8, marginBottom: 6 },
   heroBackBtn: {
     width: 36,
     height: 36,
@@ -935,46 +1191,46 @@ const styles = StyleSheet.create({
   // Title band shrinks; action buttons stay inside the rose hero (no escape).
   heroTitleWrap: { flex: 1, minWidth: 0 },
   heroTitle: {
-    fontSize: 20,
+    fontSize: 18,
     fontFamily: "Inter_700Bold",
     color: "#FFFFFF",
     letterSpacing: 0.2,
   },
   heroSub: {
-    fontSize: 12.5,
+    fontSize: 12,
     fontFamily: "Inter_400Regular",
     color: "rgba(255,255,255,0.78)",
-    marginTop: 2,
+    marginTop: 1,
   },
   wordmarkRow: {
     alignItems: "center",
-    gap: 6,
+    gap: 5,
   },
   wordmarkBoom: {
-    width: 76,
-    height: 26,
+    width: 64,
+    height: 22,
   },
   wordmarkStay: {
-    fontSize: 19,
+    fontSize: 17,
     fontFamily: "Inter_700Bold",
     color: "#FFFFFF",
-    letterSpacing: 2.5,
+    letterSpacing: 2.2,
   },
   poweredRow: {
     alignItems: "center",
     gap: 4,
-    marginTop: 2,
+    marginTop: 1,
   },
   poweredText: {
-    fontSize: 10,
+    fontSize: 9.5,
     fontFamily: "Inter_500Medium",
     color: "rgba(255,255,255,0.7)",
     letterSpacing: 0.8,
     textTransform: "uppercase",
   },
   poweredLogo: {
-    width: 46,
-    height: 12,
+    width: 42,
+    height: 11,
     opacity: 0.9,
   },
   heroActionBtn: {
@@ -1006,23 +1262,23 @@ const styles = StyleSheet.create({
     color: "#FFFFFF",
   },
   heroSearch: {
-    height: 50,
-    borderRadius: 15,
-    paddingHorizontal: 14,
+    height: 44,
+    borderRadius: 14,
+    paddingHorizontal: 12,
     alignItems: "center",
-    gap: 10,
+    gap: 8,
     backgroundColor: "rgba(255,255,255,0.16)",
     borderWidth: 1,
     borderColor: "rgba(255,255,255,0.24)",
   },
   heroSearchText: {
     flex: 1,
-    fontSize: 15,
+    fontSize: 14.5,
     fontFamily: "Inter_500Medium",
   },
   heroSearchInput: {
     flex: 1,
-    fontSize: 15,
+    fontSize: 14.5,
     fontFamily: "Inter_400Regular",
     color: "#FFFFFF",
     padding: 0,
@@ -1030,32 +1286,96 @@ const styles = StyleSheet.create({
   hScroll: {
     flexGrow: 0,
   },
-  // controlsRow is the ScrollView contentContainerStyle — globe + type tabs in one row
+  // Type tabs only (country/currency moved to marketMatrix below).
+  // Vertical rhythm: 8 → 6 → 4 between type / market / rental (P-STAY mm).
   controlsRow: {
     alignItems: "center",
     gap: 8,
     paddingHorizontal: 12,
-    paddingTop: 10,
+    paddingTop: 8,
     paddingBottom: 2,
   },
-  controlsDivider: { width: 1, height: 22, opacity: 0.7 },
+  sortChip: {
+    width: 34,
+    height: 34,
+    borderRadius: 17,
+    alignItems: "center",
+    justifyContent: "center",
+    flexShrink: 0,
+  },
+  chipStripDivider: {
+    width: StyleSheet.hairlineWidth,
+    height: 22,
+    alignSelf: "center",
+  },
+  marketMatrix: {
+    alignItems: "center",
+    gap: 6,
+    paddingHorizontal: 12,
+    paddingTop: 6,
+    paddingBottom: 2,
+  },
+  rentalChrome: {
+    alignItems: "center",
+    gap: 8,
+    paddingHorizontal: 12,
+    paddingTop: 4,
+    paddingBottom: 4,
+  },
+  rentalChip: {
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    borderRadius: 16,
+  },
+  rentalChipText: {
+    fontSize: 12.5,
+    fontFamily: "Inter_500Medium",
+  },
+  matrixCell: {
+    alignItems: "center",
+    gap: 5,
+    paddingHorizontal: 9,
+    paddingVertical: 5,
+    borderRadius: 10,
+    borderWidth: 1,
+    maxWidth: 148,
+  },
+  matrixFlag: { fontSize: 13, lineHeight: 16 },
+  matrixCountry: {
+    fontSize: 11.5,
+    fontFamily: "Inter_600SemiBold",
+    flexShrink: 1,
+  },
+  matrixCurrency: {
+    fontSize: 10.5,
+    fontFamily: "Inter_500Medium",
+    letterSpacing: 0.3,
+  },
+  matrixMore: {
+    width: 32,
+    height: 28,
+    borderRadius: 10,
+    borderWidth: 1,
+    alignItems: "center",
+    justifyContent: "center",
+  },
   heroWatermarkWrap: {
     position: "absolute",
-    top: 14,
-    right: 14,
+    top: 12,
+    right: 12,
   },
   heroWatermark: {
-    width: 72,
-    height: 24,
+    width: 64,
+    height: 22,
     opacity: 0.55,
   },
   termTab: {
-    paddingHorizontal: 14,
-    paddingVertical: 7,
+    paddingHorizontal: 12,
+    paddingVertical: 6,
     borderRadius: 999,
     borderWidth: 1,
   },
-  termTabText: { fontSize: 13, fontFamily: "Inter_600SemiBold" },
+  termTabText: { fontSize: 12.5, fontFamily: "Inter_600SemiBold" },
   resultsCount: {
     fontSize: 12,
     fontFamily: "Inter_400Regular",

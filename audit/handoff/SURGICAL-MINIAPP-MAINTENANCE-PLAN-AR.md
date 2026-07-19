@@ -249,11 +249,12 @@ sed -n '1,20p' artifacts/banco-mobile/app/section/*.tsx
 
 | ID | حالة | Tip/SHA | ملاحظة |
 |----|------|---------|--------|
-| G0 | ⏳ بانتظار Owner | — | دمج #37 |
-| G1 | ⏳ | — | شوتات Replit |
+| G0 | ✅ merge #39 | `0696c66` | FI mobile finish على main |
+| G1 | ▶️ Replit | — | شوتات تأكيد بصري |
+| G2 | ▶️ كود | `cursor/section-g2-finish-4322` | لا وميض engine chips · Stay trim · مصفوفة سوق تحت الشريط |
 | A1–A5 | ✅ كود | hard-lock category على Section + Stay | شوتات Replit للتأكيد البصري |
 | A6 | ✅ كود | SECTION_ROUTE + كروت + لا melt (حارس) | — |
-| A7 | ✅ كود | guard **29/29** + hard locks + no fake 67 | — |
+| A7 | ✅ كود | guard **35/35** + hard locks + no fake 67 | — |
 | B* | ✅ كود | **صفر** `web ? 67` تحت `banco-mobile` (كل الشاشات) | شوتات هيدر عشوائية للتأكيد |
 | C* | ⏸ | Legal/AR عند إثبات شوت | — |
 | D* | ⏸ | — | Start فقط |

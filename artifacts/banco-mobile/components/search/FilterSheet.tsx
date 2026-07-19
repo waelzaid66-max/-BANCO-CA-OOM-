@@ -26,7 +26,11 @@ import {
 } from "@/components/CategoryTabs";
 import { brandLabel, type CarBrand } from "@/constants/cars";
 import { engineByKey, type EngineDef } from "@/constants/engines";
-import { INDUSTRY_TYPES } from "@/constants/listingCreateTaxonomy";
+import {
+  INDUSTRY_TYPES,
+  MATERIAL_TYPES,
+  PROPERTY_TYPES,
+} from "@/constants/listingCreateTaxonomy";
 import { useI18n } from "@/context/LanguageContext";
 import { useColors } from "@/hooks/useColors";
 import {
@@ -105,6 +109,11 @@ interface FilterSheetProps {
    * Used by rental-locked pages where installment is irrelevant.
    */
   hidePaymentType?: boolean;
+  /**
+   * Optional restrict of RE property-type chips (Stay passes studio/apartment/
+   * villa/chalet only — never land/commercial in a stays browse).
+   */
+  propertyTypeOptions?: string[];
 }
 
 /**
@@ -136,6 +145,7 @@ export function FilterSheet({
   onClearAll,
   lockCategory = false,
   hidePaymentType = false,
+  propertyTypeOptions,
 }: FilterSheetProps) {
   const colors = useColors();
   const { t, isRTL } = useI18n();
@@ -143,6 +153,10 @@ export function FilterSheet({
 
   const rowDir = isRTL ? "row-reverse" : "row";
   const textAlign = isRTL ? "right" : "left";
+  const propertyTypeDefs =
+    propertyTypeOptions && propertyTypeOptions.length > 0
+      ? PROPERTY_TYPES.filter((p) => propertyTypeOptions.includes(p.value))
+      : PROPERTY_TYPES;
 
   // Price / year are drafts: re-synced from the committed criteria each time the
   // sheet opens, then applied together on the Apply button.
@@ -152,14 +166,18 @@ export function FilterSheet({
   const [maxYear, setMaxYear] = useState(criteria.maxYear);
 
   useEffect(() => {
-    if (visible) {
-      setMinPrice(criteria.minPrice);
-      setMaxPrice(criteria.maxPrice);
-      setMinYear(criteria.minYear);
-      setMaxYear(criteria.maxYear);
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [visible]);
+    if (!visible) return;
+    setMinPrice(criteria.minPrice);
+    setMaxPrice(criteria.maxPrice);
+    setMinYear(criteria.minYear);
+    setMaxYear(criteria.maxYear);
+  }, [
+    visible,
+    criteria.minPrice,
+    criteria.maxPrice,
+    criteria.minYear,
+    criteria.maxYear,
+  ]);
 
   const apply = () => {
     onUpdate({ minPrice, maxPrice, minYear, maxYear });
@@ -173,8 +191,12 @@ export function FilterSheet({
   // Per-section content correctness: rental systems are rent-only — offering
   // them while the تمليك (sale) chip is active would be contradictory noise.
   const selectedEngine = engineByKey(criteria.category, criteria.engineKey);
+  // Rent terms when offer axis is rent. Callers may pass refinement engines in
+  // the sheet; strip still owns sale/rent via engineKey when it is an offer.
   const showRentalTerms =
-    isRealEstate && selectedEngine?.params.offer_type === "rent";
+    isRealEstate &&
+    (selectedEngine?.params.offer_type === "rent" ||
+      criteria.engineKey === "rent");
   // Industry = manufacturing sector. Never on raw_material (commodity is
   // `material` at create). Hide for materials+all too so the group browse
   // doesn't ask a factory-sector question over steel/resin listings.
@@ -392,10 +414,17 @@ export function FilterSheet({
             </>
             )}
 
-            {/* Type (facet-gated engine chips) */}
+            {/* Type / refinements (facet-gated). RE passes refinements only —
+                offer + propertyType live on section strips. */}
             {showEngines && (
               <>
-                <SectionLabel text={t("search.type")} align={textAlign} colors={colors} />
+                <SectionLabel
+                  text={
+                    isRealEstate ? t("search.filters") : t("search.type")
+                  }
+                  align={textAlign}
+                  colors={colors}
+                />
                 <View style={styles.engineWrap}>
                   <EngineChips
                     engines={engines}
@@ -403,6 +432,68 @@ export function FilterSheet({
                     onChange={onSelectEngine}
                   />
                 </View>
+              </>
+            )}
+
+            {/* RE / Stay property type — syncs with type strip via propertyType.
+                Stay passes propertyTypeOptions so land/commercial never appear. */}
+            {isRealEstate && propertyTypeDefs.length > 0 && (
+              <>
+                <SectionLabel
+                  text={t("create.fields.propertyType")}
+                  align={textAlign}
+                  colors={colors}
+                />
+                <ToggleChipRow
+                  options={propertyTypeDefs.map((p) => p.value)}
+                  selected={criteria.propertyType}
+                  labelFor={(v) => {
+                    const def = propertyTypeDefs.find((p) => p.value === v);
+                    return def ? (isRTL ? def.ar : def.en) : v;
+                  }}
+                  onToggle={(v) => onUpdate({ propertyType: v })}
+                  rowDir={rowDir}
+                  colors={colors}
+                  testPrefix="filter-property-type"
+                />
+                <SectionLabel
+                  text={t("search.listingModeBuy")}
+                  align={textAlign}
+                  colors={colors}
+                />
+                <Pressable
+                  onPress={() =>
+                    onUpdate({
+                      listingMode:
+                        criteria.listingMode === "buy" ? "all" : "buy",
+                    })
+                  }
+                  style={[
+                    styles.chip,
+                    {
+                      alignSelf: isRTL ? "flex-end" : "flex-start",
+                      backgroundColor:
+                        criteria.listingMode === "buy"
+                          ? colors.primary
+                          : colors.secondary,
+                    },
+                  ]}
+                  testID="filter-listing-mode-buy"
+                >
+                  <AppText
+                    style={[
+                      styles.chipText,
+                      {
+                        color:
+                          criteria.listingMode === "buy"
+                            ? colors.primaryForeground
+                            : colors.mutedForeground,
+                      },
+                    ]}
+                  >
+                    {t("search.listingModeBuy")}
+                  </AppText>
+                </Pressable>
               </>
             )}
 
@@ -556,33 +647,76 @@ export function FilterSheet({
               </>
             )}
 
-            {/* Industry + origin (industrial sections) */}
-            {isIndustrial && (
+            {/* Industry (facilities / machine / production_line) + material +
+                origin (materials only). Flags already computed — do not collapse
+                to raw isIndustrial or origin leaks into factories and material
+                chips stay dead (prior wipe). */}
+            {(showIndustry || showOrigin || showMaterial) && (
               <>
-                <SectionLabel text={t("create.fields.industry")} align={textAlign} colors={colors} />
-                <ToggleChipRow
-                  options={INDUSTRY_TYPES.map((i) => i.value as SearchListingsIndustry)}
-                  selected={criteria.industry}
-                  labelFor={(v) => {
-                    const def = INDUSTRY_TYPES.find((i) => i.value === v);
-                    return def ? (isRTL ? def.ar : def.en) : v;
-                  }}
-                  onToggle={(v) => onUpdate({ industry: v })}
-                  rowDir={rowDir}
-                  colors={colors}
-                  testPrefix="filter-industry"
-                />
+                {showIndustry ? (
+                  <>
+                    <SectionLabel
+                      text={t("create.fields.industry")}
+                      align={textAlign}
+                      colors={colors}
+                    />
+                    <ToggleChipRow
+                      options={INDUSTRY_TYPES.map(
+                        (i) => i.value as SearchListingsIndustry,
+                      )}
+                      selected={criteria.industry}
+                      labelFor={(v) => {
+                        const def = INDUSTRY_TYPES.find((i) => i.value === v);
+                        return def ? (isRTL ? def.ar : def.en) : v;
+                      }}
+                      onToggle={(v) => onUpdate({ industry: v })}
+                      rowDir={rowDir}
+                      colors={colors}
+                      testPrefix="filter-industry"
+                    />
+                  </>
+                ) : null}
 
-                <SectionLabel text={t("create.fields.origin")} align={textAlign} colors={colors} />
-                <ToggleChipRow
-                  options={ORIGINS}
-                  selected={criteria.originType}
-                  labelFor={(v) => t(`create.opts.${v}`)}
-                  onToggle={(v) => onUpdate({ originType: v })}
-                  rowDir={rowDir}
-                  colors={colors}
-                  testPrefix="filter-origin"
-                />
+                {showMaterial ? (
+                  <>
+                    <SectionLabel
+                      text={t("create.fields.material")}
+                      align={textAlign}
+                      colors={colors}
+                    />
+                    <ToggleChipRow
+                      options={MATERIAL_TYPES.map((m) => m.value)}
+                      selected={criteria.material}
+                      labelFor={(v) => {
+                        const def = MATERIAL_TYPES.find((m) => m.value === v);
+                        return def ? (isRTL ? def.ar : def.en) : v;
+                      }}
+                      onToggle={(v) => onUpdate({ material: v })}
+                      rowDir={rowDir}
+                      colors={colors}
+                      testPrefix="filter-material"
+                    />
+                  </>
+                ) : null}
+
+                {showOrigin ? (
+                  <>
+                    <SectionLabel
+                      text={t("create.fields.origin")}
+                      align={textAlign}
+                      colors={colors}
+                    />
+                    <ToggleChipRow
+                      options={ORIGINS}
+                      selected={criteria.originType}
+                      labelFor={(v) => t(`create.opts.${v}`)}
+                      onToggle={(v) => onUpdate({ originType: v })}
+                      rowDir={rowDir}
+                      colors={colors}
+                      testPrefix="filter-origin"
+                    />
+                  </>
+                ) : null}
               </>
             )}
 
