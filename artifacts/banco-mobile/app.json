@@ -1,11 +1,11 @@
 {
   "expo": {
-    "name": "BANCO OOM",
-    "slug": "banco-mobile",
+    "name": "BANCO B--OOM",
+    "slug": "bancoboom",
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/images/icon.png",
-    "scheme": "bancooom",
+    "scheme": "bancoboom",
     "userInterfaceStyle": "dark",
     "newArchEnabled": true,
     "splash": {
@@ -15,7 +15,7 @@
     },
     "ios": {
       "supportsTablet": false,
-      "bundleIdentifier": "com.bancooom.app",
+      "bundleIdentifier": "com.bancoboom.app",
       "buildNumber": "1",
       "usesAppleSignIn": true,
       "infoPlist": {
@@ -27,7 +27,7 @@
       }
     },
     "android": {
-      "package": "com.bancooom.app",
+      "package": "com.bancoboom.app",
       "versionCode": 1,
       "permissions": [
         "android.permission.CAMERA",
