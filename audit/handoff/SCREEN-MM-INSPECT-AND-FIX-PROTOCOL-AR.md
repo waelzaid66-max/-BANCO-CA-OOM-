@@ -291,7 +291,7 @@ OWNER: PASS | FAIL | FIX-REQUEST
 
 ```bash
 cd artifacts/banco-mobile
-pnpm run test:section-guard    # 26/26 إلزامي
+pnpm run test:section-guard    # 29/29 إلزامي
 pnpm exec tsc --noEmit         # أو سكربت typecheck المعتمد في CI
 
 # جرد أزرار بلا hitSlop كافٍ (مراجعة يدوية للقائمة)

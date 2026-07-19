@@ -58,7 +58,7 @@
 | FI P0 (#28) | مدمج | لا تلمسه هنا |
 | عزل Website | charter | لا موجات موبايل تلمسه |
 
-**حارس يمنع الانتكاس:** `section-miniapp-guard.test.mjs` **26/26** (يرفض ENTER و`StaysHomeHeader` ويفرض flexGrow/دولة/هيدر iconBtn 12…).
+**حارس يمنع الانتكاس:** `section-miniapp-guard.test.mjs` **29/29** (يرفض ENTER و`StaysHomeHeader` ويفرض flexGrow/دولة/هيدر iconBtn 12…).
 
 ---
 
@@ -91,7 +91,7 @@
 |----|-----|-----------------|
 | M1.1 | التأكد Typecheck أخضر على main بعد الدمج | نعم |
 | M1.2 | التأكد عدم وجود `StaysHomeHeader` / boom docs | نعم |
-| M1.3 | تشغيل guard 26/26 على main | نعم |
+| M1.3 | تشغيل guard 29/29 على main | نعم |
 
 ### المرحلة 2 — عيوب شاشات متبقية (صغيرة · قائمة صريحة)
 

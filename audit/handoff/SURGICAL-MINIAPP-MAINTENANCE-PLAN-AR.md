@@ -22,7 +22,7 @@
 | MUST-KEEP | كروت Discover · Stay وردي · SECTION_ROUTE · W4 · MOB-05/07 · void=0 · country label · CI/#38 · FI#28 |
 | جرد الهيدر | تصغير `iconBtn` 12→8 خرّج الأزرار · **أُصلح** · حارس يمنع الرجوع |
 | بروتوكول الميلي | مصدر الحقيقة = dp · عتبة ≤2 · hit≥44 · ورقة عيب قبل أي commit |
-| حارس 26/26 | يمنع melt / ENTER / StaysHomeHeader / flexGrow / flag-only / iconBtn=8 |
+| حارس 29/29 | يمنع melt / ENTER / StaysHomeHeader / flexGrow / flag-only / iconBtn=8 |
 | كود حي | كل قسم = route منفصل + `category` مقفول + `lockCategory` في FilterSheet |
 
 أي خطوة في هذه الخطة تخالف سطراً أعلاه = **مرفوضة**.
@@ -60,7 +60,7 @@
 | I7 | تحت الهيدر: chips ثم نتائج · `hScroll.flexGrow:0` | فراغ أسود يبلع الشاشة |
 | I8 | هيدر قسم: iconBtn **12** · H **16** · أزرار `flexShrink:0` | أزرار خارج الشريط |
 | I9 | Website معزول | أي تعديل website في موجة الموبايل |
-| I10 | حارس 26/26 أخضر بعد كل وحدة | أي انتكاس |
+| I10 | حارس 29/29 أخضر بعد كل وحدة | أي انتكاس |
 
 ### 2.3 ماذا يوجد «صح زي ما هو» داخل كل ميني-آب (لا invent)
 
@@ -90,7 +90,7 @@ U1  اقرأ العقد §2 + MUST-KEEP — هل الوحدة تلمسه؟ إن 
 U2  إثبات: شوت أو rg يثبت العيب (ملف:سطر)
 U3  ورقة عيب ميلي (SCREEN-MM §5) إن كان بصرياً
 U4  غيّر أقل كود ممكن — ممنوع JSX reorder / مكون جديد / «تحسين شكل»
-U5  حارس 26/26 + typecheck للمسار الملموس
+U5  حارس 29/29 + typecheck للمسار الملموس
 U6  Conflict check (§5) — لا يلمس وحدتين في نفس الـ commit إن تعارضتا
 U7  Push tip → Replit شوت الوحدة فقط → Owner PASS/FAIL
 U8  إن FAIL: نفس الوحدة فقط — لا توسعة نطاق
@@ -117,7 +117,7 @@ U9  علّم الوحدة ✅ في هذا الملف → انتقل للتالي
 
 | ID | الوحدة | من | قبول |
 |----|--------|-----|------|
-| **G0** | دمج #37 (تنظيف i18n/boom + هيدر 12) إلى main بعد شوتات الهوية | Owner | main أخضر · guard 26/26 |
+| **G0** | دمج #37 (تنظيف i18n/boom + هيدر 12) إلى main بعد شوتات الهوية | Owner | main أخضر · guard 29/29 |
 | **G1** | Replit confirm tip: Discover كروت · 5 بوابات تفتح routes الصحيحة | Replit | جدول §6 لكل بوابة |
 
 *إن لم يُدمَج #37 بعد: الصيانة الجراحية تتم على فرع #37 فقط — لا على main المتلوّث.*
@@ -136,7 +136,7 @@ U9  علّم الوحدة ✅ في هذا الملف → انتقل للتالي
 | **A4** | Materials | `materials` | عنوان مواد · نتائج القسم | نفس |
 | **A5** | Booking/Stay | لا StaysHomeHeader · rose · lockCategory | هيرو وردي · أزرار داخل · tabs مدة | ممنوع أسود · ممنوع ENTER |
 | **A6** | Discover host | SECTION_ROUTE كامل · MOB-05 · لا ENTER rows | 2×2 صور · بوابات صحيحة | ممنوع redesign كروت |
-| **A7** | Separation audit نهائي | `node --test …guard` 26/26 + rg لا onBrowseSection | — | حارس فقط |
+| **A7** | Separation audit نهائي | `node --test …guard` 29/29 + rg لا onBrowseSection | — | حارس فقط |
 
 **Conflict freeze أثناء A:**  
 لا تُفتح وحدات B (topPad صفحات أخرى) · لا W3 · لا Banks live · لا listings create.
@@ -221,7 +221,7 @@ SHOT:
   [ ] لا فراغ أسود تحت الهيدر
   [ ] نتائج/engines تخص القسم فقط
   [ ] رجوع لا يلوّث Search tab criteria
-GUARD: 26/26 PASS
+GUARD: 29/29 PASS
 OWNER: PASS | FAIL → (عيب واحد فقط للإعادة)
 ```
 

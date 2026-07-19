@@ -28,7 +28,7 @@
 - Stay = هيرو وردي  
 - لا ENTER · لا `StaysHomeHeader` · لا boom-stay docs  
 - `BReactionButton` يستورد من `LanguageContext`  
-- حارس 26/26 · هيدر أقسام: أزرار داخل الشريط (iconBtn 12)  
+- حارس 29/29 · هيدر أقسام: أزرار داخل الشريط (iconBtn 12)  
 
 ## أدوار
 

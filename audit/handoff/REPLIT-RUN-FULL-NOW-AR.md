@@ -35,7 +35,7 @@ test ! -f artifacts/banco-mobile/docs/boom-stay-header-redesign-plan.md \
 rg -n "LanguageContext" artifacts/banco-mobile/components/BReactionButton.tsx
 
 node --test artifacts/banco-mobile/tests/section-miniapp-guard.test.mjs
-# 26/26 — لو FAIL: الصق وSTOP. لا تصلح.
+# 29/29 — لو FAIL: الصق وSTOP. لا تصلح.
 
 cd artifacts/banco-mobile && npx expo start --clear
 ```
@@ -50,7 +50,7 @@ cd artifacts/banco-mobile && npx expo start --clear
 ## REPLIT → CURSOR (CONFIRM CANONICAL ONLY — NO MAINTENANCE)
 SYNC_SHA: …
 SHORT: …
-GUARD: 26/26 PASS|FAIL
+GUARD: 29/29 PASS|FAIL
 FINGERPRINTS: sectionGrid YES|NO · Stay rose YES|NO · StaysHomeHeader absent YES|NO · boom docs absent YES|NO · section header buttons INSIDE YES|NO
 SCREEN P1–P6: …
 HEADER_UNDER: chips بلا void أسود · أزرار search/filter داخل شريط الهيدر
