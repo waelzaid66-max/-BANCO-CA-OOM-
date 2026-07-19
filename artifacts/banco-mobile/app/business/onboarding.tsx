@@ -2,13 +2,14 @@ import { useUser } from "@clerk/expo";
 import { Feather, MaterialCommunityIcons } from "@/components/icons";
 import {
   updateMe,
+  UpdateMeBodyAccountType,
   UpdateMeBodyBusinessActivityType,
 } from "@workspace/api-client-react";
-import { router } from "expo-router";
+import { router, useLocalSearchParams } from "expo-router";
 import * as Haptics from "expo-haptics";
 import * as ImagePicker from "expo-image-picker";
 import { Image } from "expo-image";
-import React, { useState } from "react";
+import React, { useMemo, useState } from "react";
 import {
   ActivityIndicator,
   Alert,
@@ -51,8 +52,20 @@ export default function BusinessOnboardingScreen() {
   const { user, isLoaded, isSignedIn } = useUser();
   const insets = useSafeAreaInsets();
   const topPad = Platform.OS === "web" ? 67 : insets.top;
+  const params = useLocalSearchParams<{ intent?: string }>();
+  const fiIntent = params.intent === "fi";
 
-  const [activity, setActivity] = useState<Activity | null>(null);
+  const visibleActivities = useMemo(
+    () =>
+      fiIntent
+        ? ACTIVITIES.filter((a) => a.value === "financial_institution")
+        : ACTIVITIES,
+    [fiIntent],
+  );
+
+  const [activity, setActivity] = useState<Activity | null>(
+    fiIntent ? "financial_institution" : null,
+  );
   const [businessName, setBusinessName] = useState("");
   const [ownerName, setOwnerName] = useState("");
   const [tradeName, setTradeName] = useState("");
@@ -313,8 +326,17 @@ export default function BusinessOnboardingScreen() {
         ...docs.map((d) => d.url),
         ...(idPhoto ? [idPhoto.url] : []),
       ];
+      const isFi = fiIntent || activity === "financial_institution";
       await updateMe({
         ...(phone.trim() ? { phone: phone.trim() } : {}),
+        // Only force account_type for FI — other paths (company/dealer) already
+        // set it from Profile, and omitting it lets the server preserve elevated
+        // roles while still mapping bank activity → financial_institution.
+        ...(isFi
+          ? {
+              account_type: UpdateMeBodyAccountType.financial_institution,
+            }
+          : {}),
         business: {
           activity_type: UpdateMeBodyBusinessActivityType[activity],
           business_name: businessName.trim(),
@@ -324,7 +346,7 @@ export default function BusinessOnboardingScreen() {
           ...(documentUrls.length > 0 ? { documents: documentUrls } : {}),
         },
       });
-      // Refresh Clerk so the new dealer role is reflected across the app.
+      // Refresh Clerk so the new role is reflected across the app.
       await user?.reload().catch(() => {});
       Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
       setDone(true);
@@ -413,6 +435,7 @@ export default function BusinessOnboardingScreen() {
   }
 
   if (done) {
+    const isFiDone = fiIntent || activity === "financial_institution";
     return (
       <View style={[styles.container, { backgroundColor: colors.background }]}>
         {Header}
@@ -424,16 +447,16 @@ export default function BusinessOnboardingScreen() {
             ]}
           >
             <MaterialCommunityIcons
-              name="storefront-check-outline"
+              name={isFiDone ? "bank-check" : "storefront-check-outline"}
               size={48}
               color={colors.primary}
             />
           </View>
           <AppText style={[styles.stateTitle, { color: colors.foreground }]}>
-            {t("business.successTitle")}
+            {t(isFiDone ? "business.fiSuccessTitle" : "business.successTitle")}
           </AppText>
           <AppText style={[styles.stateText, { color: colors.mutedForeground }]}>
-            {t("business.successBody")}
+            {t(isFiDone ? "business.fiSuccessBody" : "business.successBody")}
           </AppText>
           <View
             style={[
@@ -459,21 +482,43 @@ export default function BusinessOnboardingScreen() {
               {t("business.reviewNote")}
             </AppText>
           </View>
-          <Pressable
-            onPress={() => router.replace("/listings/create")}
-            style={[
-              styles.primaryBtn,
-              { backgroundColor: colors.primary, borderRadius: colors.radius },
-            ]}
-            testID="business-start-listing"
-          >
-            <Feather name="plus" size={18} color={colors.primaryForeground} />
-            <AppText
-              style={[styles.primaryBtnText, { color: colors.primaryForeground }]}
+          {isFiDone ? (
+            <Pressable
+              onPress={() => router.replace("/business/banks")}
+              style={[
+                styles.primaryBtn,
+                { backgroundColor: colors.primary, borderRadius: colors.radius },
+              ]}
+              testID="business-go-banks"
             >
-              {t("business.startListing")}
-            </AppText>
-          </Pressable>
+              <MaterialCommunityIcons
+                name="bank-outline"
+                size={18}
+                color={colors.primaryForeground}
+              />
+              <AppText
+                style={[styles.primaryBtnText, { color: colors.primaryForeground }]}
+              >
+                {t("business.fiGoBanks")}
+              </AppText>
+            </Pressable>
+          ) : (
+            <Pressable
+              onPress={() => router.replace("/listings/create")}
+              style={[
+                styles.primaryBtn,
+                { backgroundColor: colors.primary, borderRadius: colors.radius },
+              ]}
+              testID="business-start-listing"
+            >
+              <Feather name="plus" size={18} color={colors.primaryForeground} />
+              <AppText
+                style={[styles.primaryBtnText, { color: colors.primaryForeground }]}
+              >
+                {t("business.startListing")}
+              </AppText>
+            </Pressable>
+          )}
           <Pressable
             onPress={() => router.replace("/(tabs)/profile")}
             style={styles.secondaryBtn}
@@ -516,7 +561,7 @@ export default function BusinessOnboardingScreen() {
           {t("business.activityType")}
         </AppText>
         <View style={styles.activityGrid}>
-          {ACTIVITIES.map((a) => {
+          {visibleActivities.map((a) => {
             const active = activity === a.value;
             return (
               <Pressable

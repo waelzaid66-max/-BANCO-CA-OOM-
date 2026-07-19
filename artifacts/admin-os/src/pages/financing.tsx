@@ -7,12 +7,19 @@ import {
   getGetFinancingIntermediariesQueryKey,
   useCreateFinancingIntermediary,
   useUpdateFinancingIntermediary,
+  useGetFinancingBranches,
+  getGetFinancingBranchesQueryKey,
+  useCreateFinancingBranch,
+  useGetFinancingSeats,
+  getGetFinancingSeatsQueryKey,
+  useCreateFinancingSeat,
+  CreateFinancingSeatBodyRole,
   type FinancingRequest,
   type FinancingIntermediary,
   type GetFinancingRequestsParams,
 } from "@workspace/api-client-react";
 import { useQueryClient } from "@tanstack/react-query";
-import { Loader2, Download, Plus, Search, Building2, Pencil } from "lucide-react";
+import { Loader2, Download, Plus, Search, Building2, Pencil, Network } from "lucide-react";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -459,16 +466,210 @@ function NotesDialog({ req, onSave }: { req: FinancingRequest; onSave: (notes: s
   );
 }
 
+function InstitutionOpsDialog({
+  intermediary,
+  open,
+  onOpenChange,
+}: {
+  intermediary: FinancingIntermediary | null;
+  open: boolean;
+  onOpenChange: (open: boolean) => void;
+}) {
+  const { toast } = useToast();
+  const { t } = useLang();
+  const queryClient = useQueryClient();
+  const id = intermediary?.id ?? "";
+
+  const [branchName, setBranchName] = useState("");
+  const [branchCity, setBranchCity] = useState("");
+  const [seatUserId, setSeatUserId] = useState("");
+  const [seatRole, setSeatRole] = useState<"manager" | "agent">("agent");
+  const [seatBranchId, setSeatBranchId] = useState<string>(UNASSIGNED);
+
+  const branchesQuery = useGetFinancingBranches(id, {
+    query: { enabled: open && !!id },
+  });
+  const seatsQuery = useGetFinancingSeats(id, {
+    query: { enabled: open && !!id },
+  });
+  const createBranch = useCreateFinancingBranch();
+  const createSeat = useCreateFinancingSeat();
+
+  const branches = branchesQuery.data?.data ?? [];
+  const seats = seatsQuery.data?.data ?? [];
+
+  async function handleAddBranch() {
+    if (!id || !branchName.trim()) return;
+    try {
+      await createBranch.mutateAsync({
+        id,
+        data: {
+          name: branchName.trim(),
+          city: branchCity.trim() || null,
+        },
+      });
+      await queryClient.invalidateQueries({ queryKey: getGetFinancingBranchesQueryKey(id) });
+      setBranchName("");
+      setBranchCity("");
+      toast({ title: t("financingPage.toastSaved"), description: t("financingPage.toastBranchSaved") });
+    } catch {
+      toast({
+        title: t("financingPage.toastSaveFailed"),
+        description: t("financingPage.toastCouldNotSaveBranch"),
+        variant: "destructive",
+      });
+    }
+  }
+
+  async function handleAddSeat() {
+    if (!id || !seatUserId.trim()) return;
+    try {
+      await createSeat.mutateAsync({
+        id,
+        data: {
+          user_id: seatUserId.trim(),
+          role:
+            seatRole === "manager"
+              ? CreateFinancingSeatBodyRole.manager
+              : CreateFinancingSeatBodyRole.agent,
+          branch_id: seatBranchId === UNASSIGNED ? null : seatBranchId,
+        },
+      });
+      await queryClient.invalidateQueries({ queryKey: getGetFinancingSeatsQueryKey(id) });
+      setSeatUserId("");
+      setSeatBranchId(UNASSIGNED);
+      toast({ title: t("financingPage.toastSaved"), description: t("financingPage.toastSeatSaved") });
+    } catch {
+      toast({
+        title: t("financingPage.toastSaveFailed"),
+        description: t("financingPage.toastCouldNotSaveSeat"),
+        variant: "destructive",
+      });
+    }
+  }
+
+  return (
+    <Dialog open={open} onOpenChange={onOpenChange}>
+      <DialogContent className="max-w-xl max-h-[85vh] overflow-y-auto">
+        <DialogHeader>
+          <DialogTitle>{t("financingPage.manageInstitution")}</DialogTitle>
+          <DialogDescription>{intermediary?.name}</DialogDescription>
+        </DialogHeader>
+
+        <div className="space-y-5">
+          <section className="space-y-2">
+            <h3 className="text-sm font-medium">{t("financingPage.branches")}</h3>
+            <div className="max-h-28 overflow-y-auto space-y-1 border rounded-md p-2">
+              {!branches.length ? (
+                <p className="text-xs text-muted-foreground py-2 text-center">
+                  {t("financingPage.noBranches")}
+                </p>
+              ) : (
+                branches.map((b) => (
+                  <div key={b.id} className="text-sm flex justify-between gap-2">
+                    <span>{b.name}</span>
+                    <span className="text-xs text-muted-foreground">{b.city || "—"}</span>
+                  </div>
+                ))
+              )}
+            </div>
+            <div className="grid grid-cols-2 gap-2">
+              <Input
+                value={branchName}
+                onChange={(e) => setBranchName(e.target.value)}
+                placeholder={t("financingPage.branchName")}
+              />
+              <Input
+                value={branchCity}
+                onChange={(e) => setBranchCity(e.target.value)}
+                placeholder={t("financingPage.branchCity")}
+              />
+            </div>
+            <Button
+              size="sm"
+              onClick={handleAddBranch}
+              disabled={createBranch.isPending || !branchName.trim()}
+            >
+              {createBranch.isPending && <Loader2 className="w-3.5 h-3.5 me-2 animate-spin" />}
+              {t("financingPage.addBranch")}
+            </Button>
+          </section>
+
+          <section className="space-y-2">
+            <h3 className="text-sm font-medium">{t("financingPage.seats")}</h3>
+            <div className="max-h-28 overflow-y-auto space-y-1 border rounded-md p-2">
+              {!seats.length ? (
+                <p className="text-xs text-muted-foreground py-2 text-center">
+                  {t("financingPage.noSeats")}
+                </p>
+              ) : (
+                seats.map((s) => (
+                  <div key={s.id} className="text-sm">
+                    <span className="font-medium">{s.user_name || s.user_id}</span>
+                    <span className="text-xs text-muted-foreground ms-2">
+                      {s.role}
+                      {s.branch_id ? ` · ${branches.find((b) => b.id === s.branch_id)?.name || s.branch_id}` : ""}
+                    </span>
+                  </div>
+                ))
+              )}
+            </div>
+            <Input
+              value={seatUserId}
+              onChange={(e) => setSeatUserId(e.target.value)}
+              placeholder={t("financingPage.seatUserId")}
+            />
+            <div className="grid grid-cols-2 gap-2">
+              <Select value={seatRole} onValueChange={(v) => setSeatRole(v as "manager" | "agent")}>
+                <SelectTrigger>
+                  <SelectValue placeholder={t("financingPage.seatRole")} />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="manager">manager</SelectItem>
+                  <SelectItem value="agent">agent</SelectItem>
+                </SelectContent>
+              </Select>
+              <Select value={seatBranchId} onValueChange={setSeatBranchId}>
+                <SelectTrigger>
+                  <SelectValue placeholder={t("financingPage.seatBranch")} />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value={UNASSIGNED}>{t("financingPage.unassigned")}</SelectItem>
+                  {branches.map((b) => (
+                    <SelectItem key={b.id} value={b.id!}>
+                      {b.name}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+            <Button
+              size="sm"
+              onClick={handleAddSeat}
+              disabled={createSeat.isPending || !seatUserId.trim()}
+            >
+              {createSeat.isPending && <Loader2 className="w-3.5 h-3.5 me-2 animate-spin" />}
+              {t("financingPage.addSeat")}
+            </Button>
+          </section>
+        </div>
+      </DialogContent>
+    </Dialog>
+  );
+}
+
 function IntermediariesDialog({ intermediaries }: { intermediaries: FinancingIntermediary[] }) {
   const { toast } = useToast();
   const { t } = useLang();
   const queryClient = useQueryClient();
   const [open, setOpen] = useState(false);
   const [editing, setEditing] = useState<FinancingIntermediary | null>(null);
+  const [opsTarget, setOpsTarget] = useState<FinancingIntermediary | null>(null);
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [phone, setPhone] = useState("");
   const [notes, setNotes] = useState("");
+  const [ownerUserId, setOwnerUserId] = useState("");
   const [active, setActive] = useState(true);
 
   const createInterm = useCreateFinancingIntermediary();
@@ -484,6 +685,7 @@ function IntermediariesDialog({ intermediaries }: { intermediaries: FinancingInt
     setEmail("");
     setPhone("");
     setNotes("");
+    setOwnerUserId("");
     setActive(true);
   }
 
@@ -493,6 +695,7 @@ function IntermediariesDialog({ intermediaries }: { intermediaries: FinancingInt
     setEmail(im.contact_email ?? "");
     setPhone(im.contact_phone ?? "");
     setNotes(im.notes ?? "");
+    setOwnerUserId(im.owner_user_id ?? "");
     setActive(im.is_active ?? true);
   }
 
@@ -511,6 +714,7 @@ function IntermediariesDialog({ intermediaries }: { intermediaries: FinancingInt
             contact_phone: phone.trim() || null,
             notes: notes.trim() || null,
             is_active: active,
+            owner_user_id: ownerUserId.trim() || null,
           },
         });
       } else {
@@ -532,89 +736,123 @@ function IntermediariesDialog({ intermediaries }: { intermediaries: FinancingInt
   }
 
   return (
-    <Dialog
-      open={open}
-      onOpenChange={(o) => {
-        setOpen(o);
-        if (!o) resetForm();
-      }}
-    >
-      <DialogTrigger asChild>
-        <Button variant="outline">
-          <Building2 className="w-4 h-4 mr-2" />
-          Intermediaries
-        </Button>
-      </DialogTrigger>
-      <DialogContent className="max-w-lg">
-        <DialogHeader>
-          <DialogTitle>Banks &amp; Financiers</DialogTitle>
-          <DialogDescription>Manage the intermediaries you forward finance requests to.</DialogDescription>
-        </DialogHeader>
+    <>
+      <Dialog
+        open={open}
+        onOpenChange={(o) => {
+          setOpen(o);
+          if (!o) resetForm();
+        }}
+      >
+        <DialogTrigger asChild>
+          <Button variant="outline">
+            <Building2 className="w-4 h-4 mr-2" />
+            Intermediaries
+          </Button>
+        </DialogTrigger>
+        <DialogContent className="max-w-lg max-h-[90vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle>Banks &amp; Financiers</DialogTitle>
+            <DialogDescription>Manage the intermediaries you forward finance requests to.</DialogDescription>
+          </DialogHeader>
 
-        <div className="max-h-[220px] overflow-y-auto space-y-2 pr-1">
-          {!intermediaries.length ? (
-            <p className="text-sm text-muted-foreground py-4 text-center">No intermediaries yet.</p>
-          ) : (
-            intermediaries.map((im) => (
-              <div key={im.id} className="flex items-center justify-between border rounded-md p-3">
-                <div className="min-w-0">
-                  <div className="font-medium flex items-center gap-2">
-                    {im.name}
-                    {!im.is_active && <Badge variant="outline" className="text-xs">Inactive</Badge>}
+          <div className="max-h-[220px] overflow-y-auto space-y-2 pr-1">
+            {!intermediaries.length ? (
+              <p className="text-sm text-muted-foreground py-4 text-center">No intermediaries yet.</p>
+            ) : (
+              intermediaries.map((im) => (
+                <div key={im.id} className="flex items-center justify-between border rounded-md p-3 gap-2">
+                  <div className="min-w-0">
+                    <div className="font-medium flex items-center gap-2">
+                      {im.name}
+                      {!im.is_active && <Badge variant="outline" className="text-xs">Inactive</Badge>}
+                      {im.owner_user_id && (
+                        <Badge variant="outline" className="text-xs">linked</Badge>
+                      )}
+                    </div>
+                    <div className="text-xs text-muted-foreground truncate">
+                      {[im.contact_email, im.contact_phone].filter(Boolean).join(" · ") || "No contact info"}
+                    </div>
+                    {im.owner_user_id ? (
+                      <div className="text-[11px] font-mono text-muted-foreground truncate mt-0.5">
+                        owner: {im.owner_user_id}
+                      </div>
+                    ) : null}
                   </div>
-                  <div className="text-xs text-muted-foreground truncate">
-                    {[im.contact_email, im.contact_phone].filter(Boolean).join(" · ") || "No contact info"}
+                  <div className="flex items-center gap-1 shrink-0">
+                    <Button variant="ghost" size="sm" onClick={() => setOpsTarget(im)} title={t("financingPage.manageInstitution")}>
+                      <Network className="w-3.5 h-3.5" />
+                    </Button>
+                    <Button variant="ghost" size="sm" onClick={() => startEdit(im)}>
+                      <Pencil className="w-3.5 h-3.5" />
+                    </Button>
                   </div>
                 </div>
-                <Button variant="ghost" size="sm" onClick={() => startEdit(im)}>
-                  <Pencil className="w-3.5 h-3.5" />
-                </Button>
-              </div>
-            ))
-          )}
-        </div>
-
-        <div className="border-t pt-4 space-y-3">
-          <div className="flex items-center gap-2 font-medium text-sm">
-            {editing ? <Pencil className="w-4 h-4" /> : <Plus className="w-4 h-4" />}
-            {editing ? "Edit intermediary" : "Add intermediary"}
-          </div>
-          <div className="grid grid-cols-2 gap-3">
-            <div className="col-span-2">
-              <Label className="text-xs">Name</Label>
-              <Input value={name} onChange={(e) => setName(e.target.value)} placeholder="e.g. National Bank" />
-            </div>
-            <div>
-              <Label className="text-xs">Contact email</Label>
-              <Input value={email} onChange={(e) => setEmail(e.target.value)} placeholder="optional" />
-            </div>
-            <div>
-              <Label className="text-xs">Contact phone</Label>
-              <Input value={phone} onChange={(e) => setPhone(e.target.value)} placeholder="optional" />
-            </div>
-            <div className="col-span-2">
-              <Label className="text-xs">Notes</Label>
-              <Textarea value={notes} onChange={(e) => setNotes(e.target.value)} rows={2} placeholder="optional" />
-            </div>
-            {editing && (
-              <div className="col-span-2 flex items-center gap-2">
-                <Switch checked={active} onCheckedChange={setActive} id="interm-active" />
-                <Label htmlFor="interm-active" className="text-sm">Active</Label>
-              </div>
+              ))
             )}
           </div>
-        </div>
 
-        <DialogFooter>
-          {editing && (
-            <Button variant="ghost" onClick={resetForm} disabled={busy}>{t("financingPage.cancelEdit")}</Button>
-          )}
-          <Button onClick={handleSave} disabled={busy}>
-            {busy && <Loader2 className="w-4 h-4 mr-2 animate-spin" />}
-            {editing ? "Save changes" : "Add"}
-          </Button>
-        </DialogFooter>
-      </DialogContent>
-    </Dialog>
+          <div className="border-t pt-4 space-y-3">
+            <div className="flex items-center gap-2 font-medium text-sm">
+              {editing ? <Pencil className="w-4 h-4" /> : <Plus className="w-4 h-4" />}
+              {editing ? "Edit intermediary" : "Add intermediary"}
+            </div>
+            <div className="grid grid-cols-2 gap-3">
+              <div className="col-span-2">
+                <Label className="text-xs">Name</Label>
+                <Input value={name} onChange={(e) => setName(e.target.value)} placeholder="e.g. National Bank" />
+              </div>
+              <div>
+                <Label className="text-xs">Contact email</Label>
+                <Input value={email} onChange={(e) => setEmail(e.target.value)} placeholder="optional" />
+              </div>
+              <div>
+                <Label className="text-xs">Contact phone</Label>
+                <Input value={phone} onChange={(e) => setPhone(e.target.value)} placeholder="optional" />
+              </div>
+              <div className="col-span-2">
+                <Label className="text-xs">Notes</Label>
+                <Textarea value={notes} onChange={(e) => setNotes(e.target.value)} rows={2} placeholder="optional" />
+              </div>
+              {editing && (
+                <>
+                  <div className="col-span-2">
+                    <Label className="text-xs">{t("financingPage.ownerUserId")}</Label>
+                    <Input
+                      value={ownerUserId}
+                      onChange={(e) => setOwnerUserId(e.target.value)}
+                      placeholder={t("financingPage.ownerUserIdPh")}
+                      className="font-mono text-xs"
+                    />
+                  </div>
+                  <div className="col-span-2 flex items-center gap-2">
+                    <Switch checked={active} onCheckedChange={setActive} id="interm-active" />
+                    <Label htmlFor="interm-active" className="text-sm">Active</Label>
+                  </div>
+                </>
+              )}
+            </div>
+          </div>
+
+          <DialogFooter>
+            {editing && (
+              <Button variant="ghost" onClick={resetForm} disabled={busy}>{t("financingPage.cancelEdit")}</Button>
+            )}
+            <Button onClick={handleSave} disabled={busy}>
+              {busy && <Loader2 className="w-4 h-4 mr-2 animate-spin" />}
+              {editing ? "Save changes" : "Add"}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      <InstitutionOpsDialog
+        intermediary={opsTarget}
+        open={!!opsTarget}
+        onOpenChange={(o) => {
+          if (!o) setOpsTarget(null);
+        }}
+      />
+    </>
   );
 }

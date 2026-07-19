@@ -486,7 +486,9 @@ export default function BanksScreen() {
           <Pressable
             onPress={() => {
               if (isSignedIn) {
-                router.push("/business/onboarding");
+                // intent=fi forces FI account_type + bank activity on onboarding
+                // so this CTA can never leave the user as a dealer.
+                router.push("/business/onboarding?intent=fi");
               } else {
                 router.push("/(tabs)/profile");
               }

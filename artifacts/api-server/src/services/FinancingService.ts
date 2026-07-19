@@ -9,7 +9,7 @@ import {
   financingBranches,
   financingSeats,
 } from "@workspace/db/schema";
-import { and, asc, desc, eq, ilike, isNull, lt, or, sql, type SQL } from "drizzle-orm";
+import { and, asc, desc, eq, ilike, inArray, isNull, lt, or, sql, type SQL } from "drizzle-orm";
 import { writeAudit } from "./AbuseService";
 import { createNotification } from "./NotificationService";
 
@@ -372,13 +372,16 @@ export async function updateFinancingRequest(params: {
     throw Object.assign(new Error("Finance request not found"), { code: "NOT_FOUND" });
   }
 
-  // FI phase 2 — AUTO-handoff: the moment Banco's filtration forwards a request
-  // to an institution, the bank's own people (owner account + every seat) are
-  // notified in-app immediately. Fire-and-forget: a notification hiccup must
-  // never fail the admin action. Re-forwarding re-notifies (deliberate: it is
-  // the admin saying "look at this again").
+  // FI phase 2 — AUTO-handoff: notify the bank when the request is (or stays)
+  // forwarded AND an institution is assigned. Cover both admin orderings:
+  // status→forwarded with intermediary already set, OR intermediary assigned
+  // while status is already forwarded. Fire-and-forget.
   const effectiveIntermediary = params.intermediaryId ?? updated.intermediary_id;
-  if (params.status === "forwarded" && effectiveIntermediary) {
+  const isForwarded =
+    (params.status ?? updated.status) === "forwarded" && !!effectiveIntermediary;
+  const handoffTouched =
+    params.status === "forwarded" || params.intermediaryId !== undefined;
+  if (isForwarded && handoffTouched && effectiveIntermediary) {
     void notifyInstitutionHandoff(leadId, effectiveIntermediary, updated.listing_title).catch(
       () => {},
     );
@@ -585,9 +588,10 @@ export async function resolveInstitutionMembership(
 
 /**
  * The institution's request inbox — ONLY requests Banco explicitly forwarded to
- * this institution (intermediaryId match), never the raw "new" pool. Agent
- * seats with a branch see their branch's requests plus unrouted ones; owner /
- * manager see everything.
+ * this institution (intermediaryId match) in a live bank lifecycle status
+ * (forwarded | contacted | closed). Never the raw "new" pool or rejected rows.
+ * Agent seats with a branch see their branch's requests plus unrouted ones;
+ * owner / manager see everything.
  */
 export async function listInstitutionRequests(params: {
   dbUserId: string;
@@ -621,7 +625,14 @@ export async function listInstitutionRequests(params: {
     eq(leadHistory.actionType, "finance_request"),
     eq(financingRequests.intermediaryId, membership.intermediary_id),
   ];
-  if (params.status) conditions.push(eq(effectiveStatus, params.status));
+  if (params.status) {
+    conditions.push(eq(effectiveStatus, params.status));
+  } else {
+    // Default inbox: only bank-visible lifecycle states (not new/rejected).
+    conditions.push(
+      inArray(effectiveStatus, ["forwarded", "contacted", "closed"]),
+    );
+  }
   if (membership.role === "agent" && membership.branch_id) {
     conditions.push(
       or(

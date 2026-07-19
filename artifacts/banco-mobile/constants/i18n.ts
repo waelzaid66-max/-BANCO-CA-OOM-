@@ -1477,6 +1477,10 @@ const en = {
     submitting: "Activating…",
     successTitle: "You're a BANCO Business",
     successBody: "Your dealer storefront is live. Start posting listings now.",
+    fiSuccessTitle: "Financial institution submitted",
+    fiSuccessBody:
+      "Your bank / financier profile is under review. After verification, BANCO will link your inbox so forwarded financing requests reach your team.",
+    fiGoBanks: "Open Banks & Financiers hub",
     startListing: "Post your first listing",
     goToProfile: "Back to profile",
     errActivity: "Choose your activity type",
@@ -3406,6 +3410,10 @@ const ar: typeof en = {
     submitting: "بيتفعّل…",
     successTitle: "بقيت بانكو بزنس",
     successBody: "معرضك دلوقتي شغّال. ابدأ ضيف إعلاناتك.",
+    fiSuccessTitle: "تم إرسال طلب المؤسسة المالية",
+    fiSuccessBody:
+      "حساب البنك / الممول قيد المراجعة. بعد التوثيق، بانكو هيربط صندوق الوارد عشان طلبات التمويل المحوّلة توصل لفريقك.",
+    fiGoBanks: "افتح قسم البنوك والممولين",
     startListing: "أضف أول إعلان",
     goToProfile: "رجوع لحسابي",
     errActivity: "اختار نوع نشاطك",

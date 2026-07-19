@@ -1043,6 +1043,20 @@ export const AdminUserStaffRole = {
   user: 'user',
 } as const;
 
+/**
+ * Business / FI onboarding payload used for KYC review.
+ * Null when the user never submitted business verification.
+ */
+export type AdminUserCompanyDetails = {
+  activity_type?: string | null;
+  business_name?: string | null;
+  trade_name?: string | null;
+  owner_name?: string | null;
+  city?: string | null;
+  /** Uploaded verification document / ID photo URLs. */
+  documents?: string[];
+};
+
 export interface AdminUser {
   id?: string;
   /** Internal default account number, auto-assigned per user. */
@@ -1059,6 +1073,12 @@ export interface AdminUser {
   wallet_balance?: string;
   listing_count?: number;
   created_at?: string;
+  /**
+   * Business / FI onboarding payload used for KYC review (activity,
+   * names, city, document URLs). Null when the user never submitted
+   * business verification.
+   */
+  company_details?: AdminUserCompanyDetails | null;
 }
 
 export type AdminListingStatus = typeof AdminListingStatus[keyof typeof AdminListingStatus];

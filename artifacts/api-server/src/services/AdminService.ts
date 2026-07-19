@@ -29,6 +29,15 @@ type UserRole =
   | "enterprise"
   | "financial_institution";
 
+interface AdminCompanyDetails {
+  activity_type?: string | null;
+  business_name?: string | null;
+  trade_name?: string | null;
+  owner_name?: string | null;
+  city?: string | null;
+  documents?: string[];
+}
+
 interface AdminUserRow {
   id: string;
   account_number: string | null;
@@ -43,6 +52,23 @@ interface AdminUserRow {
   wallet_balance: string;
   listing_count: number;
   created_at: string;
+  company_details: AdminCompanyDetails | null;
+}
+
+function normalizeCompanyDetails(raw: unknown): AdminCompanyDetails | null {
+  if (!raw || typeof raw !== "object") return null;
+  const o = raw as Record<string, unknown>;
+  const documents = Array.isArray(o.documents)
+    ? o.documents.filter((d): d is string => typeof d === "string" && d.length > 0)
+    : [];
+  return {
+    activity_type: typeof o.activity_type === "string" ? o.activity_type : null,
+    business_name: typeof o.business_name === "string" ? o.business_name : null,
+    trade_name: typeof o.trade_name === "string" ? o.trade_name : null,
+    owner_name: typeof o.owner_name === "string" ? o.owner_name : null,
+    city: typeof o.city === "string" ? o.city : null,
+    ...(documents.length > 0 ? { documents } : {}),
+  };
 }
 
 async function fetchAdminUser(userId: string): Promise<AdminUserRow | null> {
@@ -59,6 +85,7 @@ async function fetchAdminUser(userId: string): Promise<AdminUserRow | null> {
       isVerified: users.isVerified,
       isShadowBanned: users.isShadowBanned,
       walletBalance: users.walletBalance,
+      companyDetails: users.companyDetails,
       createdAt: users.createdAt,
       listingCount: sql<number>`(select count(*)::int from listings l where l.user_id = ${users.id})`,
     })
@@ -81,6 +108,7 @@ async function fetchAdminUser(userId: string): Promise<AdminUserRow | null> {
     wallet_balance: row.walletBalance ?? "0",
     listing_count: row.listingCount ?? 0,
     created_at: (row.createdAt ?? new Date()).toISOString(),
+    company_details: normalizeCompanyDetails(row.companyDetails),
   };
 }
 
@@ -121,6 +149,7 @@ export async function listUsers(params: {
       isVerified: users.isVerified,
       isShadowBanned: users.isShadowBanned,
       walletBalance: users.walletBalance,
+      companyDetails: users.companyDetails,
       createdAt: users.createdAt,
       listingCount: sql<number>`(select count(*)::int from listings l where l.user_id = ${users.id})`,
     })
@@ -148,6 +177,7 @@ export async function listUsers(params: {
       wallet_balance: row.walletBalance ?? "0",
       listing_count: row.listingCount ?? 0,
       created_at: (row.createdAt ?? new Date()).toISOString(),
+      company_details: normalizeCompanyDetails(row.companyDetails),
     })),
     cursor: has_next && last?.createdAt ? last.createdAt.toISOString() : undefined,
     has_next,

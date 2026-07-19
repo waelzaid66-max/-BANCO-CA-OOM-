@@ -165,21 +165,28 @@ export async function updateUserProfile(
             : "dealer";
   }
 
-  // A business signup always hard-maps to a seller role. If the client also
-  // sent account_type, the business block wins (it carries the richer intent).
+  // A business signup always hard-maps to a seller/FI role. The onboarding form
+  // often sends `business` WITHOUT account_type — never blindly force "dealer"
+  // over an elevated role, and map bank activity to financial_institution so
+  // the Banks hub CTA cannot leave individuals as dealers with a bank label.
   if (input.business) {
-    // Default a business signup to the dealer role — but NEVER downgrade an
-    // account that already holds an elevated role: the onboarding form sends
-    // `business` WITHOUT account_type, and blindly forcing "dealer" here was
-    // silently wiping financial_institution/company the moment they verified.
-    if (
+    const wantsFi =
+      input.account_type === "financial_institution" ||
+      input.business.activity_type === "financial_institution";
+    const elevated =
+      user.role === "financial_institution" ||
+      user.role === "company" ||
+      user.role === "enterprise";
+
+    if (wantsFi && user.role !== "company" && user.role !== "enterprise") {
+      patch.role = "financial_institution";
+    } else if (
       (!input.account_type || input.account_type === "individual") &&
-      user.role !== "financial_institution" &&
-      user.role !== "company" &&
-      user.role !== "enterprise"
+      !elevated
     ) {
       patch.role = "dealer";
     }
+
     patch.companyDetails = {
       activity_type: input.business.activity_type,
       business_name: input.business.business_name,
