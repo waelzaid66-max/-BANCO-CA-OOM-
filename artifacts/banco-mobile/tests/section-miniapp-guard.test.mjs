@@ -475,3 +475,27 @@ test("BookingStaysApp hard-locks real_estate + rent on update/commit", () => {
     "Stay commit must lock real_estate + rent",
   );
 });
+
+test("no fake web topPad 67 remains under banco-mobile", () => {
+  // Owner crush: inventing 67px web pad destroyed headers. Search/Section use
+  // Math.max(insets.top, web?12:0). This scan locks the B-wave cleanup.
+  const fake67 = /Platform\.OS\s*===\s*["']web["']\s*\?\s*67/;
+  const hits = [];
+  function walk(dir) {
+    for (const ent of fs.readdirSync(dir, { withFileTypes: true })) {
+      if (ent.name === "node_modules" || ent.name === ".expo") continue;
+      const p = path.join(dir, ent.name);
+      if (ent.isDirectory()) walk(p);
+      else if (/\.(tsx|ts|jsx|js)$/.test(ent.name)) {
+        const src = fs.readFileSync(p, "utf8");
+        if (fake67.test(src)) hits.push(path.relative(APP_ROOT, p));
+      }
+    }
+  }
+  walk(APP_ROOT);
+  assert.equal(
+    hits.length,
+    0,
+    `fake web topPad 67 must stay gone; found in: ${hits.join(", ")}`,
+  );
+});
