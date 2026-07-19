@@ -1,7 +1,7 @@
 # لصق للمالك — تسليم Cursor PR #41 (ملخص سريع)
 
 **فرع:** `cursor/section-g2-finish-4322`  
-**Tip:** `2d05f59`  
+**Tip:** `8ae6c9b`  
 **PR:** https://github.com/waelzaid66-max/-BANCO-CA-OOM-/pull/41  
 **حارس:** 42/42 PASS  
 

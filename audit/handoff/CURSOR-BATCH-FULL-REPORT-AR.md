@@ -4,7 +4,7 @@
 **التاريخ:** 2026-07-19  
 **فرع:** `cursor/section-g2-finish-4322`  
 **PR:** https://github.com/waelzaid66-max/-BANCO-CA-OOM-/pull/41  
-**Tip هذه الدفعة:** `2d05f59`  
+**Tip هذه الدفعة:** `8ae6c9b`  
 **حارس:** `section-miniapp-guard` → **42/42 PASS**
 
 ---
@@ -20,7 +20,7 @@
 
 | SHA (قصير) | الموضوع |
 |------------|---------|
-| *(هذه)* | SmartAssetCard RTL + Section sort في badge + تقارير |
+| `2d05f59` | SmartAssetCard RTL + Section sort في badge + تقارير |
 | `915b376` | Stay sort 34px + StayCard start/end |
 | `ec12aab` | Stay: auto-reset باك · rental strip · map latch |
 | `c59e927` | Materials/توريدات: طبقات + FilterSheet حي |
