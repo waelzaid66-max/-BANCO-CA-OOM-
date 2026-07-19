@@ -9,7 +9,7 @@ import { Feather, Ionicons } from "@/components/icons";
 import { Image } from "expo-image";
 import { AppTextInput as TextInput } from "@/components/AppTextInput";
 import type { TextInput as RNTextInput } from "react-native";
-import React, { RefObject } from "react";
+import React from "react";
 import {
   Platform,
   Pressable,
@@ -43,7 +43,7 @@ type StaysHomeHeaderProps = {
   activeFilterCount: number;
   activeStayType: string;
   typeTabs: StayTypeTab[];
-  inputRef: RefObject<RNTextInput | null>;
+  inputRef: React.RefObject<RNTextInput | null>;
   onBack: () => void;
   onSaveSearch: () => void;
   onOpenFilters: () => void;
@@ -55,7 +55,7 @@ type StaysHomeHeaderProps = {
   onSelectType: (value: string) => void;
 };
 
-/** Only names registered in `@/components/icons` — color signals active state. */
+/** Names must exist in `@/components/icons` ICONS registry (runtime + types). */
 function tabIcon(value: string): React.ComponentProps<typeof Ionicons>["name"] {
   switch (value) {
     case "__all__":
@@ -63,7 +63,7 @@ function tabIcon(value: string): React.ComponentProps<typeof Ionicons>["name"] {
     case "studio":
       return "bed-outline";
     case "apartment":
-      return "home-city-outline";
+      return "business-outline";
     case "villa":
       return "home";
     case "chalet":

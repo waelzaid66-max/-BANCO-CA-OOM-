@@ -214,7 +214,7 @@ export function BookingStaysApp() {
 
   const autocompleteTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const commitTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
-  const inputRef = useRef<RNTextInput>(null);
+  const inputRef = useRef<RNTextInput | null>(null);
   const autocompleteSeq = useRef(0);
 
   useEffect(
