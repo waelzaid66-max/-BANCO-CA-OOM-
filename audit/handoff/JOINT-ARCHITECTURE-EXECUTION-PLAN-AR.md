@@ -30,10 +30,12 @@
 | موجة | الحالة | دليل |
 |------|--------|------|
 | الحقائق / TASK-001 | ✅ Claude سلّم `48142ad` · Cursor فحص مرتين | PR #31 |
-| W1 عزل الأقسام | ✅ كود + **CI كلّه SUCCESS** على PR #32 | checks: Typecheck · API · ESLint · GCP · Mobile |
-| W0 Replit | ⏳ على جهاز المالك | يحتاج `git pull origin main` (+ دمج W1 بعد اعتماده) |
-| W2 #28 | ⏳ غير مدموج | PR #28 مفتوح |
-| W3 FI أمان | ⏳ محظور كود حتى Start W3 | — |
+| TASK-002 | ✅ Claude @ `b72b1c3` — ACK A1–A7 + مراجعة #32 + مواصفات W3 | فرع `claude/handoff-full-facts-20260719` |
+| W1 عزل الأقسام | ✅ **MERGED** #32 | main |
+| W0 Replit | ⏳ على جهاز المالك | `git pull origin main` + شوتات |
+| W2 #28 | ✅ **MERGED** (fi-separation P0) | main عبر merge |
+| W3 FI أمان | ⏸ مواصفات جاهزة · ينتظر `Start W3` · سؤال مسار #40 مطروح لكلود | `CURSOR-ASK-CLAUDE-STRATEGY-THREE-GATES-AR.md` |
+| تشطيب أقسام | ▶️ PR #41 · حارس 42/42 | لا يكسر سلسلة W3 |
 
 ---
 
