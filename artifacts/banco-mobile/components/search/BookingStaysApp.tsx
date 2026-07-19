@@ -1,6 +1,4 @@
 import { Feather, Ionicons } from "@/components/icons";
-import { Image } from "expo-image";
-import { AppTextInput as TextInput } from "@/components/AppTextInput";
 import type { TextInput as RNTextInput } from "react-native";
 import {
   getAutocomplete,
@@ -26,7 +24,7 @@ import { AppText } from "@/components/AppText";
 import { LocationPicker } from "@/components/LocationPicker";
 import { SkeletonCard } from "@/components/SkeletonCard";
 import { StayCard, STAYS_ACCENT } from "@/components/StayCard";
-import { SectionBackdrop } from "@/components/SectionBackdrop";
+import { StaysHomeHeader, type StayTypeTab } from "@/components/search/stays/StaysHomeHeader";
 import { SearchResultsSurface } from "@/components/search/SearchResultsSurface";
 import { SearchResultsMap } from "@/components/search/SearchResultsMap";
 import { FilterSheet } from "@/components/search/FilterSheet";
@@ -62,9 +60,6 @@ import {
 } from "@/lib/searchTaxonomy";
 
 const ALL_TAB = "__all__";
-const BANCO_LOGO = require("../../assets/images/banco-logo.png");
-// B-OOM sub-brand mark for the STAY header wordmark (official asset, used as-is).
-const BOOM_LOGO = require("../../assets/images/boom-logo.png");
 
 // The stays type tabs (per the approved header mock): Stays (all) · Studio ·
 // Apartment · Villa · Chalet. Labels come from the canonical PROPERTY_TYPES
@@ -345,6 +340,14 @@ export function BookingStaysApp() {
   // Type tabs: Stays(all) / studio / apartment / villa / chalet.
   // Rental TERM (daily/new-law/annual) = secondary strip + FilterSheet (same axis).
   const activeStayType = criteria.propertyType ?? ALL_TAB;
+  // Tabs passed to StaysHomeHeader (Band D) — includes "All" + typed options.
+  const typeTabs: StayTypeTab[] = [
+    { value: ALL_TAB, label: t("search.discover.section.staysTabAll") },
+    ...STAY_TYPE_VALUES.map((v) => {
+      const def = PROPERTY_TYPES.find((p) => p.value === v);
+      return { value: v, label: def ? (isRTL ? def.ar : def.en) : v };
+    }),
+  ];
   const selectStayType = (value: string) => {
     playSound("tap");
     Haptics.selectionAsync();
@@ -578,175 +581,34 @@ export function BookingStaysApp() {
 
   return (
     <View style={[styles.container, { backgroundColor: colors.background }]}>
-      {/* ── Stays hero — the section's rose real-estate identity, not the generic
-          marketplace search chrome. Carries title, save/filter actions and a
-          single "Where to?" search pill. ─────────────────────────────────── */}
-      <View style={[styles.hero, { paddingTop: topPad + 8 }]} testID="stays-hero">
-        <SectionBackdrop section="real_estate" motifSize={115} />
-        {/* BANCO watermark — same identity signal as the Discover section cards */}
-        <View pointerEvents="none" style={styles.heroWatermarkWrap}>
-          <Image
-            source={BANCO_LOGO}
-            style={styles.heroWatermark}
-            contentFit="contain"
-            tintColor="#FFFFFF"
-          />
-        </View>
-        {/* Subtle dim overlay when search is open — reduces glass intensity on
-            the backdrop to make the open field more readable, as requested. */}
-        {searchOpen ? (
-          <View
-            pointerEvents="none"
-            style={[
-              StyleSheet.absoluteFill,
-              {
-                backgroundColor: "rgba(0,0,0,0.20)",
-                borderBottomLeftRadius: 24,
-                borderBottomRightRadius: 24,
-              },
-            ]}
-          />
-        ) : null}
-        <View style={[styles.heroTopRow, { flexDirection: rowDir }]}>
-          <Pressable onPress={goBack} style={styles.heroBackBtn} hitSlop={12} testID="stays-back">
-            <Feather
-              name={isRTL ? "arrow-right" : "arrow-left"}
-              size={20}
-              color="#FFFFFF"
-            />
-          </Pressable>
-          <View style={styles.heroTitleWrap}>
-            {/* ── B-OOM STAY wordmark (approved header mock, option A compact):
-                the official B-OOM mark used AS-IS + "STAY", with a small
-                "powered by BANCO" line beneath. Never altered, never recolored
-                beyond the white tint the dark hero requires for legibility. */}
-            <View
-              style={[
-                styles.wordmarkRow,
-                { flexDirection: isRTL ? "row-reverse" : "row" },
-              ]}
-            >
-              <Image
-                source={BOOM_LOGO}
-                style={styles.wordmarkBoom}
-                contentFit="contain"
-              />
-              <AppText style={styles.wordmarkStay} numberOfLines={1}>
-                STAY
-              </AppText>
-            </View>
-            <View
-              style={[
-                styles.poweredRow,
-                { flexDirection: isRTL ? "row-reverse" : "row" },
-              ]}
-            >
-              <AppText style={styles.poweredText} numberOfLines={1}>
-                {t("booking.poweredBy")}
-              </AppText>
-              <Image
-                source={BANCO_LOGO}
-                style={styles.poweredLogo}
-                contentFit="contain"
-                tintColor="#FFFFFF"
-              />
-            </View>
-          </View>
-          <Pressable
-            onPress={handleSaveSearch}
-            disabled={searchSaved}
-            style={[styles.heroActionBtn, searchSaved && styles.heroActionBtnActive]}
-            testID="stays-save-search"
-          >
-            <Feather
-              name="bookmark"
-              size={16}
-              color={searchSaved ? STAYS_ACCENT : "#FFFFFF"}
-            />
-          </Pressable>
-          <Pressable
-            onPress={() => {
-              playSound("tap");
-              setShowFilters((v) => !v);
-            }}
-            style={[
-              styles.heroActionBtn,
-              activeFilterCount > 0 && styles.heroActionBtnActive,
-            ]}
-            testID="stays-filter-toggle"
-          >
-            <Feather
-              name="sliders"
-              size={17}
-              color={activeFilterCount > 0 ? STAYS_ACCENT : "#FFFFFF"}
-            />
-            {activeFilterCount > 0 && (
-              <View style={styles.filterBadge}>
-                <AppText style={styles.filterBadgeText}>{activeFilterCount}</AppText>
-              </View>
-            )}
-          </Pressable>
-        </View>
-
-        {/* Single "Where to?" pill — tap to reveal the field; the field itself
-            replaces the placeholder in place (no separate rectangle). */}
-        {searchOpen ? (
-          <View style={[styles.heroSearch, { flexDirection: rowDir }]}>
-            <Ionicons name="location-outline" size={18} color="rgba(255,255,255,0.9)" />
-            <TextInput
-              ref={inputRef}
-              value={draftQuery}
-              onChangeText={handleQueryChange}
-              onSubmitEditing={() => {
-                commitQueryNow(draftQuery);
-                if (!draftQuery.trim()) closeSearch();
-              }}
-              placeholder={t("search.discover.section.staysWhere")}
-              placeholderTextColor="rgba(255,255,255,0.6)"
-              style={[styles.heroSearchInput, { textAlign }]}
-              returnKeyType="search"
-              testID="stays-search-input"
-              autoCorrect={false}
-            />
-            <Pressable
-              onPress={draftQuery.length > 0 ? clearQuery : closeSearch}
-              hitSlop={8}
-              testID="stays-search-close"
-            >
-              <Feather name="x" size={16} color="rgba(255,255,255,0.9)" />
-            </Pressable>
-          </View>
-        ) : (
-          <Pressable
-            onPress={openSearch}
-            style={[styles.heroSearch, { flexDirection: rowDir }]}
-            testID="stays-search-toggle"
-          >
-            <Ionicons name="location-outline" size={18} color="rgba(255,255,255,0.9)" />
-            <AppText
-              style={[
-                styles.heroSearchText,
-                {
-                  textAlign,
-                  color: draftQuery ? "#FFFFFF" : "rgba(255,255,255,0.72)",
-                },
-              ]}
-              numberOfLines={1}
-            >
-              {draftQuery || t("search.discover.section.staysWhere")}
-            </AppText>
-            {draftQuery.length > 0 ? (
-              <Pressable onPress={clearQuery} hitSlop={8} testID="stays-search-clear">
-                <Feather name="x" size={16} color="rgba(255,255,255,0.9)" />
-              </Pressable>
-            ) : (
-              <Feather name="search" size={16} color="rgba(255,255,255,0.9)" />
-            )}
-          </Pressable>
-        )}
-      </View>
-
-      {/* Autocomplete — anchored directly under the hero search pill. */}
+      {/* ── BOOM STAY premium black header — extracted into StaysHomeHeader.
+          Owns back/save/search/filter/type-tab bands on a void (#000) canvas.
+          Parent keeps all search state; header is purely presentational. ── */}
+      <StaysHomeHeader
+        searchOpen={searchOpen}
+        draftQuery={draftQuery}
+        searchSaved={searchSaved}
+        activeFilterCount={activeFilterCount}
+        activeStayType={activeStayType}
+        typeTabs={typeTabs}
+        inputRef={inputRef}
+        onBack={goBack}
+        onSaveSearch={handleSaveSearch}
+        onOpenFilters={() => {
+          playSound("tap");
+          setShowFilters((v) => !v);
+        }}
+        onOpenSearch={openSearch}
+        onCloseSearch={closeSearch}
+        onQueryChange={handleQueryChange}
+        onSubmitQuery={() => {
+          commitQueryNow(draftQuery);
+          if (!draftQuery.trim()) closeSearch();
+        }}
+        onClearQuery={clearQuery}
+        onSelectType={selectStayType}
+      />
+      {/* Autocomplete — anchored directly under the header search pill. */}
       {showSuggestions && suggestions.length > 0 && (
         <View
           style={[
@@ -846,42 +708,7 @@ export function BookingStaysApp() {
             }
           />
         </Pressable>
-        <View
-          style={[styles.chipStripDivider, { backgroundColor: colors.border }]}
-        />
-        {[{ value: ALL_TAB, label: t("search.discover.section.staysAll") }]
-          .concat(
-            STAY_TYPE_VALUES.map((v) => {
-              const def = PROPERTY_TYPES.find((p) => p.value === v);
-              return { value: v, label: def ? (isRTL ? def.ar : def.en) : v };
-            }),
-          )
-          .map((tab) => {
-            const active = activeStayType === tab.value;
-            return (
-              <Pressable
-                key={tab.value}
-                onPress={() => selectStayType(tab.value)}
-                style={[
-                  styles.termTab,
-                  {
-                    backgroundColor: active ? STAYS_ACCENT : colors.card,
-                    borderColor: active ? STAYS_ACCENT : colors.border,
-                  },
-                ]}
-                testID={`stays-type-${tab.value}`}
-              >
-                <AppText
-                  style={[
-                    styles.termTabText,
-                    { color: active ? "#FFFFFF" : colors.foreground },
-                  ]}
-                >
-                  {tab.label}
-                </AppText>
-              </Pressable>
-            );
-          })}
+        {/* Type tabs live in StaysHomeHeader (Band D) — only sort + Wanted stay here */}
         <Pressable
           onPress={selectListingModeWanted}
           style={[

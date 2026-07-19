@@ -1040,17 +1040,6 @@ export default function ProfileScreen() {
                 <Feather name="camera" size={18} color="#ffffff" />
               )}
             </Pressable>
-            <Pressable
-              onPress={() => {
-                Haptics.selectionAsync();
-                setShowMenu(true);
-              }}
-              hitSlop={8}
-              style={styles.coverActionBtn}
-              testID="profile-menu"
-            >
-              <Ionicons name="ellipsis-horizontal" size={20} color="#ffffff" />
-            </Pressable>
           </View>
         </View>
 
@@ -1108,21 +1097,37 @@ export default function ProfileScreen() {
               </View>
             </Pressable>
 
-            <Pressable
-              onPress={openEditProfile}
-              style={[
-                styles.editProfileBtn,
-                { borderColor: colors.border, borderRadius: colors.radius },
-              ]}
-              testID="edit-profile"
-            >
-              <Feather name="edit-2" size={14} color={colors.foreground} />
-              <AppText
-                style={[styles.editProfileText, { color: colors.foreground }]}
+            <View style={{ flexDirection: isRTL ? "row-reverse" : "row", gap: 8 }}>
+              <Pressable
+                onPress={openEditProfile}
+                style={[
+                  styles.editProfileBtn,
+                  { borderColor: colors.border, borderRadius: colors.radius },
+                ]}
+                testID="edit-profile"
               >
-                {t("profile.editProfile")}
-              </AppText>
-            </Pressable>
+                <Feather name="edit-2" size={14} color={colors.foreground} />
+                <AppText
+                  style={[styles.editProfileText, { color: colors.foreground }]}
+                >
+                  {t("profile.editProfile")}
+                </AppText>
+              </Pressable>
+              <Pressable
+                onPress={() => {
+                  Haptics.selectionAsync();
+                  setShowMenu(true);
+                }}
+                style={[
+                  styles.editProfileBtn,
+                  { borderColor: colors.border, borderRadius: colors.radius, paddingHorizontal: 10 },
+                ]}
+                testID="profile-menu"
+                hitSlop={8}
+              >
+                <Ionicons name="ellipsis-horizontal" size={18} color={colors.foreground} />
+              </Pressable>
+            </View>
           </View>
 
           <View style={[styles.igNameRow, isRTL && styles.rowReverse]}>
