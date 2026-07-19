@@ -1,27 +1,19 @@
-# Agent handoff — Cursor ↔ Claude (قناة حية)
+# قناة Cursor ↔ Claude — حالة حية
 
-## حالة القناة (2026-07-19)
+## أمر المالك النافذ
+صدق · لا خلط فلاتر · لا كذب · فحص مزدوج · صيانة حقيقية · تقسيم قدرات · خُذ من Claude وأكمِل معه.
 
-| طرف | ملف | حالة |
-|-----|-----|------|
-| Cursor → Claude | `CLAUDE-AGENT-INTAKE-AR.md` | ✅ |
-| Cursor → Claude | `CURSOR-TO-CLAUDE-COLLAB-SURGICAL-AR.md` | ✅ |
-| Cursor → Claude | `CURSOR-ONLINE-ACK-TO-CLAUDE-AR.md` | ✅ |
-| Cursor → Claude | `ENTER-NOW-REPLIT-PASTE-AR.md` | ✅ |
-| **Claude → Cursor** | `CLAUDE-RESPONSE-FULL-FACTS-AR.md` | ✅ مستلم (`c21d355`) |
-| **Claude → Cursor** | `CLAUDE-MASTER-FEATURE-LIFECYCLE-SHEET-AR.md` | ✅ مستلم (`69f56c4`) |
-| Cursor → Claude | `CURSOR-REPLY-TO-CLAUDE-AR.md` | ✅ رد الاستلام |
-| Cursor → Claude | `CURSOR-STRONG-REPLY-START-GATES-AR.md` | ✅ لا Start W3 قبل البوابات |
-| Cursor → Claude | **`CLAUDE-TASK-001-COMPLETE-SURGICAL-GAPS-AR.md`** | ✅ **التاسك الحالي — نفّذه** |
-| Claude → Cursor | `CLAUDE-SURGICAL-FOLLOWUP-PROFILE-MINIAPP-AR.md` | ⏳ مخرج TASK-001 |
+## تقسيم سريع
+| Cursor | Claude | Owner |
+|--------|--------|-------|
+| W0 إرشاد · W1 فصل · W2 #28 · W4/W5 موبايل UI | W3 أمان FI بعد Start W3 | اعتماد · أسرار · Replit pull |
 
-**فرع Claude:** `claude/handoff-full-facts-20260719`  
-**فرع القناة:** `cursor/master-gated-plan-4322` · PR #31
+## ملفات حاكمة الآن
+1. `CAPABILITY-SPLIT-AND-HONESTY-PROTOCOL-AR.md`  
+2. `CLAUDE-TASK-001-COMPLETE-SURGICAL-GAPS-AR.md`  
+3. `CLAUDE-SURGICAL-FOLLOWUP-PROFILE-MINIAPP-AR.md` ← من Claude `48142ad`  
+4. `CURSOR-VERIFY-PASS-CLAUDE-TASK001-AR.md` ← فحص مزدوج  
+5. `CURSOR-TO-CLAUDE-JOINT-START-AR.md` ← أمر البدء المشترك  
 
-## قواعد
-
-1. حقائق أولاً — لا كود منتج قبل اعتماد المالك.  
-2. موجة واحدة بعد الاعتماد.  
-3. لا مسح ميزات.  
-4. أيقونات Android = SVG فقط.  
-5. من يلمس ملفًا مشتركًا يعلن في هذا المجلد أولًا.
+## صيانة كود Cursor (منفصلة عن docs)
+فرع متوقع: `cursor/w1-section-filter-isolation-4322` — قطع سلك `onBrowseSection` + CI guard.
