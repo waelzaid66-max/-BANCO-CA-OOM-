@@ -790,7 +790,7 @@ export function SectionSearchApp({
         style={[
           styles.header,
           {
-            paddingTop: topPad + 10,
+            paddingTop: topPad + 6,
             backgroundColor: colors.background,
             borderBottomColor: colors.border,
             flexDirection: rowDir,
@@ -1297,13 +1297,13 @@ const styles = StyleSheet.create({
   resultsArea: { flex: 1 },
   header: {
     paddingHorizontal: 12,
-    paddingBottom: 10,
+    paddingBottom: 8,
     borderBottomWidth: 1,
     alignItems: "center",
     gap: 6,
   },
   backBtn: {
-    padding: 8,
+    padding: 6,
   },
   headerTitleWrap: {
     flex: 1,
@@ -1314,21 +1314,21 @@ const styles = StyleSheet.create({
     gap: 8,
   },
   headerIcon: {
-    width: 26,
-    height: 26,
-    borderRadius: 8,
+    width: 24,
+    height: 24,
+    borderRadius: 7,
     alignItems: "center",
     justifyContent: "center",
   },
   headerTitle: {
     flex: 1,
-    fontSize: 18,
+    fontSize: 16,
     fontFamily: "Inter_700Bold",
   },
   headerSub: {
-    fontSize: 12,
+    fontSize: 11,
     fontFamily: "Inter_400Regular",
-    marginTop: 2,
+    marginTop: 1,
   },
   searchBar: {
     alignItems: "center",

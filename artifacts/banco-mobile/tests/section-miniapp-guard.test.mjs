@@ -103,4 +103,25 @@ test("Search catalogue chrome is gated off Discover (MOB-05)", () => {
     /<CategoryTabs[\s\S]*?viewState\s*!==\s*["']discover["']|<Fragment>[\s\S]*CategoryTabs|viewState\s*!==\s*["']discover["'][\s\S]*CategoryTabs/,
     "CategoryTabs must sit behind the Discover gate",
   );
+  assert.match(
+    searchTab,
+    /viewState\s*!==\s*["']discover["'][\s\S]*filter-toggle|filter-toggle[\s\S]*viewState\s*!==\s*["']discover["']/,
+    "Discover must not show the shared filter toggle (filters live in mini-apps)",
+  );
+});
+
+test("Discover section portals are ENTER rows (not a melt filter grid)", () => {
+  const src = fs.readFileSync(DISCOVER, "utf8");
+  assert.match(src, /sectionPortal|sectionList/);
+  // JSX usage only — comments/imports from CategoryTabs (CategoryIcon) are fine.
+  assert.doesNotMatch(
+    src,
+    /<EngineChips[\s/>]|<CategoryTabs[\s/>]/,
+    "SearchDiscover must not mount CategoryTabs/EngineChips JSX",
+  );
+  assert.match(
+    src,
+    /router\.push\(SECTION_ROUTE\[cat\]\)/,
+    "Section press must push the section mini-app route",
+  );
 });

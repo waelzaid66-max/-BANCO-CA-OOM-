@@ -708,7 +708,9 @@ export default function SearchScreen() {
         style={[
           styles.header,
           {
-            paddingTop: topPad + 12,
+            // Discover: short chrome only — section filters live inside mini-apps.
+            paddingTop: topPad + (viewState === "discover" ? 6 : 12),
+            paddingBottom: viewState === "discover" ? 8 : 12,
             backgroundColor: colors.background,
             borderBottomColor: colors.border,
             flexDirection: rowDir,
@@ -723,6 +725,7 @@ export default function SearchScreen() {
               borderColor: colors.border,
               borderRadius: colors.radius,
               flexDirection: rowDir,
+              paddingVertical: viewState === "discover" ? 8 : 10,
             },
           ]}
         >
@@ -771,40 +774,45 @@ export default function SearchScreen() {
           </Pressable>
         )}
 
-        <Pressable
-          onPress={() => setShowFilters((v) => !v)}
-          style={[
-            styles.iconBtn,
-            {
-              backgroundColor:
-                activeFilterCount > 0 ? colors.primary : colors.secondary,
-              borderRadius: colors.radius,
-            },
-          ]}
-          testID="filter-toggle"
-        >
-          <Feather
-            name="sliders"
-            size={18}
-            color={
-              activeFilterCount > 0
-                ? colors.primaryForeground
-                : colors.foreground
-            }
-          />
-          {activeFilterCount > 0 && (
-            <View
-              style={[
-                styles.filterBadge,
-                { backgroundColor: colors.primaryForeground },
-              ]}
-            >
-              <AppText style={[styles.filterBadgeText, { color: colors.primary }]}>
-                {activeFilterCount}
-              </AppText>
-            </View>
-          )}
-        </Pressable>
+        {/* Filters belong to an active browse / section — never on Discover. */}
+        {viewState !== "discover" ? (
+          <Pressable
+            onPress={() => setShowFilters((v) => !v)}
+            style={[
+              styles.iconBtn,
+              {
+                backgroundColor:
+                  activeFilterCount > 0 ? colors.primary : colors.secondary,
+                borderRadius: colors.radius,
+              },
+            ]}
+            testID="filter-toggle"
+          >
+            <Feather
+              name="sliders"
+              size={18}
+              color={
+                activeFilterCount > 0
+                  ? colors.primaryForeground
+                  : colors.foreground
+              }
+            />
+            {activeFilterCount > 0 && (
+              <View
+                style={[
+                  styles.filterBadge,
+                  { backgroundColor: colors.primaryForeground },
+                ]}
+              >
+                <AppText
+                  style={[styles.filterBadgeText, { color: colors.primary }]}
+                >
+                  {activeFilterCount}
+                </AppText>
+              </View>
+            )}
+          </Pressable>
+        ) : null}
       </View>
 
       {/* Catalogue chrome belongs to active Search browse — not Discover.
