@@ -1,5 +1,5 @@
 import { Feather } from "@/components/icons";
-import { FeedItem, useGetTrending } from "@workspace/api-client-react";
+import { FeedItem } from "@workspace/api-client-react";
 import { Image } from "expo-image";
 import { LinearGradient } from "expo-linear-gradient";
 import { router, type Href } from "expo-router";
@@ -94,19 +94,6 @@ export function SearchDiscover({
   const { t, isRTL } = useI18n();
   const rowDir = isRTL ? "row-reverse" : "row";
   const textAlign = isRTL ? "right" : "left";
-
-  const { data: trendingRes } = useGetTrending();
-  const trending = trendingRes?.data ?? [];
-
-  // Honest gate: CTA enters /section/real-estate?map=1 (MOB-07). Only show when
-  // trending proves coordinate-bearing *real_estate* inventory.
-  const mapAvailable = trending.some(
-    (i) =>
-      i.category === "real_estate" &&
-      i.coordinates &&
-      Number.isFinite(i.coordinates.lat) &&
-      Number.isFinite(i.coordinates.lng)
-  );
 
   const handleSectionPress = (cat: Category) => {
     // ENTER dedicated section mini-app — never show engine strips on Discover
@@ -275,15 +262,14 @@ export function SearchDiscover({
         </View>
       </Pressable>
 
-      {/* Explore on map — gated on real coordinate-bearing inventory (see
-          mapAvailable). If a browse still resolves with no coordinates the host
-          falls back to the list, so this never lands on an empty map. */}
-      {mapAvailable && (
-        <Pressable
-          onPress={onExploreMap}
-          style={styles.mapCtaWrap}
-          testID="discover-explore-map"
-        >
+      {/* Explore on map — ALWAYS present on the Discover home (owner request).
+          Routes to /section/real-estate?map=1; the host falls back to the list
+          when a browse has no coordinates, so it never lands on an empty map. */}
+      <Pressable
+        onPress={onExploreMap}
+        style={styles.mapCtaWrap}
+        testID="discover-explore-map"
+      >
           <LinearGradient
             colors={["#23252B", "#0C0D10"]}
             start={{ x: 0, y: 0 }}
@@ -315,7 +301,6 @@ export function SearchDiscover({
             </View>
           </LinearGradient>
         </Pressable>
-      )}
 
       {/* Car import — ENTER Cars mini-app with import engine seeded (never melts
           into shared Search). Strips/filters live inside SectionSearchApp. */}
