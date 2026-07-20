@@ -99,7 +99,7 @@ defaultBucketID = "replit-objstore-41fc812e-9f5e-42cb-93cc-f15445fe1efa"
 [userenv]
 
 [userenv.shared]
-ADMIN_EMAILS = "info@bancoeg.com,wael_zeed@yahoo.com,waelzaid66@gmail.com"
+ADMIN_EMAILS = "\thttps://banco.today"
 PAYMOB_MODE = "sandbox"
 CLERK_PUBLISHABLE_KEY = "pk_test_ZXZvbHZpbmctbWFncGllLTQzLmNsZXJrLmFjY291bnRzLmRldiQ"
 VITE_CLERK_PUBLISHABLE_KEY = "pk_test_ZXZvbHZpbmctbWFncGllLTQzLmNsZXJrLmFjY291bnRzLmRldiQ"
@@ -119,4 +119,5 @@ PAYMOB_SECRET_KEY = "متاجل "
 PAYMENT_CONFIG_ENCRYPTION_KEY = "متاجل "
 CORS_ALLOWED_ORIGINS = "رديت في رسالة "
 PUBLIC_APP_URL = "رديت في رسالة"
-PUBLIC_API_BASE_URL = "رديت في رسالة "
+PUBLIC_API_BASE_URL = "https://banco.today/"
+EXPO_PUBLIC_PUBLIC_APP_URL = "https://banco.autos/api"
