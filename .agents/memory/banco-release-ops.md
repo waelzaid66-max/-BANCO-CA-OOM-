@@ -17,3 +17,6 @@ description: How to actually push to origin (broken token workarounds) and what 
 - `runDependencyAudit()` → works (0 vulns across all severities on 2026-07-19).
 - `runHoundDogScan()` → works (0 findings).
 - `runSastScan()` → returns `{incomplete: true, results: []}` consistently (repo too large). Do NOT report SAST as "clean" — report it as incomplete and lean on dep audit + HoundDog + the app's own security posture (CORS allowlist, CSRF guard, FI authz tests, publicVisibilityConditions).
+
+## Release naming (owner decision 2026-07-20)
+- The global release tag name is **`B.4`** — chosen by the owner, superseding Claude's `v1.5.0-global` proposal. Tag is to be created + pushed only after Claude confirms his review of the tested main. Don't rename or "normalize" it to semver.
