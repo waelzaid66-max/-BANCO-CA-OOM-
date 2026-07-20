@@ -257,10 +257,13 @@ test("BookingStaysApp mounts owner-approved black StaysHomeHeader (BOOM STAY)", 
     /Platform\.OS\s*===\s*["']web["']\s*\?\s*67/,
     "Stay must not restore fake web topPad 67",
   );
+  // Rental strip replaced by compact RentalTermPickerButton (owner).
+  // The button uses alignSelf:"flex-start" instead of a ScrollView, so there
+  // is no flexGrow void risk — guard checks the compact button is present.
   assert.match(
     booking,
-    /hScroll:\s*\{\s*flexGrow:\s*0/,
-    "Stay chip strip must pin flexGrow:0 (no black void)",
+    /RentalTermPickerButton|stays-rental-term-btn/,
+    "Stay rental term must use the compact picker button (no black void ScrollView)",
   );
 });
 

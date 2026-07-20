@@ -1132,9 +1132,6 @@ const styles = StyleSheet.create({
     color: "#FFFFFF",
     padding: 0,
   },
-  hScroll: {
-    flexGrow: 0,
-  },
   // Type tabs only (country/currency moved to marketMatrix below).
   // Vertical rhythm: 8 → 6 → 4 between type / market / rental (P-STAY mm).
   controlsRow: {
@@ -1163,22 +1160,6 @@ const styles = StyleSheet.create({
     paddingHorizontal: 12,
     paddingTop: 6,
     paddingBottom: 2,
-  },
-  rentalChrome: {
-    alignItems: "center",
-    gap: 8,
-    paddingHorizontal: 12,
-    paddingTop: 4,
-    paddingBottom: 4,
-  },
-  rentalChip: {
-    paddingHorizontal: 12,
-    paddingVertical: 6,
-    borderRadius: 16,
-  },
-  rentalChipText: {
-    fontSize: 12.5,
-    fontFamily: "Inter_500Medium",
   },
   matrixCell: {
     alignItems: "center",
