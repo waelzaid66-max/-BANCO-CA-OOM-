@@ -44,3 +44,6 @@ JARs; this is the ONLY way to resolve it without native dirs.
 `eas build:view <id> --json` → `logFiles[0]` is an NDJSON log served with content
 encoding; fetch with `curl --compressed` (plain curl yields undecodable bytes).
 Each line is `{phase, msg, ...}`; grep `msg` for `FAILED`/`What went wrong`.
+
+## Icon assets fixed (2026-07-20)
+- `icon.png`/`favicon.png` were JPEG-content masquerading as .png (icon also non-square 1194×1139) → expo-doctor failed the app.json schema check and would break the Android adaptiveIcon in native builds. Re-encoded PNG32, icon squared to 1194×1194 (black pad = original bg). expo-doctor now 18/18. If icons are ever replaced, verify with `file` + `magick identify` that content is真 PNG and square BEFORE committing.
