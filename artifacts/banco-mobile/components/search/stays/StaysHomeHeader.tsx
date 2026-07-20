@@ -100,7 +100,7 @@ export function StaysHomeHeader({
   const textAlign = isRTL ? "right" : "left";
 
   return (
-    <View style={[styles.root, { paddingTop: topPad + 8 }]} testID="stays-header">
+    <View style={[styles.root, { paddingTop: topPad + 3 }]} testID="stays-header">
       {/* Band A — top actions */}
       <View style={[styles.topBar, { flexDirection: rowDir }]}>
         <Pressable
@@ -309,9 +309,9 @@ const styles = StyleSheet.create({
   },
   brandBlock: {
     alignItems: "center",
-    paddingTop: 8,
+    paddingTop: 2,
     paddingBottom: 4,
-    marginBottom: 16,
+    marginBottom: 12,
   },
   wordmarkRow: {
     alignItems: "center",
