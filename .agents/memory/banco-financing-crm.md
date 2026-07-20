@@ -35,3 +35,5 @@ invalidation refetches the same cursor/key, but the local copy isn't replaced, s
 status/assignment edits don't show until reload. Use prev/next cursor navigation (a cursor
 stack) rendering `resp.data` directly — invalidation then updates the visible page immediately.
 **Why:** code review rejected the accumulate-in-state version for exactly this.
+
+- `createSeat` is fail-closed: rejects inactive institutions and soft-deleted member users (FORBIDDEN). There is NO is_verified column on financing_intermediaries — the F-CLM-02 invariant is admin-gated creation + isActive.

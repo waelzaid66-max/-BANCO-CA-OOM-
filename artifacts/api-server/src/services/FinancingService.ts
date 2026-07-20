@@ -961,21 +961,39 @@ export async function createSeat(params: {
   adminUserId: string;
 }): Promise<FinancingSeatRow> {
   const [im] = await db
-    .select({ id: financingIntermediaries.id })
+    .select({
+      id: financingIntermediaries.id,
+      isActive: financingIntermediaries.isActive,
+    })
     .from(financingIntermediaries)
     .where(eq(financingIntermediaries.id, params.intermediaryId))
     .limit(1);
   if (!im) {
     throw Object.assign(new Error("Intermediary not found"), { code: "NOT_FOUND" });
   }
+  // F-CLM-02 invariant (fail-closed): a seat IS operational access to the
+  // institution inbox. There is no separate is_verified flag on institutions —
+  // creation is admin-gated — so isActive is the on/off invariant and a seat
+  // must never be granted on a deactivated institution.
+  if (!im.isActive) {
+    throw Object.assign(new Error("Institution is inactive"), { code: "FORBIDDEN" });
+  }
 
   const [member] = await db
-    .select({ id: users.id, name: users.name, email: users.email })
+    .select({
+      id: users.id,
+      name: users.name,
+      email: users.email,
+      deletedAt: users.deletedAt,
+    })
     .from(users)
     .where(eq(users.id, params.userId))
     .limit(1);
   if (!member) {
     throw Object.assign(new Error("User not found"), { code: "NOT_FOUND" });
+  }
+  if (member.deletedAt) {
+    throw Object.assign(new Error("User account is deleted"), { code: "FORBIDDEN" });
   }
 
   if (params.branchId) {

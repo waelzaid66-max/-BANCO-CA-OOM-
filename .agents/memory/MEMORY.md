@@ -51,7 +51,8 @@
 - [BANCO engine-strip flicker](banco-engine-strip-flicker.md) — chip row must gate on facets RESOLVED (!loading) not the fail-open set, or it shows-then-collapses; home animated bar must re-measure on category switch
 - [React Compiler component order](react-compiler-component-order.md) — helper components MUST be defined before use; compiler rewrites fn decls to const bindings (no hoisting) → runtime ReferenceError tsc/metro never catch
 - [Arabic content audit regex](arabic-content-audit-regex.md) — use `rg '\p{Arabic}'` not `[\xD8-\xDB]` (matches Latin Ø-Û, gives false "no Arabic" results); search limit<=50
-- [BANCO icon validation gap](banco-icon-validation-gap.md) — unmapped icon name → CircleAlert "dot" + dev warn; test:icons audits it but isn't in CI (only api-server test runs) so broken icons ship silently; wire test:icons into validation
+- [BANCO mobile CI chain](banco-icon-validation-gap.md) — mobile `test` chain = 7 guard suites (icons…i18n); a guard test protects nothing until appended to that chain; icons was always chained, i18n was the real gap
+- [BANCO scheme canonical](banco-scheme-canonical.md) — scheme is bancooom (pkg/web-smoke/deploy repo agree); config-sync commits can drift app.json; universal-links guard failure = check drift, not the test
 - [Mutation success vs refresh](banco-mutation-vs-refresh.md) — report a write's success from the write call alone; a best-effort post-write refetch failure must NEVER surface as a mutation error (honesty rule)
 - [Home has NO search bar](banco-home-no-search-bar.md) — user forcefully banned a home search pill; search lives only on the Search tab; removing it is intended, NOT scope creep
 - [Search discover + mini-app nav locks](banco-search-discover-locks.md) — discover page = section cards ONLY (strips permanently banned, agreed 4x); section/booking mini-apps MUST render MiniAppBottomNav (they're stack routes above (tabs))

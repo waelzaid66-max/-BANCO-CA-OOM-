@@ -18,6 +18,8 @@ import {
   leadHistory,
   savedListings,
   userBehavior,
+  conversations,
+  messages,
 } from "@workspace/db/schema";
 
 const deleteUserMock = vi.mocked(clerkClient.users.deleteUser);
@@ -176,6 +178,66 @@ describe("deleteAccount", () => {
     expect(stateAtClerkCall).not.toBeNull();
     expect(stateAtClerkCall!.email).toBeNull();
     expect(stateAtClerkCall!.deletedAt).toBeInstanceOf(Date);
+  });
+
+  it("blanks the user's chat messages and conversation previews; counterparty content survives", async () => {
+    const f = await seedUserWithFootprint();
+
+    const [conv] = await db
+      .insert(conversations)
+      .values({
+        listingId: f.listingId,
+        buyerId: f.userId,
+        sellerId: f.sellerId,
+        lastMessageText: "secret text typed by the buyer",
+      })
+      .returning({ id: conversations.id });
+
+    const [mineMsg] = await db
+      .insert(messages)
+      .values({
+        conversationId: conv.id,
+        senderId: f.userId,
+        body: "my private phone is 0100-000-0000",
+        mediaUrl: "https://example.com/private.jpg",
+        mediaKind: "image",
+      })
+      .returning({ id: messages.id });
+
+    const [theirsMsg] = await db
+      .insert(messages)
+      .values({
+        conversationId: conv.id,
+        senderId: f.sellerId,
+        body: "seller reply stays intact",
+      })
+      .returning({ id: messages.id });
+
+    await deleteAccount(f.clerkId);
+
+    // The deleted user's message content is tombstoned (row survives for
+    // thread structure, content is gone).
+    const [mine] = await db.select().from(messages).where(eq(messages.id, mineMsg.id));
+    expect(mine).toBeDefined();
+    expect(mine.body).toBe("");
+    expect(mine.mediaUrl).toBeNull();
+    expect(mine.mediaKind).toBeNull();
+
+    // The counterparty's message is untouched.
+    const [theirs] = await db
+      .select()
+      .from(messages)
+      .where(eq(messages.id, theirsMsg.id));
+    expect(theirs.body).toBe("seller reply stays intact");
+
+    // The conversation row survives (counterparty keeps the thread) but the
+    // preview that could quote the deleted user is dropped.
+    const [convAfter] = await db
+      .select()
+      .from(conversations)
+      .where(eq(conversations.id, conv.id));
+    expect(convAfter).toBeDefined();
+    expect(convAfter.lastMessageText).toBeNull();
   });
 
   it("throws NOT_FOUND and never touches Clerk for an unknown user", async () => {

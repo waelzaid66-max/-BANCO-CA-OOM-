@@ -1,6 +1,13 @@
 import { db } from "@workspace/db";
-import { users, leadHistory, savedListings, userBehavior } from "@workspace/db/schema";
-import { eq, and, ne, isNull } from "drizzle-orm";
+import {
+  users,
+  leadHistory,
+  savedListings,
+  userBehavior,
+  conversations,
+  messages,
+} from "@workspace/db/schema";
+import { eq, and, ne, isNull, or } from "drizzle-orm";
 import { clerkClient } from "@clerk/express";
 import { logger } from "../lib/logger";
 import { checkProfileMutationRate, flagDuplicateAccount } from "./AbuseService";
@@ -270,6 +277,22 @@ export async function deleteAccount(clerkId: string): Promise<{ deleted: boolean
     // Remove the user's personal collections/behavior history entirely.
     await tx.delete(savedListings).where(eq(savedListings.userId, user.id));
     await tx.delete(userBehavior).where(eq(userBehavior.userId, user.id));
+
+    // Chat privacy (Play/GDPR account deletion): blank the CONTENT of every
+    // message this user sent (empty tombstone — thread structure survives so
+    // the counterparty's history and replies keep working) and drop
+    // conversation previews that may quote the deleted user's words. Previews
+    // repopulate on the next message sent in the thread.
+    await tx
+      .update(messages)
+      .set({ body: "", mediaUrl: null, mediaKind: null })
+      .where(eq(messages.senderId, user.id));
+    await tx
+      .update(conversations)
+      .set({ lastMessageText: null })
+      .where(
+        or(eq(conversations.buyerId, user.id), eq(conversations.sellerId, user.id)),
+      );
   });
 
   // Final step: remove the account from the auth provider. Runs after the

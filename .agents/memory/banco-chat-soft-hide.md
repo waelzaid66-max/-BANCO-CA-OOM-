@@ -54,3 +54,5 @@ hold the real asset object because the uploader needs its dimensions.
 
 **How to apply:** if backend gains pagination later, add load-older then — not
 before. Keep pending/optimistic rows distinct from server rows so retry works.
+
+- Account deletion (Play/GDPR): `deleteAccount` tombstones the deleted user's message CONTENT (`body=''`, media nulled) and nulls `lastMessageText` on all their conversations, inside the same delete transaction. Thread rows survive for the counterparty; previews repopulate on the next send. Counterparty messages are untouched (tested).
