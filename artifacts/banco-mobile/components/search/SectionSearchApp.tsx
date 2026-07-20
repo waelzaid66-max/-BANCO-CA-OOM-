@@ -1488,69 +1488,60 @@ export function SectionSearchApp({
         </ScrollView>
       ) : null}
 
-      {/* ── Car brand strip (layer expansion — Stay/RE secondary-strip pattern) ── */}
+      {/* ── Cars: brand-picker button + origin chips — ONE compact strip.
+          Replaces the old brand-only row + the separate origin row, saving
+          ~50dp of vertical chrome. Brand collapses to a single icon+label
+          button (active = accent, shows chosen brand; idle = grid icon).  ── */}
       {showCarBrandStrip ? (
         <ScrollView
           horizontal
           showsHorizontalScrollIndicator={false}
           style={styles.hScroll}
-          contentContainerStyle={[styles.reTypeStrip, { flexDirection: rowDir }]}
-          testID="car-brand-strip"
+          contentContainerStyle={[styles.chipStrip, { flexDirection: rowDir }]}
+          testID="car-brand-origin-strip"
         >
+          {/* Collapsed brand button — single picker entry point */}
           <Pressable
             onPress={() => {
               playSound("tap");
               setCarPickerOpen(true);
             }}
             style={[
-              styles.stripChip,
+              styles.carBrandBtn,
               {
-                backgroundColor: colors.secondary,
                 flexDirection: rowDir,
-                alignItems: "center",
-                gap: 4,
+                backgroundColor: brandValue ? accent : colors.secondary,
+                borderColor: brandValue ? accent : colors.border,
               },
             ]}
-            testID="car-brand-all"
+            testID="car-brand-btn"
           >
-            <Feather name="grid" size={13} color={colors.foreground} />
-            <AppText style={[styles.stripChipText, { color: colors.foreground }]}>
-              {t("search.allBrands")}
+            <Feather
+              name="grid"
+              size={13}
+              color={brandValue ? "#FFFFFF" : colors.foreground}
+            />
+            <AppText
+              style={[styles.stripChipText, { color: brandValue ? "#FFFFFF" : colors.foreground }]}
+              numberOfLines={1}
+            >
+              {brandValue
+                ? brandLabel(
+                    QUICK_BRANDS.find((b) => b.value === brandValue) ??
+                      ({ value: brandValue, en: brandValue, ar: brandValue } as CarBrand),
+                    isRTL,
+                  )
+                : t("search.allBrands")}
             </AppText>
+            <Feather
+              name="chevron-down"
+              size={12}
+              color={brandValue ? "#FFFFFF" : colors.mutedForeground}
+            />
           </Pressable>
-          {QUICK_BRANDS.map((b) => {
-            const active = brandValue === b.value;
-            return (
-              <Pressable
-                key={b.value}
-                onPress={() => {
-                  playSound("tap");
-                  Haptics.selectionAsync();
-                  browseBrandChip(b);
-                }}
-                style={[
-                  styles.stripChip,
-                  { backgroundColor: active ? accent : colors.secondary },
-                ]}
-                testID={`car-brand-${b.value}`}
-              >
-                <AppText
-                  style={[
-                    styles.stripChipText,
-                    { color: active ? "#FFFFFF" : colors.mutedForeground },
-                  ]}
-                >
-                  {brandLabel(b, isRTL)}
-                </AppText>
-              </Pressable>
-            );
-          })}
-        </ScrollView>
-      ) : null}
-
-      {/* ── Car origin strip (local / imported) ── */}
-      {showCarOriginChrome ? (
-        <View style={[styles.chipRow, { flexDirection: rowDir }]} testID="car-origin-strip">
+          {/* Thin divider between brand and origin */}
+          <View style={[styles.chipStripDivider, { backgroundColor: colors.border }]} />
+          {/* Origin chips inline */}
           {(["all", "local", "imported"] as const).map((o) => {
             const active = originKey === o;
             return (
@@ -1562,14 +1553,14 @@ export function SectionSearchApp({
                   selectOrigin(o);
                 }}
                 style={[
-                  styles.chip,
+                  styles.stripChip,
                   { backgroundColor: active ? accent : colors.secondary },
                 ]}
                 testID={`car-origin-${o}`}
               >
                 <AppText
                   style={[
-                    styles.chipText,
+                    styles.stripChipText,
                     { color: active ? "#FFFFFF" : colors.mutedForeground },
                   ]}
                 >
@@ -1578,7 +1569,7 @@ export function SectionSearchApp({
               </Pressable>
             );
           })}
-        </View>
+        </ScrollView>
       ) : null}
 
       {/* ── Materials commodity strip (حديد / ألومنيوم / …) ── */}
@@ -2075,6 +2066,16 @@ const styles = StyleSheet.create({
     paddingHorizontal: 14,
     paddingVertical: 7,
     borderRadius: 18,
+  },
+  carBrandBtn: {
+    alignItems: "center",
+    gap: 6,
+    paddingHorizontal: 12,
+    paddingVertical: 7,
+    borderRadius: 18,
+    borderWidth: StyleSheet.hairlineWidth,
+    maxWidth: 150,
+    flexShrink: 1,
   },
   sortChip: {
     alignItems: "center",

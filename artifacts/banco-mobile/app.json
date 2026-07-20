@@ -9,8 +9,8 @@
     "userInterfaceStyle": "dark",
     "newArchEnabled": true,
     "splash": {
-      "image": "./assets/images/banco-logo.png",
-      "resizeMode": "contain",
+      "image": "./assets/images/banco-splash.png",
+      "resizeMode": "cover",
       "backgroundColor": "#000000"
     },
     "ios": {
