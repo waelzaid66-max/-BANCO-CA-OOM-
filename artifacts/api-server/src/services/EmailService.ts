@@ -79,26 +79,27 @@ class ResendTransport implements EmailTransport {
     private readonly from: string,
   ) {}
   async send(msg: EmailMessage): Promise<void> {
-    // BUG-001: the body MUST be a Buffer, not a string. Node's undici coerces a
-    // string body via the ByteString algorithm and THROWS on any char > U+00FF —
-    // every Arabic subject/body silently killed the send. A UTF-8 Buffer (plus
-    // an explicit charset) transmits Arabic content byte-for-byte.
+    // BUG-001 (v2): Buffer.from still triggers undici's ByteString check in
+    // some Node.js runtime versions. Definitive fix: escape every non-ASCII
+    // character to its \uXXXX sequence — the HTTP body becomes pure ASCII while
+    // the JSON remains valid (parsers treat \u escapes transparently, so Arabic
+    // text is preserved in the delivered email).
+    const payload = JSON.stringify({
+      from: this.from,
+      to: msg.to,
+      subject: msg.subject,
+      html: msg.html,
+      text: msg.text,
+    }).replace(/[\u0080-\uFFFF]/g, (c) =>
+      `\\u${c.charCodeAt(0).toString(16).padStart(4, "0")}`,
+    );
     const res = await fetch("https://api.resend.com/emails", {
       method: "POST",
       headers: {
         Authorization: `Bearer ${this.apiKey}`,
         "Content-Type": "application/json; charset=utf-8",
       },
-      body: Buffer.from(
-        JSON.stringify({
-          from: this.from,
-          to: msg.to,
-          subject: msg.subject,
-          html: msg.html,
-          text: msg.text,
-        }),
-        "utf8",
-      ),
+      body: payload,
     });
     if (!res.ok) {
       const detail = await res.text().catch(() => "");
