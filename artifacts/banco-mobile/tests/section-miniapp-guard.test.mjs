@@ -264,28 +264,20 @@ test("BookingStaysApp mounts owner-approved black StaysHomeHeader (BOOM STAY)", 
   );
 });
 
-test("Stay keeps country/currency in matrix under type strip (not in-strip globe)", () => {
+test("Stay collapses country + currency into the MarketCountryButton icon (owner: no spread matrix)", () => {
   const booking = fs.readFileSync(BOOKING_APP, "utf8");
+  // Owner 2026-07-20: currency is display/valuation of the market's money, NOT a
+  // search axis. Country + currency collapse into ONE compact icon (same pattern
+  // as every section, MarketCountryButton) — the spread market-matrix is removed.
   assert.match(
     booking,
-    /testID="stays-market-matrix"/,
-    "Stay must expose the launch-market matrix under the type strip",
+    /<MarketCountryButton\b/,
+    "Stay type strip must mount the compact MarketCountryButton (country + currency icon)",
   );
-  assert.match(
-    booking,
-    /MARKET_COUNTRIES\.map/,
-    "Stay matrix must reuse MARKET_COUNTRIES taxonomy (no invented market list)",
-  );
-  assert.match(
-    booking,
-    /CURRENCY_BY_MARKET/,
-    "Stay matrix must show currency from existing taxonomy",
-  );
-  // Type strip must not lead with MarketCountryButton anymore.
   assert.doesNotMatch(
     booking,
-    /MarketCountryButton/,
-    "Stay must not put MarketCountryButton back in the type strip",
+    /testID="stays-market-matrix"/,
+    "Stay must NOT spread a market-matrix grid (owner: collapse into the icon)",
   );
 });
 
