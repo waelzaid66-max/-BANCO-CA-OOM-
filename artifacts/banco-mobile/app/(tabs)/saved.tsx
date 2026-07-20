@@ -1,7 +1,7 @@
 import { Feather } from "@/components/icons";
 import { getListing, FeedItem } from "@workspace/api-client-react";
 import { router } from "expo-router";
-import React, { useEffect, useState } from "react";
+import React, { useCallback, useEffect, useMemo, useState } from "react";
 import {
   ActivityIndicator,
   FlatList,
@@ -93,6 +93,16 @@ export default function SavedScreen() {
 
   const totalSaved = savedItems.length + savedSearches.length;
 
+  // Sort once, not on every render — avoids re-sorting the array each frame.
+  const sortedItems = useMemo(
+    () => [...savedItems].sort((a, b) => b.savedAt - a.savedAt),
+    [savedItems],
+  );
+  const sortedSearches = useMemo(
+    () => [...savedSearches].sort((a, b) => b.savedAt - a.savedAt),
+    [savedSearches],
+  );
+
   const renderSearch = (search: SavedSearch) => {
     const chips: string[] = [];
     if (search.category !== "all") {
@@ -180,7 +190,7 @@ export default function SavedScreen() {
     );
   };
 
-  const renderListing = (item: SavedItem) => {
+  const renderListing = useCallback((item: SavedItem) => {
     const fresh = freshPrices[item.id];
     const trend = priceTrend(item.price_display, fresh);
     const cardItem: FeedItem = fresh
@@ -229,7 +239,13 @@ export default function SavedScreen() {
         />
       </View>
     );
-  };
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [freshPrices, isRTL, rowDir, colors, t, toggleSave]);
+
+  const renderFlatItem = useCallback(
+    ({ item }: { item: SavedItem }) => renderListing(item),
+    [renderListing],
+  );
 
   return (
     <View style={[styles.container, { backgroundColor: colors.background }]}>
@@ -285,9 +301,13 @@ export default function SavedScreen() {
         </View>
       ) : (
         <FlatList
-          data={[...savedItems].sort((a, b) => b.savedAt - a.savedAt)}
+          data={sortedItems}
           keyExtractor={(item) => item.id}
-          renderItem={({ item }) => renderListing(item)}
+          renderItem={renderFlatItem}
+          windowSize={5}
+          maxToRenderPerBatch={6}
+          initialNumToRender={6}
+          removeClippedSubviews
           ListHeaderComponent={
             savedSearches.length > 0 ? (
               <View style={styles.searchesSection}>
@@ -302,9 +322,7 @@ export default function SavedScreen() {
                 >
                   {t("saved.searches")}
                 </AppText>
-                {[...savedSearches]
-                  .sort((a, b) => b.savedAt - a.savedAt)
-                  .map(renderSearch)}
+                {sortedSearches.map(renderSearch)}
                 {savedItems.length > 0 && (
                   <AppText
                     style={[

@@ -276,6 +276,10 @@ export default function MyListingsScreen() {
           keyExtractor={(item, i) => item.id ?? String(i)}
           contentContainerStyle={styles.list}
           showsVerticalScrollIndicator={false}
+          windowSize={5}
+          maxToRenderPerBatch={6}
+          initialNumToRender={8}
+          removeClippedSubviews
           refreshControl={
             <RefreshControl
               refreshing={refreshing}

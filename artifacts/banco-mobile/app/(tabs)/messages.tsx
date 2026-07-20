@@ -10,7 +10,7 @@ import {
 import { Image } from "expo-image";
 import * as Haptics from "expo-haptics";
 import { router } from "expo-router";
-import React from "react";
+import React, { useCallback } from "react";
 import {
   Alert,
   FlatList,
@@ -73,7 +73,7 @@ export default function MessagesScreen() {
   const deleteMut = useDeleteConversation();
 
   // Long-press to soft-hide a thread for this user only (see backend un-hide).
-  const handleDelete = (id: string) => {
+  const handleDelete = useCallback((id: string) => {
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
     Alert.alert(t("messages.deleteTitle"), t("messages.deleteBody"), [
       { text: t("common.cancel"), style: "cancel" },
@@ -97,7 +97,7 @@ export default function MessagesScreen() {
         },
       },
     ]);
-  };
+  }, [t, deleteMut, qc]);
 
   const Header = (
     <View
@@ -158,7 +158,7 @@ export default function MessagesScreen() {
     );
   }
 
-  const renderRow = ({ item }: { item: ConversationSummary }) => {
+  const renderRow = useCallback(({ item }: { item: ConversationSummary }) => {
     const unread = item.unread > 0;
     return (
       <Pressable
@@ -191,6 +191,7 @@ export default function MessagesScreen() {
               source={{ uri: item.listing_thumb }}
               style={styles.thumb}
               contentFit="cover"
+              cachePolicy="memory-disk"
             />
           ) : (
             <Feather name="image" size={20} color={colors.mutedForeground} />
@@ -255,7 +256,7 @@ export default function MessagesScreen() {
         </View>
       </Pressable>
     );
-  };
+  }, [rowDir, colors, handleDelete, isRTL, lang, t]);
 
   return (
     <View style={[styles.container, { backgroundColor: colors.background }]}>
@@ -308,6 +309,10 @@ export default function MessagesScreen() {
           renderItem={renderRow}
           contentContainerStyle={styles.list}
           showsVerticalScrollIndicator={false}
+          windowSize={5}
+          maxToRenderPerBatch={8}
+          initialNumToRender={10}
+          removeClippedSubviews
         />
       )}
     </View>

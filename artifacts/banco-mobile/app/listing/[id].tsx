@@ -1667,6 +1667,10 @@ export default function ListingDetailScreen() {
                   isRTL && { flexDirection: "row-reverse" },
                 ]}
                 scrollEnabled
+                windowSize={3}
+                maxToRenderPerBatch={4}
+                initialNumToRender={4}
+                removeClippedSubviews
               />
             </View>
           )}

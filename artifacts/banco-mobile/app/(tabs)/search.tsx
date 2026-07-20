@@ -363,7 +363,7 @@ export default function SearchScreen() {
   // Live typing: update the input immediately, debounce autocomplete (250ms) and
   // the committed search (350ms). The results list stays mounted throughout, so
   // each keystroke refreshes results in place with no flicker or remount.
-  const handleQueryChange = (text: string) => {
+  const handleQueryChange = useCallback((text: string) => {
     setDraftQuery(text);
     setBrandValue(null);
     setShowSuggestions(true);
@@ -373,9 +373,9 @@ export default function SearchScreen() {
     commitTimer.current = setTimeout(() => {
       update({ q: text, brand: null, model: null });
     }, 350);
-  };
+  }, [fetchAutocomplete, update]);
 
-  const commitQueryNow = (q: string) => {
+  const commitQueryNow = useCallback((q: string) => {
     if (commitTimer.current) clearTimeout(commitTimer.current);
     setShowSuggestions(false);
     // Deliberate searches only (submit / suggestion tap) feed the "recent
@@ -383,16 +383,16 @@ export default function SearchScreen() {
     // half-typed words.
     recordQuery(q);
     update({ q, brand: null, model: null });
-  };
+  }, [recordQuery, update]);
 
-  const clearQuery = () => {
+  const clearQuery = useCallback(() => {
     if (commitTimer.current) clearTimeout(commitTimer.current);
     setDraftQuery("");
     setBrandValue(null);
     setSuggestions([]);
     setShowSuggestions(false);
     update({ q: "", brand: null, model: null });
-  };
+  }, [update]);
 
   // Browse cars by brand: car titles are English "Brand Model Year", so the
   // brand's English term (or `q` override, e.g. Mercedes) is a reliable title
@@ -465,11 +465,11 @@ export default function SearchScreen() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [params]);
 
-  const handleSuggestionTap = (s: string) => {
+  const handleSuggestionTap = useCallback((s: string) => {
     setDraftQuery(s);
     setBrandValue(null);
     commitQueryNow(s);
-  };
+  }, [commitQueryNow]);
 
   const handleCardPress = useCallback(
     (item: FeedItem) => {
@@ -500,13 +500,13 @@ export default function SearchScreen() {
     [commit]
   );
 
-  const selectCategory = (cat: FilterCategory) => {
+  const selectCategory = useCallback((cat: FilterCategory) => {
     // A brand browse shows its term in the search box; clear that display too so
     // the car term can't leak into the new category and empty its results.
     if (brandValue) setDraftQuery("");
     setBrandValue(null);
     update({ ...CLEAR_ATTRS, category: cat });
-  };
+  }, [brandValue, update]);
 
   // Discover section cards MUST NOT filter this tab in place (that melted
   // catalogues into shared Search criteria). They router.push SECTION_ROUTE

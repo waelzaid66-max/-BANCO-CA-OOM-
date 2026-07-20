@@ -296,6 +296,10 @@ export default function NotificationsScreen() {
           showsVerticalScrollIndicator={false}
           refreshing={query.isRefetching}
           onRefresh={() => query.refetch()}
+          windowSize={5}
+          maxToRenderPerBatch={10}
+          initialNumToRender={10}
+          removeClippedSubviews
         />
       )}
     </View>

@@ -167,6 +167,7 @@ function SmartAssetCardComponent({
               ]}
               contentFit="cover"
               transition={200}
+              cachePolicy="memory-disk"
             />
 
             <View style={styles.topBadges}>

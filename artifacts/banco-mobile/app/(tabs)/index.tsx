@@ -633,7 +633,7 @@ export default function FeedScreen() {
     setLoadingMore(false);
   };
 
-  const handleCategoryChange = (cat: Category) => {
+  const handleCategoryChange = useCallback((cat: Category) => {
     // Re-tapping the already-active tab is a "reveal-on-retap": un-collapse the
     // engine bar (it auto-hides on scroll) and jump back to the top, without
     // disturbing the current filter selection.
@@ -661,7 +661,7 @@ export default function FeedScreen() {
       action: "category_tap",
       category: apiCategoryFor(cat),
     }).catch(() => {});
-  };
+  }, [category, engineKey, industrialType, sessionId, apiCategoryFor]);
 
   const handleCardPress = useCallback(
     (item: FeedItem) => {
