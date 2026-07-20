@@ -1,3 +1,4 @@
+- [B.4 release state](b4-release-state.md) — B.4 tagged ce2d7a7; architect CONFIRM-B4:YES; deleteServingUrls provider-aware; Claude PRs merged; OPENAI+RESEND rotated; open items listed
 - [BANCO BFF Architecture](banco-bff-arch.md) — immutable FeedItem contract + layer rules that all future surfaces must respect
 - [BANCO installment label match](banco-payment-display.md) — headline monthly amount + payment-type label must come from the SAME offer (best_offer); lowest_monthly vs best_offer diverge
 - [BANCO trust_signal verified](banco-trust-signal.md) — client "verified" filters must include "Top Dealer"; use shared isVerifiedSignal(), only "Private Seller" is unverified
