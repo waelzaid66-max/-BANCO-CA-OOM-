@@ -536,3 +536,141 @@ export async function sendSubscriptionExpiringEmail(args: {
     text,
   });
 }
+
+/** Notify a conversation participant of a new incoming message. */
+export async function sendNewMessageEmail(args: {
+  to: string;
+  lang?: EmailLang;
+  senderName: string;
+  preview: string;
+  conversationId: string;
+}): Promise<void> {
+  const lang: EmailLang = args.lang ?? "ar";
+  const ar = lang === "ar";
+  const { transport, appUrl } = await resolveEmailRuntime();
+  const cta = appUrl(`/messages/${args.conversationId}`);
+
+  const preview =
+    args.preview.length > 100
+      ? `${args.preview.slice(0, 99)}…`
+      : args.preview;
+
+  const { html, text } = renderEmail({
+    lang,
+    preheader: ar
+      ? `رسالة جديدة من ${args.senderName}`
+      : `New message from ${args.senderName}`,
+    heading: ar ? "رسالة جديدة" : "New message",
+    intro: ar
+      ? `أرسل لك ${args.senderName} رسالة جديدة على BANCO.`
+      : `${args.senderName} sent you a new message on BANCO.`,
+    rows: [{ label: ar ? "المعاينة" : "Preview", value: preview }],
+    cta: cta ? { label: ar ? "افتح المحادثة" : "Open conversation", url: cta } : undefined,
+    footer: ar
+      ? "تلقّيت هذا الإيميل لأنك طرف في هذه المحادثة. تقدر تدير إشعارات الرسائل من الإعدادات."
+      : "You received this because you are a party to this conversation. Manage message alerts in Settings.",
+  });
+
+  await transport.send({
+    to: args.to,
+    subject: ar
+      ? `BANCO — رسالة جديدة من ${args.senderName}`
+      : `BANCO — New message from ${args.senderName}`,
+    html,
+    text,
+  });
+}
+
+/** Notify a user that a new listing matches one of their alerts-enabled saved searches. */
+export async function sendNewMatchEmail(args: {
+  to: string;
+  lang?: EmailLang;
+  userName: string;
+  searchName: string;
+  listingTitle: string;
+  listingId: string;
+}): Promise<void> {
+  const lang: EmailLang = args.lang ?? "ar";
+  const ar = lang === "ar";
+  const { transport, appUrl } = await resolveEmailRuntime();
+  const cta = appUrl(`/listing/${args.listingId}`);
+
+  const { html, text } = renderEmail({
+    lang,
+    preheader: ar
+      ? `إعلان جديد يطابق بحثك «${args.searchName}»`
+      : `New listing matches your saved search "${args.searchName}"`,
+    heading: ar ? "نتيجة جديدة لبحثك المحفوظ" : "New match for your saved search",
+    intro: ar
+      ? `يا ${args.userName}، ظهر إعلان جديد يطابق بحثك المحفوظ «${args.searchName}».`
+      : `Hi ${args.userName}, a new listing matches your saved search "${args.searchName}".`,
+    rows: [
+      { label: ar ? "الإعلان" : "Listing", value: args.listingTitle },
+      { label: ar ? "البحث المحفوظ" : "Saved search", value: args.searchName },
+    ],
+    cta: cta ? { label: ar ? "عرض الإعلان" : "View listing", url: cta } : undefined,
+    footer: ar
+      ? "تلقّيت هذا لأن لديك بحثاً محفوظاً بالتنبيهات مفعّلة. تقدر تدير التنبيهات من الإعدادات."
+      : "You received this because you have a saved search with alerts enabled. Manage alerts in Settings.",
+  });
+
+  await transport.send({
+    to: args.to,
+    subject: ar
+      ? "BANCO — نتيجة جديدة لبحثك المحفوظ"
+      : "BANCO — New match for your saved search",
+    html,
+    text,
+  });
+}
+
+/** Notify a user that the cash price dropped on a listing they saved. */
+export async function sendPriceDropEmail(args: {
+  to: string;
+  lang?: EmailLang;
+  userName: string;
+  listingTitle: string;
+  oldPrice: number;
+  newPrice: number;
+  listingId: string;
+}): Promise<void> {
+  const lang: EmailLang = args.lang ?? "ar";
+  const ar = lang === "ar";
+  const { transport, appUrl } = await resolveEmailRuntime();
+  const cta = appUrl(`/listing/${args.listingId}`);
+
+  const fmt = (n: number) =>
+    new Intl.NumberFormat(ar ? "ar-EG" : "en-EG", {
+      style: "decimal",
+      maximumFractionDigits: 0,
+    }).format(n);
+
+  const { html, text } = renderEmail({
+    lang,
+    preheader: ar
+      ? `انخفض سعر «${args.listingTitle}»`
+      : `Price dropped on "${args.listingTitle}"`,
+    heading: ar ? "انخفض سعر إعلان محفوظ" : "Price drop on a saved listing",
+    intro: ar
+      ? `يا ${args.userName}، انخفض سعر إعلان حفظته من قبل.`
+      : `Hi ${args.userName}, the price dropped on a listing you saved.`,
+    rows: [
+      { label: ar ? "الإعلان" : "Listing", value: args.listingTitle },
+      { label: ar ? "السعر القديم" : "Old price", value: `${fmt(args.oldPrice)} EGP` },
+      { label: ar ? "السعر الجديد" : "New price", value: `${fmt(args.newPrice)} EGP` },
+    ],
+    cta: cta ? { label: ar ? "عرض الإعلان" : "View listing", url: cta } : undefined,
+    footer: ar
+      ? "تلقّيت هذا لأنك حفظت هذا الإعلان. تقدر تدير تنبيهات انخفاض السعر من الإعدادات."
+      : "You received this because you saved this listing. Manage price-drop alerts in Settings.",
+  });
+
+  await transport.send({
+    to: args.to,
+    subject: ar
+      ? "BANCO — انخفض سعر إعلان محفوظ"
+      : "BANCO — Price drop on a saved listing",
+    html,
+    text,
+  });
+}

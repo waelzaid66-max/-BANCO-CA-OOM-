@@ -9,6 +9,7 @@ import {
 import { and, eq, or, desc, asc, ne, isNull, inArray, sql } from "drizzle-orm";
 import { createNotification } from "./NotificationService";
 import { checkMessageRate, checkConversationRate } from "./AbuseService";
+import { isEmailChannelEnabled, sendNewMessageEmail } from "./EmailService";
 import { publicVisibilityConditions } from "../lib/feedVisibility";
 import { getObjectStorageService } from "../lib/objectStorageProvider";
 import {
@@ -467,6 +468,27 @@ export async function sendMessage(
     body: preview.length > 80 ? `${preview.slice(0, 79)}…` : preview,
     data: { conversation_id: conversationId, listing_id: conv.listingId },
   });
+
+  // Best-effort email to the recipient — never blocks the send response.
+  void (async () => {
+    try {
+      if (!(await isEmailChannelEnabled(recipientId, "message"))) return;
+      const [recipient] = await db
+        .select({ email: users.email })
+        .from(users)
+        .where(eq(users.id, recipientId))
+        .limit(1);
+      if (!recipient?.email) return;
+      await sendNewMessageEmail({
+        to: recipient.email,
+        senderName: sender?.name ?? "مستخدم BANCO · BANCO User",
+        preview: preview.length > 80 ? `${preview.slice(0, 79)}…` : preview,
+        conversationId,
+      });
+    } catch (emailErr) {
+      console.error("[Conversation message email]", emailErr);
+    }
+  })();
 
   // Resolve the reply preview + shared-listing card for the returned message so
   // the sender's client can render them immediately (no thread refetch needed).

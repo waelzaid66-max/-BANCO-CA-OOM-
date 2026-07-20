@@ -3,6 +3,11 @@ import { savedSearches, companyFollows, users } from "@workspace/db/schema";
 import { and, eq, ne, or, isNull, lte, gte } from "drizzle-orm";
 import { createNotification } from "./NotificationService";
 import { getSaverUserIds } from "./SaveService";
+import {
+  isEmailChannelEnabled,
+  sendNewMatchEmail,
+  sendPriceDropEmail,
+} from "./EmailService";
 
 /**
  * AlertService — best-effort, non-blocking dispatch of the two demand-side
@@ -66,6 +71,28 @@ export async function notifyNewMatch(listing: {
         .update(savedSearches)
         .set({ lastNotifiedListingAt: new Date() })
         .where(eq(savedSearches.id, search.id));
+
+      // Best-effort email — never blocks or throws into the caller.
+      void (async () => {
+        try {
+          if (!(await isEmailChannelEnabled(search.userId, "new_match"))) return;
+          const [u] = await db
+            .select({ email: users.email, name: users.name })
+            .from(users)
+            .where(eq(users.id, search.userId))
+            .limit(1);
+          if (!u?.email) return;
+          await sendNewMatchEmail({
+            to: u.email,
+            userName: u.name ?? "",
+            searchName: search.name ?? "",
+            listingTitle: listing.title,
+            listingId: listing.id,
+          });
+        } catch (emailErr) {
+          console.error("[Alert new_match email]", emailErr);
+        }
+      })();
     }
   } catch (err) {
     console.error("[Alert new_match]", err);
@@ -98,6 +125,29 @@ export async function notifyPriceDrop(listing: {
           new_price: listing.newPrice,
         },
       });
+
+      // Best-effort email — never blocks or throws into the caller.
+      void (async () => {
+        try {
+          if (!(await isEmailChannelEnabled(userId, "price_drop"))) return;
+          const [u] = await db
+            .select({ email: users.email, name: users.name })
+            .from(users)
+            .where(eq(users.id, userId))
+            .limit(1);
+          if (!u?.email) return;
+          await sendPriceDropEmail({
+            to: u.email,
+            userName: u.name ?? "",
+            listingTitle: listing.title,
+            oldPrice: listing.oldPrice,
+            newPrice: listing.newPrice,
+            listingId: listing.id,
+          });
+        } catch (emailErr) {
+          console.error("[Alert price_drop email]", emailErr);
+        }
+      })();
     }
   } catch (err) {
     console.error("[Alert price_drop]", err);

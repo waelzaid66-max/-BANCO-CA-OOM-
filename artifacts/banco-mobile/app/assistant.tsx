@@ -112,6 +112,20 @@ export default function AssistantScreen() {
     t("assistant.suggest4"),
   ];
 
+  const retryLast = useCallback(() => {
+    if (sending) return;
+    // Find the last user message before the error bubble and re-send it.
+    let lastUserIdx = -1;
+    for (let i = messages.length - 1; i >= 0; i--) {
+      if (messages[i].role === "user") { lastUserIdx = i; break; }
+    }
+    if (lastUserIdx === -1) return;
+    const content = messages[lastUserIdx].content;
+    // Drop the user message + the error bubble so send() can re-add the user turn cleanly.
+    setMessages((prev) => prev.slice(0, lastUserIdx));
+    send(content);
+  }, [messages, sending, send]);
+
   const runAction = useCallback((a: AiAssistantAction) => {
     Haptics.selectionAsync().catch(() => {});
     if (a.kind === "listing" && a.listing_id) {
@@ -363,6 +377,23 @@ export default function AssistantScreen() {
                     </View>
                   </View>
                   {renderActions(m)}
+                  {m.error && !sending && (
+                    <View style={[styles.bubbleRow, { justifyContent: "flex-start", marginTop: 4 }]}>
+                      <Pressable
+                        onPress={retryLast}
+                        style={[
+                          styles.actionChip,
+                          { borderColor: colors.border, backgroundColor: colors.secondary, flexDirection: rowDir },
+                        ]}
+                        testID="assistant-retry"
+                      >
+                        <Feather name="refresh-cw" size={13} color={colors.primary} />
+                        <AppText style={[styles.actionChipText, { color: colors.primary }]}>
+                          {t("common.retry")}
+                        </AppText>
+                      </Pressable>
+                    </View>
+                  )}
                 </View>
               );
             })
