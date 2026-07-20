@@ -52,6 +52,14 @@ export async function searchHandler(req: Request, res: Response) {
 
     const result = await searchListings(parsed, query.cursor, query.limit);
     const validated = validateResponse(FeedItemSchema.array(), result.items);
+
+    // Anonymous search results are safe to cache briefly at the CDN/browser layer.
+    if (!req.userId) {
+      res.setHeader("Cache-Control", "public, max-age=20, stale-while-revalidate=60");
+    } else {
+      res.setHeader("Cache-Control", "private, no-store");
+    }
+
     return res.json(successResponse(validated, { cursor: result.cursor, has_next: result.has_next }));
   } catch (err) {
     if (err instanceof ZodError) {
@@ -81,6 +89,7 @@ export async function mapClustersHandler(req: Request, res: Response) {
       query.zoom,
     );
     const validated = validateResponse(MapClusterSchema.array(), clusters);
+    res.setHeader("Cache-Control", "public, max-age=20, stale-while-revalidate=60");
     return res.json(successResponse(validated, { total: clusters.length }));
   } catch (err) {
     if (err instanceof ZodError) {
@@ -100,6 +109,7 @@ export async function autocompleteHandler(req: Request, res: Response) {
     }
     const suggestions = await getAutocomplete(q);
     const validated = validateResponse(z.string().array(), suggestions);
+    res.setHeader("Cache-Control", "public, max-age=60, stale-while-revalidate=120");
     return res.json(successResponse(validated, { total: validated.length }));
   } catch (err) {
     console.error("[Autocomplete]", err);
@@ -112,6 +122,7 @@ export async function facetsHandler(req: Request, res: Response) {
     const query = FacetsQuerySchema.parse(req.query);
     const facets = await getFacets(query.category);
     const validated = validateResponse(FacetCountsSchema, facets);
+    res.setHeader("Cache-Control", "public, max-age=60, stale-while-revalidate=300");
     return res.json(successResponse(validated, { total: facets.total }));
   } catch (err) {
     if (err instanceof ZodError) {
@@ -127,6 +138,7 @@ export async function trendingHandler(req: Request, res: Response) {
     const limit = Math.min(Number(req.query.limit ?? 20), 50);
     const items = await getTrending(limit);
     const validated = validateResponse(FeedItemSchema.array(), items);
+    res.setHeader("Cache-Control", "public, max-age=60, stale-while-revalidate=300");
     return res.json(successResponse(validated, { total: validated.length }));
   } catch (err) {
     console.error("[Trending]", err);

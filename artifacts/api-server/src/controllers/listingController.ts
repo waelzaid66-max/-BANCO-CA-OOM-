@@ -89,6 +89,14 @@ export async function getListingHandler(req: Request, res: Response) {
 
     incrementView(id, req.ip);
 
+    // Anonymous listing pages can be cached briefly at the browser/CDN layer.
+    // Authenticated requests carry is_saved state so they must NOT be shared.
+    if (!req.userId) {
+      res.setHeader("Cache-Control", "public, max-age=20, stale-while-revalidate=60");
+    } else {
+      res.setHeader("Cache-Control", "private, no-store");
+    }
+
     const validated = validateResponse(ListingDetailSchema, listing);
     return res.json(successResponse(validated));
   } catch (err) {

@@ -34,6 +34,16 @@ export async function feedHandler(req: Request, res: Response) {
     });
 
     const validated = validateResponse(FeedItemSchema.array(), result.items);
+
+    // Short public cache for anonymous browsing — trades freshness for speed.
+    // Authenticated requests carry personalised content (saved state, etc.) so
+    // they must never be served from a shared cache.
+    if (!req.userId) {
+      res.setHeader("Cache-Control", "public, max-age=30, stale-while-revalidate=60");
+    } else {
+      res.setHeader("Cache-Control", "private, no-store");
+    }
+
     return res.json(
       successResponse(validated, { cursor: result.cursor, has_next: result.has_next })
     );

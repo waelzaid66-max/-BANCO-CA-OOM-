@@ -1,209 +1,377 @@
+import { useEffect, useRef, useState } from "react";
 import logoUrl from "@/assets/banco-logo.png";
 
 /**
- * BANCO — the official entry page. Replaces the old placeholder (logo + a
- * "دخول" button that pointed at the retired Replit mobile link) with a real
- * directory of every surface and its main destinations: the mobile app (store
- * links), Banco Market, and the Admin control panel.
- *
- * All bases come from Vite env so the SAME build works in every environment:
- *   VITE_MARKET_URL · VITE_ADMIN_URL · VITE_APP_ANDROID_URL · VITE_APP_IOS_URL
- * A surface whose URL isn't configured yet renders as "قريباً / soon" instead
- * of a dead link — no stale hardcoded destinations, ever.
+ * BANCO — صفحة الدخول الرسمية
+ * روابط سريعة ثابتة لكل الأسطح: التطبيق · ماركت · لوحة التحكم
+ * لا تعتمد على متغيرات بيئة — المسارات معروفة دائماً.
  */
 
-const ENV = import.meta.env as Record<string, string | undefined>;
-const MARKET_URL = ENV.VITE_MARKET_URL ?? "";
-const ADMIN_URL = ENV.VITE_ADMIN_URL ?? "";
-const ANDROID_URL = ENV.VITE_APP_ANDROID_URL ?? "";
-const IOS_URL = ENV.VITE_APP_IOS_URL ?? "";
+const PATHS = {
+  app: "/banco-mobile/",
+  market: "/dealer-os/",
+  admin: "/admin-os/",
+};
 
-type Dest = { ar: string; en: string; path: string };
-
-const MARKET_PAGES: Dest[] = [
-  { ar: "الرئيسية", en: "Home", path: "/" },
-  { ar: "الإعلانات", en: "Listings", path: "/listings" },
-  { ar: "طلبات التسعير", en: "RFQs", path: "/rfqs" },
-  { ar: "التوريد العالمي", en: "Global Supply", path: "/global-supply" },
-  { ar: "الاستثمارات", en: "Investments", path: "/investments" },
-  { ar: "التحليلات", en: "Analytics", path: "/analytics" },
-  { ar: "الخصوصية", en: "Privacy", path: "/privacy" },
-  { ar: "الشروط", en: "Terms", path: "/terms" },
+const SECTIONS = [
+  { icon: "🚗", ar: "سيارات", en: "Cars" },
+  { icon: "🏠", ar: "عقارات وإيجار وحجز يومي", en: "Real Estate & Daily Booking" },
+  { icon: "⚙️", ar: "صناعة وتوريد", en: "Industry & Supply" },
+  { icon: "🤝", ar: "أعمال B2B", en: "B2B Market" },
+  { icon: "💬", ar: "رسائل فورية", en: "Instant Messaging" },
+  { icon: "🤖", ar: "مساعد ذكي", en: "AI Assistant" },
 ];
 
-const ADMIN_PAGES: Dest[] = [
-  { ar: "نظرة عامة", en: "Overview", path: "/overview" },
-  { ar: "المستخدمون", en: "Users", path: "/users" },
-  { ar: "الإعلانات", en: "Listings", path: "/listings" },
-  { ar: "الإشراف", en: "Moderation", path: "/moderation" },
-  { ar: "الإيرادات", en: "Revenue", path: "/revenue" },
-  { ar: "المراقبة", en: "Monitoring", path: "/monitoring" },
-];
-
-const APP_SECTIONS: { ar: string; en: string }[] = [
-  { ar: "السيارات", en: "Cars" },
-  { ar: "العقارات — بيع وإيجار وحجز يومي", en: "Real Estate — sale, rent & daily booking" },
-  { ar: "الصناعة والتوريد", en: "Industry & Supply" },
-  { ar: "سوق الأعمال B2B", en: "B2B Market" },
-  { ar: "الرسائل", en: "Messenger" },
-  { ar: "المساعد الذكي", en: "AI Assistant" },
-];
-
-function LinkOrSoon({ url, label }: { url: string; label: string }) {
-  if (!url) {
-    return <span style={S.soon}>{label} — قريباً</span>;
-  }
-  return (
-    <a href={url} target="_blank" rel="noreferrer" style={S.cta}>
-      {label}
-    </a>
-  );
+function useScrollY() {
+  const [y, setY] = useState(0);
+  useEffect(() => {
+    const fn = () => setY(window.scrollY);
+    window.addEventListener("scroll", fn, { passive: true });
+    return () => window.removeEventListener("scroll", fn);
+  }, []);
+  return y;
 }
 
-function App() {
+export default function App() {
+  const scrollY = useScrollY();
+  const heroRef = useRef<HTMLDivElement>(null);
+
   return (
-    <div style={S.page} dir="rtl">
-      <header style={S.hero}>
+    <div style={S.root} dir="rtl">
+      {/* ── شريط التنقل العلوي ── */}
+      <nav
+        style={{
+          ...S.nav,
+          background: scrollY > 40 ? "rgba(0,0,0,0.92)" : "transparent",
+          borderBottom: scrollY > 40 ? "1px solid #1a1a1a" : "1px solid transparent",
+        }}
+      >
+        <img src={logoUrl} alt="BANCO" style={S.navLogo} />
+        <div style={S.navLinks}>
+          <a href={PATHS.app} style={S.navLink}>التطبيق</a>
+          <a href={PATHS.market} style={S.navLink}>ماركت</a>
+          <a href={PATHS.admin} style={{ ...S.navLink, opacity: 0.5 }}>إدارة</a>
+        </div>
+      </nav>
+
+      {/* ── الـ Hero ── */}
+      <header ref={heroRef} style={S.hero}>
+        {/* توهج خلفي */}
+        <div style={S.glow} />
+
         <img src={logoUrl} alt="BANCO" style={S.logo} />
-        <h1 style={S.title}>بانكو — سوق واحد لكل شيء</h1>
+
+        <h1 style={S.title}>بانكو</h1>
+        <p style={S.subtitle}>سوق واحد لكل شيء</p>
         <p style={S.tagline}>
-          سيارات · عقارات وحجز يومي · صناعة وتوريد · أعمال B2B — على الموبايل
-          والويب
+          سيارات · عقارات · تجارة · B2B · حجز يومي — على الموبايل والويب
         </p>
+
+        {/* أزرار الدخول */}
+        <div style={S.ctaGroup}>
+          <a href={PATHS.app} style={S.ctaPrimary}>
+            <span>📱</span>
+            <span>ادخل التطبيق</span>
+          </a>
+          <a href={PATHS.market} style={S.ctaSecondary}>
+            <span>🛒</span>
+            <span>بانكو ماركت</span>
+          </a>
+        </div>
+
+        <a href={PATHS.admin} style={S.adminLink}>لوحة التحكم ←</a>
       </header>
 
-      <main style={S.grid}>
-        {/* التطبيق */}
-        <section style={{ ...S.card, borderTopColor: "#E8002D" }}>
-          <h2 style={S.cardTitle}>📱 تطبيق بانكو</h2>
-          <p style={S.cardBody}>التجربة الكاملة — كل الأقسام والخدمات:</p>
-          <ul style={S.list}>
-            {APP_SECTIONS.map((s) => (
-              <li key={s.en} style={S.li}>
-                {s.ar}
-              </li>
-            ))}
-          </ul>
-          <div style={S.ctaRow}>
-            <LinkOrSoon url={ANDROID_URL} label="Google Play" />
-            <LinkOrSoon url={IOS_URL} label="App Store" />
-          </div>
-        </section>
+      {/* ── أقسام التطبيق ── */}
+      <section style={S.sectionsWrap}>
+        <h2 style={S.sectionTitle}>كل شيء في مكان واحد</h2>
+        <div style={S.sectionsGrid}>
+          {SECTIONS.map((s) => (
+            <div key={s.en} style={S.sectionCard}>
+              <span style={S.sectionIcon}>{s.icon}</span>
+              <span style={S.sectionAr}>{s.ar}</span>
+              <span style={S.sectionEn}>{s.en}</span>
+            </div>
+          ))}
+        </div>
+      </section>
+
+      {/* ── لوحات الدخول السريع ── */}
+      <section style={S.cardsRow}>
+        {/* تطبيق الموبايل */}
+        <a href={PATHS.app} style={{ ...S.card, borderColor: "#E8002D33" }}>
+          <div style={{ ...S.cardAccent, background: "#E8002D" }} />
+          <div style={S.cardIcon}>📱</div>
+          <h3 style={S.cardTitle}>تطبيق بانكو</h3>
+          <p style={S.cardBody}>التجربة الكاملة — كل الأقسام والخدمات في تطبيق واحد</p>
+          <span style={{ ...S.cardCta, background: "#E8002D" }}>دخول ←</span>
+        </a>
 
         {/* بانكو ماركت */}
-        <section style={{ ...S.card, borderTopColor: "#1FA97D" }}>
-          <h2 style={S.cardTitle}>🛒 بانكو ماركت</h2>
-          <p style={S.cardBody}>منصة الويب للتجار والشركات — الصفحات الرئيسية:</p>
-          <ul style={S.list}>
-            {MARKET_PAGES.map((p) => (
-              <li key={p.path} style={S.li}>
-                {MARKET_URL ? (
-                  <a href={MARKET_URL + p.path} style={S.pageLink}>
-                    {p.ar} <span style={S.pathMono}>{p.path}</span>
-                  </a>
-                ) : (
-                  <>
-                    {p.ar} <span style={S.pathMono}>{p.path}</span>
-                  </>
-                )}
-              </li>
-            ))}
-          </ul>
-          <div style={S.ctaRow}>
-            <LinkOrSoon url={MARKET_URL} label="افتح بانكو ماركت" />
-          </div>
-        </section>
+        <a href={PATHS.market} style={{ ...S.card, borderColor: "#1FA97D33" }}>
+          <div style={{ ...S.cardAccent, background: "#1FA97D" }} />
+          <div style={S.cardIcon}>🛒</div>
+          <h3 style={S.cardTitle}>بانكو ماركت</h3>
+          <p style={S.cardBody}>منصة الويب للتجار والشركات — عرض الإعلانات وإدارة الأعمال</p>
+          <span style={{ ...S.cardCta, background: "#1FA97D" }}>دخول ←</span>
+        </a>
 
         {/* لوحة التحكم */}
-        <section style={{ ...S.card, borderTopColor: "#3B82F6" }}>
-          <h2 style={S.cardTitle}>🛠️ لوحة التحكم</h2>
-          <p style={S.cardBody}>لإدارة المنصة (للفريق فقط) — الأقسام الرئيسية:</p>
-          <ul style={S.list}>
-            {ADMIN_PAGES.map((p) => (
-              <li key={p.path} style={S.li}>
-                {ADMIN_URL ? (
-                  <a href={ADMIN_URL + p.path} style={S.pageLink}>
-                    {p.ar} <span style={S.pathMono}>{p.path}</span>
-                  </a>
-                ) : (
-                  <>
-                    {p.ar} <span style={S.pathMono}>{p.path}</span>
-                  </>
-                )}
-              </li>
-            ))}
-          </ul>
-          <div style={S.ctaRow}>
-            <LinkOrSoon url={ADMIN_URL} label="افتح لوحة التحكم" />
-          </div>
-        </section>
-      </main>
+        <a href={PATHS.admin} style={{ ...S.card, borderColor: "#6C63FF33" }}>
+          <div style={{ ...S.cardAccent, background: "#6C63FF" }} />
+          <div style={S.cardIcon}>⚙️</div>
+          <h3 style={S.cardTitle}>لوحة التحكم</h3>
+          <p style={S.cardBody}>إدارة المنصة — مستخدمون، إشراف، تحليلات، إيرادات</p>
+          <span style={{ ...S.cardCta, background: "#6C63FF" }}>دخول ←</span>
+        </a>
+      </section>
 
+      {/* ── الفوتر ── */}
       <footer style={S.footer}>
-        © {new Date().getFullYear()} BANCO — جميع الحقوق محفوظة
+        <img src={logoUrl} alt="BANCO" style={{ height: 28, opacity: 0.5 }} />
+        <p style={S.footerText}>
+          banco.autos · banco.today · banco.deals
+        </p>
+        <p style={{ ...S.footerText, marginTop: 4 }}>
+          © {new Date().getFullYear()} BANCO · جميع الحقوق محفوظة
+        </p>
       </footer>
     </div>
   );
 }
 
+/* ─────────────────── الأنماط ─────────────────── */
 const S: Record<string, React.CSSProperties> = {
-  page: {
+  root: {
     minHeight: "100vh",
-    background: "#0a0a0a",
-    color: "#f5f5f5",
-    fontFamily: "system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif",
-    padding: "clamp(16px, 4vw, 48px)",
+    background: "#000",
+    color: "#fff",
+    fontFamily:
+      "'Cairo', 'IBM Plex Arabic', 'Segoe UI', system-ui, -apple-system, sans-serif",
+    overflowX: "hidden",
+  },
+
+  /* ── nav ── */
+  nav: {
+    position: "fixed",
+    top: 0,
+    insetInline: 0,
+    zIndex: 100,
+    display: "flex",
+    alignItems: "center",
+    justifyContent: "space-between",
+    padding: "14px 32px",
+    backdropFilter: "blur(12px)",
+    transition: "background 0.3s, border-color 0.3s",
+  },
+  navLogo: { height: 28, width: "auto" },
+  navLinks: { display: "flex", gap: 28, alignItems: "center" },
+  navLink: {
+    color: "#e0e0e0",
+    textDecoration: "none",
+    fontSize: 15,
+    fontWeight: 600,
+    transition: "color 0.2s",
+  },
+
+  /* ── hero ── */
+  hero: {
+    position: "relative",
     display: "flex",
     flexDirection: "column",
-    gap: 36,
+    alignItems: "center",
+    justifyContent: "center",
+    textAlign: "center",
+    minHeight: "100vh",
+    padding: "120px 24px 80px",
+    gap: 16,
+    overflow: "hidden",
   },
-  hero: { textAlign: "center", display: "flex", flexDirection: "column", alignItems: "center", gap: 14 },
-  logo: { width: "min(52vw, 220px)", height: "auto" },
-  title: { fontSize: "clamp(22px, 4vw, 34px)", fontWeight: 800, margin: 0 },
-  tagline: { color: "#b8b8b8", fontSize: "clamp(14px, 2vw, 17px)", margin: 0, lineHeight: 1.8 },
-  grid: {
-    display: "grid",
-    gridTemplateColumns: "repeat(auto-fit, minmax(280px, 1fr))",
-    gap: 18,
-    maxWidth: 1100,
-    width: "100%",
+  glow: {
+    position: "absolute",
+    top: "30%",
+    left: "50%",
+    transform: "translate(-50%, -50%)",
+    width: 600,
+    height: 600,
+    borderRadius: "50%",
+    background:
+      "radial-gradient(circle, rgba(232,0,45,0.15) 0%, rgba(232,0,45,0.04) 50%, transparent 70%)",
+    pointerEvents: "none",
+    zIndex: 0,
+  },
+  logo: {
+    position: "relative",
+    zIndex: 1,
+    width: "min(55vw, 180px)",
+    height: "auto",
+    marginBottom: 8,
+    filter: "drop-shadow(0 0 40px rgba(232,0,45,0.4))",
+  },
+  title: {
+    position: "relative",
+    zIndex: 1,
+    fontSize: "clamp(42px, 8vw, 72px)",
+    fontWeight: 900,
+    margin: 0,
+    letterSpacing: "-1px",
+    background: "linear-gradient(135deg, #fff 40%, #aaa)",
+    WebkitBackgroundClip: "text",
+    WebkitTextFillColor: "transparent",
+  },
+  subtitle: {
+    position: "relative",
+    zIndex: 1,
+    fontSize: "clamp(20px, 3.5vw, 30px)",
+    fontWeight: 700,
+    color: "#c8c8c8",
+    margin: 0,
+  },
+  tagline: {
+    position: "relative",
+    zIndex: 1,
+    fontSize: "clamp(14px, 2vw, 17px)",
+    color: "#6a6a6a",
+    margin: 0,
+    lineHeight: 1.9,
+    maxWidth: 540,
+  },
+
+  /* أزرار الدخول */
+  ctaGroup: {
+    position: "relative",
+    zIndex: 1,
+    display: "flex",
+    gap: 14,
+    flexWrap: "wrap",
+    justifyContent: "center",
+    marginTop: 12,
+  },
+  ctaPrimary: {
+    display: "flex",
+    alignItems: "center",
+    gap: 8,
+    background: "#E8002D",
+    color: "#fff",
+    fontWeight: 800,
+    fontSize: 17,
+    padding: "14px 32px",
+    borderRadius: 999,
+    textDecoration: "none",
+    boxShadow: "0 0 30px rgba(232,0,45,0.4)",
+    transition: "transform 0.15s, box-shadow 0.15s",
+  },
+  ctaSecondary: {
+    display: "flex",
+    alignItems: "center",
+    gap: 8,
+    background: "transparent",
+    color: "#fff",
+    fontWeight: 700,
+    fontSize: 17,
+    padding: "13px 28px",
+    borderRadius: 999,
+    border: "1.5px solid #333",
+    textDecoration: "none",
+    transition: "border-color 0.2s, background 0.2s",
+  },
+  adminLink: {
+    position: "relative",
+    zIndex: 1,
+    color: "#444",
+    fontSize: 13,
+    textDecoration: "none",
+    marginTop: 4,
+    transition: "color 0.2s",
+  },
+
+  /* ── sections ── */
+  sectionsWrap: {
+    padding: "60px 24px",
+    maxWidth: 900,
     margin: "0 auto",
+    textAlign: "center",
+  },
+  sectionTitle: {
+    fontSize: "clamp(20px, 3.5vw, 26px)",
+    fontWeight: 800,
+    color: "#fff",
+    marginBottom: 32,
+  },
+  sectionsGrid: {
+    display: "grid",
+    gridTemplateColumns: "repeat(auto-fit, minmax(140px, 1fr))",
+    gap: 16,
+  },
+  sectionCard: {
+    background: "#0e0e0e",
+    border: "1px solid #1c1c1c",
+    borderRadius: 14,
+    padding: "20px 14px",
+    display: "flex",
+    flexDirection: "column",
+    alignItems: "center",
+    gap: 8,
+    transition: "border-color 0.2s",
+  },
+  sectionIcon: { fontSize: 28 },
+  sectionAr: { fontSize: 13, fontWeight: 700, color: "#e0e0e0" },
+  sectionEn: { fontSize: 11, color: "#555" },
+
+  /* ── cards row ── */
+  cardsRow: {
+    display: "grid",
+    gridTemplateColumns: "repeat(auto-fit, minmax(260px, 1fr))",
+    gap: 20,
+    maxWidth: 1000,
+    margin: "0 auto",
+    padding: "20px 24px 80px",
   },
   card: {
-    background: "#141414",
-    border: "1px solid #262626",
-    borderTopWidth: 4,
-    borderRadius: 16,
-    padding: "22px 20px",
+    position: "relative",
+    background: "#0d0d0d",
+    border: "1px solid #1c1c1c",
+    borderRadius: 20,
+    padding: "28px 24px",
     display: "flex",
     flexDirection: "column",
     gap: 10,
+    textDecoration: "none",
+    color: "#fff",
+    overflow: "hidden",
+    transition: "transform 0.2s, border-color 0.2s",
   },
-  cardTitle: { fontSize: 19, fontWeight: 800, margin: 0 },
-  cardBody: { color: "#a8a8a8", fontSize: 14, margin: 0 },
-  list: { margin: 0, paddingInlineStart: 18, display: "flex", flexDirection: "column", gap: 6 },
-  li: { fontSize: 14, lineHeight: 1.7 },
-  pageLink: { color: "#f5f5f5", textDecoration: "none" },
-  pathMono: { color: "#7a7a7a", fontFamily: "ui-monospace, Menlo, monospace", fontSize: 12, marginInlineStart: 6 },
-  ctaRow: { display: "flex", gap: 10, marginTop: "auto", paddingTop: 12, flexWrap: "wrap" },
-  cta: {
-    backgroundColor: "#E8002D",
+  cardAccent: {
+    position: "absolute",
+    top: 0,
+    insetInline: 0,
+    height: 3,
+    borderRadius: "20px 20px 0 0",
+  },
+  cardIcon: { fontSize: 30, marginTop: 4 },
+  cardTitle: { fontSize: 18, fontWeight: 800, margin: 0 },
+  cardBody: { fontSize: 13.5, color: "#888", lineHeight: 1.7, flexGrow: 1 },
+  cardCta: {
+    display: "inline-block",
     color: "#fff",
     fontWeight: 700,
-    fontSize: 14.5,
-    padding: "10px 22px",
+    fontSize: 13.5,
+    padding: "9px 20px",
     borderRadius: 999,
+    marginTop: 6,
+    alignSelf: "flex-start",
     textDecoration: "none",
   },
-  soon: {
-    border: "1px solid #333",
-    color: "#8a8a8a",
-    fontWeight: 600,
-    fontSize: 14,
-    padding: "10px 22px",
-    borderRadius: 999,
-  },
-  footer: { textAlign: "center", color: "#6a6a6a", fontSize: 12, marginTop: "auto" },
-};
 
-export default App;
+  /* ── footer ── */
+  footer: {
+    borderTop: "1px solid #111",
+    padding: "32px 24px",
+    textAlign: "center",
+    display: "flex",
+    flexDirection: "column",
+    alignItems: "center",
+    gap: 8,
+  },
+  footerText: { color: "#3a3a3a", fontSize: 12, margin: 0 },
+};
