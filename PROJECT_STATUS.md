@@ -11,7 +11,7 @@ artifacts/
 ├── banco-mobile/        — React Native (Expo Router) — primary user app
 ├── dealer-os/           — React + Vite — Dealer / BANCO Market portal  
 ├── admin-os/            — React + Vite — Admin Control Center
-├── landing/             — React + Vite — banco.it root landing page
+├── landing/             — React + Vite — banco.today root landing page
 └── mockup-sandbox/      — Vite — design exploration canvas
 
 lib/

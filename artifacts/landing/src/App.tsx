@@ -32,11 +32,31 @@ function useScrollY() {
   return y;
 }
 
+/**
+ * Domain-aware redirect:
+ *   banco.deals  → /dealer-os/   (dealer management platform)
+ *   banco.autos  → /banco-mobile/ (automotive marketplace)
+ *   banco.today  → show main landing (consumer entry)
+ * All three domains hit the same Replit deployment — we route by Host header.
+ */
+function DomainRouter({ children }: { children: React.ReactNode }) {
+  useEffect(() => {
+    const h = window.location.hostname.toLowerCase().replace(/^www\./, "");
+    if (h === "banco.deals") {
+      window.location.replace("/dealer-os/");
+    } else if (h === "banco.autos") {
+      window.location.replace("/banco-mobile/");
+    }
+  }, []);
+  return <>{children}</>;
+}
+
 export default function App() {
   const scrollY = useScrollY();
   const heroRef = useRef<HTMLDivElement>(null);
 
   return (
+    <DomainRouter>
     <div style={S.root} dir="rtl">
       {/* ── شريط التنقل العلوي ── */}
       <nav

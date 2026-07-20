@@ -13,7 +13,7 @@ changes.
 | --- | --- |
 | Does your app collect or share any of the required user data types? | **Yes** |
 | Is all of the user data collected by your app encrypted in transit? | **Yes** (HTTPS/TLS for all API traffic) |
-| Do you provide a way for users to request that their data be deleted? | **Yes** — in-app: Profile → Delete Account, plus email to privacy@banco.it |
+| Do you provide a way for users to request that their data be deleted? | **Yes** — in-app: Profile → Delete Account, plus email to privacy@banco.today |
 
 ---
 
