@@ -1,12 +1,28 @@
 ---
 name: BANCO root landing artifact
-description: Why a separate minimal landing artifact owns "/" and why it must stay bare
+description: What the landing page is, what changed, and what must stay
 ---
 
-There is a standalone react-vite artifact `landing` (pkg `@workspace/landing`, dir `artifacts/landing`) mounted at the root path `/`. Its ONLY job: dark background, centered BANCO logo, ONE button `دخول` linking to `/banco-mobile/`.
+There is a standalone react-vite artifact `landing` (pkg `@workspace/landing`, dir `artifacts/landing`) mounted at the root path `/`.
 
-**Why it exists:** the root path `/` was previously unmapped, so production (banco.lt) served a 404. The landing artifact claims `/` to show a clean entry page. The other artifacts keep their own paths (`/admin-os/`, `/dealer-os/`, `/banco-mobile/`, `/api`) — `/banco-mobile/` is more specific than `/`, so path routing does not collide.
+**What it does now:** Professional dark entry page with:
+- BANCO logo, glowing hero, gradient title
+- Nav bar (التطبيق / ماركت / إدارة) with scroll-blur
+- Two hero CTAs: "ادخل التطبيق" → /banco-mobile/ (red) and "بانكو ماركت" → /dealer-os/ (outline)
+- "لوحة التحكم" subtle admin link → /admin-os/
+- 6-tile sections grid (features)
+- Three entry cards (app/market/admin) with direct path links
+- Footer with domain names
 
-**Keep it minimal — do NOT add features.** The user (DIRECTOR persona) was emphatic: "nothing more, nothing less." No marketing copy, no animation, no extra buttons, no design-subagent embellishment. Treat any request to "improve the landing page" as scope creep unless the user explicitly asks.
+**Why direct paths, not env vars:** The VITE_MARKET_URL/VITE_ADMIN_URL env vars are not set in any environment — always show قريباً. Paths (/banco-mobile/, /dealer-os/, /admin-os/) are stable across all envs (production routing maps them in artifact.toml equivalent).
 
-**How to apply:** changes here must be additive and self-contained — never modify admin-os / dealer-os / banco-mobile / api-server / routes / DNS to serve this page. The logo lives at `artifacts/landing/src/assets/banco-logo.png` (copied in, imported via `@` alias) so there is no `attached_assets` runtime dependency.
+**Production routing (from deployment logs):**
+- `/` → artifacts/landing/dist/public (static)
+- `/dealer-os/` → artifacts/dealer-os/dist/public (static)
+- `/admin-os/` → artifacts/admin-os/dist/public (static)
+- `/banco-mobile/` → mobile app (runnable, port 23351)
+- `/api/` → api-server (runnable, port 8080)
+
+**How to apply:** Any change to landing must also rebuild `dist/public` with `BASE_PATH=/ pnpm run build` inside the landing artifact before committing, so the static build matches the source.
+
+**Why it exists:** root path `/` was previously a 404 in production. Landing claims `/` to fix that.
