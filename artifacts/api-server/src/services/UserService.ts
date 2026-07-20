@@ -12,7 +12,7 @@ import {
 import { eq, and, ne, isNull, isNotNull, or, inArray, sql } from "drizzle-orm";
 import { clerkClient } from "@clerk/express";
 import { logger } from "../lib/logger";
-import { deleteObjectsByServingUrls } from "../lib/objectStorage";
+import { getObjectStorageService } from "../lib/objectStorageProvider";
 import { checkProfileMutationRate, flagDuplicateAccount } from "./AbuseService";
 import { sendWelcomeEmail } from "./EmailService";
 import { mergeBusinessCompanyDetails } from "../lib/mergeBusinessCompanyDetails";
@@ -340,7 +340,7 @@ export async function deleteAccount(clerkId: string): Promise<{ deleted: boolean
   // failure is logged loudly but never resurrects the account — the DB, the
   // source of truth, is already scrubbed.
   if (chatMediaUrls.length > 0) {
-    const media = await deleteObjectsByServingUrls(chatMediaUrls);
+    const media = await getObjectStorageService().deleteServingUrls(chatMediaUrls);
     if (media.failed > 0) {
       logger.error(
         { user_id: user.id, ...media },

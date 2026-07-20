@@ -36,6 +36,15 @@ export interface ObjectStorage {
   getServingObjectMetadata(
     servingUrl: string,
   ): Promise<{ contentType: string | null; size: number | null } | null>;
+  /**
+   * Best-effort deletion of first-party uploaded objects by serving URL
+   * (privacy cleanup, e.g. account deletion). Never throws: foreign URLs are
+   * skipped, missing objects count as deleted (idempotent), unexpected
+   * storage errors are counted in `failed` for the caller to log loudly.
+   */
+  deleteServingUrls(
+    servingUrls: string[],
+  ): Promise<{ deleted: number; skipped: number; failed: number }>;
   trySetObjectEntityAclPolicy(
     rawPath: string,
     aclPolicy: ObjectAclPolicy,

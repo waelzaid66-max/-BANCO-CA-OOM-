@@ -4,6 +4,7 @@ import {
   GetObjectCommand,
   PutObjectCommand,
   CopyObjectCommand,
+  DeleteObjectCommand,
 } from "@aws-sdk/client-s3";
 import { getSignedUrl } from "@aws-sdk/s3-request-presigner";
 import { Readable } from "stream";
@@ -270,6 +271,41 @@ export class S3ObjectStorageService {
     }
     if (!userId) return false;
     return policy.owner === userId;
+  }
+
+  /**
+   * Best-effort deletion of first-party uploaded objects by serving URL —
+   * the S3 counterpart of the Replit backend's method (same contract, see
+   * ObjectStorage interface). Never throws; missing objects count as deleted
+   * (idempotent), unexpected errors land in `failed` for the caller to log.
+   */
+  async deleteServingUrls(
+    servingUrls: string[],
+  ): Promise<{ deleted: number; skipped: number; failed: number }> {
+    let deleted = 0;
+    let skipped = 0;
+    let failed = 0;
+    for (const url of servingUrls) {
+      const wildcardPath = parseServingWildcard(url);
+      if (!wildcardPath) {
+        skipped++;
+        continue;
+      }
+      try {
+        const ref = await this.getObjectEntityFile(`/objects/${wildcardPath}`);
+        await this.client.send(
+          new DeleteObjectCommand({ Bucket: this.bucket, Key: ref.key }),
+        );
+        deleted++;
+      } catch (err) {
+        if (err instanceof ObjectNotFoundError) {
+          deleted++; // already gone — idempotent
+          continue;
+        }
+        failed++;
+      }
+    }
+    return { deleted, skipped, failed };
   }
 }
 

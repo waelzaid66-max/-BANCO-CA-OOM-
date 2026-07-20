@@ -8,25 +8,28 @@ vi.mock("@clerk/express", () => ({
   clerkClient: { users: { deleteUser: vi.fn() } },
 }));
 
-// Mock the storage-blob cleanup seam: vitest processes can't sign against the
-// object-storage sidecar (only the workflow server process can), and the unit
-// under test only needs to prove it passes the RIGHT serving URLs to the seam.
-vi.mock("../lib/objectStorage", async (importOriginal) => {
-  const actual = await importOriginal<typeof import("../lib/objectStorage")>();
+// Mock the storage provider's blob-deletion seam: vitest processes can't sign
+// against the object-storage sidecar (only the workflow server process can),
+// and the unit under test only needs to prove it passes the RIGHT serving
+// URLs through the provider interface (backend-agnostic — replit or s3; each
+// backend's own deleteServingUrls has dedicated contract tests).
+const { deleteServingUrlsMock } = vi.hoisted(() => ({
+  deleteServingUrlsMock: vi.fn(async () => ({ deleted: 0, skipped: 0, failed: 0 })),
+}));
+vi.mock("../lib/objectStorageProvider", async (importOriginal) => {
+  const actual = await importOriginal<typeof import("../lib/objectStorageProvider")>();
   return {
     ...actual,
-    deleteObjectsByServingUrls: vi.fn(async () => ({
-      deleted: 0,
-      skipped: 0,
-      failed: 0,
-    })),
+    getObjectStorageService: () =>
+      ({ deleteServingUrls: deleteServingUrlsMock }) as unknown as ReturnType<
+        typeof actual.getObjectStorageService
+      >,
   };
 });
 
 import { clerkClient } from "@clerk/express";
 import { eq, inArray } from "drizzle-orm";
 import { deleteAccount } from "./UserService";
-import { deleteObjectsByServingUrls } from "../lib/objectStorage";
 import { db, deleteUsers, uniq, randomUUID } from "../__tests__/helpers";
 import {
   users,
@@ -41,7 +44,6 @@ import {
 } from "@workspace/db/schema";
 
 const deleteUserMock = vi.mocked(clerkClient.users.deleteUser);
-const deleteMediaMock = vi.mocked(deleteObjectsByServingUrls);
 
 const uids: string[] = [];
 
@@ -289,9 +291,9 @@ describe("deleteAccount", () => {
     expect(convAfter.lastMessageText).toBeNull();
 
     // The storage blobs behind the user's chat media are handed to the
-    // cleanup seam exactly once, with the captured serving URLs.
-    expect(deleteMediaMock).toHaveBeenCalledTimes(1);
-    expect(deleteMediaMock).toHaveBeenCalledWith([CHAT_MEDIA_URL]);
+    // provider's cleanup seam exactly once, with the captured serving URLs.
+    expect(deleteServingUrlsMock).toHaveBeenCalledTimes(1);
+    expect(deleteServingUrlsMock).toHaveBeenCalledWith([CHAT_MEDIA_URL]);
 
     // Message-notification previews quoting the deleted user are purged from
     // the counterparty's inbox…
