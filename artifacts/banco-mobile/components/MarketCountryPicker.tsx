@@ -12,7 +12,7 @@ import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 import { AppText } from "@/components/AppText";
 import { PHONE_COUNTRIES } from "@/constants/countryCodes";
-import { MARKET_COUNTRIES } from "@/constants/listingCreateTaxonomy";
+import { CURRENCY_BY_MARKET, MARKET_COUNTRIES } from "@/constants/listingCreateTaxonomy";
 import { useI18n } from "@/context/LanguageContext";
 import { useColors } from "@/hooks/useColors";
 import { marketCountryLabel } from "@/lib/searchTaxonomy";
@@ -239,6 +239,9 @@ export function MarketCountryButton({
       ? opt.ar
       : opt.en
     : marketCountryLabel(selected, isRTL);
+  // Currency rides in the same icon (owner: currency is display/valuation in the
+  // market's money, NOT a search filter). Follows the market — never chosen alone.
+  const currency = CURRENCY_BY_MARKET[selected] ?? "";
 
   return (
     <Pressable
@@ -268,6 +271,11 @@ export function MarketCountryButton({
       >
         {label}
       </AppText>
+      {currency ? (
+        <AppText style={[styles.triggerCurrency, { color: colors.primary }]}>
+          {currency}
+        </AppText>
+      ) : null}
       <Feather name="chevron-down" size={14} color={colors.mutedForeground} />
     </Pressable>
   );
@@ -342,5 +350,9 @@ const styles = StyleSheet.create({
     flexShrink: 1,
     fontSize: 13,
     fontFamily: "Inter_600SemiBold",
+  },
+  triggerCurrency: {
+    fontSize: 12,
+    fontFamily: "Inter_700Bold",
   },
 });
