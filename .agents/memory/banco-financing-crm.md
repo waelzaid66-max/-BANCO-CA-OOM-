@@ -36,4 +36,4 @@ status/assignment edits don't show until reload. Use prev/next cursor navigation
 stack) rendering `resp.data` directly — invalidation then updates the visible page immediately.
 **Why:** code review rejected the accumulate-in-state version for exactly this.
 
-- `createSeat` is fail-closed: rejects inactive institutions and soft-deleted member users (FORBIDDEN). There is NO is_verified column on financing_intermediaries — the F-CLM-02 invariant is admin-gated creation + isActive.
+- Seat granting is fail-closed: never grant operational inbox access against an inactive institution or a deleted user account. There is no institution-level is_verified flag — admin-gated creation + isActive IS the verification invariant.

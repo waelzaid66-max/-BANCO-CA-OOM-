@@ -366,3 +366,52 @@ async function signObjectURL({
   const { signed_url: signedURL } = (await response.json()) as { signed_url: string };
   return signedURL;
 }
+
+/**
+ * Best-effort deletion of first-party uploaded objects by their public serving
+ * URLs (shape: https://<host>/api/v1/uploads/objects/<wildcardPath>). Used by
+ * account deletion to remove chat media blobs after the DB tombstone commits.
+ * Never throws: non-first-party URLs are skipped, already-missing objects
+ * count as deleted (idempotent), and unexpected storage errors are counted in
+ * `failed` so the caller can log loudly.
+ */
+export async function deleteObjectsByServingUrls(
+  servingUrls: string[]
+): Promise<{ deleted: number; skipped: number; failed: number }> {
+  const svc = new ObjectStorageService();
+  let deleted = 0;
+  let skipped = 0;
+  let failed = 0;
+  for (const url of servingUrls) {
+    let wildcardPath: string | null = null;
+    try {
+      const parsed = new URL(url);
+      const UPLOADS_PREFIX = "/api/v1/uploads/objects/";
+      if (parsed.pathname.startsWith(UPLOADS_PREFIX)) {
+        wildcardPath = parsed.pathname.slice(UPLOADS_PREFIX.length) || null;
+      }
+    } catch {
+      wildcardPath = null;
+    }
+    if (!wildcardPath) {
+      skipped++;
+      continue;
+    }
+    try {
+      const objectFile = await svc.getObjectEntityFile(`/objects/${wildcardPath}`);
+      await objectFile.delete();
+      deleted++;
+    } catch (err) {
+      if (err instanceof ObjectNotFoundError) {
+        deleted++; // already gone — deletion is idempotent
+        continue;
+      }
+      if ((err as { code?: number }).code === 404) {
+        deleted++; // raced away between resolve and delete — same outcome
+        continue;
+      }
+      failed++;
+    }
+  }
+  return { deleted, skipped, failed };
+}

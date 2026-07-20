@@ -6,10 +6,13 @@ import {
   userBehavior,
   conversations,
   messages,
+  notifications,
+  pushTokens,
 } from "@workspace/db/schema";
-import { eq, and, ne, isNull, or } from "drizzle-orm";
+import { eq, and, ne, isNull, isNotNull, or, inArray, sql } from "drizzle-orm";
 import { clerkClient } from "@clerk/express";
 import { logger } from "../lib/logger";
+import { deleteObjectsByServingUrls } from "../lib/objectStorage";
 import { checkProfileMutationRate, flagDuplicateAccount } from "./AbuseService";
 import { sendWelcomeEmail } from "./EmailService";
 import { mergeBusinessCompanyDetails } from "../lib/mergeBusinessCompanyDetails";
@@ -251,6 +254,16 @@ export async function deleteAccount(clerkId: string): Promise<{ deleted: boolean
 
   const now = new Date();
 
+  // Chat media blobs to purge from object storage after the DB transaction
+  // commits: capture the serving URLs BEFORE the tombstone nulls them.
+  const chatMediaRows = await db
+    .select({ url: messages.mediaUrl })
+    .from(messages)
+    .where(and(eq(messages.senderId, user.id), isNotNull(messages.mediaUrl)));
+  const chatMediaUrls = chatMediaRows
+    .map((r) => r.url)
+    .filter((u): u is string => !!u);
+
   // Atomic local anonymization + personal-data wipe.
   await db.transaction(async (tx) => {
     // Anonymize the user record. We keep the row (soft delete) so seller
@@ -293,7 +306,48 @@ export async function deleteAccount(clerkId: string): Promise<{ deleted: boolean
       .where(
         or(eq(conversations.buyerId, user.id), eq(conversations.sellerId, user.id)),
       );
+
+    // Message-notification previews quote the deleted user's words (body) and
+    // name (title) in the counterparty's notification inbox — purge them for
+    // every conversation this user participated in. (NOTE: messages.reactions
+    // keeps opaque user ids; after anonymization they point at a "Deleted
+    // User" row — same privacy class as the retained senderId that preserves
+    // thread structure — deliberately not rewritten.)
+    const convRows = await tx
+      .select({ id: conversations.id })
+      .from(conversations)
+      .where(
+        or(eq(conversations.buyerId, user.id), eq(conversations.sellerId, user.id)),
+      );
+    const convIds = convRows.map((c) => c.id);
+    if (convIds.length > 0) {
+      await tx
+        .delete(notifications)
+        .where(
+          and(
+            eq(notifications.type, "message"),
+            inArray(sql`${notifications.data}->>'conversation_id'`, convIds),
+          ),
+        );
+    }
+
+    // The deleted account's devices must stop receiving pushes immediately.
+    await tx.delete(pushTokens).where(eq(pushTokens.userId, user.id));
   });
+
+  // Best-effort storage cleanup AFTER the tombstone is durable: delete the
+  // actual chat media objects so blobs can't outlive the DB scrub. A storage
+  // failure is logged loudly but never resurrects the account — the DB, the
+  // source of truth, is already scrubbed.
+  if (chatMediaUrls.length > 0) {
+    const media = await deleteObjectsByServingUrls(chatMediaUrls);
+    if (media.failed > 0) {
+      logger.error(
+        { user_id: user.id, ...media },
+        "Chat media cleanup incomplete after account deletion",
+      );
+    }
+  }
 
   // Final step: remove the account from the auth provider. Runs after the
   // local transaction has committed so the privacy obligation (data wipe) is

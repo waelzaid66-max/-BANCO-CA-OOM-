@@ -55,4 +55,4 @@ hold the real asset object because the uploader needs its dimensions.
 **How to apply:** if backend gains pagination later, add load-older then — not
 before. Keep pending/optimistic rows distinct from server rows so retry works.
 
-- Account deletion (Play/GDPR): `deleteAccount` tombstones the deleted user's message CONTENT (`body=''`, media nulled) and nulls `lastMessageText` on all their conversations, inside the same delete transaction. Thread rows survive for the counterparty; previews repopulate on the next send. Counterparty messages are untouched (tested).
+- Account deletion must chase DERIVED chat copies, not just primary rows: storage blobs behind mediaUrl, message-notification preview text/title, push tokens. Tombstone content in-tx; blob deletion is best-effort AFTER commit with loud logging (never a thrown error). Reactions user-ids stay by decision — opaque ids pointing at an anonymized row, same privacy class as the retained senderId that preserves thread structure.

@@ -8,9 +8,25 @@ vi.mock("@clerk/express", () => ({
   clerkClient: { users: { deleteUser: vi.fn() } },
 }));
 
+// Mock the storage-blob cleanup seam: vitest processes can't sign against the
+// object-storage sidecar (only the workflow server process can), and the unit
+// under test only needs to prove it passes the RIGHT serving URLs to the seam.
+vi.mock("../lib/objectStorage", async (importOriginal) => {
+  const actual = await importOriginal<typeof import("../lib/objectStorage")>();
+  return {
+    ...actual,
+    deleteObjectsByServingUrls: vi.fn(async () => ({
+      deleted: 0,
+      skipped: 0,
+      failed: 0,
+    })),
+  };
+});
+
 import { clerkClient } from "@clerk/express";
 import { eq, inArray } from "drizzle-orm";
 import { deleteAccount } from "./UserService";
+import { deleteObjectsByServingUrls } from "../lib/objectStorage";
 import { db, deleteUsers, uniq, randomUUID } from "../__tests__/helpers";
 import {
   users,
@@ -20,9 +36,12 @@ import {
   userBehavior,
   conversations,
   messages,
+  notifications,
+  pushTokens,
 } from "@workspace/db/schema";
 
 const deleteUserMock = vi.mocked(clerkClient.users.deleteUser);
+const deleteMediaMock = vi.mocked(deleteObjectsByServingUrls);
 
 const uids: string[] = [];
 
@@ -193,13 +212,15 @@ describe("deleteAccount", () => {
       })
       .returning({ id: conversations.id });
 
+    const CHAT_MEDIA_URL =
+      "https://app.example.com/api/v1/uploads/objects/uploads/chat-media-test-object";
     const [mineMsg] = await db
       .insert(messages)
       .values({
         conversationId: conv.id,
         senderId: f.userId,
         body: "my private phone is 0100-000-0000",
-        mediaUrl: "https://example.com/private.jpg",
+        mediaUrl: CHAT_MEDIA_URL,
         mediaKind: "image",
       })
       .returning({ id: messages.id });
@@ -212,6 +233,34 @@ describe("deleteAccount", () => {
         body: "seller reply stays intact",
       })
       .returning({ id: messages.id });
+
+    // The counterparty's notification inbox holds a preview quoting the
+    // deleted user's words + name; an unrelated message-notification (other
+    // conversation) must survive the purge.
+    await db.insert(notifications).values({
+      userId: f.sellerId,
+      type: "message",
+      title: "Real Name",
+      body: "my private phone is 0100-000-0000",
+      data: { conversation_id: conv.id, listing_id: f.listingId },
+    });
+    const [unrelatedNotif] = await db
+      .insert(notifications)
+      .values({
+        userId: f.sellerId,
+        type: "message",
+        title: "Someone Else",
+        body: "unrelated preview survives",
+        data: { conversation_id: randomUUID() },
+      })
+      .returning({ id: notifications.id });
+
+    // The deleted account's device must stop receiving pushes.
+    await db.insert(pushTokens).values({
+      userId: f.userId,
+      token: uniq("tok"),
+      platform: "android",
+    });
 
     await deleteAccount(f.clerkId);
 
@@ -238,6 +287,30 @@ describe("deleteAccount", () => {
       .where(eq(conversations.id, conv.id));
     expect(convAfter).toBeDefined();
     expect(convAfter.lastMessageText).toBeNull();
+
+    // The storage blobs behind the user's chat media are handed to the
+    // cleanup seam exactly once, with the captured serving URLs.
+    expect(deleteMediaMock).toHaveBeenCalledTimes(1);
+    expect(deleteMediaMock).toHaveBeenCalledWith([CHAT_MEDIA_URL]);
+
+    // Message-notification previews quoting the deleted user are purged from
+    // the counterparty's inbox…
+    const sellerNotifs = await db
+      .select()
+      .from(notifications)
+      .where(eq(notifications.userId, f.sellerId));
+    expect(sellerNotifs.map((n) => n.body)).not.toContain(
+      "my private phone is 0100-000-0000",
+    );
+    // …while message notifications about OTHER conversations survive.
+    expect(sellerNotifs.map((n) => n.id)).toContain(unrelatedNotif.id);
+
+    // Push tokens for the deleted account are gone.
+    const tokens = await db
+      .select()
+      .from(pushTokens)
+      .where(eq(pushTokens.userId, f.userId));
+    expect(tokens).toHaveLength(0);
   });
 
   it("throws NOT_FOUND and never touches Clerk for an unknown user", async () => {
