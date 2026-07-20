@@ -98,7 +98,7 @@ export const PRIVACY_SECTIONS: Record<LegalLang, LegalSection[]> = {
     },
     {
       heading: "Contact",
-      body: "For privacy questions or data requests, contact privacy@banco.it.",
+      body: "For privacy questions or data requests, contact privacy@banco.today.",
     },
   ],
   ar: [
@@ -156,7 +156,7 @@ export const PRIVACY_SECTIONS: Record<LegalLang, LegalSection[]> = {
     },
     {
       heading: "التواصل",
-      body: "للاستفسارات المتعلقة بالخصوصية أو طلبات البيانات، تواصل عبر privacy@banco.it.",
+      body: "للاستفسارات المتعلقة بالخصوصية أو طلبات البيانات، تواصل عبر privacy@banco.today.",
     },
   ],
 };
@@ -242,7 +242,7 @@ export const TERMS_SECTIONS: Record<LegalLang, LegalSection[]> = {
     },
     {
       heading: "Contact",
-      body: "For questions about these Terms, contact legal@banco.it.",
+      body: "For questions about these Terms, contact legal@banco.today.",
     },
   ],
   ar: [
@@ -325,7 +325,7 @@ export const TERMS_SECTIONS: Record<LegalLang, LegalSection[]> = {
     },
     {
       heading: "التواصل",
-      body: "للاستفسار عن هذه الشروط، تواصل عبر legal@banco.it.",
+      body: "للاستفسار عن هذه الشروط، تواصل عبر legal@banco.today.",
     },
   ],
 };

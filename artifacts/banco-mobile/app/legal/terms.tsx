@@ -89,7 +89,7 @@ const SECTIONS: Record<"en" | "ar", LegalSection[]> = {
     },
     {
       heading: "Contact",
-      body: "For questions about these Terms, contact legal@banco.it.",
+      body: "For questions about these Terms, contact legal@banco.today.",
     },
   ],
   ar: [
@@ -172,7 +172,7 @@ const SECTIONS: Record<"en" | "ar", LegalSection[]> = {
     },
     {
       heading: "التواصل",
-      body: "للاستفسار عن هذه الشروط، تواصل عبر legal@banco.it.",
+      body: "للاستفسار عن هذه الشروط، تواصل عبر legal@banco.today.",
     },
   ],
 };

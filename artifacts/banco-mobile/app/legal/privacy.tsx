@@ -64,7 +64,7 @@ const SECTIONS: Record<"en" | "ar", LegalSection[]> = {
     },
     {
       heading: "Contact",
-      body: "For privacy questions or data requests, contact privacy@banco.it.",
+      body: "For privacy questions or data requests, contact privacy@banco.today.",
     },
   ],
   ar: [
@@ -122,7 +122,7 @@ const SECTIONS: Record<"en" | "ar", LegalSection[]> = {
     },
     {
       heading: "التواصل",
-      body: "للاستفسارات المتعلقة بالخصوصية أو طلبات البيانات، تواصل عبر privacy@banco.it.",
+      body: "للاستفسارات المتعلقة بالخصوصية أو طلبات البيانات، تواصل عبر privacy@banco.today.",
     },
   ],
 };

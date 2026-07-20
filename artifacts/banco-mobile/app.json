@@ -18,6 +18,12 @@
       "bundleIdentifier": "com.bancoboom.app",
       "buildNumber": "1",
       "usesAppleSignIn": true,
+      "associatedDomains": [
+        "applinks:banco.today",
+        "applinks:banco.deals",
+        "applinks:banco.autos",
+        "webcredentials:banco.today"
+      ],
       "infoPlist": {
         "NSPhotoLibraryUsageDescription": "BANCO accesses your photos and videos only when you choose them to add to a listing, a chat message, your profile picture, or your business verification documents and identity photo.",
         "ITSAppUsesNonExemptEncryption": false
@@ -37,7 +43,19 @@
       "adaptiveIcon": {
         "foregroundImage": "./assets/images/icon.png",
         "backgroundColor": "#000000"
-      }
+      },
+      "intentFilters": [
+        {
+          "action": "VIEW",
+          "autoVerify": true,
+          "data": [
+            { "scheme": "https", "host": "banco.today" },
+            { "scheme": "https", "host": "banco.deals" },
+            { "scheme": "https", "host": "banco.autos" }
+          ],
+          "category": ["BROWSABLE", "DEFAULT"]
+        }
+      ]
     },
     "web": {
       "favicon": "./assets/images/favicon.png"

@@ -608,7 +608,7 @@ function EmailSection() {
                 id="fromEmail"
                 value={form.fromEmail}
                 onChange={(e) => set("fromEmail", e.target.value)}
-                placeholder="noreply@banco.it"
+                placeholder="noreply@banco.today"
               />
             </div>
           </div>
@@ -620,7 +620,7 @@ function EmailSection() {
                 id="sendingDomain"
                 value={form.sendingDomain}
                 onChange={(e) => set("sendingDomain", e.target.value)}
-                placeholder="banco.it"
+                placeholder="banco.today"
               />
             </div>
             <div className="grid gap-2">
@@ -629,7 +629,7 @@ function EmailSection() {
                 id="replyTo"
                 value={form.replyTo}
                 onChange={(e) => set("replyTo", e.target.value)}
-                placeholder="support@banco.it"
+                placeholder="support@banco.today"
               />
             </div>
           </div>
@@ -640,7 +640,7 @@ function EmailSection() {
               id="publicAppUrl"
               value={form.publicAppUrl}
               onChange={(e) => set("publicAppUrl", e.target.value)}
-              placeholder="https://banco.it"
+              placeholder="https://banco.today"
             />
             <p className="text-xs text-muted-foreground">
               Base URL used to build the buttons/links inside emails.

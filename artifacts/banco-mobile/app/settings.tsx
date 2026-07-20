@@ -37,7 +37,7 @@ import { useColors } from "@/hooks/useColors";
 
 type Colors = ReturnType<typeof useColors>;
 
-const SUPPORT_EMAIL = "support@banco.it";
+const SUPPORT_EMAIL = "support@banco.today";
 
 const CATEGORY_ORDER: NotificationPreferenceType[] = [
   "lead",

@@ -89,7 +89,7 @@ role-guard) and mirror the in-app legal screens word-for-word, including the
 deployed host:
 
 - **Production (after Publish):** `https://<your-app>.replit.app/dealer-os/privacy`
-  — or the custom domain once configured, e.g. `https://banco.it/dealer-os/privacy`.
+  — or the custom domain once configured, e.g. `https://banco.today/privacy`.
 - **Development / review preview (live now):**
   `https://10560eed-bc01-46c4-9db9-1c90e30d4ffa-00-3e831fkvz4woy.janeway.replit.dev/dealer-os/privacy`
   (and `.../dealer-os/terms`). Dev URLs are ephemeral — use the production URL for

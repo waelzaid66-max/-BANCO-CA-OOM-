@@ -21,7 +21,7 @@ import { encryptSecret, decryptSecret } from "../lib/secretCrypto";
 
 export const PROVIDER = "resend";
 
-const DEFAULT_FROM = "BANCO <noreply@banco.it>";
+const DEFAULT_FROM = "BANCO <noreply@banco.today>";
 
 /** Fully-resolved config the email transport needs to operate. */
 export interface ResolvedEmailConfig {
