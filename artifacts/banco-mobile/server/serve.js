@@ -124,6 +124,14 @@ const server = http.createServer((req, res) => {
     pathname = pathname.slice(basePath.length) || "/";
   }
 
+  // Liveness probe — deployment orchestrator hits /status to check the server
+  // is up before routing traffic. Must respond quickly without I/O.
+  if (pathname === "/status" || pathname === "/healthz") {
+    res.writeHead(200, { "content-type": "application/json" });
+    res.end(JSON.stringify({ status: "ok" }));
+    return;
+  }
+
   if (pathname === "/" || pathname === "/manifest") {
     const platform = req.headers["expo-platform"];
     if (platform === "ios" || platform === "android") {
