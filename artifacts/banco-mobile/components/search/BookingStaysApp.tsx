@@ -12,6 +12,7 @@ import * as Haptics from "expo-haptics";
 import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import {
   Alert,
+  Modal,
   Platform,
   Pressable,
   ScrollView,
@@ -76,6 +77,124 @@ function serializeCriteria(c: SearchCriteria): string {
     .sort()
     .map((k) => `${String(k)}=${JSON.stringify(c[k])}`)
     .join("|");
+}
+
+/** Compact icon-trigger + inline modal picker for the rental-term filter.
+ *  Replaces the horizontal chip strip so the header stays lean (owner). */
+function RentalTermPickerButton({
+  terms,
+  selected,
+  onSelect,
+}: {
+  terms: { value: string; en: string; ar: string }[];
+  selected: string | null;
+  onSelect: (v: string | null) => void;
+}) {
+  const [open, setOpen] = useState(false);
+  const colors = useColors();
+  const { isRTL, t } = useI18n();
+  const rowDir = isRTL ? "row-reverse" : "row";
+  const activeTerm = terms.find((r) => r.value === selected);
+  const label = activeTerm
+    ? isRTL
+      ? activeTerm.ar
+      : activeTerm.en
+    : t("search.discover.rentalTermAny");
+
+  return (
+    <>
+      <Pressable
+        onPress={() => setOpen(true)}
+        style={[
+          styles.termBtn,
+          {
+            flexDirection: rowDir,
+            backgroundColor: selected ? STAYS_ACCENT : colors.secondary,
+            borderColor: selected ? STAYS_ACCENT : colors.border,
+          },
+        ]}
+        testID="stays-rental-term-btn"
+        accessibilityLabel={label}
+      >
+        <Feather
+          name="calendar"
+          size={13}
+          color={selected ? "#FFFFFF" : colors.mutedForeground}
+        />
+        <AppText
+          style={[styles.termBtnLabel, { color: selected ? "#FFFFFF" : colors.foreground }]}
+          numberOfLines={1}
+        >
+          {label}
+        </AppText>
+        <Feather
+          name="chevron-down"
+          size={13}
+          color={selected ? "#FFFFFF" : colors.mutedForeground}
+        />
+      </Pressable>
+
+      <Modal
+        visible={open}
+        transparent
+        animationType="fade"
+        onRequestClose={() => setOpen(false)}
+      >
+        <Pressable style={styles.termBackdrop} onPress={() => setOpen(false)}>
+          <View
+            style={[
+              styles.termSheet,
+              { backgroundColor: colors.card, borderColor: colors.border },
+            ]}
+          >
+            <AppText
+              style={[
+                styles.termSheetTitle,
+                { color: colors.foreground, borderBottomColor: colors.border },
+              ]}
+            >
+              {t("create.fields.rentalTerm")}
+            </AppText>
+            {/* "All types" row */}
+            <Pressable
+              onPress={() => { onSelect(null); setOpen(false); }}
+              style={[
+                styles.termRow,
+                { flexDirection: rowDir, borderBottomColor: colors.border },
+                !selected
+                  ? { backgroundColor: `${STAYS_ACCENT}1A` }
+                  : null,
+              ]}
+            >
+              <AppText style={[styles.termRowText, { color: colors.foreground }]}>
+                {t("search.discover.rentalTermAny")}
+              </AppText>
+              {!selected && <Feather name="check" size={15} color={STAYS_ACCENT} />}
+            </Pressable>
+            {terms.map((r) => {
+              const active = r.value === selected;
+              return (
+                <Pressable
+                  key={r.value}
+                  onPress={() => { onSelect(r.value); setOpen(false); }}
+                  style={[
+                    styles.termRow,
+                    { flexDirection: rowDir, borderBottomColor: colors.border },
+                    active ? { backgroundColor: `${STAYS_ACCENT}1A` } : null,
+                  ]}
+                >
+                  <AppText style={[styles.termRowText, { color: colors.foreground }]}>
+                    {isRTL ? r.ar : r.en}
+                  </AppText>
+                  {active && <Feather name="check" size={15} color={STAYS_ACCENT} />}
+                </Pressable>
+              );
+            })}
+          </View>
+        </Pressable>
+      </Modal>
+    </>
+  );
 }
 
 /**
@@ -752,45 +871,17 @@ export function BookingStaysApp() {
           the type strip above (owner: no spread matrix — currency is display,
           not a search axis; it follows the chosen market). */}
 
-      {/* Rental-term strip — market-honest regimes (daily / new-law / …).
-          Same criteria.rentalTerm as FilterSheet — one axis, two surfaces. */}
-      {rentalTerms.length > 0 ? (
-        <ScrollView
-          horizontal
-          showsHorizontalScrollIndicator={false}
-          style={styles.hScroll}
-          contentContainerStyle={[styles.rentalChrome, { flexDirection: rowDir }]}
-          testID="stays-rental-strip"
-        >
-          {rentalTerms.map((r) => {
-            const active = criteria.rentalTerm === r.value;
-            return (
-              <Pressable
-                key={r.value}
-                onPress={() => selectRentalTerm(r.value)}
-                style={[
-                  styles.rentalChip,
-                  {
-                    backgroundColor: active ? STAYS_ACCENT : colors.secondary,
-                  },
-                ]}
-                testID={`stays-rental-${r.value}`}
-              >
-                <AppText
-                  style={[
-                    styles.rentalChipText,
-                    {
-                      color: active ? "#FFFFFF" : colors.mutedForeground,
-                    },
-                  ]}
-                >
-                  {isRTL ? r.ar : r.en}
-                </AppText>
-              </Pressable>
-            );
-          })}
-        </ScrollView>
-      ) : null}
+      {/* Rental-term compact picker — same criteria.rentalTerm as FilterSheet.
+          Collapsed into an icon-button (owner) so the strip doesn't eat chrome. */}
+      {rentalTerms.length > 0 && (
+        <RentalTermPickerButton
+          terms={rentalTerms}
+          selected={criteria.rentalTerm}
+          onSelect={(v) =>
+            v === null ? update({ rentalTerm: null }) : selectRentalTerm(v)
+          }
+        />
+      )}
 
       {viewState === "results" && items.length > 0 ? (
         <AppText
@@ -1193,4 +1284,51 @@ const styles = StyleSheet.create({
     marginTop: 8,
   },
   emptyCtaText: { fontSize: 14, fontFamily: "Inter_600SemiBold" },
+  // RentalTermPickerButton
+  termBtn: {
+    alignSelf: "flex-start",
+    alignItems: "center",
+    gap: 6,
+    paddingHorizontal: 14,
+    paddingVertical: 7,
+    borderRadius: 20,
+    borderWidth: 1,
+    marginHorizontal: 16,
+    marginBottom: 8,
+  },
+  termBtnLabel: {
+    fontSize: 13,
+    fontFamily: "Inter_500Medium",
+    flexShrink: 1,
+    maxWidth: 200,
+  },
+  termBackdrop: {
+    flex: 1,
+    backgroundColor: "rgba(0,0,0,0.55)",
+    justifyContent: "center",
+    alignItems: "center",
+    paddingHorizontal: 24,
+  },
+  termSheet: {
+    width: "100%",
+    maxWidth: 400,
+    borderRadius: 16,
+    borderWidth: StyleSheet.hairlineWidth,
+    overflow: "hidden",
+  },
+  termSheetTitle: {
+    fontSize: 15,
+    fontFamily: "Cairo_700Bold",
+    paddingHorizontal: 20,
+    paddingVertical: 14,
+    borderBottomWidth: StyleSheet.hairlineWidth,
+  },
+  termRow: {
+    paddingHorizontal: 20,
+    paddingVertical: 14,
+    borderBottomWidth: StyleSheet.hairlineWidth,
+    alignItems: "center",
+    justifyContent: "space-between",
+  },
+  termRowText: { fontSize: 14, fontFamily: "Inter_400Regular", flex: 1 },
 });

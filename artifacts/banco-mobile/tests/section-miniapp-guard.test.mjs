@@ -296,8 +296,8 @@ test("Stay auto-resets filters on back; rental strip + map latch wired", () => {
   );
   assert.match(
     booking,
-    /testID="stays-rental-strip"/,
-    "Stay must expose rental-term strip under market matrix",
+    /testID="stays-rental-term-btn"/,
+    "Stay must expose rental-term compact picker button under market matrix",
   );
   assert.match(
     booking,

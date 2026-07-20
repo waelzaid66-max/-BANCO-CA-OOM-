@@ -928,6 +928,15 @@ export default function ProfileScreen() {
         },
       },
       {
+        key: "import-track",
+        icon: "package" as const,
+        label: t("search.discover.importTrackCta"),
+        onPress: () => {
+          setShowMenu(false);
+          router.push("/import-tracking" as any);
+        },
+      },
+      {
         key: "wallet",
         icon: "credit-card",
         label: t("profile.menuWallet"),
