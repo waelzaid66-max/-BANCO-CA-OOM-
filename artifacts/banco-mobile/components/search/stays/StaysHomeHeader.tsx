@@ -100,7 +100,7 @@ export function StaysHomeHeader({
   const textAlign = isRTL ? "right" : "left";
 
   return (
-    <View style={[styles.root, { paddingTop: topPad + 3 }]} testID="stays-header">
+    <View style={[styles.root, { paddingTop: topPad - 1 }]} testID="stays-header">
       {/* Band A — top actions */}
       <View style={[styles.topBar, { flexDirection: rowDir }]}>
         <Pressable
@@ -293,12 +293,12 @@ const styles = StyleSheet.create({
   root: {
     backgroundColor: VOID,
     paddingHorizontal: 16,
-    paddingBottom: 10,
+    paddingBottom: 4,
   },
   topBar: {
     alignItems: "center",
-    minHeight: 44,
-    marginBottom: 4,
+    minHeight: 40,
+    marginBottom: 0,
   },
   topSpacer: { flex: 1 },
   iconHit: {
@@ -309,14 +309,14 @@ const styles = StyleSheet.create({
   },
   brandBlock: {
     alignItems: "center",
-    paddingTop: 2,
-    paddingBottom: 4,
-    marginBottom: 12,
+    paddingTop: 0,
+    paddingBottom: 0,
+    marginBottom: 6,
   },
   wordmarkRow: {
     alignItems: "center",
     gap: 8,
-    marginBottom: 10,
+    marginBottom: 6,
   },
   wordmarkBoom: {
     width: 108,
@@ -334,7 +334,7 @@ const styles = StyleSheet.create({
     gap: 10,
     maxWidth: "100%",
     paddingHorizontal: 8,
-    marginBottom: 8,
+    marginBottom: 4,
   },
   taglineRule: {
     flex: 1,
@@ -355,7 +355,7 @@ const styles = StyleSheet.create({
     color: ASH,
     letterSpacing: 1.2,
     textTransform: "uppercase",
-    marginBottom: 4,
+    marginBottom: 2,
   },
   poweredRow: {
     alignItems: "center",
@@ -415,14 +415,14 @@ const styles = StyleSheet.create({
     color: SNOW,
   },
   tabsScroll: {
-    marginTop: 14,
+    marginTop: 8,
     marginHorizontal: -16,
   },
   tabsRow: {
     alignItems: "stretch",
     paddingHorizontal: 12,
     gap: 0,
-    minHeight: 56,
+    minHeight: 48,
   },
   tabItem: {
     alignItems: "center",

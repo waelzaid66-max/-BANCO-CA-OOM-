@@ -865,23 +865,20 @@ export function BookingStaysApp() {
             {t("search.listingModeBuy")}
           </AppText>
         </Pressable>
+        {/* 4th chip — Rental term (All types / Daily / Annual …) — same strip */}
+        {rentalTerms.length > 0 && (
+          <>
+            <View style={[styles.chipStripDivider, { backgroundColor: "rgba(255,255,255,0.14)" }]} />
+            <RentalTermPickerButton
+              terms={rentalTerms}
+              selected={criteria.rentalTerm}
+              onSelect={(v) =>
+                v === null ? update({ rentalTerm: null }) : selectRentalTerm(v)
+              }
+            />
+          </>
+        )}
       </ScrollView>
-
-      {/* Country + currency now live in the compact MarketCountryButton icon in
-          the type strip above (owner: no spread matrix — currency is display,
-          not a search axis; it follows the chosen market). */}
-
-      {/* Rental-term compact picker — same criteria.rentalTerm as FilterSheet.
-          Collapsed into an icon-button (owner) so the strip doesn't eat chrome. */}
-      {rentalTerms.length > 0 && (
-        <RentalTermPickerButton
-          terms={rentalTerms}
-          selected={criteria.rentalTerm}
-          onSelect={(v) =>
-            v === null ? update({ rentalTerm: null }) : selectRentalTerm(v)
-          }
-        />
-      )}
 
       {viewState === "results" && items.length > 0 ? (
         <AppText
@@ -1018,6 +1015,14 @@ const styles = StyleSheet.create({
   container: { flex: 1 },
   resultsArea: { flex: 1 },
 
+  // ── Compact chip strip (4 items: Country / Sort / Wanted / RentalTerm) ──
+  hScroll: {
+    flexShrink: 0,
+    flexGrow: 0,
+    borderBottomWidth: StyleSheet.hairlineWidth,
+    borderBottomColor: "rgba(255,255,255,0.08)",
+  },
+
   // ── Stays hero (G2: slight trim — same options, less chrome height) ──────
   hero: {
     paddingHorizontal: 14,
@@ -1136,15 +1141,15 @@ const styles = StyleSheet.create({
   // Vertical rhythm: 8 → 6 → 4 between type / market / rental (P-STAY mm).
   controlsRow: {
     alignItems: "center",
-    gap: 8,
-    paddingHorizontal: 12,
-    paddingTop: 8,
-    paddingBottom: 2,
+    gap: 7,
+    paddingHorizontal: 10,
+    paddingTop: 5,
+    paddingBottom: 5,
   },
   sortChip: {
-    width: 34,
-    height: 34,
-    borderRadius: 17,
+    width: 30,
+    height: 30,
+    borderRadius: 15,
     alignItems: "center",
     justifyContent: "center",
     flexShrink: 0,
@@ -1200,12 +1205,12 @@ const styles = StyleSheet.create({
     opacity: 0.55,
   },
   termTab: {
-    paddingHorizontal: 12,
-    paddingVertical: 6,
+    paddingHorizontal: 10,
+    paddingVertical: 4,
     borderRadius: 999,
     borderWidth: 1,
   },
-  termTabText: { fontSize: 12.5, fontFamily: "Inter_600SemiBold" },
+  termTabText: { fontSize: 11.5, fontFamily: "Inter_600SemiBold" },
   resultsCount: {
     fontSize: 12,
     fontFamily: "Inter_400Regular",
@@ -1267,21 +1272,18 @@ const styles = StyleSheet.create({
   emptyCtaText: { fontSize: 14, fontFamily: "Inter_600SemiBold" },
   // RentalTermPickerButton
   termBtn: {
-    alignSelf: "flex-start",
     alignItems: "center",
-    gap: 6,
-    paddingHorizontal: 14,
-    paddingVertical: 7,
+    gap: 5,
+    paddingHorizontal: 10,
+    paddingVertical: 4,
     borderRadius: 20,
     borderWidth: 1,
-    marginHorizontal: 16,
-    marginBottom: 8,
   },
   termBtnLabel: {
-    fontSize: 13,
+    fontSize: 12,
     fontFamily: "Inter_500Medium",
     flexShrink: 1,
-    maxWidth: 200,
+    maxWidth: 120,
   },
   termBackdrop: {
     flex: 1,
