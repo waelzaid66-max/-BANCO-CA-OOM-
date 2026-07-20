@@ -1,38 +1,42 @@
 ---
-name: BANCO canonical domain & contact emails
-description: The official BANCO mother domain and per-vertical contact emails to use when wiring links, the domain/about page, and settings.
+name: BANCO domain & contacts
+description: Canonical domains, email contacts, and deployment routing for BANCO
 ---
 
-# BANCO domain & contact emails
+## Canonical Domains (as of 2026-07-20)
 
-Canonical "mother" domain: **banco.it**
+All three point to the **same Replit autoscale deployment** — routing is path-based + domain-aware redirect in the landing app:
 
-Official contact emails (per vertical):
-- info@banco.it — general
-- support@banco.it — support
-- legal@banco.it — legal / terms / privacy
-- cars@banco.it — automotive vertical
-- property@banco.it — real-estate vertical
-- business@banco.it — B2B / business / supply
+| Domain | Role | Resolved path |
+|---|---|---|
+| **banco.today** | Primary consumer landing + main app | `/` (serves landing, all paths) |
+| **banco.deals** | Dealer management platform | redirect → `/dealer-os/` |
+| **banco.autos** | Automotive marketplace (primary Replit URL) | redirect → `/banco-mobile/` |
 
-**Why:** the user supplied these as the single source of truth for all in-app
-links, the domain/about page, and contact settings. They are public contact
-addresses (not secrets), safe to render in the UI.
+Replit primary URL: **banco.autos** (assigned as primary). All three verified in Resend.
 
-**Code state:** the banco.app → banco.it migration is **DONE in code** — all
-in-repo emails/links/copy now use banco.it (mobile screens, i18n EN+AR, dealer
-legal-content, server HTML templates, Play data-safety doc, api From: header,
-payment-provider placeholder). Local-parts kept as-is (support@/legal@/privacy@/
-noreply@) rather than remapped per-vertical.
+## Path mapping in production
 
-**Runtime config verified clean:** no env var carries banco.app, and the
-`email_provider_config` DB row is empty (service falls back to the code default
-`BANCO <noreply@banco.it>`). EmailService is DB-first/env-fallback, so if a
-future admin row is added, re-check its from_email/sending_domain/public_app_url.
+```
+/                → artifacts/landing/dist/public  (static)
+/dealer-os/      → artifacts/dealer-os/dist/public (static)
+/admin-os/       → artifacts/admin-os/dist/public  (static)
+/api             → artifacts/api-server (node, port 8080)
+/banco-mobile/   → artifacts/banco-mobile (expo web, port 23351)
+```
 
-**Still external (NOT in repo, user-owned):** the Google Play Console store
-listing — must be updated to banco.it by the user; code can't change it.
+## Email contacts (banco.today domain — verified in Resend)
 
-**How to apply:** the per-vertical addresses (cars@/property@/business@/info@)
-above are still available if a future task wants surface-specific contacts; map
-the bare/general address to the vertical that matches the surface.
+- noreply@banco.today — system emails (DEFAULT_FROM in EmailConfigService)
+- support@banco.today — user support
+- privacy@banco.today — privacy / data requests
+- legal@banco.today — legal / terms
+
+## Key env vars
+
+- `PUBLIC_APP_URL` = `https://banco.today`
+- `PUBLIC_API_BASE_URL` = `https://banco.autos/api`
+- `EXPO_PUBLIC_PUBLIC_APP_URL` = `https://banco.today`
+- `CORS_ALLOWED_ORIGINS` = all 3 domains + www variants
+
+**Why:** Domain redirect is client-side (DomainRouter in landing/src/App.tsx). This works because all domains serve the same static bundle at `/`. The redirect happens instantly in the browser before rendering anything.

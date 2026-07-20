@@ -157,6 +157,7 @@ export default function App() {
         </p>
       </footer>
     </div>
+    </DomainRouter>
   );
 }
 

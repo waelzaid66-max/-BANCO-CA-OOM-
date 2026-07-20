@@ -59,7 +59,7 @@ describe.skipIf(!hasStorage)("object upload round-trip (real first-party storage
     }
 
     const wildcard = objectPath.replace(/^\/objects\//, "");
-    return `https://banco.it/api/v1/uploads/objects/${wildcard}`;
+    return `https://banco.today/api/v1/uploads/objects/${wildcard}`;
   }
 
   it("stores real bytes and reads back the authoritative size + content-type", async () => {

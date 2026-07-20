@@ -28,7 +28,7 @@ export interface ResolvedEmailConfig {
   source: "db" | "env";
   /** Provider API key, or null when none is configured (→ log-only transport). */
   apiKey: string | null;
-  /** Fully-formed From header, e.g. `BANCO <noreply@banco.it>`. */
+  /** Fully-formed From header, e.g. `BANCO <noreply@banco.today>`. */
   from: string;
   /** Public base URL for email CTA links, or null when unset. */
   publicAppUrl: string | null;

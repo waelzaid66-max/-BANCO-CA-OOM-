@@ -48,7 +48,7 @@
 - [BANCO upload content-type & size truth](banco-upload-content-type.md) — server ignores sent filename/content_type/size + extensionless UUID keys; PUT Content-Type is the only stored type; size must be checked from stored metadata server-side
 - [BANCO admin bootstrap freeze](banco-admin-bootstrap-freeze.md) — ADMIN_EMAILS only mints the FIRST admin then freezes once any admin exists; no in-app grant UI (ban/unban only) → add later admins via DB
 - [BANCO mobile permission minimization](banco-mobile-permission-minimization.md) — app never launches camera (library-only); keeping CAMERA off needs expo-image-picker cameraPermission:false too (plugin re-adds it)
-- [BANCO domain & contacts](banco-domain-contacts.md) — banco.app→banco.it migration DONE in code + runtime config verified clean (empty email_provider_config row, no env); only external Google Play listing left (user-owned)
+- [BANCO domain & contacts](banco-domain-contacts.md) — 3 domains: banco.today(main/landing) banco.deals(→/dealer-os/) banco.autos(primary Replit URL→/banco-mobile/); all verified Resend; emails→banco.today
 - [BANCO engine-strip flicker](banco-engine-strip-flicker.md) — chip row must gate on facets RESOLVED (!loading) not the fail-open set, or it shows-then-collapses; home animated bar must re-measure on category switch
 - [React Compiler component order](react-compiler-component-order.md) — helper components MUST be defined before use; compiler rewrites fn decls to const bindings (no hoisting) → runtime ReferenceError tsc/metro never catch
 - [Arabic content audit regex](arabic-content-audit-regex.md) — use `rg '\p{Arabic}'` not `[\xD8-\xDB]` (matches Latin Ø-Û, gives false "no Arabic" results); search limit<=50
