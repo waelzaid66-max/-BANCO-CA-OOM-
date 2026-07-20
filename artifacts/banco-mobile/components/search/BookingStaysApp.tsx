@@ -32,12 +32,9 @@ import { MiniAppBottomNav } from "@/components/MiniAppBottomNav";
 import { apiCategoryFor } from "@/components/CategoryTabs";
 import { labelForValue } from "@/constants/locations";
 import {
-  CURRENCY_BY_MARKET,
   DEFAULT_MARKET_COUNTRY,
-  MARKET_COUNTRIES,
   PROPERTY_TYPES,
 } from "@/constants/listingCreateTaxonomy";
-import { PHONE_COUNTRIES } from "@/constants/countryCodes";
 import {
   loadPreferredMarketCountry,
   savePreferredMarketCountry,
@@ -53,7 +50,10 @@ import {
   mapAnchorKey,
 } from "@/lib/searchParams";
 import { requestNearMeCoords, DEFAULT_NEAR_RADIUS_KM } from "@/lib/nearMe";
-import { MarketCountryPicker } from "@/components/MarketCountryPicker";
+import {
+  MarketCountryButton,
+  MarketCountryPicker,
+} from "@/components/MarketCountryPicker";
 import {
   rentalTermsForSearch,
   sanitizeRentalTermForMarket,
@@ -657,6 +657,16 @@ export function BookingStaysApp() {
         contentContainerStyle={[styles.controlsRow, { flexDirection: rowDir }]}
         testID="stays-type-strip"
       >
+        {/* Country + currency collapsed into ONE compact icon (owner) — same
+            pattern as every section. Currency is display/valuation of the
+            market's money, not a search filter. Opens the searchable picker. */}
+        <MarketCountryButton
+          selected={criteria.marketCountry}
+          onPress={() => {
+            playSound("tap");
+            setMarketPickerOpen(true);
+          }}
+        />
         <Pressable
           onPress={() => {
             playSound("tap");
@@ -738,88 +748,9 @@ export function BookingStaysApp() {
         </Pressable>
       </ScrollView>
 
-      {/* Launch-market matrix under the type strip — compact flag · country ·
-          currency cells. Uses taxonomy already wired to FilterSheet / seed;
-          does not invent a new market system. Active = soft rose outline only. */}
-      <ScrollView
-        horizontal
-        showsHorizontalScrollIndicator={false}
-        style={styles.hScroll}
-        contentContainerStyle={[styles.marketMatrix, { flexDirection: rowDir }]}
-        testID="stays-market-matrix"
-      >
-        {MARKET_COUNTRIES.map((m) => {
-          const active = criteria.marketCountry === m.value;
-          const currency = CURRENCY_BY_MARKET[m.value] ?? "";
-          const flag = PHONE_COUNTRIES.find((c) => c.iso === m.value)?.flag;
-          return (
-            <Pressable
-              key={m.value}
-              onPress={() => {
-                playSound("tap");
-                Haptics.selectionAsync();
-                selectMarketCountry(m.value);
-              }}
-              style={[
-                styles.matrixCell,
-                {
-                  flexDirection: rowDir,
-                  backgroundColor: active
-                    ? "rgba(101,14,54,0.08)"
-                    : colors.card,
-                  borderColor: active ? STAYS_ACCENT : colors.border,
-                },
-              ]}
-              testID={`stays-market-${m.value}`}
-              accessibilityLabel={`${isRTL ? m.ar : m.en} ${currency}`}
-            >
-              {flag ? (
-                <AppText style={styles.matrixFlag}>{flag}</AppText>
-              ) : (
-                <Feather
-                  name="globe"
-                  size={12}
-                  color={colors.mutedForeground}
-                />
-              )}
-              <AppText
-                style={[
-                  styles.matrixCountry,
-                  { color: colors.foreground },
-                ]}
-                numberOfLines={1}
-              >
-                {isRTL ? m.ar : m.en}
-              </AppText>
-              <AppText
-                style={[
-                  styles.matrixCurrency,
-                  { color: colors.mutedForeground },
-                ]}
-              >
-                {currency}
-              </AppText>
-            </Pressable>
-          );
-        })}
-        <Pressable
-          onPress={() => {
-            playSound("tap");
-            setMarketPickerOpen(true);
-          }}
-          style={[
-            styles.matrixMore,
-            {
-              backgroundColor: colors.secondary,
-              borderColor: colors.border,
-            },
-          ]}
-          testID="stays-market-more"
-          accessibilityLabel={t("search.marketCountryTitle")}
-        >
-          <Feather name="more-horizontal" size={14} color={colors.mutedForeground} />
-        </Pressable>
-      </ScrollView>
+      {/* Country + currency now live in the compact MarketCountryButton icon in
+          the type strip above (owner: no spread matrix — currency is display,
+          not a search axis; it follows the chosen market). */}
 
       {/* Rental-term strip — market-honest regimes (daily / new-law / …).
           Same criteria.rentalTerm as FilterSheet — one axis, two surfaces. */}
