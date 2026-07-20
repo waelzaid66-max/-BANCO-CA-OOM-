@@ -575,12 +575,21 @@ test("Banks hub honesty — not a live partner directory (i18n + screen)", () =>
   );
 });
 
-test("Discover map CTA requires real_estate evidence (MOB-07 honesty)", () => {
+test("Discover map CTA is always present (owner) with honest RE-map destination", () => {
   const src = fs.readFileSync(DISCOVER, "utf8");
+  // Owner 2026-07-20: the explore-on-map card must ALWAYS show on the Discover
+  // home. Honesty is preserved by the DESTINATION — the MOB-07 test asserts
+  // onExploreMap → /section/real-estate?map=1, whose host falls back to the list
+  // when a browse has no coordinates (never an empty map).
   assert.match(
     src,
-    /category\s*===\s*["']real_estate["']/,
-    "mapAvailable must require trending category === real_estate",
+    /testID="discover-explore-map"/,
+    "Discover must render the explore-on-map card",
+  );
+  assert.doesNotMatch(
+    src,
+    /mapAvailable/,
+    "explore-on-map card must not be gated (owner: always present on main search)",
   );
 });
 
