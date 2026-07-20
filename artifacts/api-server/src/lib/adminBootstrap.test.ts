@@ -15,7 +15,7 @@ describe("parseAdminEmails", () => {
   });
 });
 
-describe("shouldPromoteToFirstAdmin (bootstrap freeze)", () => {
+describe("shouldPromoteToFirstAdmin (owner-controlled allowlist)", () => {
   const adminEmails = ["a@x.com", "b@x.com"];
 
   it("promotes an allowlisted email when NO admin exists yet", () => {
@@ -25,6 +25,18 @@ describe("shouldPromoteToFirstAdmin (bootstrap freeze)", () => {
         email: "a@x.com",
         adminEmails,
         anAdminExists: false,
+      })
+    ).toBe(true);
+  });
+
+  it("promotes an allowlisted email even when another admin already exists", () => {
+    // All ADMIN_EMAILS are eligible — the owner controls the full list.
+    expect(
+      shouldPromoteToFirstAdmin({
+        isAlreadyAdmin: false,
+        email: "b@x.com",
+        adminEmails,
+        anAdminExists: true,
       })
     ).toBe(true);
   });
@@ -40,20 +52,7 @@ describe("shouldPromoteToFirstAdmin (bootstrap freeze)", () => {
     ).toBe(true);
   });
 
-  // The core hardening: once any admin exists the allowlist is frozen, so a
-  // second allowlisted (or newly-added/compromised) email is NOT auto-promoted.
-  it("FREEZES once an admin already exists", () => {
-    expect(
-      shouldPromoteToFirstAdmin({
-        isAlreadyAdmin: false,
-        email: "b@x.com",
-        adminEmails,
-        anAdminExists: true,
-      })
-    ).toBe(false);
-  });
-
-  it("never promotes an email that isn't on the allowlist", () => {
+  it("never promotes an email that is NOT on the allowlist (even if no admin exists)", () => {
     expect(
       shouldPromoteToFirstAdmin({
         isAlreadyAdmin: false,
@@ -64,13 +63,24 @@ describe("shouldPromoteToFirstAdmin (bootstrap freeze)", () => {
     ).toBe(false);
   });
 
+  it("never promotes an unlisted email even when no admin exists and anAdminExists=true", () => {
+    expect(
+      shouldPromoteToFirstAdmin({
+        isAlreadyAdmin: false,
+        email: "c@x.com",
+        adminEmails,
+        anAdminExists: true,
+      })
+    ).toBe(false);
+  });
+
   it("never re-promotes someone who is already an admin", () => {
     expect(
       shouldPromoteToFirstAdmin({
         isAlreadyAdmin: true,
         email: "a@x.com",
         adminEmails,
-        anAdminExists: false,
+        anAdminExists: true,
       })
     ).toBe(false);
   });
