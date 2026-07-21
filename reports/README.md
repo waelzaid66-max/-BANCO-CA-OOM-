@@ -10,6 +10,7 @@
 | **Laptop validation results** | [`laptop-validation-results.json`](./laptop-validation-results.json) |
 | **Forensic history (bancoo baseline study)** | [`forensic-history-2026-07-21/`](./forensic-history-2026-07-21/) |
 | **Continuous recovery (current)** | [`continuous-recovery/`](./continuous-recovery/) |
+| **Production MAIN engine (bancoo)** | [`production-main-engine/`](./production-main-engine/) |
 
 ### Regenerate
 
