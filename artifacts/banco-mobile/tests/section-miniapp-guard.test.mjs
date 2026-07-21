@@ -339,8 +339,8 @@ test("Stay auto-resets filters on back; rental strip + map latch wired", () => {
   );
   assert.match(
     booking,
-    /sortChip:\s*\{[\s\S]*?width:\s*34[\s\S]*?height:\s*34/,
-    "Stay sort chip must be 34×34 (P-SECTION S6 / Claude W4)",
+    /sortChip:\s*\{[\s\S]*?width:\s*30[\s\S]*?height:\s*30/,
+    "Stay sort chip must be 30×30 after owner compact trim (4bf7cfb; was 34 in W4)",
   );
 });
 
@@ -472,15 +472,21 @@ test("Real-estate section uses offer strip + type strip (no listingMode clash)",
 test("Car section expands brand + origin strips; import deep-links engine", () => {
   const section = fs.readFileSync(SECTION_APP, "utf8");
   const discover = fs.readFileSync(DISCOVER, "utf8");
+  // Owner compact (aa0364c): one combined strip — brand picker + origin chips.
   assert.match(
     section,
-    /testID="car-brand-strip"/,
-    "Car must expose secondary brand strip",
+    /testID="car-brand-origin-strip"/,
+    "Car must expose collapsed brand+origin strip (aa0364c)",
   );
   assert.match(
     section,
-    /testID="car-origin-strip"/,
-    "Car must expose origin strip (local/imported)",
+    /testID="car-brand-btn"/,
+    "Car must expose collapsed brand picker button",
+  );
+  assert.match(
+    section,
+    /testID=\{`car-origin-\$\{o\}`\}|testID="car-origin-/,
+    "Car must expose origin chips inside the combined strip",
   );
   assert.match(
     section,
