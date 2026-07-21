@@ -23,7 +23,7 @@ import {
   type SocialLinkPlatform,
 } from "@workspace/api-client-react";
 import { useQueryClient } from "@tanstack/react-query";
-import React, { useEffect, useMemo, useRef, useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import {
   ActivityIndicator,
   Alert,
@@ -930,16 +930,17 @@ export default function ProfileScreen() {
     // Banks are not rental hosts — do not push the rental hub from FI role alone.
     const showRentalHub = hasBookableRentals || (isBusiness && !isFi);
 
-    // useMemo: only rebuilds when role/hub/language change — not on every render.
-    // Handlers (router, setShowMenu, signOut) are stable refs; safe to omit from deps.
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-    const menuItems = useMemo<{
+    // Plain array — NOT useMemo. This block runs only after early returns
+    // (!isLoaded / needsAccountType). A hook here violates Rules of Hooks when
+    // auth/onboarding paths skip it (crash risk on signed-in ↔ loading flips).
+    // Proven-stable pattern: bancoo tip used a plain menuItems array.
+    const menuItems: {
       key: string;
       icon: React.ComponentProps<typeof Feather>["name"];
       label: string;
       onPress: () => void;
       danger?: boolean;
-    }[]>(() => [
+    }[] = [
       {
         key: "edit",
         icon: "edit-2",
@@ -1059,8 +1060,7 @@ export default function ProfileScreen() {
         },
         danger: true,
       },
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-    ], [showRentalHub, isBusiness, isFi, t]);
+    ];
 
     return (
       <ScrollView
