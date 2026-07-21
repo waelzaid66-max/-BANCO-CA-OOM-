@@ -93,6 +93,19 @@ const CHECKS = [
     why: "Locate-me control (fcd7d1c) must remain after wipe restore",
   },
   {
+    id: "P-map-market-center",
+    file: "artifacts/banco-mobile/lib/searchTaxonomy.ts",
+    test: (s) =>
+      /export function marketCountryMapCenter/.test(s) && /FR:\s*\{\s*lat:/.test(s),
+    why: "Market-country initial map center (b68c8af) must remain; includes EU",
+  },
+  {
+    id: "P-map-market-center-wired",
+    file: "artifacts/banco-mobile/components/search/SearchResultsMap.tsx",
+    test: (s) => /marketCountryMapCenter\(criteria\.marketCountry\)/.test(s),
+    why: "Native map must frame by selected market country",
+  },
+  {
     id: "P-map-geolocation-webview",
     file: "artifacts/banco-mobile/components/search/SearchResultsMap.tsx",
     test: (s) => /geolocationEnabled/.test(s),
