@@ -118,6 +118,9 @@ const en = {
   chat: {
     photoPermTitle: "Photo access needed",
     photoPermBody: "Allow photo access to send an image.",
+    photoAccessConfirm: "Choose photo",
+    photoAccessBullet1: "Used only to send a chat image you pick",
+    photoAccessBullet2: "We never browse your library on our own",
     uploadFailTitle: "Upload failed",
     uploadFailBody: "Couldn't send the image. Please try again.",
     markSold: "Mark sold",
@@ -449,6 +452,11 @@ const en = {
     yearTo: "To",
     nearMe: "Near me",
     nearMeDenied: "Location permission is required to search near you.",
+    locateFailedTitle: "Couldn't find your location",
+    locateDeniedBody:
+      "Allow location access so Locate me can centre the map. You can enable it in Settings.",
+    locateFailedBody:
+      "GPS timed out or is unavailable. Move outdoors or try again in a moment.",
     allEgypt: "All Egypt",
     discover: {
       categories: "Browse categories",
@@ -749,6 +757,7 @@ const en = {
     photoPermissionBody: "Allow photo access to add or change your photo.",
     photoPermissionSettings: "Open Settings",
     photoAccessTitle: "Access Your Photos",
+    coverAccessTitle: "Access photos for your cover",
     photoAccessMessage:
       "To set a profile picture, BANCO needs permission to open your photo library. We only access the photo you pick — nothing else, and never in the background.",
     photoAccessBullet1: "Used only for your profile picture",
@@ -2112,6 +2121,9 @@ const ar: typeof en = {
   chat: {
     photoPermTitle: "محتاج إذن الصور",
     photoPermBody: "اسمح بالوصول للصور عشان تبعت صورة.",
+    photoAccessConfirm: "اختَر صورة",
+    photoAccessBullet1: "تُستخدم فقط لإرسال صورة تختارها في الشات",
+    photoAccessBullet2: "لا نتصفّح مكتبتك من تلقاء أنفسنا",
     uploadFailTitle: "فشل الرفع",
     uploadFailBody: "تعذّر إرسال الصورة. حاول تاني.",
     markSold: "تحديد كمباع",
@@ -2443,6 +2455,11 @@ const ar: typeof en = {
     yearTo: "إلى",
     nearMe: "قريب مني",
     nearMeDenied: "يلزم السماح بالموقع للبحث بالقرب منك.",
+    locateFailedTitle: "تعذّر تحديد موقعك",
+    locateDeniedBody:
+      "اسمح بالوصول للموقع عشان زر موقعي يوسّط الخريطة. تقدر تفعّله من الإعدادات.",
+    locateFailedBody:
+      "انتهت مهلة الـ GPS أو غير متاح. اطلع لمكان مفتوح أو حاول تاني بعد لحظات.",
     allEgypt: "كل مصر",
     discover: {
       categories: "تصفّح الأقسام",
@@ -2741,6 +2758,7 @@ const ar: typeof en = {
     photoPermissionBody: "اسمح بالوصول للصور عشان تقدر تضيف أو تغيّر صورتك.",
     photoPermissionSettings: "افتح الإعدادات",
     photoAccessTitle: "الوصول إلى صورك",
+    coverAccessTitle: "الوصول للصور لغلاف حسابك",
     photoAccessMessage:
       "لتعيين صورة الملف الشخصي، يحتاج BANCO إذنًا لفتح مكتبة صورك. لا نصل إلا للصورة التي تختارها — لا شيء غير ذلك، وأبدًا في الخلفية.",
     photoAccessBullet1: "تُستخدم فقط لصورة ملفك الشخصي",
