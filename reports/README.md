@@ -1,23 +1,29 @@
 # BANCO `/reports`
 
-## Production Execution Protocol v1.0 pack (current)
+## Current mandatory packs
 
-**Path:** [`production-protocol-v1-2026-07-21/`](./production-protocol-v1-2026-07-21/)
+| Pack | Path |
+|------|------|
+| **Production Fingerprint (canonical JSON)** | [`ProductionFingerprint.json`](./ProductionFingerprint.json) |
+| **Validation Standard (F0/F1 + full mandatory set)** | [`production-validation-standard-2026-07-21/`](./production-validation-standard-2026-07-21/) |
+| Protocol v1.0 evidence pack | [`production-protocol-v1-2026-07-21/`](./production-protocol-v1-2026-07-21/) |
 
-Regenerate (evidence capture from live commands):
+### Regenerate
 
 ```bash
+node scripts/generate-production-validation-standard.mjs
 node scripts/generate-production-protocol-reports.mjs
 ```
 
-**Verdict policy:** reports may say PASS only when a command proved it.  
-**Definitive production edition is NOT declared** while install/typecheck/live F0–F1 remain blocked or pending.
+### F0 / F1 owner brief (Arabic)
+
+`audit/F0-F1-EVIDENCE-RECOMMENDATION-2026-07-21-AR.md`
+
+**Production Ready is NOT declared** while install/typecheck/live F1 remain BLOCKED.
 
 ## Other folders
 
 | Folder | Meaning |
 |--------|---------|
-| `from-maintenance/` | Historical maintenance audits copied for reference |
-| `from-other-repos/` | Knowledge snapshots from other remotes — **not** merge sources |
-
-Cross-links: `audit/PRODUCTION-FORENSIC-MASTER-PLAN-ZERO-GUESS-2026-07-21-AR.md`, `audit/COMPLETION-SPINE-SCALE-COHERENCE-2026-07-21-AR.md`, `audit/BANCOO-IMPORT-BOARD-ZERO-BLIND-2026-07-21-AR.md`.
+| `from-maintenance/` | Historical maintenance audits |
+| `from-other-repos/` | Knowledge snapshots — **not** merge sources |
