@@ -181,6 +181,12 @@ function checkOpenApi() {
   pass("openapi.yaml structure");
 }
 
+function checkFullChainIntegrity() {
+  const r = run("node", ["scripts/chain-integrity-gate.mjs"], ROOT);
+  if (r.ok) pass("full-chain integrity gate");
+  else fail("full-chain integrity gate", (r.stderr || r.stdout).split("\n").slice(-8).join(" "));
+}
+
 /** Anti-93b650b pollution: touch-trap menus + opaque upload 500 for missing storage. */
 function checkReplitWipePollution() {
   const profile = path.join(MOBILE, "app", "(tabs)", "profile.tsx");
@@ -270,6 +276,7 @@ function main() {
   checkExpoSdkAlignment();
   checkWorkspaceRefs();
   checkOpenApi();
+  checkFullChainIntegrity();
   checkReplitWipePollution();
   checkGcpDockerConfig();
 
