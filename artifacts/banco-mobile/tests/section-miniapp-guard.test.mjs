@@ -834,13 +834,32 @@ test("Profile FI account type pushes onboarding with intent=fi", () => {
 test("Banks hub hides Join when institution membership is active", () => {
   const src = fs.readFileSync(BANKS, "utf8");
   assert.match(src, /onMembershipChange/);
-  assert.match(src, /!isFiMember/);
+  assert.match(src, /showJoinCta/);
   assert.match(src, /testID="banks-join-box"/);
   assert.match(
     src,
     /onboarding\?intent=fi/,
     "Banks Join CTA must keep intent=fi",
   );
+});
+
+test("Banks hub shows awaiting-admin link for FI role without membership", () => {
+  const src = fs.readFileSync(BANKS, "utf8");
+  assert.match(src, /testID="banks-awaiting-link"/);
+  assert.match(src, /showAwaitingAdminLink/);
+  assert.match(src, /financial_institution/);
+  assert.match(src, /useGetMe/);
+});
+
+test("Profile role prefers /me over Clerk publicMetadata", () => {
+  const src = fs.readFileSync(PROFILE, "utf8");
+  assert.match(src, /meQuery\.data\?\.data\?\.role/);
+  assert.match(
+    src,
+    /const role = meRole \|\| clerkRole/,
+    "profile must use DB role first (S1)",
+  );
+  assert.match(src, /demoteBlockedTitle/, "client demote guard copy");
 });
 
 test("Banks productsHint honesty keys exist in en+ar", () => {

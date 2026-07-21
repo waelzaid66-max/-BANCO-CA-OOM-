@@ -42,7 +42,7 @@ const CHECKS = [
     test: (s) => {
       const i = s.indexOf("const chooseAccountType");
       if (i < 0) return false;
-      const sl = s.slice(i, i + 1600);
+      const sl = s.slice(i, i + 2200);
       const d = sl.indexOf("setNeedsAccountType(false)");
       const u = sl.indexOf("await updateMe({ account_type");
       return d >= 0 && u >= 0 && d < u;
@@ -54,6 +54,32 @@ const CHECKS = [
     file: "artifacts/banco-mobile/app/(tabs)/profile.tsx",
     test: (s) => /intent=fi/.test(s) && /financial_institution/.test(s),
     why: "FI onboarding must pass intent=fi (never silent dealer demotion path)",
+  },
+  {
+    id: "P-account-role-from-me",
+    file: "artifacts/banco-mobile/app/(tabs)/profile.tsx",
+    test: (s) =>
+      /meQuery\.data\?\.data\?\.role/.test(s) &&
+      /const role = meRole \|\| clerkRole/.test(s),
+    why: "Profile chrome must prefer DB /me.role over Clerk metadata lag",
+  },
+  {
+    id: "P-account-demote-guard",
+    file: "artifacts/api-server/src/services/UserService.ts",
+    test: (s) =>
+      /DEMOTE_BLOCKED/.test(s) &&
+      /account_type === "individual"/.test(s) &&
+      /financial_institution/.test(s),
+    why: "Elevated roles must not self-demote to individual via PATCH /me",
+  },
+  {
+    id: "P-banks-awaiting-link",
+    file: "artifacts/banco-mobile/app/business/banks.tsx",
+    test: (s) =>
+      /testID="banks-awaiting-link"/.test(s) &&
+      /showAwaitingAdminLink/.test(s) &&
+      /intent=fi/.test(s),
+    why: "FI without owner link must see awaiting-admin UX, not endless Join",
   },
   {
     id: "P-menu-touch-safe-profile",

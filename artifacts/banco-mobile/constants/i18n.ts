@@ -817,6 +817,9 @@ const en = {
     onboardingContinue: "Continue",
     settingUpAccount: "Setting up your account…",
     accountTypeError: "Couldn't save your account type. Please try again.",
+    demoteBlockedTitle: "Can't switch to personal",
+    demoteBlockedBody:
+      "Company and financial-institution accounts can't be switched to personal from the app. Contact BANCO support if you need a change.",
     statListings: "Listings",
     statActive: "Active",
     statYears: "Years",
@@ -1435,6 +1438,10 @@ const en = {
       joinDesc:
         "Register your institution on BANCO's ads marketplace. After review, an admin links your account so forwarded financing requests from listings can reach your team inbox.",
       joinCta: "Join as an institution",
+      awaitingLinkTitle: "Institution link pending",
+      awaitingLinkDesc:
+        "Your financial-institution account is submitted. Inbox access opens only after a BANCO admin links your institution — verification alone does not open the inbox.",
+      awaitingLinkCta: "Check verification status",
       note: "BANCO is a verified ads platform — financing terms are set entirely by the institution.",
       inboxTitle: "Financing requests inbox",
       inboxEmpty: "No forwarded requests yet — Banco sends them here after review.",
@@ -2801,6 +2808,9 @@ const ar: typeof en = {
     onboardingContinue: "متابعة",
     settingUpAccount: "بنجهّز حسابك…",
     accountTypeError: "تعذّر حفظ نوع الحساب. حاول تاني.",
+    demoteBlockedTitle: "مش هينفع تتحوّل لشخصي",
+    demoteBlockedBody:
+      "حسابات الشركة والمؤسسة المالية ماينفعش تتحول لشخصي من التطبيق. تواصل مع دعم بانكو لو محتاج تغيير.",
     statListings: "إعلانات",
     statActive: "نشطة",
     statYears: "سنوات",
@@ -3416,6 +3426,10 @@ const ar: typeof en = {
       joinDesc:
         "سجّل مؤسستك على سوق إعلانات بانكو. بعد المراجعة، الأدمن بيربط حسابك عشان طلبات التمويل المحوّلة من الإعلانات توصل لصندوق فريقك.",
       joinCta: "انضم كمؤسسة",
+      awaitingLinkTitle: "ربط المؤسسة قيد الانتظار",
+      awaitingLinkDesc:
+        "حساب المؤسسة المالية اتبعت. صندوق الوارد يفتح فقط بعد ما أدمن بانكو يربط حساب مؤسستك — التوثيق لوحده مش بيفتح الصندوق.",
+      awaitingLinkCta: "راجع حالة التوثيق",
       note: "بانكو منصة إعلانات موثّقة — شروط التمويل تحددها المؤسسة بالكامل.",
       inboxTitle: "صندوق طلبات التمويل",
       inboxEmpty: "لا توجد طلبات محوّلة بعد — بانكو بترسلها هنا بعد الدراسة.",
