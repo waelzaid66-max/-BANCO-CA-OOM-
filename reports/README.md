@@ -8,6 +8,7 @@
 | **Validation Standard (F0/F1 + full mandatory set)** | [`production-validation-standard-2026-07-21/`](./production-validation-standard-2026-07-21/) |
 | Protocol v1.0 evidence pack | [`production-protocol-v1-2026-07-21/`](./production-protocol-v1-2026-07-21/) |
 | **Laptop validation results** | [`laptop-validation-results.json`](./laptop-validation-results.json) |
+| **Forensic history (bancoo baseline study)** | [`forensic-history-2026-07-21/`](./forensic-history-2026-07-21/) |
 
 ### Regenerate
 
