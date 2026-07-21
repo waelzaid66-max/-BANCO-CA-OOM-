@@ -2,7 +2,7 @@
 
 | Field | Value |
 |-------|-------|
-| Commit | `5d027bfdbd88cb89304c8ca869454d64c4d1273a` |
+| Commit | `2c667c81be1fe76d1ef4113a15edc2ed58548e75` |
 | Branch | `main` |
 | Date | 2026-07-21 |
 | Production accepted | **NO** |
@@ -11,7 +11,7 @@
 | Repo | Status |
 |------|--------|
 | bancoo | Orphan snapshot; web stack **imported surgically this iteration** (not whole-tree) |
-| CA-OOM | Working line @ `5d027bf` |
+| CA-OOM | Working line @ `2c667c8` |
 | B-OOM / b.deals | Contained ancestors |
 | aws-virgen | Deploy packaging uniques — not imported |
 | bancooom | EMPTY — FAIL ops |
