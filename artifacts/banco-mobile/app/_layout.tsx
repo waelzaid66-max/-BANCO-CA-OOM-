@@ -1,4 +1,4 @@
-import { ClerkLoaded, ClerkProvider, useAuth } from "@clerk/expo";
+import { ClerkProvider, useAuth } from "@clerk/expo";
 import { tokenCache } from "@clerk/expo/token-cache";
 import {
   Cairo_400Regular,
@@ -76,10 +76,37 @@ const queryClient = new QueryClient({
   },
 });
 
+// Renders the app once Clerk initializes — or after a short timeout if it
+// can't (unauthorized origin, blocked CDN, network failure). Without this,
+// <ClerkLoaded> kept the ENTIRE app on an infinite white screen whenever
+// clerk-js failed to init. Timed-out sessions behave as signed-out guests;
+// auth state hydrates automatically if Clerk finishes loading later.
+const CLERK_LOAD_TIMEOUT_MS = 2500;
+function ClerkLoadGate({
+  children,
+  waitExpired,
+}: {
+  children: React.ReactNode;
+  waitExpired: boolean;
+}) {
+  const { isLoaded } = useAuth();
+  useEffect(() => {
+    if (waitExpired && !isLoaded) {
+      console.error(
+        "[BANCO] Clerk did not initialize in time (origin not authorized for this Clerk instance, or clerk-js blocked). Rendering app as signed-out.",
+      );
+    }
+  }, [waitExpired, isLoaded]);
+  if (!isLoaded && !waitExpired) return null;
+  return <>{children}</>;
+}
+
 function AuthTokenBridge() {
   const { getToken } = useAuth();
   useEffect(() => {
-    setAuthTokenGetter(() => getToken());
+    // getToken can reject while clerk-js is still initializing (or failed to
+    // init). API calls must degrade to anonymous, never crash the request.
+    setAuthTokenGetter(() => getToken().catch(() => null));
   }, [getToken]);
   return null;
 }
@@ -260,8 +287,20 @@ function shouldSkipIntro(): boolean {
   }
 }
 
+// Fonts must enhance, not block: if font loading neither resolves nor errors
+// (seen hanging forever on web), render with system fonts after this window.
+const FONT_WAIT_MS = 2000;
+
 export default function RootLayout() {
   const [introDone, setIntroDone] = useState(shouldSkipIntro());
+  const [fontWaitExpired, setFontWaitExpired] = useState(false);
+  // Runs from first mount (in parallel with the font wait, not after it) so a
+  // Clerk that can't load never adds its timeout on top of the font timeout.
+  const [clerkWaitExpired, setClerkWaitExpired] = useState(false);
+  useEffect(() => {
+    const t = setTimeout(() => setClerkWaitExpired(true), CLERK_LOAD_TIMEOUT_MS);
+    return () => clearTimeout(t);
+  }, []);
   const [fontsLoaded, fontError] = useFonts({
     Inter_400Regular,
     Inter_500Medium,
@@ -277,17 +316,29 @@ export default function RootLayout() {
   });
 
   useEffect(() => {
+    const t = setTimeout(() => setFontWaitExpired(true), FONT_WAIT_MS);
+    return () => clearTimeout(t);
+  }, []);
+
+  useEffect(() => {
     if (fontError) {
       // Surface text-font (Inter/Cairo) load failures loudly. Icons are SVG
       // (see components/icons.tsx) so they are unaffected by font loading.
       console.error("[BANCO] Text fonts failed to load:", fontError);
     }
-    if (fontsLoaded || fontError) {
+    if (fontWaitExpired && !fontsLoaded && !fontError) {
+      console.error(
+        "[BANCO] Fonts still pending after " +
+          FONT_WAIT_MS +
+          "ms — rendering with system fonts (Inter/Cairo will apply if they finish loading).",
+      );
+    }
+    if (fontsLoaded || fontError || fontWaitExpired) {
       SplashScreen.hideAsync();
     }
-  }, [fontsLoaded, fontError]);
+  }, [fontsLoaded, fontError, fontWaitExpired]);
 
-  if (!fontsLoaded && !fontError) return null;
+  if (!fontsLoaded && !fontError && !fontWaitExpired) return null;
 
   // ErrorBoundary wraps Clerk so a missing/invalid publishable key or provider
   // boot crash still surfaces the recovery UI instead of a white screen.
@@ -303,7 +354,7 @@ export default function RootLayout() {
           tokenCache={tokenCache}
           proxyUrl={proxyUrl}
         >
-          <ClerkLoaded>
+          <ClerkLoadGate waitExpired={clerkWaitExpired}>
             <QueryClientProvider client={queryClient}>
               <AuthTokenBridge />
               <ThemeProvider>
@@ -343,7 +394,7 @@ export default function RootLayout() {
                 </LanguageProvider>
               </ThemeProvider>
             </QueryClientProvider>
-          </ClerkLoaded>
+          </ClerkLoadGate>
         </ClerkProvider>
       </ErrorBoundary>
     </SafeAreaProvider>

@@ -1,10 +1,14 @@
 /**
  * Standalone production server for Expo static builds.
  *
- * Serves the output of build.js (static-build/) with two special routes:
- * - GET / or /manifest with expo-platform header → platform manifest JSON
- * - GET / without expo-platform → landing page HTML
- * Everything else falls through to static file serving from ./static-build/.
+ * Serves the output of build.js (static-build/) with these routes:
+ * - GET / or /manifest with expo-platform header → platform manifest JSON (Expo Go)
+ * - GET / without expo-platform → the exported WEB APP (static-build/web/index.html)
+ *   — falls back to the Expo Go QR landing page only when no web build exists.
+ * - GET /expo-go → the QR landing page (native preview via Expo Go)
+ * - /privacy, /terms → static legal pages
+ * - Everything else: static files from static-build/web/ then static-build/,
+ *   with an SPA fallback to the web index.html for client-side router paths.
  *
  * Zero external dependencies — uses only Node.js built-ins (http, fs, path).
  */
@@ -14,6 +18,8 @@ const fs = require("fs");
 const path = require("path");
 
 const STATIC_ROOT = path.resolve(__dirname, "..", "static-build");
+const WEB_ROOT = path.join(STATIC_ROOT, "web");
+const WEB_INDEX = path.join(WEB_ROOT, "index.html");
 const TEMPLATE_PATH = path.resolve(__dirname, "templates", "landing-page.html");
 const PRIVACY_PATH = path.resolve(__dirname, "templates", "privacy.html");
 const TERMS_PATH = path.resolve(__dirname, "templates", "terms.html");
@@ -30,6 +36,7 @@ const MIME_TYPES = {
   ".gif": "image/gif",
   ".svg": "image/svg+xml",
   ".ico": "image/x-icon",
+  ".webp": "image/webp",
   ".woff": "font/woff",
   ".woff2": "font/woff2",
   ".ttf": "font/ttf",
@@ -83,26 +90,25 @@ function serveLandingPage(req, res, landingPageTemplate, appName) {
   res.end(html);
 }
 
-function serveStaticFile(urlPath, res) {
+/**
+ * Resolve a URL path against a static root, guarding path traversal.
+ * Returns the absolute file path when it exists (and is a file), else null.
+ */
+function resolveStaticFile(root, urlPath) {
   const safePath = path.normalize(urlPath).replace(/^(\.\.(\/|\\|$))+/, "");
-  const filePath = path.join(STATIC_ROOT, safePath);
+  const filePath = path.join(root, safePath);
 
-  if (!filePath.startsWith(STATIC_ROOT)) {
-    res.writeHead(403);
-    res.end("Forbidden");
-    return;
-  }
+  if (!filePath.startsWith(root)) return null;
+  if (!fs.existsSync(filePath)) return null;
+  if (fs.statSync(filePath).isDirectory()) return null;
+  return filePath;
+}
 
-  if (!fs.existsSync(filePath) || fs.statSync(filePath).isDirectory()) {
-    res.writeHead(404);
-    res.end("Not Found");
-    return;
-  }
-
+function sendFile(filePath, res, extraHeaders = {}) {
   const ext = path.extname(filePath).toLowerCase();
   const contentType = MIME_TYPES[ext] || "application/octet-stream";
   const content = fs.readFileSync(filePath);
-  res.writeHead(200, { "content-type": contentType });
+  res.writeHead(200, { "content-type": contentType, ...extraHeaders });
   res.end(content);
 }
 
@@ -110,10 +116,23 @@ const landingPageTemplate = fs.readFileSync(TEMPLATE_PATH, "utf-8");
 const privacyPage = fs.readFileSync(PRIVACY_PATH, "utf-8");
 const termsPage = fs.readFileSync(TERMS_PATH, "utf-8");
 const appName = getAppName();
+const hasWebBuild = fs.existsSync(WEB_INDEX);
+
+if (!hasWebBuild) {
+  console.warn(
+    "WARN: static-build/web/index.html missing — browsers get the Expo Go QR page. " +
+      "Run scripts/build.js (deploy build) to produce the web export.",
+  );
+}
 
 function serveHtml(html, res) {
   res.writeHead(200, { "content-type": "text/html; charset=utf-8" });
   res.end(html);
+}
+
+function serveWebIndex(res) {
+  // index.html must never be cached — it points at hashed bundles.
+  sendFile(WEB_INDEX, res, { "cache-control": "no-cache" });
 }
 
 const server = http.createServer((req, res) => {
@@ -139,8 +158,14 @@ const server = http.createServer((req, res) => {
     }
 
     if (pathname === "/") {
+      if (hasWebBuild) return serveWebIndex(res);
       return serveLandingPage(req, res, landingPageTemplate, appName);
     }
+  }
+
+  // Native preview entry — QR code page for opening the app in Expo Go.
+  if (pathname === "/expo-go") {
+    return serveLandingPage(req, res, landingPageTemplate, appName);
   }
 
   if (pathname === "/privacy" || pathname === "/legal/privacy") {
@@ -150,7 +175,31 @@ const server = http.createServer((req, res) => {
     return serveHtml(termsPage, res);
   }
 
-  serveStaticFile(pathname, res);
+  // Web export assets first (hashed → cache aggressively), then the native
+  // static build (Expo Go bundles/assets under timestamped dirs).
+  if (hasWebBuild) {
+    const webFile = resolveStaticFile(WEB_ROOT, pathname);
+    if (webFile) {
+      const cache = pathname.startsWith("/_expo/")
+        ? { "cache-control": "public, max-age=31536000, immutable" }
+        : {};
+      return sendFile(webFile, res, cache);
+    }
+  }
+
+  const nativeFile = resolveStaticFile(STATIC_ROOT, pathname);
+  if (nativeFile) {
+    return sendFile(nativeFile, res);
+  }
+
+  // SPA fallback: client-side routes (e.g. /listing/123, /search) render from
+  // the web index. Only for HTML-navigations — asset-looking paths get a 404.
+  if (hasWebBuild && !path.extname(pathname)) {
+    return serveWebIndex(res);
+  }
+
+  res.writeHead(404);
+  res.end("Not Found");
 });
 
 const port = parseInt(process.env.PORT || "3000", 10);

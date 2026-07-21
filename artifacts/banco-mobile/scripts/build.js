@@ -548,6 +548,53 @@ async function runLightweightBuild() {
   console.log("Mobile lightweight build OK:", outDir);
 }
 
+/**
+ * Browser-facing production build: `expo export --platform web` into
+ * static-build/web. serve.js serves it to browsers (no expo-platform header)
+ * while Expo Go keeps getting the native manifests/bundles built below.
+ *
+ * EXPO_WEB_BASE_URL bakes the deployment path prefix (/banco-mobile) into
+ * asset URLs via app.config.ts experiments.baseUrl.
+ * Restored from bancoo handoff (C-WEB-BASE) — without this, browsers only see
+ * the Expo Go QR landing page.
+ */
+function exportWebBuild() {
+  console.log("Exporting web build (expo export --platform web)...");
+  const outDir = path.join(projectRoot, "static-build", "web");
+
+  const { spawnSync } = require("child_process");
+  const env = {
+    ...process.env,
+    EXPO_WEB_BASE_URL: basePath || "",
+    // Same key mapping startMetro uses for the native bundles.
+    EXPO_PUBLIC_CLERK_PUBLISHABLE_KEY:
+      process.env.EXPO_PUBLIC_CLERK_PUBLISHABLE_KEY ||
+      process.env.CLERK_PUBLISHABLE_KEY ||
+      "",
+  };
+
+  const result = spawnSync(
+    process.execPath,
+    [
+      path.join(projectRoot, "node_modules", "expo", "bin", "cli"),
+      "export",
+      "--output-dir",
+      outDir,
+      "--platform",
+      "web",
+    ],
+    { cwd: projectRoot, stdio: "inherit", env },
+  );
+
+  if (result.status !== 0) {
+    exitWithError("Web export failed — browser build did not compile.");
+  }
+  if (!fs.existsSync(path.join(outDir, "index.html"))) {
+    exitWithError("Web export completed but index.html is missing.");
+  }
+  console.log("Web build ready:", outDir);
+}
+
 async function main() {
   console.log("Building static Expo Go deployment...");
 
@@ -565,6 +612,10 @@ async function main() {
 
   prepareDirectories(timestamp);
   clearMetroCache();
+
+  // Web first: it runs its own bundler; keeping it before Metro avoids two
+  // bundlers competing for CPU/memory in the deploy build container.
+  exportWebBuild();
 
   await startMetro(domain, expoPublicReplId);
 
