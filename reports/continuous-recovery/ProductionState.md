@@ -2,14 +2,14 @@
 
 | Field | Value |
 |-------|-------|
-| Commit | `9965d12a4d532c755abf7642e90a2c1afa914226` |
+| Commit | `edbe6cf16a1daf83a3201afc7e6bdd649c9c0412` |
 | Branch | `main` |
 | Date | 2026-07-21 |
 | Production accepted | **NO** |
 
 
 ## Current iteration
-**R-WEB-BASE-CLERK-GATE** — restored Replit browser SPA export + ClerkLoadGate from bancoo handoff after forensic carding.
+**R-ARCHIVE-POSTSIGNUP-EDIT-INVALIDATE** — mobile archive parity, post-signup half-wire closed, edit listing cache invalidate.
 
 ## Critical area board
 - **authentication_clerk_email_google_apple:** PASS

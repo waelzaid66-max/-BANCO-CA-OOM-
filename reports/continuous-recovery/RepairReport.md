@@ -1,32 +1,35 @@
-# Repair Report — C-WEB-BASE
+# Repair Report — ARCHIVE / POST-SIGNUP / EDIT INVALIDATE
 
 | Field | Value |
 |-------|-------|
-| Commit | `9965d12a4d532c755abf7642e90a2c1afa914226` |
+| Commit | `edbe6cf16a1daf83a3201afc7e6bdd649c9c0412` |
 | Branch | `main` |
 | Date | 2026-07-21 |
 | Production accepted | **NO** |
 
 
 ## Unique ID
-`REP-C-WEB-BASE-2026-07-21`
+`REP-ARCHIVE-POSTSIGNUP-2026-07-21`
 
 ## Problem
-CA lacked bancoo's Replit web production path: browsers got Expo Go QR only; `<ClerkLoaded>` could white-screen forever on unauthorized origins; fonts could hang on web.
+1. Edit listing PATCH success only bumped session version — listing RQ cache could stay stale.
+2. Post-signup `updateMe` failure still `router.push` business onboarding (half-wired journey).
+3. Dealer-os could archive/activate; mobile mine/detail only sold/delete/bump.
 
 ## Evidence
-- Forensic card C-WEB-BASE / C-MEM-WEB
-- Diff bancoo`321af02` vs CA: `_layout.tsx`, `app.config.ts`, `scripts/build.js`, `server/serve.js`
+- Laptop-style audit of tip `9965d12`
+- API already accepts `UpdateListingBody.status` active|sold|archived
+- Dealer `handleStatusToggle` archive/activate contract
 
 ## Root Cause
-History-stripped bancoo handoff contained the web stack; CA continuous line had native/EAS focus and never re-imported the Replit browser SPA path after wipe-era churn.
+Prior wave wired edit media + post-signup Alert but left navigation and cache incomplete; archive UI never ported to mobile.
 
 ## Files Modified
 See fingerprint.lastRepair.files
 
 ## Validation
-- chain-integrity-gate: PASS (includes P-clerk-load-gate, P-web-export-build, P-web-serve-spa)
-- mobile node tests incl. session-restore: PASS
+- chain-integrity-gate: PASS (46 markers incl. archive/post-signup/invalidate)
+- mobile node tests: PASS
 - typecheck/lint/full build: BLOCKED (no node_modules)
 
 ## Rollback
