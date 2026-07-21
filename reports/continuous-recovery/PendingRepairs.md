@@ -1,17 +1,10 @@
 # Pending Repairs
 
-| Field | Value |
-|-------|-------|
-| Commit | `76ead31dc3778e9e521ce013cab2c9719145b483` |
-| Branch | `main` |
-| Date | 2026-07-21 |
-| Production accepted | **NO** |
-
-
 1. Laptop/owner: `CONFIRM_BANCOO_FORCE=YES` + `./scripts/publish-bancoo-production-main.sh` (bancoo MAIN)
 2. Laptop: `pnpm install --frozen-lockfile` + `laptop-validation-matrix.mjs --with-install`
-2. Owner: sync bancooom + deploy + paste readyz (F1)
-3. Laptop: device N2 QA
-4. Optional card: aws-virgen EB packaging (AWS lane only)
-5. Runtime prove web export on Replit after deps available
-
+3. Owner: sync bancooom + deploy + paste readyz (F1)
+4. Laptop: device N2 QA
+5. Optional: MOBILE-ARCHIVE-UNWIRED (dealer has archive; mobile mine/detail sold-only)
+6. Optional: VIDEO-POSTER-SCHEMA-UNWIRED (thumbnail_url never set on client)
+7. Optional: EXPO-APP-IDENTITY-DRIFT (app.json name/slug vs bancoo) — owner branding decision
+8. Runtime prove web export on Replit after deps available

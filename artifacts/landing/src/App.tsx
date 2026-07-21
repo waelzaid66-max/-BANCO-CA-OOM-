@@ -42,10 +42,13 @@ function useScrollY() {
 function DomainRouter({ children }: { children: React.ReactNode }) {
   useEffect(() => {
     const h = window.location.hostname.toLowerCase().replace(/^www\./, "");
+    // Clerk live keys are bound to banco.today only. Relative redirects on
+    // banco.deals / banco.autos keep the user on a non-authorized origin →
+    // white-screen / broken SSO. Restored from bancoo production handoff.
     if (h === "banco.deals") {
-      window.location.replace("/dealer-os/");
+      window.location.replace("https://banco.today/dealer-os/");
     } else if (h === "banco.autos") {
-      window.location.replace("/banco-mobile/");
+      window.location.replace("https://banco.today/banco-mobile/");
     }
   }, []);
   return <>{children}</>;
