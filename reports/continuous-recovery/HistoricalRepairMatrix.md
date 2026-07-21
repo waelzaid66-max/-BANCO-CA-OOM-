@@ -2,7 +2,7 @@
 
 | Field | Value |
 |-------|-------|
-| Commit | `edbe6cf16a1daf83a3201afc7e6bdd649c9c0412` |
+| Commit | `5d027bfdbd88cb89304c8ca869454d64c4d1273a` |
 | Branch | `main` |
 | Date | 2026-07-21 |
 | Production accepted | **NO** |
@@ -14,5 +14,6 @@
 | S1–S4 / N0–N2 / C1–C3 | on CA |
 | Forensic bancoo baseline study | docs `194e144` era |
 | C-WEB-BASE ClerkLoadGate + web export | prior |
-| **ARCHIVE / POST-SIGNUP / EDIT INVALIDATE** | this iteration |
+| ARCHIVE / POST-SIGNUP / EDIT INVALIDATE | prior |
+| **STATUS CACHE / SOLD / ACCOUNT SoT** | this iteration |
 

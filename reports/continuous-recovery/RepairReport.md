@@ -1,34 +1,33 @@
-# Repair Report — ARCHIVE / POST-SIGNUP / EDIT INVALIDATE
+# Repair Report — STATUS CACHE / SOLD / ACCOUNT SoT
 
 | Field | Value |
 |-------|-------|
-| Commit | `edbe6cf16a1daf83a3201afc7e6bdd649c9c0412` |
+| Commit | `5d027bfdbd88cb89304c8ca869454d64c4d1273a` |
 | Branch | `main` |
 | Date | 2026-07-21 |
 | Production accepted | **NO** |
 
 
 ## Unique ID
-`REP-ARCHIVE-POSTSIGNUP-2026-07-21`
+`REP-STATUS-CACHE-SOLD-2026-07-21`
 
 ## Problem
-1. Edit listing PATCH success only bumped session version — listing RQ cache could stay stale.
-2. Post-signup `updateMe` failure still `router.push` business onboarding (half-wired journey).
-3. Dealer-os could archive/activate; mobile mine/detail only sold/delete/bump.
+1. Mine/detail/chat status mutations updated local UI only — profile grid/feed stayed stale.
+2. Mine + dealer-os could not mark sold (chat/detail only).
+3. `accountTypeChosen` was set before `updateMe` — failed sync + cold restart skipped retry forever.
 
 ## Evidence
-- Laptop-style audit of tip `9965d12`
-- API already accepts `UpdateListingBody.status` active|sold|archived
-- Dealer `handleStatusToggle` archive/activate contract
+- Precision audit after `5d027bf`
+- Existing `updateListing({ status })` + `bumpListings` / RQ keys
 
 ## Root Cause
-Prior wave wired edit media + post-signup Alert but left navigation and cache incomplete; archive UI never ported to mobile.
+Archive wave closed UI gaps but not cross-surface cache; Clerk flag written optimistically for anti-trap without SoT revert.
 
 ## Files Modified
 See fingerprint.lastRepair.files
 
 ## Validation
-- chain-integrity-gate: PASS (46 markers incl. archive/post-signup/invalidate)
+- chain-integrity-gate: PASS
 - mobile node tests: PASS
 - typecheck/lint/full build: BLOCKED (no node_modules)
 
